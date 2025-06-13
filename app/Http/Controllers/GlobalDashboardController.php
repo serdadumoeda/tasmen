@@ -12,12 +12,14 @@ class GlobalDashboardController extends Controller
 {
     public function index()
     {
-        // Pastikan hanya kepala pusdatik yang bisa akses
-        if (auth()->user()->role !== 'kepala_pusdatik') {
-            abort(403, 'Hanya Kepala Pusdatik yang dapat mengakses halaman ini.');
+
+        if (!in_array(auth()->user()->role, ['superadmin', 'manager'])) {
+            // Pesan error juga diperbarui agar lebih akurat
+            abort(403, 'Hanya Super Admin atau Manager yang dapat mengakses halaman ini.');
         }
 
-        // Kumpulkan semua data untuk ringkasan
+
+ 
         $stats = [
             'total_projects' => Project::count(),
             'total_users' => User::count(),

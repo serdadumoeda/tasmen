@@ -17,7 +17,8 @@ class Task extends Model
         'progress', 
         'status', 
         'project_id', 
-        'assigned_to_id'
+        'assigned_to_id',
+        'estimated_hours'
     ];
 
     /**
@@ -44,5 +45,10 @@ class Task extends Model
     public function attachments()
     {
         return $this->hasMany(Attachment::class)->latest();
+    }
+
+    public function timeLogs()
+    {
+        return $this->hasMany(TimeLog::class);
     }
 }

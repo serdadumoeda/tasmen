@@ -23,7 +23,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Gate::before(function ($user, $ability) {
-            if ($user->role === 'kepala_pusdatik') {
+            if ($user->role === 'superadmin' || $user->role === 'manager') {
                 return true;
             }
         });

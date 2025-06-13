@@ -6,6 +6,9 @@ use App\Http\Controllers\TaskController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\AttachmentController; 
 use App\Http\Controllers\GlobalDashboardController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\WorkloadAnalysisController;
+use App\Http\Controllers\TimeLogController; 
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -17,7 +20,7 @@ Route::get('/dashboard', function () {
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
-    // Ganti route dashboard ini
+    
     Route::get('/dashboard', [ProjectController::class, 'index'])->name('dashboard');
 
     // Route untuk menampilkan, membuat, dan menyimpan proyek
@@ -42,6 +45,20 @@ Route::middleware('auth')->group(function () {
     Route::get('/projects/{project}/team', [ProjectController::class, 'teamDashboard'])->name('projects.team.dashboard');
 
     Route::get('/global-dashboard', [GlobalDashboardController::class, 'index'])->name('global.dashboard');
+
+    Route::resource('users', UserController::class)->middleware('superadmin');
+
+    Route::get('/workload-analysis', [WorkloadAnalysisController::class, 'index'])
+    ->name('workload.analysis');
+
+    Route::prefix('tasks/{task}/time-log')->name('timelogs.')->group(function () {
+        Route::post('/start', [TimeLogController::class, 'start'])->name('start');
+        Route::post('/stop', [TimeLogController::class, 'stop'])->name('stop');
+        Route::post('/manual', [TimeLogController::class, 'storeManual'])->name('storeManual');
+    });
+
+    Route::get('/projects/{project}/report', [ProjectController::class, 'downloadReport'])
+    ->name('projects.report');
 });
 
 require __DIR__.'/auth.php';

@@ -67,4 +67,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(Task::class, 'assigned_to_id');
     }
+
+    public function timeLogs()
+    {
+        return $this->hasMany(TimeLog::class);
+    }
 }

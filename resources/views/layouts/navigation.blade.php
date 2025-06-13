@@ -12,6 +12,17 @@
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         {{ __('Dashboard') }}
                     </x-nav-link>
+
+                    @if(Auth::user()->role === 'superadmin')
+                        <x-nav-link :href="route('users.index')" :active="request()->routeIs('users.index*')">
+                            {{ __('User Management') }}
+                        </x-nav-link>
+                    @endif
+                    @if(in_array(Auth::user()->role, ['superadmin', 'manager']))
+                        <x-nav-link :href="route('workload.analysis')" :active="request()->routeIs('workload.analysis')">
+                            {{ __('Analisis Beban Kerja') }}
+                        </x-nav-link>
+                    @endif
                 </div>
             </div>
 
@@ -90,7 +101,14 @@
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
+            
+            @if(Auth::user()->role === 'superadmin')
+                <x-responsive-nav-link :href="route('users.index')" :active="request()->routeIs('users.index*')">
+                    {{ __('User Management') }}
+                </x-responsive-nav-link>
+            @endif
         </div>
+
         <div class="pt-4 pb-1 border-t border-gray-200">
             <div class="px-4">
                 <div class="font-medium text-base text-gray-800">{{ Auth::user()->name }}</div>

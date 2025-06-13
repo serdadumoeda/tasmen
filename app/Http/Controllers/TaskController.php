@@ -50,7 +50,8 @@ class TaskController extends Controller
             'assigned_to_id' => 'required|exists:users,id',
             'deadline' => 'required|date',
             'progress' => 'required|integer|min:0|max:100',
-            'status' => 'required|string'
+            'status' => 'required|string',
+            'estimated_hours' => 'nullable|numeric|min:0',
         ]);
         
         $task->update($validated);

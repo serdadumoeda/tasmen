@@ -15,6 +15,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             \App\Http\Middleware\MarkNotificationAsRead::class,
         ]);
+
+        $middleware->alias([
+            'superadmin' => \App\Http\Middleware\CheckSuperadmin::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

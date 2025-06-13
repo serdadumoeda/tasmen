@@ -2,17 +2,18 @@
 
 namespace App\Http\Controllers;
 
-// TAMBAHKAN BARIS INI
+
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use App\Models\Project;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class ProjectController extends Controller
 {
-    // DAN TAMBAHKAN BARIS INI
+    
     use AuthorizesRequests;
 
     /**
@@ -20,19 +21,20 @@ class ProjectController extends Controller
      */
     public function index()
     {
+        $user = Auth::user();
 
-        if (Auth::user()->role === 'kepala_pusdatik') {
+        if ($user->role === 'superadmin' || $user->role === 'manager') {
             return redirect()->route('global.dashboard');
         }
 
-        $user = Auth::user();
-        // Ambil proyek dimana user adalah anggota ATAU leader
+        // Logika untuk user biasa dan leader tetap sama
         $projects = Project::where('leader_id', $user->id)
                             ->orWhereHas('members', function ($query) use ($user) {
+  
                                 $query->where('user_id', $user->id);
                             })
-                            ->with('leader') // Eager load relasi leader
-                            ->distinct() // Menghindari duplikat jika user adalah leader sekaligus member
+                            ->with('leader')
+                            ->distinct()
                             ->latest()
                             ->get();
 
@@ -89,10 +91,10 @@ class ProjectController extends Controller
     {
         $this->authorize('view', $project);
 
-        $project->load('leader', 'members', 'tasks', 'tasks.assignedTo', 'tasks.comments.user', 'tasks.attachments', 'activities.user');
+        $project->load('leader', 'members', 'tasks.timeLogs', 'tasks.assignedTo', 'tasks.comments.user', 'tasks.attachments', 'activities.user');
         $projectMembers = $project->members()->orderBy('name')->get();
 
-        // Kalkulasi statistik proyek
+        
         $taskStatuses = $project->tasks->countBy('status');
         $stats = [
             'total' => $project->tasks->count(),
@@ -101,15 +103,15 @@ class ProjectController extends Controller
             'completed' => $taskStatuses->get('completed', 0),
         ];
 
-        // BAGIAN PENTING: Pastikan baris ini ada
+        
         $tasksByUser = $project->tasks->groupBy('assigned_to_id');
 
-        // PASTIKAN SEMUA VARIABEL DIKIRIM KE VIEW
+        
         return view('projects.show', compact(
             'project',
             'projectMembers',
             'stats',
-            'tasksByUser' // Pastikan '$tasksByUser' ada di sini
+            'tasksByUser' 
         ));
     }
 
@@ -149,6 +151,43 @@ class ProjectController extends Controller
             'project' => $project,
             'teamSummary' => $teamSummary
         ]);
+    }
+    public function downloadReport(Project $project)
+    {
+        // Otorisasi, hanya manager dan superadmin yang bisa download
+        if (!in_array(auth()->user()->role, ['superadmin', 'manager'])) {
+            abort(403);
+        }
+
+        // Muat semua relasi yang dibutuhkan untuk laporan
+        $project->load('leader', 'members', 'tasks.assignedTo', 'tasks.timeLogs');
+
+        // Kalkulasi statistik seperti di halaman show
+        $taskStatuses = $project->tasks->countBy('status');
+        $stats = [
+            'total' => $project->tasks->count(),
+            'pending' => $taskStatuses->get('pending', 0),
+            'in_progress' => $taskStatuses->get('in_progress', 0),
+            'completed' => $taskStatuses->get('completed', 0),
+        ];
+
+        // Kalkulasi total jam kerja tercatat
+        $totalMinutesLogged = $project->tasks->flatMap->timeLogs->sum('duration_in_minutes');
+        $totalHoursLogged = floor($totalMinutesLogged / 60);
+        $remainingMinutes = $totalMinutesLogged % 60;
+
+        // Siapkan semua data untuk dikirim ke view
+        $data = [
+            'project' => $project,
+            'stats' => $stats,
+            'totalLoggedTime' => "{$totalHoursLogged} jam {$remainingMinutes} menit",
+        ];
+
+        // Muat view Blade khusus untuk PDF dengan data di atas
+        $pdf = Pdf::loadView('reports.project-summary', $data);
+
+        // Beri nama file dan kirim sebagai download ke browser
+        return $pdf->download('laporan-proyek-' . $project->name . '-' . now()->format('Y-m-d') . '.pdf');
     }
 
 }
