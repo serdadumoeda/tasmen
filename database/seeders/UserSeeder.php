@@ -10,14 +10,26 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        // Membuat user utama yang bisa kita pakai untuk login
-        User::create([
-            'name' => 'Admin User',
-            'email' => 'admin@example.com',
-            'password' => Hash::make('password'),
-        ]);
+      
+      User::truncate(); 
 
-        // Membuat 4 user tambahan
-        User::factory(4)->create();
+      
+      User::create([
+          'name' => 'Kepala Pusdatik',
+          'email' => 'kapusdatik@example.com',
+          'password' => Hash::make('password'),
+          'role' => 'kepala_pusdatik', // Set role khusus
+      ]);
+
+      
+      User::create([
+          'name' => 'Ketua Tim Alpha',
+          'email' => 'ketua.alpha@example.com',
+          'password' => Hash::make('password'),
+          'role' => 'leader',
+      ]);
+      
+      
+      User::factory(3)->create();
     }
 }

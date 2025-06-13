@@ -20,6 +20,11 @@ class ProjectController extends Controller
      */
     public function index()
     {
+
+        if (Auth::user()->role === 'kepala_pusdatik') {
+            return redirect()->route('global.dashboard');
+        }
+
         $user = Auth::user();
         // Ambil proyek dimana user adalah anggota ATAU leader
         $projects = Project::where('leader_id', $user->id)
@@ -82,12 +87,68 @@ class ProjectController extends Controller
      */
     public function show(Project $project)
     {
-        // Pastikan user yang login adalah bagian dari proyek
         $this->authorize('view', $project);
 
-        $project->load('leader', 'members', 'tasks', 'tasks.assignedTo');
-        // Ambil anggota proyek untuk dropdown 'assign task'
+        $project->load('leader', 'members', 'tasks', 'tasks.assignedTo', 'tasks.comments.user', 'tasks.attachments', 'activities.user');
         $projectMembers = $project->members()->orderBy('name')->get();
-        return view('projects.show', compact('project', 'projectMembers'));
+
+        // Kalkulasi statistik proyek
+        $taskStatuses = $project->tasks->countBy('status');
+        $stats = [
+            'total' => $project->tasks->count(),
+            'pending' => $taskStatuses->get('pending', 0),
+            'in_progress' => $taskStatuses->get('in_progress', 0),
+            'completed' => $taskStatuses->get('completed', 0),
+        ];
+
+        // BAGIAN PENTING: Pastikan baris ini ada
+        $tasksByUser = $project->tasks->groupBy('assigned_to_id');
+
+        // PASTIKAN SEMUA VARIABEL DIKIRIM KE VIEW
+        return view('projects.show', compact(
+            'project',
+            'projectMembers',
+            'stats',
+            'tasksByUser' // Pastikan '$tasksByUser' ada di sini
+        ));
     }
+
+    public function teamDashboard(Project $project)
+    {
+        // Gunakan policy yang baru kita buat
+        $this->authorize('viewTeamDashboard', $project);
+
+        // Eager load semua data yang dibutuhkan untuk efisiensi
+        $project->load(['members', 'tasks']);
+
+        $teamSummary = collect();
+
+        foreach ($project->members as $member) {
+            // Filter tugas yang hanya milik anggota ini dalam proyek ini
+            $memberTasks = $project->tasks->where('assigned_to_id', $member->id);
+
+            if ($memberTasks->isEmpty()) {
+                $averageProgress = 0;
+            } else {
+                $averageProgress = round($memberTasks->avg('progress'));
+            }
+
+            $teamSummary->push([
+                'member_id' => $member->id,
+                'member_name' => $member->name,
+                'total_tasks' => $memberTasks->count(),
+                'pending_tasks' => $memberTasks->where('status', 'pending')->count(),
+                'inprogress_tasks' => $memberTasks->where('status', 'in_progress')->count(),
+                'completed_tasks' => $memberTasks->where('status', 'completed')->count(),
+                'overdue_tasks' => $memberTasks->where('deadline', '<', now())->where('status', '!=', 'completed')->count(),
+                'average_progress' => $averageProgress
+            ]);
+        }
+
+        return view('projects.team-dashboard', [
+            'project' => $project,
+            'teamSummary' => $teamSummary
+        ]);
+    }
+
 }

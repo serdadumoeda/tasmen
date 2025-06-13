@@ -6,6 +6,8 @@ use App\Models\Project;
 use App\Models\Task;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use App\Http\Controllers\Controller;
+use App\Notifications\TaskAssigned;
 
 class TaskController extends Controller
 {
@@ -19,7 +21,10 @@ class TaskController extends Controller
             'deadline' => 'required|date',
         ]);
 
-        $project->tasks()->create($validated);
+        $task = $project->tasks()->create($validated);
+
+        $userToNotify = $task->assignedTo;
+        $userToNotify->notify(new TaskAssigned($task));
 
         return redirect()->route('projects.show', $project)->with('success', 'Tugas baru berhasil ditambahkan!');
     }
