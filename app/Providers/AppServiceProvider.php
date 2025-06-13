@@ -2,13 +2,16 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Gate; // Pastikan Gate di-import
+use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
     /**
      * Register any application services.
      */
+
+
     public function register(): void
     {
         //
@@ -19,10 +22,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        Gate::before(function ($user, $ability) {
+            if ($user->role === 'superadmin' || $user->role === 'manager') {
+                return true;
+            }
+        });
     }
 
     protected $policies = [
-        'App\Models\Project' => 'App\Policies\ProjectPolicy', // Tambahkan baris ini
+        'App\Models\Project' => 'App\Policies\ProjectPolicy', 
     ];
 }

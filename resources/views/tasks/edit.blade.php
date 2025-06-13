@@ -46,6 +46,11 @@
                         </div>
 
                         <div class="mb-4">
+                            <label for="estimated_hours" class="block font-medium text-sm text-gray-700">Estimasi Jam</label>
+                            <input type="number" step="0.5" name="estimated_hours" id="estimated_hours" class="block mt-1 w-full" value="{{ old('estimated_hours', $task->estimated_hours) }}">
+                        </div>
+
+                        <div class="mb-4">
                             <label for="status" class="block font-medium text-sm text-gray-700">Status</label>
                              <select name="status" id="status" class="block mt-1 w-full" required>
                                 <option value="pending" @selected(old('status', $task->status) == 'pending')>Pending</option>

@@ -21,6 +21,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
     ];
 
     /**
@@ -65,5 +66,10 @@ class User extends Authenticatable
     public function tasks()
     {
         return $this->hasMany(Task::class, 'assigned_to_id');
+    }
+
+    public function timeLogs()
+    {
+        return $this->hasMany(TimeLog::class);
     }
 }

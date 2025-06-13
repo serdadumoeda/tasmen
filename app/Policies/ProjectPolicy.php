@@ -64,4 +64,10 @@ class ProjectPolicy
     {
         return false;
     }
+
+    public function viewTeamDashboard(User $user, Project $project): bool
+    {
+        return $user->id === $project->leader_id;
+    }
+
 }
