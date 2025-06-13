@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Models\Attachment;
@@ -31,11 +32,27 @@ class AttachmentController extends Controller
 
     public function destroy(Attachment $attachment)
     {
-        Gate::authorize('view', $attachment->task->project);
+       
 
+        // Pertama, ambil relasi tugas.
+        $task = $attachment->task;
+
+        // Jika tugasnya ADA, baru lakukan otorisasi berdasarkan proyeknya.
+        if ($task) {
+            Gate::authorize('view', $task->project);
+        }
+
+        // Jika tugasnya sudah tidak ada (orphaned record), atau jika otorisasi berhasil,
+        // lanjutkan proses penghapusan file dan record database.
+
+        // Hapus file dari storage
         Storage::disk('public')->delete($attachment->path);
+        
+        // Hapus record dari database
         $attachment->delete();
 
         return back()->with('success', 'File berhasil dihapus.');
+        
+
     }
 }

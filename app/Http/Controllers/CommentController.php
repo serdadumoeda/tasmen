@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Task;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use App\Notifications\NewCommentOnTask; // PASTIKAN BARIS INI BENAR
 
 class CommentController extends Controller
 {
@@ -14,12 +15,12 @@ class CommentController extends Controller
 
         $request->validate(['body' => 'required|string']);
 
-        $task->comments()->create([
+        $comment = $task->comments()->create([
             'body' => $request->body,
             'user_id' => auth()->id()
         ]);
 
-            // Beri notifikasi pada pemilik tugas dan ketua proyek, kecuali jika mereka yang berkomentar
+        // Beri notifikasi pada pemilik tugas dan ketua proyek, kecuali jika mereka yang berkomentar
         $recipients = collect([$task->assignedTo, $task->project->leader])
                         ->unique('id')
                         ->where('id', '!=', auth()->id());
@@ -27,7 +28,7 @@ class CommentController extends Controller
         foreach ($recipients as $recipient) {
             $recipient->notify(new NewCommentOnTask($comment));
         }
-
+        
         return back()->with('success', 'Komentar berhasil ditambahkan.');
     }
 }
