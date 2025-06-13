@@ -33,20 +33,53 @@
                 <div class="lg:col-span-2 bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
                     <h3 class="text-lg font-medium mb-4 text-gray-900">Semua Proyek</h3>
                     <div class="space-y-4">
+
+                      
                         @foreach ($allProjects as $project)
+                            @php
+                                $totalTasks = $project->tasks->count();
+                                $completedTasks = $project->tasks->where('status', 'completed')->count();
+                                $completionPercentage = ($totalTasks > 0) ? round(($completedTasks / $totalTasks) * 100) : 0;
+
+                                $statusText = 'Belum Ada Tugas';
+                                $statusClass = 'bg-gray-100 text-gray-800';
+
+                                if ($totalTasks > 0) {
+                                    if ($completionPercentage == 100) {
+                                        $statusText = 'Selesai';
+                                        $statusClass = 'bg-green-100 text-green-800';
+                                    } elseif ($completionPercentage > 0) {
+                                        $statusText = 'Sedang Berjalan';
+                                        $statusClass = 'bg-blue-100 text-blue-800';
+                                    } else {
+                                        $statusText = 'Baru';
+                                        $statusClass = 'bg-yellow-100 text-yellow-800';
+                                    }
+                                }
+                            @endphp
+
                             <a href="{{ route('projects.show', $project) }}" class="block p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition">
-                                <div class="flex justify-between">
+                                <div class="flex justify-between items-start">
                                     <div>
                                         <p class="font-bold text-blue-600">{{ $project->name }}</p>
                                         <p class="text-sm text-gray-600">Ketua: {{ $project->leader->name }}</p>
                                     </div>
-                                    <div class="text-right">
-                                        <p class="font-semibold text-gray-700">{{ $project->tasks->where('status', 'completed')->count() }} / {{ $project->tasks->count() }} Tugas</p>
-                                        <p class="text-sm text-gray-500">Selesai</p>
+                                    <div class="text-right flex-shrink-0 ml-4">
+                                        <p class="font-semibold text-gray-700">{{ $completedTasks }} / {{ $totalTasks }} Tugas</p>
+                                        <span class="px-2 py-1 text-xs font-semibold rounded-full {{ $statusClass }}">
+                                            {{ $statusText }}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="mt-3">
+                                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                        <div class="bg-blue-600 h-2.5 rounded-full" style="width: {{ $completionPercentage }}%"></div>
                                     </div>
                                 </div>
                             </a>
                         @endforeach
+                    
+
                     </div>
                 </div>
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
