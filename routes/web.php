@@ -10,9 +10,10 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\WorkloadAnalysisController;
 use App\Http\Controllers\TimeLogController; 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\SubTaskController;
 
 Route::get('/', function () {
-    return view('welcome');
+    return redirect()->route('login');
 });
 
 Route::get('/dashboard', function () {
@@ -56,6 +57,10 @@ Route::middleware('auth')->group(function () {
         Route::post('/stop', [TimeLogController::class, 'stop'])->name('stop');
         Route::post('/manual', [TimeLogController::class, 'storeManual'])->name('storeManual');
     });
+
+    Route::post('/tasks/{task}/subtasks', [SubTaskController::class, 'store'])->name('subtasks.store');
+    Route::patch('/subtasks/{subTask}', [SubTaskController::class, 'update'])->name('subtasks.update');
+    Route::delete('/subtasks/{subTask}', [SubTaskController::class, 'destroy'])->name('subtasks.destroy');
 
     Route::get('/projects/{project}/report', [ProjectController::class, 'downloadReport'])
     ->name('projects.report');

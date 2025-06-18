@@ -91,7 +91,7 @@ class ProjectController extends Controller
     {
         $this->authorize('view', $project);
 
-        $project->load('leader', 'members', 'tasks.timeLogs', 'tasks.assignedTo', 'tasks.comments.user', 'tasks.attachments', 'activities.user');
+        $project->load('leader', 'members', 'tasks.timeLogs', 'tasks.assignedTo', 'tasks.comments.user', 'tasks.attachments', 'activities.user', 'tasks.subTasks');
         $projectMembers = $project->members()->orderBy('name')->get();
 
         

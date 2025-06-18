@@ -51,4 +51,23 @@ class Task extends Model
     {
         return $this->hasMany(TimeLog::class);
     }
+    // Relasi baru ke sub_tasks
+    public function subTasks()
+    {
+        return $this->hasMany(SubTask::class);
+    }
+
+    // Method baru untuk kalkulasi progress
+    public function recalculateProgress()
+    {
+        $totalSubTasks = $this->subTasks()->count();
+        if ($totalSubTasks === 0) {
+            // Jika tidak ada sub-task, progress bisa dianggap 0 atau 100 tergantung status
+            $this->progress = ($this->status === 'completed') ? 100 : 0;
+        } else {
+            $completedSubTasks = $this->subTasks()->where('is_completed', true)->count();
+            $this->progress = round(($completedSubTasks / $totalSubTasks) * 100);
+        }
+        $this->save();
+    }
 }

@@ -132,6 +132,38 @@
                                         <div class="bg-blue-600 h-2.5 rounded-full progress-bar" style="width: {{ $task->progress }}%"></div>
                                     </div>
                                 </div>
+
+                                <div class="mt-4 border-t border-gray-200 pt-4">
+                                    <h5 class="font-semibold text-sm mb-2 text-gray-700">Rincian Tugas</h5>
+                                    <div class="space-y-2">
+                                        @forelse($task->subTasks as $subTask)
+                                            <div class="flex items-center justify-between">
+                                                <form action="{{ route('subtasks.update', $subTask) }}" method="POST" class="flex items-center">
+                                                    @csrf
+                                                    @method('PATCH')
+                                                    <input type="checkbox" name="is_completed" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" 
+                                                        onchange="this.form.submit()"
+                                                        @if($subTask->is_completed) checked @endif>
+                                                    <label class="ml-3 text-sm {{ $subTask->is_completed ? 'line-through text-gray-500' : 'text-gray-800' }}">
+                                                        {{ $subTask->title }}
+                                                    </label>
+                                                </form>
+                                                <form action="{{ route('subtasks.destroy', $subTask) }}" method="POST" onsubmit="return confirm('Hapus rincian tugas ini?');">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="text-xs text-red-400 hover:text-red-600">&times;</button>
+                                                </form>
+                                            </div>
+                                        @empty
+                                            <p class="text-xs text-gray-500">Belum ada rincian tugas.</p>
+                                        @endforelse
+                                    </div>
+                                    <form action="{{ route('subtasks.store', $task) }}" method="POST" class="mt-3 flex space-x-2">
+                                        @csrf
+                                        <input type="text" name="title" class="flex-grow block w-full rounded-md border-gray-300 shadow-sm text-sm focus:border-indigo-500 focus:ring-indigo-500" placeholder="Tambah rincian baru..." required>
+                                        <button type="submit" class="px-3 py-1 bg-gray-700 text-white text-xs font-bold rounded hover:bg-gray-800">Tambah</button>
+                                    </form>
+                                </div>
                                 
                                 <div class="mt-4 border-t border-gray-200 pt-4"
                                      x-data="{
