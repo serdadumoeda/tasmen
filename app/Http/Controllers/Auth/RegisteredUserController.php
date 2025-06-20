@@ -19,7 +19,9 @@ class RegisteredUserController extends Controller
      */
     public function create(): View
     {
-        return view('auth.register');
+        // Ambil semua user dengan role Eselon II untuk pilihan Unit Kerja
+        $eselon2Users = User::where('role', 'Eselon II')->orderBy('name')->get();
+        return view('auth.register', compact('eselon2Users'));
     }
 
     /**
@@ -33,12 +35,18 @@ class RegisteredUserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'eselon_2_id' => ['required', 'exists:users,id'],
+            'role' => ['required', 'in:Koordinator,Ketua Tim,Sub Koordinator,Staff'],
+            'parent_id' => ['required', 'exists:users,id'],
         ]);
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'role' => $request->role,
+            'eselon_2_id' => $request->eselon_2_id,
+            'parent_id' => $request->parent_id,
         ]);
 
         event(new Registered($user));

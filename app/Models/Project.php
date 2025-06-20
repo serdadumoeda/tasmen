@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Scopes\HierarchicalScope;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Traits\RecordsActivity;
@@ -10,8 +11,14 @@ class Project extends Model
 {
     use HasFactory, RecordsActivity;
 
-    protected $fillable = ['name', 'description', 'leader_id'];
+    protected $fillable = ['name', 'description', 'leader_id', 'owner_id'];
 
+
+    protected static function booted(): void
+    {
+        
+        static::addGlobalScope(new HierarchicalScope);
+    }
     /**
      * Mendapatkan ketua tim (leader) dari proyek.
      */

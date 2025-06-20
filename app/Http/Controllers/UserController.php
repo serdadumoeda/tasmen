@@ -84,4 +84,20 @@ class UserController extends Controller
         $user->delete();
         return redirect()->route('users.index')->with('success', 'User berhasil dihapus.');
     }
+
+    public function getUsersByUnit($eselon2_id)
+    {
+        // Cari user Eselon II
+        $eselon2 = User::findOrFail($eselon2_id);
+        
+        // Ambil semua ID bawahannya
+        $subordinateIds = $eselon2->getAllSubordinateIds();
+        // Tambahkan ID Eselon II itu sendiri
+        $subordinateIds[] = $eselon2->id;
+
+        // Ambil semua user yang berada dalam lingkup unit tersebut
+        $usersInUnit = User::whereIn('id', $subordinateIds)->orderBy('name')->get(['id', 'name', 'role']);
+
+        return response()->json($usersInUnit);
+    }
 }

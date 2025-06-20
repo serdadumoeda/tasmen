@@ -13,9 +13,8 @@ class GlobalDashboardController extends Controller
     public function index()
     {
 
-        if (!in_array(auth()->user()->role, ['superadmin', 'manager'])) {
-            // Pesan error juga diperbarui agar lebih akurat
-            abort(403, 'Hanya Super Admin atau Manager yang dapat mengakses halaman ini.');
+        if (!in_array(auth()->user()->role, ['superadmin', 'Eselon I', 'Eselon II'])) {
+            abort(403, 'Hanya Super Admin, Eselon I, atau Eselon II yang dapat mengakses halaman ini.');
         }
 
 

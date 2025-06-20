@@ -20,6 +20,8 @@ Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
+Route::get('/get-users-by-unit/{eselon2_id}', [UserController::class, 'getUsersByUnit'])->name('users.by-unit');
+
 Route::middleware('auth')->group(function () {
     
     Route::get('/dashboard', [ProjectController::class, 'index'])->name('dashboard');

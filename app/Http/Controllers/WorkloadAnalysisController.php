@@ -11,8 +11,7 @@ class WorkloadAnalysisController extends Controller
 {
     public function index()
     {
-        // Otorisasi: Hanya superadmin dan manager yang bisa akses
-        if (!in_array(auth()->user()->role, ['superadmin', 'manager'])) {
+        if (!in_array(auth()->user()->role, ['superadmin', 'Eselon I', 'Eselon II'])) {
             abort(403, 'Anda tidak memiliki hak akses untuk halaman ini.');
         }
 

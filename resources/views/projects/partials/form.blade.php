@@ -19,24 +19,30 @@
     <textarea name="description" id="description" rows="4" class="block mt-1 w-full rounded-md shadow-sm border-gray-300" required>{{ old('description', $project->description ?? '') }}</textarea>
 </div>
 
+{{-- PERBAIKAN 1: Gunakan $potentialMembers, bukan $users --}}
 <div class="mb-4">
-    <label for="leader_id" class="block font-medium text-sm text-gray-700">Ketua Tim</label>
+    <label for="leader_id" class="block font-medium text-sm text-gray-700">Pimpinan Proyek</label>
     <select name="leader_id" id="leader_id" class="block mt-1 w-full rounded-md shadow-sm border-gray-300" required>
-        <option value="">-- Pilih Ketua Tim --</option>
-        @foreach ($users as $user)
-            <option value="{{ $user->id }}" @selected(old('leader_id', $project->leader_id ?? '') == $user->id)>{{ $user->name }}</option>
+        <option value="">-- Pilih Pimpinan Proyek --</option>
+        @foreach ($potentialMembers as $member)
+            <option value="{{ $member->id }}" @selected(old('leader_id', $project->leader_id ?? '') == $member->id)>
+                {{ $member->name }} ({{ $member->role }})
+            </option>
         @endforeach
     </select>
 </div>
 
+{{-- PERBAIKAN 2: Gunakan $potentialMembers, bukan $users --}}
 <div class="mb-4">
     <label for="members" class="block font-medium text-sm text-gray-700">Anggota Tim (pilih beberapa dengan Ctrl/Cmd + Klik)</label>
     <select name="members[]" id="members" class="block mt-1 w-full rounded-md shadow-sm border-gray-300 h-40" multiple required>
         @php
             $projectMemberIds = collect(old('members', isset($project) ? $project->members->pluck('id') : []));
         @endphp
-        @foreach ($users as $user)
-            <option value="{{ $user->id }}" @selected($projectMemberIds->contains($user->id))>{{ $user->name }}</option>
+        @foreach ($potentialMembers as $member)
+            <option value="{{ $member->id }}" @selected($projectMemberIds->contains($member->id))>
+                {{ $member->name }} ({{ $member->role }})
+            </option>
         @endforeach
     </select>
 </div>

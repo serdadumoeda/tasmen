@@ -16,7 +16,8 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
-        'parent_id', // <-- Tambahkan ini
+        'parent_id',
+        'eselon_2_id',
     ];
 
     protected $hidden = [
