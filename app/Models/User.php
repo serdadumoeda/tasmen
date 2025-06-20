@@ -2,43 +2,28 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Collection;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
     protected $fillable = [
         'name',
         'email',
         'password',
         'role',
+        'parent_id', // <-- Tambahkan ini
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
@@ -46,23 +31,45 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+    
+    // Relasi ke atasan langsung
+    public function parent()
+    {
+        return $this->belongsTo(User::class, 'parent_id');
+    }
 
+    // Relasi ke bawahan langsung
+    public function children()
+    {
+        return $this->hasMany(User::class, 'parent_id');
+    }
+
+    // Fungsi REKURSIF untuk mendapatkan SEMUA ID bawahan di bawah user ini
+    public function getAllSubordinateIds(): array
+    {
+        $subordinateIds = [];
+        $children = $this->children()->with('children')->get(); // Eager load children
+
+        foreach ($children as $child) {
+            $subordinateIds[] = $child->id;
+            // Gabungkan dengan ID bawahan dari si anak
+            $subordinateIds = array_merge($subordinateIds, $child->getAllSubordinateIds());
+        }
+
+        return $subordinateIds;
+    }
+
+    // (Sisa method lainnya seperti ledProjects, projects, tasks, timeLogs tidak perlu diubah)
     public function ledProjects()
     {
         return $this->hasMany(Project::class, 'leader_id');
     }
 
-    /**
-     * Proyek di mana user ini menjadi anggota.
-     */
     public function projects()
     {
-        return $this->belongsToMany(Project::class);
+        return $this->belongsToMany(Project::class, 'project_user', 'user_id', 'project_id');
     }
 
-    /**
-     * Tugas yang ditugaskan kepada user ini.
-     */
     public function tasks()
     {
         return $this->hasMany(Task::class, 'assigned_to_id');

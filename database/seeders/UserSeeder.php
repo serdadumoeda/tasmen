@@ -10,35 +10,102 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        // Disarankan untuk menjalankan seeder dengan migrate:fresh
-        
-        // Membuat user Super Admin
-        User::create([
+        // KOSONGKAN TABEL USER DULU
+        // User::query()->delete(); // Hapus baris ini jika Anda tidak ingin menghapus user lama
+
+        // --- ROLE NON-HIERARKI ---
+        $superadmin = User::create([
             'name' => 'Super Admin',
             'email' => 'superadmin@example.com',
             'password' => Hash::make('password'),
-            'role' => 'superadmin', // Role tertinggi
+            'role' => 'superadmin',
+            'parent_id' => null,
         ]);
 
-        // Membuat user Manager (sebelumnya Kepala Pusdatik)
-        User::create([
-            'name' => 'Project Manager',
-            'email' => 'manager@example.com',
+        // --- ESELON I ---
+        $eselon1 = User::create([
+            'name' => 'Kepala Badan', // 
+            'email' => 'kepala.badan@example.com',
             'password' => Hash::make('password'),
-            'role' => 'manager', // Role pengawas proyek
+            'role' => 'Eselon I',
+            'parent_id' => null,
         ]);
 
-        // Membuat user Ketua Tim
-        User::create([
-            'name' => 'Ketua Tim Alpha',
-            'email' => 'ketua.alpha@example.com',
+        // --- ESELON II ---
+        $sekban = User::create([
+            'name' => 'Sekretaris Badan', // 
+            'email' => 'sekban@example.com',
             'password' => Hash::make('password'),
-            'role' => 'leader',
+            'role' => 'Eselon II',
+            'parent_id' => $eselon1->id,
+        ]);
+
+        $kapusren = User::create([
+            'name' => 'Kepala Pusat Perencanaan Ketenagakerjaan', // 
+            'email' => 'kapusren@example.com',
+            'password' => Hash::make('password'),
+            'role' => 'Eselon II',
+            'parent_id' => $eselon1->id,
+        ]);
+
+        $kapusdatin = User::create([
+            'name' => 'Kepala Pusat Data dan TI Ketenagakerjaan', // 
+            'email' => 'kapusdatin@example.com',
+            'password' => Hash::make('password'),
+            'role' => 'Eselon II',
+            'parent_id' => $eselon1->id,
+        ]);
+
+        // --- KOORDINATOR (di bawah Kapusdatin sebagai contoh) ---
+        $koorPengembanganSI = User::create([
+            'name' => 'Koordinator Bid. Pengembangan Sistem Informasi Ketenagakerjaan', // 
+            'email' => 'koor.si@example.com',
+            'password' => Hash::make('password'),
+            'role' => 'Koordinator',
+            'parent_id' => $kapusdatin->id,
         ]);
         
-        // Membuat user anggota biasa
-        User::factory(3)->create([
-            'role' => 'user' // Role default
+        // --- KETUA TIM (di bawah Koordinator, role baru sesuai permintaan) ---
+        $ketuaTimA = User::create([
+            'name' => 'Ketua Tim Proyek A',
+            'email' => 'ketuatim.a@example.com',
+            'password' => Hash::make('password'),
+            'role' => 'Ketua Tim',
+            'parent_id' => $koorPengembanganSI->id,
+        ]);
+
+        // --- SUB KOORDINATOR (di bawah Ketua Tim) ---
+        $subkoorPerancangan = User::create([
+            'name' => 'Sub Koord. Bid. Perancangan Sistem Informasi Ketenagakerjaan', // 
+            'email' => 'subkoor.perancangan@example.com',
+            'password' => Hash::make('password'),
+            'role' => 'Sub Koordinator',
+            'parent_id' => $ketuaTimA->id,
+        ]);
+        
+        $subkoorPengembangan = User::create([
+            'name' => 'Sub Koord. Bid. Pengembangan Sistem Informasi Ketenagakerjaan', // 
+            'email' => 'subkoor.pengembangan@example.com',
+            'password' => Hash::make('password'),
+            'role' => 'Sub Koordinator',
+            'parent_id' => $ketuaTimA->id,
+        ]);
+
+        // --- STAFF (di bawah Sub Koordinator) ---
+        User::create([
+            'name' => 'Staff Perancangan 1',
+            'email' => 'staff.perancangan1@example.com',
+            'password' => Hash::make('password'),
+            'role' => 'Staff',
+            'parent_id' => $subkoorPerancangan->id,
+        ]);
+
+        User::create([
+            'name' => 'Staff Pengembangan 1',
+            'email' => 'staff.pengembangan1@example.com',
+            'password' => Hash::make('password'),
+            'role' => 'Staff',
+            'parent_id' => $subkoorPengembangan->id,
         ]);
     }
 }
