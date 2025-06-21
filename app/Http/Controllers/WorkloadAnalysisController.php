@@ -2,10 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Project;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class WorkloadAnalysisController extends Controller
 {
@@ -16,41 +14,27 @@ class WorkloadAnalysisController extends Controller
             abort(403, 'Anda tidak memiliki hak akses untuk halaman ini.');
         }
 
+        // Fungsi rekursif untuk memuat data bawahan secara efisien
+        $relations = [
+            'tasks' => fn($q) => $q->whereIn('status', ['pending', 'in_progress']),
+            'specialAssignments' => fn($q) => $q->where('status', 'AKTIF')
+        ];
+
+        $loadRecursively = function ($query) use (&$loadRecursively, $relations) {
+            return $query->with(array_merge($relations, ['children' => $loadRecursively]));
+        };
+
+        // Query dasar untuk mengambil user
         $userQuery = User::query();
 
         if ($currentUser->role === 'Eselon II') {
-            $subordinateIds = $currentUser->getAllSubordinateIds();
-            $subordinateIds[] = $currentUser->id;
-            $userQuery->whereIn('id', $subordinateIds);
+            // Jika Eselon II, ambil dirinya sendiri sebagai top level
+            $topLevelUsers = $userQuery->where('id', $currentUser->id)->with(['children' => $loadRecursively] + $relations)->get();
+        } else { // Untuk Superadmin dan Eselon I
+            // Ambil semua user yang tidak punya atasan (pimpinan tertinggi)
+            $topLevelUsers = $userQuery->whereNull('parent_id')->with(['children' => $loadRecursively] + $relations)->get();
         }
-
-        // Ambil hanya user yang relevan
-        $users = $userQuery->whereIn('role', ['Koordinator', 'Ketua Tim', 'Sub Koordinator', 'Staff'])
-            ->with(['tasks' => function ($query) {
-                $query->whereIn('status', ['pending', 'in_progress']);
-            }])
-            // PERBAIKAN: Hitung jumlah SK yang aktif secara efisien
-            ->withCount(['specialAssignments' => function ($query) {
-                $query->where('status', 'AKTIF');
-            }])
-            ->get();
-
-        $userWorkload = $users->map(function ($user) {
-            $weeklyCapacity = 40;
-            $totalAssignedHours = $user->tasks->sum('estimated_hours');
-            $utilization = ($weeklyCapacity > 0) ? round(($totalAssignedHours / $weeklyCapacity) * 100) : 0;
-
-            return [
-                'name' => $user->name,
-                'role' => $user->role,
-                'active_tasks_count' => $user->tasks->count(),
-                'total_assigned_hours' => $totalAssignedHours,
-                'utilization' => $utilization,
-                // Tambahkan data jumlah SK
-                'special_assignments_count' => $user->special_assignments_count,
-            ];
-        })->sortByDesc('utilization');
         
-        return view('workload-analysis', compact('userWorkload'));
+        return view('workload-analysis', compact('topLevelUsers'));
     }
 }
