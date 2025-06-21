@@ -5,7 +5,6 @@
                 {{ __('Global Dashboard Pengawasan') }}
             </h2>
 
-            {{-- REKOMENDASI: Tombol ditambahkan di sini, hanya muncul jika user punya izin --}}
             @can('create', App\Models\Project::class)
                 <a href="{{ route('projects.create') }}" class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 active:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
                     Buat Proyek Baru
@@ -42,9 +41,7 @@
                 <div class="lg:col-span-2 bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
                     <h3 class="text-lg font-medium mb-4 text-gray-900">Semua Proyek</h3>
                     <div class="space-y-4">
-
-                      
-                        @foreach ($allProjects as $project)
+                        @forelse ($allProjects as $project)
                             @php
                                 $totalTasks = $project->tasks->count();
                                 $completedTasks = $project->tasks->where('status', 'completed')->count();
@@ -72,6 +69,13 @@
                                     <div>
                                         <p class="font-bold text-blue-600">{{ $project->name }}</p>
                                         <p class="text-sm text-gray-600">Ketua: {{ $project->leader->name }}</p>
+                                        
+                                        {{-- PENAMBAHAN KODE UNTUK ANGGARAN --}}
+                                        <p class="text-sm text-gray-600 mt-1">
+                                            <span class="font-semibold">Anggaran:</span> Rp {{ number_format($project->budget_items_sum_total_cost ?? 0, 0, ',', '.') }}
+                                        </p>
+                                        {{-- AKHIR PENAMBAHAN --}}
+
                                     </div>
                                     <div class="text-right flex-shrink-0 ml-4">
                                         <p class="font-semibold text-gray-700">{{ $completedTasks }} / {{ $totalTasks }} Tugas</p>
@@ -86,9 +90,9 @@
                                     </div>
                                 </div>
                             </a>
-                        @endforeach
-                    
-
+                        @empty
+                            <p class="p-6 text-center text-gray-500">Tidak ada proyek untuk ditampilkan.</p>
+                        @endforelse
                     </div>
                 </div>
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
@@ -97,18 +101,14 @@
                         @foreach($recentActivities as $activity)
                             <li class="text-sm text-gray-600 border-b border-gray-200 pb-2">
                                 <span class="font-semibold text-gray-800">{{ optional($activity->user)->name ?? 'User tidak dikenal' }}</span>
-                                
-                                {{-- REKOMENDASI: Penanganan log yang lebih baik --}}
                                 @switch($activity->description)
                                     @case('created_project') membuat proyek "{{ optional($activity->subject)->name ?? '' }}" @break
                                     @case('created_task') membuat tugas "{{ optional($activity->subject)->title ?? '...' }}" @break
                                     @case('updated_task') memperbarui tugas "{{ optional($activity->subject)->title ?? '...' }}" @break
                                     @case('deleted_task') menghapus sebuah tugas @break
-                                    
                                     @case('created_user') membuat user baru: {{ optional($activity->subject)->name ?? '' }} @break
                                     @case('updated_user') memperbarui data user: {{ optional($activity->subject)->name ?? '' }} @break
                                     @case('deleted_user') menghapus user @break
-
                                     @default melakukan sebuah aktivitas @break
                                 @endswitch
                                 <span class="block text-xs text-gray-400">{{ $activity->created_at->diffForHumans() }}</span>
@@ -117,7 +117,6 @@
                     </ul>
                 </div>
             </div>
-
         </div>
     </div>
 </x-app-layout>

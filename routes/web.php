@@ -11,6 +11,7 @@ use App\Http\Controllers\WorkloadAnalysisController;
 use App\Http\Controllers\TimeLogController; 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SubTaskController;
+use App\Http\Controllers\BudgetItemController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -70,6 +71,10 @@ Route::middleware('auth')->group(function () {
     Route::put('/projects/{project}', [ProjectController::class, 'update'])->name('projects.update');
     Route::delete('/projects/{project}', [ProjectController::class, 'destroy'])->name('projects.destroy');
     Route::get('/projects/{project}/s-curve', [ProjectController::class, 'sCurve'])->name('projects.s-curve');
+
+    Route::resource('projects.budget-items', BudgetItemController::class)
+        ->except(['show'])
+        ->parameters(['budget-items' => 'budgetItem']); 
 });
 
 require __DIR__.'/auth.php';

@@ -57,4 +57,9 @@ class Project extends Model
     {
         return $this->hasMany(Activity::class)->latest();
     }
+
+    public function budgetItems()
+    {
+        return $this->hasMany(BudgetItem::class);
+    }
 }

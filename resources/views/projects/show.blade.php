@@ -35,6 +35,11 @@
                             Edit Proyek
                         </a>
                     @endcan
+                    @can('update', $project)
+                        <a href="{{ route('projects.budget-items.index', $project) }}" class="inline-block bg-green-600 text-white font-bold text-sm px-4 py-2 rounded-lg shadow-md hover:bg-green-700 transition-colors">
+                            Kelola Anggaran
+                        </a>
+                    @endcan
                     @if($project->start_date && $project->end_date)
                         <a href="{{ route('projects.s-curve', $project) }}" class="inline-block bg-teal-600 text-white font-bold text-sm px-4 py-2 rounded-lg shadow-md hover:bg-teal-700 transition-colors">
                             Lihat Kurva S
