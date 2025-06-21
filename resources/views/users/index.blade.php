@@ -13,38 +13,17 @@
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 text-gray-900">
-                    <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Jabatan</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Atasan</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        @foreach ($users as $user)
-                            <tr>
-                                <td class="px-6 py-4 whitespace-nowrap">{{ $user->name }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap">{{ $user->email }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                                        {{ $user->role }}
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">{{ $user->parent->name ?? '-' }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    ...
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                    </table>
-                    <div class="mt-4">
-                        {{ $users->links() }}
-                    </div>
+                {{-- 
+                Struktur tabel diubah menjadi div untuk mengakomodasi daftar bersarang (nested list).
+                Setiap user level atas akan dipanggil dari sini, dan partial view akan mengurus sisanya.
+                --}}
+                <div class="divide-y divide-gray-200">
+                    @forelse ($topLevelUsers as $user)
+                        {{-- Memanggil partial view rekursif untuk pertama kalinya dengan level 0 --}}
+                        @include('users.partials.user-hierarchy-row', ['user' => $user, 'level' => 0])
+                    @empty
+                        <p class="p-6 text-gray-500">Tidak ada user yang dapat Anda kelola.</p>
+                    @endforelse
                 </div>
             </div>
         </div>

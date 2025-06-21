@@ -23,7 +23,7 @@
                     
                     {{-- PERBAIKAN: Tombol aksi untuk level Proyek --}}
                     @can('update', $project)
-                        <a href="{{ route('projects.edit', $project) }}" class="inline-block bg-yellow-500 text-white font-bold text-sm px-4 py-2 rounded-lg shadow-md hover:bg-yellow-600 transition-colors">
+                        <a href="{{ route('projects.edit', $project) }}" class="inline-block bg-amber-500 text-white font-bold text-sm px-4 py-2 rounded-lg shadow-md hover:bg-amber-600 transition-colors">
                             Edit Proyek
                         </a>
                     @endcan

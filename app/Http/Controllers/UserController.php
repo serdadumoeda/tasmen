@@ -10,22 +10,38 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests; // TAMBAHKAN BARIS INI
 
 class UserController extends Controller
 {
-    use AuthorizesRequests; // DAN TAMBAHKAN BARIS INI
+    use AuthorizesRequests; 
 
     public function index()
     {
         $this->authorize('viewAny', User::class);
         $currentUser = auth()->user();
 
-        // Superadmin melihat semua, pimpinan lain hanya melihat bawahannya
-        if ($currentUser->role === 'superadmin') {
-            $users = User::with('parent')->latest()->paginate(15);
-        } else {
+        // Ambil semua user yang berada dalam lingkup wewenang user yang sedang login
+        $query = User::query()->with('children'); // Eager load children untuk efisiensi
+
+        if ($currentUser->role !== 'superadmin') {
             $subordinateIds = $currentUser->getAllSubordinateIds();
-            $users = User::whereIn('id', $subordinateIds)->with('parent')->latest()->paginate(15);
+            $subordinateIds[] = $currentUser->id; // Pimpinan juga ingin melihat dirinya sendiri
+            $query->whereIn('id', $subordinateIds);
         }
 
-        return view('users.index', compact('users'));
+        $allScopedUsers = $query->get();
+
+        // Filter untuk mendapatkan user level teratas dalam lingkup ini
+        // (yaitu user yang parent_id-nya tidak ada dalam daftar ID yang kita miliki, atau null)
+        $scopedUserIds = $allScopedUsers->pluck('id');
+        $topLevelUsers = $allScopedUsers->filter(function ($user) use ($scopedUserIds) {
+            // User level atas adalah yang tidak punya parent, atau parent-nya di luar lingkup kita
+            return $user->parent_id === null || !$scopedUserIds->contains($user->parent_id);
+        });
+        
+        // Untuk superadmin, user level atas adalah yang tidak punya parent sama sekali
+        if ($currentUser->role === 'superadmin') {
+            $topLevelUsers = $allScopedUsers->where('parent_id', null);
+        }
+
+        return view('users.index', compact('topLevelUsers'));
     }
 
     public function create()

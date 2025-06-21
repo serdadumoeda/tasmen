@@ -35,11 +35,16 @@ class ProjectPolicy
     }
 
     /**
-     * Determine whether the user can update the model.
+     * Tentukan apakah user bisa mengedit detail utama proyek.
+     * Hanya owner atau atasan owner yang bisa.
      */
     public function update(User $user, Project $project): bool
     {
-        return false;
+        // Cek apakah ada owner, jika tidak (data lama), leader yang bertanggung jawab
+        if (!$project->owner) {
+            return $user->id === $project->leader_id;
+        }
+        return $user->id === $project->owner_id || $project->owner->isSubordinateOf($user);
     }
 
     /**
@@ -76,9 +81,25 @@ class ProjectPolicy
         return $user->id === $project->owner_id || $project->owner->isSubordinateOf($user);
     }
 
+    /**
+     * Tentukan apakah user bisa menghapus proyek.
+     * Hanya owner atau atasan owner yang bisa.
+     */
     public function delete(User $user, Project $project): bool
     {
+        if (!$project->owner) {
+            return $user->id === $project->leader_id;
+        }
         return $user->id === $project->owner_id || $project->owner->isSubordinateOf($user);
+    }
+
+    /**
+     * Tentukan apakah user bisa mengelola anggota proyek.
+     * Owner dan Leader proyek bisa.
+     */
+    public function manageMembers(User $user, Project $project): bool
+    {
+        return $user->id === $project->owner_id || $user->id === $project->leader_id;
     }
 
 }

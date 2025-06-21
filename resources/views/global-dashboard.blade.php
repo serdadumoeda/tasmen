@@ -5,14 +5,12 @@
                 {{ __('Global Dashboard Pengawasan') }}
             </h2>
 
-            
+            {{-- REKOMENDASI: Tombol ditambahkan di sini, hanya muncul jika user punya izin --}}
             @can('create', App\Models\Project::class)
                 <a href="{{ route('projects.create') }}" class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 active:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
                     Buat Proyek Baru
                 </a>
             @endcan
-            
-
         </div>
     </x-slot>
 
@@ -98,12 +96,19 @@
                      <ul class="space-y-3">
                         @foreach($recentActivities as $activity)
                             <li class="text-sm text-gray-600 border-b border-gray-200 pb-2">
-                                <span class="font-semibold text-gray-800">{{ $activity->user->name }}</span>
+                                <span class="font-semibold text-gray-800">{{ optional($activity->user)->name ?? 'User tidak dikenal' }}</span>
+                                
+                                {{-- REKOMENDASI: Penanganan log yang lebih baik --}}
                                 @switch($activity->description)
-                                    @case('created_project') membuat proyek "{{ $activity->subject->name ?? '' }}" @break
-                                    @case('created_task') membuat tugas "{{ $activity->subject->title ?? '...' }}" @break
-                                    @case('updated_task') memperbarui tugas "{{ $activity->subject->title ?? '...' }}" @break
+                                    @case('created_project') membuat proyek "{{ optional($activity->subject)->name ?? '' }}" @break
+                                    @case('created_task') membuat tugas "{{ optional($activity->subject)->title ?? '...' }}" @break
+                                    @case('updated_task') memperbarui tugas "{{ optional($activity->subject)->title ?? '...' }}" @break
                                     @case('deleted_task') menghapus sebuah tugas @break
+                                    
+                                    @case('created_user') membuat user baru: {{ optional($activity->subject)->name ?? '' }} @break
+                                    @case('updated_user') memperbarui data user: {{ optional($activity->subject)->name ?? '' }} @break
+                                    @case('deleted_user') menghapus user @break
+
                                     @default melakukan sebuah aktivitas @break
                                 @endswitch
                                 <span class="block text-xs text-gray-400">{{ $activity->created_at->diffForHumans() }}</span>
