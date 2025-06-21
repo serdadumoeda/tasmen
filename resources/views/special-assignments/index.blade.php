@@ -2,72 +2,88 @@
     <x-slot name="header">
         <div class="flex justify-between items-center">
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                {{ __('Daftar SK Penugasan Saya') }}
+                {{ __('Daftar SK Penugasan') }}
             </h2>
-            <a href="{{ route('special-assignments.create') }}" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-semibold text-xs uppercase">
+            
+            @can('create', App\Models\SpecialAssignment::class)
+            <a href="{{ route('special-assignments.create') }}" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-semibold text-xs uppercase shadow-sm">
                 Tambah SK Baru
             </a>
+            @endcan
         </div>
     </x-slot>
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            @if (session('success'))
-                <div class="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">
-                    <span class="block sm:inline">{{ session('success') }}</span>
-                </div>
-            @endif
+            <!-- Form Filter dan Pencarian -->
+            <div class="bg-white p-4 rounded-lg shadow-sm mb-6">
+                <form action="{{ route('special-assignments.index') }}" method="GET" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                    <input type="text" name="search" placeholder="Cari berdasarkan judul atau nomor SK..." value="{{ request('search') }}" class="rounded-md border-gray-300 shadow-sm col-span-1">
+                    
+                    @if(auth()->user()->canManageUsers())
+                    <select name="personnel_id" class="rounded-md border-gray-300 shadow-sm col-span-1">
+                        <option value="">-- Semua Personil --</option>
+                        @foreach($subordinates as $user)
+                            <option value="{{ $user->id }}" @selected(request('personnel_id') == $user->id)>{{ $user->name }}</option>
+                        @endforeach
+                    </select>
+                    @endif
 
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 text-gray-900">
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Judul / Uraian Tugas</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nomor SK</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Masa Berlaku</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                    <th class="px-6 py-3 text-right"></th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                @forelse ($assignments as $assignment)
-                                    <tr>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm font-medium text-gray-900">{{ $assignment->title }}</div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $assignment->sk_number ?? '-' }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            {{ $assignment->start_date->format('d M Y') }} s/d {{ $assignment->end_date ? $assignment->end_date->format('d M Y') : 'Selesai' }}
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            @if($assignment->status === 'AKTIF')
-                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Aktif</span>
-                                            @else
-                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">Selesai</span>
-                                            @endif
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <a href="{{ route('special-assignments.edit', $assignment) }}" class="text-indigo-600 hover:text-indigo-900">Edit</a>
-                                            <form action="{{ route('special-assignments.destroy', $assignment) }}" method="POST" class="inline-block ml-2" onsubmit="return confirm('Yakin ingin menghapus SK ini?');">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="text-red-600 hover:text-red-900">Hapus</button>
-                                            </form>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="5" class="px-6 py-4 text-center text-gray-500">
-                                            Anda belum memiliki data SK Penugasan.
-                                        </td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
+                    <div>
+                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md shadow-sm">Filter</button>
+                        <a href="{{ route('special-assignments.index') }}" class="px-4 py-2 text-gray-600">Reset</a>
                     </div>
+                </form>
+            </div>
+
+            <!-- Daftar SK -->
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="divide-y divide-gray-200">
+                    @forelse ($assignments as $sk)
+                        <div class="p-6 hover:bg-gray-50/50 transition">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h4 class="font-bold text-indigo-700">{{ $sk->title }}</h4>
+                                    <div class="text-xs text-gray-500 mt-1 flex items-center space-x-2">
+                                        <span>No. SK: {{ $sk->sk_number ?? '-' }}</span>
+                                        <span>|</span>
+                                        <span>Dibuat oleh: {{ $sk->creator->name ?? 'N/A' }}</span>
+                                        {{-- Link Lihat File --}}
+                                        @if ($sk->file_path)
+                                            <span>|</span>
+                                            <a href="{{ asset('storage/' . $sk->file_path) }}" target="_blank" class="text-blue-500 hover:underline flex items-center">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
+                                                Lihat File
+                                            </a>
+                                        @endif
+                                    </div>
+                                </div>
+                                <div class="text-sm flex-shrink-0">
+                                    @can('update', $sk)
+                                    <a href="{{ route('special-assignments.edit', $sk) }}" class="text-indigo-600 hover:text-indigo-900 font-medium">Edit</a>
+                                    @endcan
+                                </div>
+                            </div>
+                            <div class="mt-3 border-t pt-3">
+                                <h5 class="text-sm font-semibold mb-2">Anggota & Peran:</h5>
+                                <ul class="space-y-1">
+                                    @foreach($sk->members as $member)
+                                        <li class="text-sm text-gray-700 ml-4">- {{ $member->name }} <span class="text-gray-500">({{ $member->pivot->role_in_sk }})</span></li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="text-center text-gray-500 p-10">
+                            <p>Tidak ada data SK ditemukan sesuai filter.</p>
+                        </div>
+                    @endforelse
                 </div>
+                 @if($assignments->hasPages())
+                    <div class="p-6 border-t bg-gray-50">
+                        {{ $assignments->appends(request()->query())->links() }}
+                    </div>
+                @endif
             </div>
         </div>
     </div>

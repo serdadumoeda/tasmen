@@ -48,9 +48,9 @@
             <div class="text-xs text-gray-500 mt-1">{{ $totalAssignedHours }} jam ({{ $utilization }}%)</div>
         </td>
         <td class="px-6 py-4 whitespace-nowrap text-center">
-            <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
+            <a href="{{ route('special-assignments.index', ['personnel_id' => $user->id]) }}" class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800 hover:bg-purple-200">
                 {{ $skCount }} SK
-            </span>
+            </a>
         </td>
         <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-semibold {{ $statusColor }}">
             {{ $statusText }}

@@ -8,7 +8,8 @@
         <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900">
-                    <form action="{{ route('special-assignments.store') }}" method="POST">
+                    {{-- PERBAIKAN: Tambahkan enctype untuk upload file --}}
+                    <form action="{{ route('special-assignments.store') }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         @include('special-assignments._form', ['assignment' => new \App\Models\SpecialAssignment()])
                     </form>

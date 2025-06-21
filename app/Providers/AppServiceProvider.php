@@ -11,6 +11,7 @@ class AppServiceProvider extends ServiceProvider
         'App\Models\Project' => 'App\Policies\ProjectPolicy',
         User::class => UserPolicy::class,
         Task::class => TaskPolicy::class,
+        SpecialAssignment::class => SpecialAssignmentPolicy::class,
     ];
 
     public function register(): void

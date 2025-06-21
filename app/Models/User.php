@@ -139,6 +139,8 @@ class User extends Authenticatable
 
     public function specialAssignments()
     {
-        return $this->hasMany(SpecialAssignment::class);
+        return $this->belongsToMany(SpecialAssignment::class, 'special_assignment_user')
+                    ->withPivot('role_in_sk')
+                    ->withTimestamps();
     }
 }

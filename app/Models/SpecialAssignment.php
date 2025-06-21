@@ -10,7 +10,7 @@ class SpecialAssignment extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id',
+        'creator_id',
         'sk_number',
         'title',
         'description',
@@ -20,13 +20,24 @@ class SpecialAssignment extends Model
         'file_path',
     ];
 
+    /**
+     * PERBAIKAN: Beritahu Laravel untuk memperlakukan kolom-kolom ini sebagai objek Tanggal (Carbon).
+     * Ini akan menyelesaikan error 'format() on string'.
+     */
     protected $casts = [
         'start_date' => 'date',
         'end_date' => 'date',
     ];
 
-    public function user()
+    public function creator()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'creator_id');
+    }
+
+    public function members()
+    {
+        return $this->belongsToMany(User::class, 'special_assignment_user')
+                    ->withPivot('role_in_sk')
+                    ->withTimestamps();
     }
 }
