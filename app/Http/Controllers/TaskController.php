@@ -42,7 +42,7 @@ class TaskController extends Controller
     public function update(Request $request, Task $task)
     {
         $project = $task->project;
-        Gate::authorize('view', $project);
+        $this->authorize('update', $task);
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
@@ -61,7 +61,7 @@ class TaskController extends Controller
 
     public function destroy(Task $task)
     {
-        Gate::authorize('view', $task->project);
+        $this->authorize('delete', $task);
         
         $task->delete();
         

@@ -13,12 +13,15 @@
                         {{ __('Dashboard') }}
                     </x-nav-link>
 
-                    @if(Auth::user()->role === 'superadmin')
+                    {{-- Tampilkan untuk semua yang bisa manage user --}}
+                    @if(Auth::user()->canManageUsers())
                         <x-nav-link :href="route('users.index')" :active="request()->routeIs('users.index*')">
                             {{ __('User Management') }}
                         </x-nav-link>
                     @endif
-                    @if(in_array(Auth::user()->role, ['superadmin', 'manager']))
+
+                    {{-- Tampilkan untuk pimpinan tingkat atas --}}
+                    @if(Auth::user()->isTopLevelManager())
                         <x-nav-link :href="route('workload.analysis')" :active="request()->routeIs('workload.analysis')">
                             {{ __('Analisis Beban Kerja') }}
                         </x-nav-link>

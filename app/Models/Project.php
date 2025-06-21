@@ -19,6 +19,16 @@ class Project extends Model
         
         static::addGlobalScope(new HierarchicalScope);
     }
+
+    /**
+     * Mendapatkan pemilik (owner) dari proyek.
+     * INI ADALAH METHOD BARU YANG PERLU DITAMBAHKAN
+     */
+    public function owner()
+    {
+        return $this->belongsTo(User::class, 'owner_id');
+    }
+
     /**
      * Mendapatkan ketua tim (leader) dari proyek.
      */

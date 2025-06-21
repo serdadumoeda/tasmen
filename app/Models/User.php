@@ -80,4 +80,41 @@ class User extends Authenticatable
     {
         return $this->hasMany(TimeLog::class);
     }
+
+    public function isSubordinateOf(User $potentialSuperior): bool
+    {
+        $current = $this;
+        while ($current->parent) {
+            if ($current->parent->id === $potentialSuperior->id) {
+                return true;
+            }
+            $current = $current->parent;
+        }
+        return false;
+    }
+
+    /**
+     * Mengecek apakah user memiliki peran pimpinan tingkat atas.
+     */
+    public function isTopLevelManager(): bool
+    {
+        return in_array($this->role, ['superadmin', 'Eselon I', 'Eselon II']);
+    }
+
+    /**
+     * Mengecek apakah user memiliki wewenang untuk mengelola user lain.
+     */
+    public function canManageUsers(): bool
+    {
+        return in_array($this->role, ['superadmin', 'Eselon I', 'Eselon II', 'Koordinator']);
+    }
+
+    /**
+     * Mengecek apakah user memiliki wewenang untuk membuat proyek.
+     */
+    public function canCreateProjects(): bool
+    {
+        // Pimpinan dari Koordinator ke atas bisa membuat proyek
+        return in_array($this->role, ['superadmin', 'Eselon I', 'Eselon II', 'Koordinator']);
+    }
 }

@@ -151,4 +151,51 @@ class ProjectController extends Controller
         $pdf = Pdf::loadView('reports.project-summary', $data);
         return $pdf->download('laporan-proyek-' . $project->name . '-' . now()->format('Y-m-d') . '.pdf');
     }
+
+    public function edit(Project $project)
+    {
+        $this->authorize('update', $project);
+
+        $owner = $project->owner;
+        $subordinateIds = $owner->getAllSubordinateIds();
+        $subordinateIds[] = $owner->id; // Owner bisa memilih dirinya sendiri
+        $potentialMembers = User::whereIn('id', $subordinateIds)->orderBy('name')->get();
+
+        return view('projects.edit', compact('project', 'potentialMembers'));
+    }
+
+    public function update(Request $request, Project $project)
+    {
+        $this->authorize('update', $project);
+
+        $owner = $project->owner;
+        $subordinateIds = $owner->getAllSubordinateIds();
+        $subordinateIds[] = $owner->id;
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'required|string',
+            'leader_id' => ['required', 'exists:users,id', Rule::in($subordinateIds)],
+            'members' => 'required|array',
+            'members.*' => ['exists:users,id', Rule::in($subordinateIds)],
+        ]);
+
+        $project->update($validated);
+
+        $memberIds = collect($request->members);
+        if (!$memberIds->contains($request->leader_id)) {
+            $memberIds->push($request->leader_id);
+        }
+        $project->members()->sync($memberIds->unique());
+
+        return redirect()->route('projects.show', $project)->with('success', 'Proyek berhasil diperbarui.');
+    }
+
+    public function destroy(Project $project)
+    {
+        $this->authorize('delete', $project);
+        $projectName = $project->name;
+        $project->delete();
+        return redirect()->route('dashboard')->with('success', "Proyek '{$projectName}' berhasil dihapus.");
+    }
 }

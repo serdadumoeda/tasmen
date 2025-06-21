@@ -11,21 +11,40 @@ class WorkloadAnalysisController extends Controller
 {
     public function index()
     {
-        if (!in_array(auth()->user()->role, ['superadmin', 'Eselon I', 'Eselon II'])) {
+        $currentUser = auth()->user(); // BARIS BARU: Ambil user yang sedang login
+
+        if (!in_array($currentUser->role, ['superadmin', 'Eselon I', 'Eselon II'])) {
             abort(403, 'Anda tidak memiliki hak akses untuk halaman ini.');
         }
 
-        // Ambil semua user yang memiliki role 'leader' atau 'user' untuk dianalisis
-        $users = User::whereIn('role', ['leader', 'user'])->with('tasks')->get();
-        $projects = Project::with('tasks', 'members')->get();
+        // MODIFIKASI: Gunakan Query Builder untuk persiapan filter
+        $userQuery = User::query();
+        $projectQuery = Project::query();
 
-        // 1. Analisis Beban Kerja per Pengguna
+        // BARIS BARU: Jika user adalah Eselon II, terapkan filter hirarki
+        if ($currentUser->role === 'Eselon II') {
+            $subordinateIds = $currentUser->getAllSubordinateIds();
+            $subordinateIds[] = $currentUser->id;
+
+            // Filter user yang akan dianalisis hanya dari bawahannya
+            $userQuery->whereIn('id', $subordinateIds);
+            // Filter proyek berdasarkan proyek yang dimiliki oleh bawahannya
+            $projectQuery->whereIn('owner_id', $subordinateIds);
+        }
+
+        // MODIFIKASI: Ambil data dari query yang sudah difilter
+        // Ambil semua user yang relevan untuk dianalisis
+        $users = $userQuery->whereIn('role', ['Koordinator', 'Ketua Tim', 'Sub Koordinator', 'Staff', 'leader', 'user'])
+                           ->with('tasks')
+                           ->get();
+
+        $projects = $projectQuery->with('tasks', 'members')->get();
+
+        // 1. Analisis Beban Kerja per Pengguna (Logika ini tidak berubah)
         $userWorkload = $users->map(function ($user) {
             $activeTasks = $user->tasks->whereIn('status', ['pending', 'in_progress']);
             $overdueTasks = $activeTasks->where('deadline', '<', now());
             
-            // Formula Skor Beban Kerja (bisa disesuaikan)
-            // Bobot: 1 poin per tugas aktif, 3 poin tambahan per tugas overdue
             $workloadScore = $activeTasks->count() + ($overdueTasks->count() * 3);
 
             return [
@@ -39,7 +58,7 @@ class WorkloadAnalysisController extends Controller
         })->sortByDesc('workload_score');
 
 
-        // 2. Analisis Beban Kerja per Proyek
+        // 2. Analisis Beban Kerja per Proyek (Logika ini tidak berubah)
         $projectWorkload = $projects->map(function ($project) {
             $totalTasks = $project->tasks->count();
             if ($totalTasks === 0) {
@@ -59,7 +78,7 @@ class WorkloadAnalysisController extends Controller
             ];
         })->sortByDesc('active_tasks_count');
 
-        // 3. Statistik Global
+        // 3. Statistik Global (Logika ini tidak berubah)
         $globalStats = [
             'total_active_tasks' => $projectWorkload->sum('active_tasks_count'),
             'total_overdue_tasks' => $projectWorkload->sum('overdue_tasks_count'),

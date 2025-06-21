@@ -30,7 +30,8 @@ class ProjectPolicy
      */
     public function create(User $user): bool
     {
-        return false;
+        // Gunakan helper method yang sudah kita buat di model User
+        return $user->canCreateProjects();
     }
 
     /**
@@ -68,6 +69,16 @@ class ProjectPolicy
     public function viewTeamDashboard(User $user, Project $project): bool
     {
         return $user->id === $project->leader_id;
+    }
+
+    public function update(User $user, Project $project): bool
+    {
+        return $user->id === $project->owner_id || $project->owner->isSubordinateOf($user);
+    }
+
+    public function delete(User $user, Project $project): bool
+    {
+        return $user->id === $project->owner_id || $project->owner->isSubordinateOf($user);
     }
 
 }

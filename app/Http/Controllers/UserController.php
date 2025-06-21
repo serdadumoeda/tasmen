@@ -6,31 +6,60 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests; // TAMBAHKAN BARIS INI
 
 class UserController extends Controller
 {
+    use AuthorizesRequests; // DAN TAMBAHKAN BARIS INI
+
     public function index()
     {
-        $users = User::with('parent')->latest()->paginate(10);
+        $this->authorize('viewAny', User::class);
+        $currentUser = auth()->user();
+
+        // Superadmin melihat semua, pimpinan lain hanya melihat bawahannya
+        if ($currentUser->role === 'superadmin') {
+            $users = User::with('parent')->latest()->paginate(15);
+        } else {
+            $subordinateIds = $currentUser->getAllSubordinateIds();
+            $users = User::whereIn('id', $subordinateIds)->with('parent')->latest()->paginate(15);
+        }
+
         return view('users.index', compact('users'));
     }
 
     public function create()
     {
-        // Kirim semua user sebagai calon atasan
-        $users = User::orderBy('name')->get();
-        return view('users.create', compact('users'));
+        $this->authorize('create', User::class);
+        $currentUser = auth()->user();
+        
+        // Calon atasan adalah user itu sendiri dan semua bawahannya
+        $subordinateIds = $currentUser->getAllSubordinateIds();
+        $subordinateIds[] = $currentUser->id; // Tambahkan diri sendiri
+        
+        $potentialParents = User::whereIn('id', $subordinateIds)->orderBy('name')->get();
+
+        return view('users.create', ['users' => $potentialParents]);
     }
 
     public function store(Request $request)
     {
+        $this->authorize('create', User::class);
+        $currentUser = auth()->user();
+
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'role' => ['required', 'in:superadmin,Eselon I,Eselon II,Koordinator,Ketua Tim,Sub Koordinator,Staff'],
-            'parent_id' => ['nullable', 'exists:users,id'],
+            'role' => ['required', 'in:Eselon I,Eselon II,Koordinator,Ketua Tim,Sub Koordinator,Staff'],
+            'parent_id' => ['required', 'exists:users,id'],
         ]);
+
+        // Pastikan parent_id yang dipilih berada dalam hirarki user yang sedang login
+        $parent = User::find($request->parent_id);
+        if ($parent->id !== $currentUser->id && !$parent->isSubordinateOf($currentUser)) {
+            abort(403, 'Anda tidak dapat membuat user di bawah atasan yang bukan bawahan Anda.');
+        }
 
         User::create([
             'name' => $request->name,
@@ -42,28 +71,44 @@ class UserController extends Controller
 
         return redirect()->route('users.index')->with('success', 'User berhasil dibuat.');
     }
-
+    
     public function edit(User $user)
     {
-        // Kirim semua user KECUALI user itu sendiri sebagai calon atasan
-        $users = User::where('id', '!=', $user->id)->orderBy('name')->get();
-        return view('users.edit', compact('user', 'users'));
+        $this->authorize('update', $user);
+        $currentUser = auth()->user();
+
+        // Calon atasan adalah user itu sendiri dan semua bawahannya
+        $subordinateIds = $currentUser->getAllSubordinateIds();
+        $subordinateIds[] = $currentUser->id;
+        
+        // Calon atasan tidak boleh user yang sedang diedit itu sendiri
+        $potentialParents = User::whereIn('id', $subordinateIds)
+                                ->where('id', '!=', $user->id)
+                                ->orderBy('name')
+                                ->get();
+
+        return view('users.edit', ['user' => $user, 'users' => $potentialParents]);
     }
 
     public function update(Request $request, User $user)
     {
+        $this->authorize('update', $user);
+        $currentUser = auth()->user();
+
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email,'.$user->id],
-            'role' => ['required', 'in:superadmin,Eselon I,Eselon II,Koordinator,Ketua Tim,Sub Koordinator,Staff'],
-            'parent_id' => ['nullable', 'exists:users,id', 'not_in:'.$user->id],
+            'role' => ['required', 'in:Eselon I,Eselon II,Koordinator,Ketua Tim,Sub Koordinator,Staff'],
+            'parent_id' => ['required', 'exists:users,id', 'not_in:'.$user->id],
             'password' => ['nullable', 'confirmed', Rules\Password::defaults()],
         ]);
+        
+        $parent = User::find($request->parent_id);
+        if ($parent->id !== $currentUser->id && !$parent->isSubordinateOf($currentUser)) {
+             abort(403, 'Anda tidak dapat memindahkan user ke atasan yang bukan bawahan Anda.');
+        }
 
-        $user->name = $request->name;
-        $user->email = $request->email;
-        $user->role = $request->role;
-        $user->parent_id = $request->parent_id;
+        $user->fill($request->only('name', 'email', 'role', 'parent_id'));
 
         if ($request->filled('password')) {
             $user->password = Hash::make($request->password);
@@ -73,31 +118,28 @@ class UserController extends Controller
 
         return redirect()->route('users.index')->with('success', 'User berhasil diperbarui.');
     }
-    
-    // method destroy tidak perlu diubah
+
     public function destroy(User $user)
     {
-        if ($user->id === auth()->id()) {
-            return back()->with('error', 'Anda tidak dapat menghapus akun Anda sendiri.');
+        $this->authorize('delete', $user);
+        
+        // Pindahkan bawahan langsung dari user yang akan dihapus ke atasan dari user yang dihapus
+        $newParentId = $user->parent_id;
+        foreach ($user->children as $child) {
+            $child->parent_id = $newParentId;
+            $child->save();
         }
 
         $user->delete();
-        return redirect()->route('users.index')->with('success', 'User berhasil dihapus.');
+        return redirect()->route('users.index')->with('success', 'User berhasil dihapus dan bawahannya telah dipindahkan.');
     }
 
     public function getUsersByUnit($eselon2_id)
     {
-        // Cari user Eselon II
         $eselon2 = User::findOrFail($eselon2_id);
-        
-        // Ambil semua ID bawahannya
         $subordinateIds = $eselon2->getAllSubordinateIds();
-        // Tambahkan ID Eselon II itu sendiri
         $subordinateIds[] = $eselon2->id;
-
-        // Ambil semua user yang berada dalam lingkup unit tersebut
         $usersInUnit = User::whereIn('id', $subordinateIds)->orderBy('name')->get(['id', 'name', 'role']);
-
         return response()->json($usersInUnit);
     }
 }

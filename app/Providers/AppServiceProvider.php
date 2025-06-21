@@ -9,6 +9,8 @@ class AppServiceProvider extends ServiceProvider
 {
     protected $policies = [
         'App\Models\Project' => 'App\Policies\ProjectPolicy',
+        User::class => UserPolicy::class,
+        Task::class => TaskPolicy::class,
     ];
 
     public function register(): void
