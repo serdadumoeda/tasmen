@@ -30,10 +30,11 @@
                         </div>
 
                         <div class="mb-4">
-                            <label for="assigned_to_id" class="block font-medium text-sm text-gray-700">Ditugaskan Kepada</label>
-                            <select name="assigned_to_id" id="assigned_to_id" class="block mt-1 w-full" required>
+                            <label for="assignees" class="block font-medium text-sm text-gray-700">Ditugaskan Kepada (bisa pilih lebih dari satu)</label>
+                            {{-- Ubah 'name', tambahkan 'multiple', dan perbarui logika @selected --}}
+                            <select name="assignees[]" id="assignees" class="block mt-1 w-full" multiple required>
                                 @foreach ($projectMembers as $member)
-                                    <option value="{{ $member->id }}" @selected(old('assigned_to_id', $task->assigned_to_id) == $member->id)>
+                                    <option value="{{ $member->id }}" @selected(in_array($member->id, old('assignees', $task->assignees->pluck('id')->toArray())))>
                                         {{ $member->name }}
                                     </option>
                                 @endforeach

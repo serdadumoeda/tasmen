@@ -21,12 +21,14 @@ class CommentController extends Controller
         ]);
 
         // Beri notifikasi pada pemilik tugas dan ketua proyek, kecuali jika mereka yang berkomentar
-        $recipients = collect([$task->assignedTo, $task->project->leader])
-                        ->unique('id')
-                        ->where('id', '!=', auth()->id());
+        $recipients = $task->assignees->push($task->project->leader) // Ambil semua assignee, lalu tambahkan leader
+                ->unique('id') // Pastikan tidak ada duplikat
+                ->where('id', '!=', auth()->id()); // Jangan kirim notif ke diri sendiri
 
         foreach ($recipients as $recipient) {
-            $recipient->notify(new NewCommentOnTask($comment));
+            if ($recipient) { // Pastikan recipient tidak null
+                $recipient->notify(new NewCommentOnTask($comment));
+            }
         }
         
         return back()->with('success', 'Komentar berhasil ditambahkan.');

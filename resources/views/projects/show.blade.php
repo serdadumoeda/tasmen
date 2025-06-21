@@ -115,7 +115,12 @@
                                     <div>
                                         <h4 class="font-bold text-lg text-gray-800">{{ $task->title }}</h4>
                                         {{-- PERBAIKAN: Menambahkan optional() pada assignedTo->name --}}
-                                        <p class="text-sm text-gray-600">Untuk: <strong>{{ optional($task->assignedTo)->name ?? 'N/A' }}</strong> | Deadline:
+                                        <p class="text-sm text-gray-600">Untuk: 
+                                            <strong>
+                                                @foreach($task->assignees as $assignee)
+                                                    {{ $assignee->name }}{{ !$loop->last ? ', ' : '' }}
+                                                @endforeach
+                                            </strong> | Deadline:
                                             <span class="@if($isOverdue) text-red-700 font-bold @endif">
                                                 {{ \Carbon\Carbon::parse($task->deadline)->format('d M Y') }}
                                             </span>

@@ -17,7 +17,6 @@ class Task extends Model
         'progress', 
         'status', 
         'project_id', 
-        'assigned_to_id',
         'estimated_hours'
     ];
 
@@ -29,12 +28,9 @@ class Task extends Model
         return $this->belongsTo(Project::class);
     }
 
-    /**
-     * User yang ditugaskan untuk tugas ini.
-     */
-    public function assignedTo()
+    public function assignees()
     {
-        return $this->belongsTo(User::class, 'assigned_to_id');
+        return $this->belongsToMany(User::class, 'task_user', 'task_id', 'user_id');
     }
 
     public function comments()

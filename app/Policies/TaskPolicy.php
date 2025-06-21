@@ -9,13 +9,13 @@ class TaskPolicy
 {
     public function update(User $user, Task $task): bool
     {
-        // User bisa update jika dia adalah pimpinan proyek ATAU yang ditugaskan
-        return $user->id === $task->project->leader_id || $user->id === $task->assigned_to_id;
+        // User bisa update jika dia adalah pimpinan proyek ATAU salah satu dari yang ditugaskan
+        return $user->id === $task->project->leader_id || $task->assignees->contains($user);
     }
 
     public function delete(User $user, Task $task): bool
     {
         // Aturan yang sama dengan update
-        return $user->id === $task->project->leader_id || $user->id === $task->assigned_to_id;
+        return $user->id === $task->project->leader_id || $task->assignees->contains($user);
     }
 }

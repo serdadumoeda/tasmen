@@ -129,7 +129,7 @@ class User extends Authenticatable
 
     public function tasks()
     {
-        return $this->hasMany(Task::class, 'assigned_to_id');
+        return $this->belongsToMany(Task::class, 'task_user', 'user_id', 'task_id');
     }
 
     public function timeLogs()

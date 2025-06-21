@@ -55,13 +55,8 @@ class ProjectController extends Controller
             'members.*' => ['exists:users,id', Rule::in($subordinateIds)],
         ]);
 
-        $project = Project::create([
-            'name' => $request->name,
-            'description' => $request->description,
-            'owner_id' => $user->id,
-            'leader_id' => $request->leader_id,
-        ]);
-
+        $project = Project::create($validated);
+        
         $memberIds = collect($request->members);
         if (!$memberIds->contains($request->leader_id)) {
             $memberIds->push($request->leader_id);
@@ -76,8 +71,15 @@ class ProjectController extends Controller
     {
         $this->authorize('view', $project);
 
-        $project->load('owner', 'leader', 'members', 'tasks.assignedTo', 'tasks.comments.user', 'tasks.attachments', 'activities.user', 'tasks.subTasks');
-        $tasksByUser = $project->tasks->groupBy('assigned_to_id');
+        // PERBAIKAN DI SINI: ganti tasks.assignedTo menjadi tasks.assignees
+        $project->load('owner', 'leader', 'members', 'tasks.assignees', 'tasks.comments.user', 'tasks.attachments', 'activities.user', 'tasks.subTasks');
+        
+        // Logika ini perlu disesuaikan karena satu tugas bisa dimiliki banyak orang
+        // Untuk sementara kita biarkan, namun idealnya ini perlu refactor cara menampilkannya
+        $tasksByUser = $project->tasks->groupBy(function($task) {
+            return $task->assignees->first()->id ?? 0;
+        });
+
         $projectMembers = $project->members()->orderBy('name')->get();
         $taskStatuses = $project->tasks->countBy('status');
         
@@ -94,14 +96,10 @@ class ProjectController extends Controller
     public function edit(Project $project)
     {
         $this->authorize('update', $project);
-
-        // PERBAIKAN: Gunakan user yang login sebagai fallback jika owner tidak ada
         $referenceUser = $project->owner ?? auth()->user();
-
         $subordinateIds = $referenceUser->getAllSubordinateIds();
         $subordinateIds[] = $referenceUser->id;
         $potentialMembers = User::whereIn('id', $subordinateIds)->orderBy('name')->get();
-
         $taskStatuses = $project->tasks->countBy('status');
         $stats = [
             'total' => $project->tasks->count(),
@@ -109,20 +107,15 @@ class ProjectController extends Controller
             'in_progress' => $taskStatuses->get('in_progress', 0),
             'completed' => $taskStatuses->get('completed', 0),
         ];
-        
         return view('projects.edit', compact('project', 'potentialMembers', 'stats'));
     }
 
     public function update(Request $request, Project $project)
     {
         $this->authorize('update', $project);
-        
-        // PERBAIKAN: Gunakan user yang login sebagai fallback jika owner tidak ada
         $referenceUser = $project->owner ?? auth()->user();
-
         $subordinateIds = $referenceUser->getAllSubordinateIds();
         $subordinateIds[] = $referenceUser->id;
-
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'required|string',
@@ -132,15 +125,12 @@ class ProjectController extends Controller
             'members' => 'required|array',
             'members.*' => ['exists:users,id', Rule::in($subordinateIds)],
         ]);
-        
         $project->update($validated);
-        
         $memberIds = collect($request->members);
         if (!$memberIds->contains($request->leader_id)) {
             $memberIds->push($request->leader_id);
         }
         $project->members()->sync($memberIds->unique());
-
         return redirect()->route('projects.show', $project)->with('success', 'Proyek berhasil diperbarui.');
     }
 
@@ -151,14 +141,66 @@ class ProjectController extends Controller
         $project->delete();
         return redirect()->route('dashboard')->with('success', "Proyek '{$projectName}' berhasil dihapus.");
     }
+    
+    public function sCurve(Project $project)
+    {
+        $this->authorize('view', $project);
+        if (!$project->start_date || !$project->end_date) {
+            return back()->with('error', 'Proyek ini belum memiliki tanggal mulai dan selesai untuk membuat Kurva S.');
+        }
+        $startDate = \Carbon\Carbon::parse($project->start_date);
+        $endDate = \Carbon\Carbon::parse($project->end_date);
+        $period = \Carbon\CarbonPeriod::create($startDate, $endDate);
+        $labels = [];
+        foreach ($period as $date) {
+            $labels[] = $date->format('d M');
+        }
+        $totalHours = $project->tasks()->sum('estimated_hours');
+        $projectDurationDays = $startDate->diffInDays($endDate) + 1;
+        $plannedHoursPerDay = ($projectDurationDays > 0) ? $totalHours / $projectDurationDays : 0;
+        $plannedCumulative = [];
+        $cumulative = 0;
+        for ($i = 0; $i < count($labels); $i++) {
+            $cumulative += $plannedHoursPerDay;
+            $plannedCumulative[] = round($cumulative, 2);
+        }
+        $timeLogs = DB::table('time_logs')
+            ->join('tasks', 'time_logs.task_id', '=', 'tasks.id')
+            ->where('tasks.project_id', $project->id)
+            ->whereNotNull('end_time')
+            ->select(DB::raw('DATE(time_logs.end_time) as date'), DB::raw('SUM(time_logs.duration_in_minutes) as total_minutes'))
+            ->groupBy('date')
+            ->orderBy('date', 'asc')
+            ->get()
+            ->keyBy('date');
+        $actualCumulative = [];
+        $cumulative = 0;
+        foreach ($period as $date) {
+            $dateString = $date->format('Y-m-d');
+            if (isset($timeLogs[$dateString])) {
+                $cumulative += $timeLogs[$dateString]->total_minutes / 60;
+            }
+            $actualCumulative[] = round($cumulative, 2);
+        }
+        $chartData = [
+            'labels' => $labels,
+            'planned' => $plannedCumulative,
+            'actual' => $actualCumulative,
+            'total_hours' => round($totalHours, 2)
+        ];
+        return view('projects.s-curve', compact('project', 'chartData'));
+    }
 
     public function teamDashboard(Project $project)
     {
         $this->authorize('viewTeamDashboard', $project);
-        $project->load(['members', 'tasks']);
+        $project->load(['members', 'tasks.assignees']);
         $teamSummary = collect();
         foreach ($project->members as $member) {
-            $memberTasks = $project->tasks->where('assigned_to_id', $member->id);
+            // Dapatkan tugas di mana user ini adalah salah satu assignee
+            $memberTasks = $project->tasks->filter(function ($task) use ($member) {
+                return $task->assignees->contains($member);
+            });
             $averageProgress = $memberTasks->isEmpty() ? 0 : round($memberTasks->avg('progress'));
             $teamSummary->push([
                 'member_id' => $member->id,
@@ -179,7 +221,8 @@ class ProjectController extends Controller
         if (!auth()->user()->isTopLevelManager()) {
             abort(403);
         }
-        $project->load('leader', 'members', 'tasks.assignedTo', 'tasks.timeLogs');
+        // PERBAIKAN DI SINI: ganti tasks.assignedTo menjadi tasks.assignees
+        $project->load('leader', 'members', 'tasks.assignees', 'tasks.timeLogs');
         $taskStatuses = $project->tasks->countBy('status');
         $stats = [
             'total' => $project->tasks->count(),
@@ -197,66 +240,5 @@ class ProjectController extends Controller
         ];
         $pdf = Pdf::loadView('reports.project-summary', $data);
         return $pdf->download('laporan-proyek-' . $project->name . '-' . now()->format('Y-m-d') . '.pdf');
-    }
-
-    public function sCurve(Project $project)
-    {
-        $this->authorize('view', $project);
-
-        if (!$project->start_date || !$project->end_date) {
-            return back()->with('error', 'Proyek ini belum memiliki tanggal mulai dan selesai untuk membuat Kurva S.');
-        }
-
-        // Siapkan data untuk chart
-        $startDate = \Carbon\Carbon::parse($project->start_date);
-        $endDate = \Carbon\Carbon::parse($project->end_date);
-        $period = \Carbon\CarbonPeriod::create($startDate, $endDate);
-
-        $labels = [];
-        foreach ($period as $date) {
-            $labels[] = $date->format('d M');
-        }
-
-        // 1. Kurva Rencana (Planned)
-        $totalHours = $project->tasks()->sum('estimated_hours');
-        $projectDurationDays = $startDate->diffInDays($endDate) + 1;
-        $plannedHoursPerDay = ($projectDurationDays > 0) ? $totalHours / $projectDurationDays : 0;
-
-        $plannedCumulative = [];
-        $cumulative = 0;
-        for ($i = 0; $i < count($labels); $i++) {
-            $cumulative += $plannedHoursPerDay;
-            $plannedCumulative[] = round($cumulative, 2);
-        }
-
-        // 2. Kurva Aktual (Actual)
-        $timeLogs = DB::table('time_logs')
-            ->join('tasks', 'time_logs.task_id', '=', 'tasks.id')
-            ->where('tasks.project_id', $project->id)
-            ->whereNotNull('end_time')
-            ->select(DB::raw('DATE(time_logs.end_time) as date'), DB::raw('SUM(time_logs.duration_in_minutes) as total_minutes'))
-            ->groupBy('date')
-            ->orderBy('date', 'asc')
-            ->get()
-            ->keyBy('date');
-
-        $actualCumulative = [];
-        $cumulative = 0;
-        foreach ($period as $date) {
-            $dateString = $date->format('Y-m-d');
-            if (isset($timeLogs[$dateString])) {
-                $cumulative += $timeLogs[$dateString]->total_minutes / 60; // ubah ke jam
-            }
-            $actualCumulative[] = round($cumulative, 2);
-        }
-
-        $chartData = [
-            'labels' => $labels,
-            'planned' => $plannedCumulative,
-            'actual' => $actualCumulative,
-            'total_hours' => round($totalHours, 2)
-        ];
-
-        return view('projects.s-curve', compact('project', 'chartData'));
     }
 }
