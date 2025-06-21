@@ -11,7 +11,7 @@ class Project extends Model
 {
     use HasFactory, RecordsActivity;
 
-    protected $fillable = ['name', 'description', 'leader_id', 'owner_id'];
+    protected $fillable = ['name', 'description', 'leader_id', 'owner_id', 'start_date', 'end_date'];
 
 
     protected static function booted(): void

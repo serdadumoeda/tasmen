@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Facades\DB;
 
 class ProjectController extends Controller
 {
@@ -47,6 +48,8 @@ class ProjectController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'required|string',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date',
             'leader_id' => ['required', 'exists:users,id', Rule::in($subordinateIds)],
             'members' => 'required|array',
             'members.*' => ['exists:users,id', Rule::in($subordinateIds)],
@@ -123,6 +126,8 @@ class ProjectController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'required|string',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date',
             'leader_id' => ['required', 'exists:users,id', Rule::in($subordinateIds)],
             'members' => 'required|array',
             'members.*' => ['exists:users,id', Rule::in($subordinateIds)],
@@ -192,5 +197,66 @@ class ProjectController extends Controller
         ];
         $pdf = Pdf::loadView('reports.project-summary', $data);
         return $pdf->download('laporan-proyek-' . $project->name . '-' . now()->format('Y-m-d') . '.pdf');
+    }
+
+    public function sCurve(Project $project)
+    {
+        $this->authorize('view', $project);
+
+        if (!$project->start_date || !$project->end_date) {
+            return back()->with('error', 'Proyek ini belum memiliki tanggal mulai dan selesai untuk membuat Kurva S.');
+        }
+
+        // Siapkan data untuk chart
+        $startDate = \Carbon\Carbon::parse($project->start_date);
+        $endDate = \Carbon\Carbon::parse($project->end_date);
+        $period = \Carbon\CarbonPeriod::create($startDate, $endDate);
+
+        $labels = [];
+        foreach ($period as $date) {
+            $labels[] = $date->format('d M');
+        }
+
+        // 1. Kurva Rencana (Planned)
+        $totalHours = $project->tasks()->sum('estimated_hours');
+        $projectDurationDays = $startDate->diffInDays($endDate) + 1;
+        $plannedHoursPerDay = ($projectDurationDays > 0) ? $totalHours / $projectDurationDays : 0;
+
+        $plannedCumulative = [];
+        $cumulative = 0;
+        for ($i = 0; $i < count($labels); $i++) {
+            $cumulative += $plannedHoursPerDay;
+            $plannedCumulative[] = round($cumulative, 2);
+        }
+
+        // 2. Kurva Aktual (Actual)
+        $timeLogs = DB::table('time_logs')
+            ->join('tasks', 'time_logs.task_id', '=', 'tasks.id')
+            ->where('tasks.project_id', $project->id)
+            ->whereNotNull('end_time')
+            ->select(DB::raw('DATE(time_logs.end_time) as date'), DB::raw('SUM(time_logs.duration_in_minutes) as total_minutes'))
+            ->groupBy('date')
+            ->orderBy('date', 'asc')
+            ->get()
+            ->keyBy('date');
+
+        $actualCumulative = [];
+        $cumulative = 0;
+        foreach ($period as $date) {
+            $dateString = $date->format('Y-m-d');
+            if (isset($timeLogs[$dateString])) {
+                $cumulative += $timeLogs[$dateString]->total_minutes / 60; // ubah ke jam
+            }
+            $actualCumulative[] = round($cumulative, 2);
+        }
+
+        $chartData = [
+            'labels' => $labels,
+            'planned' => $plannedCumulative,
+            'actual' => $actualCumulative,
+            'total_hours' => round($totalHours, 2)
+        ];
+
+        return view('projects.s-curve', compact('project', 'chartData'));
     }
 }
