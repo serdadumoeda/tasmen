@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,7 +9,6 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
         .progress-bar { transition: width 0.6s ease; }
-        [x-cloak] { display: none !important; }
     </style>
 </head>
 <body class="bg-gray-100">
@@ -17,36 +16,25 @@
 
         <div class="mb-6">
             <a href="{{ route('dashboard') }}" class="text-blue-600 hover:text-blue-800 font-medium">&larr; Kembali ke Dashboard</a>
-            <div class="flex items-start md:items-center mt-2 flex-col md:flex-row">
+            <div class="flex items-center mt-2">
                 <h1 class="text-4xl font-bold text-gray-800">{{ $project->name }}</h1>
-                <div class="ms-auto flex items-center space-x-3 mt-2 md:mt-0">
-                    
-                    {{-- PERBAIKAN: Tombol aksi untuk level Proyek --}}
-                    @can('update', $project)
-                        <a href="{{ route('projects.edit', $project) }}" class="inline-block bg-amber-500 text-white font-bold text-sm px-4 py-2 rounded-lg shadow-md hover:bg-amber-600 transition-colors">
-                            Edit Proyek
-                        </a>
-                    @endcan
-                    @can('delete', $project)
-                        <form action="{{ route('projects.destroy', $project) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus proyek ini? Semua tugas di dalamnya akan ikut terhapus.');">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="inline-block bg-red-600 text-white font-bold text-sm px-4 py-2 rounded-lg shadow-md hover:bg-red-700 transition-colors">
-                                Hapus Proyek
-                            </button>
-                        </form>
-                    @endcan
-
+                <div class="ms-auto flex items-center space-x-3">
+                    {{-- PERBAIKAN: Menambahkan optional() untuk keamanan --}}
                     @can('viewTeamDashboard', $project)
                         <a href="{{ route('projects.team.dashboard', $project) }}" class="inline-block bg-blue-600 text-white font-bold text-sm px-4 py-2 rounded-lg shadow-md hover:bg-blue-700 transition-colors">
                             Lihat Dashboard Tim
                         </a>
                     @endcan
-                    @if(in_array(Auth::user()->role, ['superadmin', 'Eselon I', 'Eselon II']))
+                    @if(in_array(optional(Auth::user())->role, ['superadmin', 'Eselon I', 'Eselon II']))
                         <a href="{{ route('projects.report', $project) }}" target="_blank" class="inline-block bg-gray-600 text-white font-bold text-sm px-4 py-2 rounded-lg shadow-md hover:bg-gray-700 transition-colors">
                             Download Laporan PDF
                         </a>
                     @endif
+                    @can('update', $project)
+                        <a href="{{ route('projects.edit', $project) }}" class="inline-block bg-amber-500 text-white font-bold text-sm px-4 py-2 rounded-lg shadow-md hover:bg-amber-600 transition-colors">
+                            Edit Proyek
+                        </a>
+                    @endcan
                 </div>
             </div>
         </div>
@@ -82,8 +70,6 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div class="lg:col-span-2 space-y-6">
 
-                {{-- PERBAIKAN: Form tambah tugas hanya untuk pimpinan proyek --}}
-                @if(Auth::id() === $project->leader_id || Auth::id() === $project->owner_id)
                 <div class="bg-white p-6 rounded-lg shadow">
                     <h3 class="text-xl font-semibold mb-4 border-b border-gray-200 pb-2 text-gray-800">Tambah Tugas Baru</h3>
                     <form action="{{ route('tasks.store', $project) }}" method="POST">
@@ -110,7 +96,6 @@
                         <button type="submit" class="mt-4 inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700">Tambah Tugas</button>
                     </form>
                 </div>
-                @endif
 
                 <div class="bg-white p-6 rounded-lg shadow">
                     <h3 class="text-xl font-semibold mb-4 border-b border-gray-200 pb-2 text-gray-800">Daftar Tugas</h3>
@@ -124,14 +109,13 @@
                                 <div class="flex justify-between items-start">
                                     <div>
                                         <h4 class="font-bold text-lg text-gray-800">{{ $task->title }}</h4>
-                                        <p class="text-sm text-gray-600">Untuk: <strong>{{ $task->assignedTo->name }}</strong> | Deadline:
+                                        {{-- PERBAIKAN: Menambahkan optional() pada assignedTo->name --}}
+                                        <p class="text-sm text-gray-600">Untuk: <strong>{{ optional($task->assignedTo)->name ?? 'N/A' }}</strong> | Deadline:
                                             <span class="@if($isOverdue) text-red-700 font-bold @endif">
                                                 {{ \Carbon\Carbon::parse($task->deadline)->format('d M Y') }}
                                             </span>
                                         </p>
                                     </div>
-                                    
-                                    {{-- PERBAIKAN: Tombol aksi tugas hanya untuk yang berwenang --}}
                                     @can('update', $task)
                                     <div class="flex items-center space-x-2 flex-shrink-0">
                                         <a href="{{ route('tasks.edit', $task) }}" class="inline-block px-3 py-1 text-xs font-semibold text-amber-800 bg-amber-100 rounded-full hover:bg-amber-200 transition-colors">
@@ -159,9 +143,7 @@
                                         <div class="bg-blue-600 h-2.5 rounded-full progress-bar" style="width: {{ $task->progress }}%"></div>
                                     </div>
                                 </div>
-                                
-                                {{-- PERBAIKAN: Izin untuk mengelola rincian, lampiran, dan waktu kerja --}}
-                                @can('update', $task)
+
                                 <div class="mt-4 border-t border-gray-200 pt-4">
                                     <h5 class="font-semibold text-sm mb-2 text-gray-700">Rincian Tugas</h5>
                                     <div class="space-y-2">
@@ -197,9 +179,8 @@
                                 <div class="mt-4 border-t border-gray-200 pt-4"
                                      x-data="{
                                         showManualForm: false,
-                                        runningTaskForThisUser: {{ Auth::user()->timeLogs()->whereNull('end_time')->first()->task_id ?? 'null' }}
+                                        runningTaskForThisUser: {{ optional(Auth::user()->timeLogs()->whereNull('end_time')->first())->task_id ?? 'null' }}
                                      }"
-                                     x-cloak
                                 >
                                     <h5 class="font-semibold text-sm mb-2 text-gray-700">Pencatatan Waktu</h5>
                                     <div class="flex justify-between items-center text-sm">
@@ -267,15 +248,13 @@
                                         </div>
                                     </form>
                                 </div>
-                                @endcan
-
-                                {{-- Diskusi bisa dilakukan oleh semua anggota tim --}}
                                 <div class="mt-4 border-t border-gray-200 pt-4">
                                     <h5 class="font-semibold text-sm mb-2 text-gray-700">Diskusi</h5>
-                                    <div class="space-y-3 mb-4 max-h-60 overflow-y-auto">
+                                    <div class="space-y-3 mb-4">
                                         @forelse($task->comments as $comment)
                                         <div class="flex items-start space-x-2 text-sm">
-                                            <span class="font-bold text-gray-800 flex-shrink-0">{{ $comment->user->name }}:</span>
+                                            {{-- PERBAIKAN: Menambahkan optional() pada comment->user->name --}}
+                                            <span class="font-bold text-gray-800">{{ optional($comment->user)->name ?? 'User Dihapus' }}:</span>
                                             <p class="text-gray-700">{{ $comment->body }}</p>
                                         </div>
                                         @empty
@@ -307,18 +286,16 @@
 
                 <div class="bg-white p-6 rounded-lg shadow">
                     <h3 class="text-xl font-semibold mb-2 text-gray-800">Detail Proyek</h3>
-                    <div class="text-gray-700 space-y-2">
-                        <p>{{ $project->description }}</p>
-                        <p><span class="font-semibold">Pemilik Proyek:</span> {{ $project->owner->name }}</p>
-                    </div>
+                    <p class="text-gray-700">{{ $project->description }}</p>
                 </div>
 
                 <div class="bg-white p-6 rounded-lg shadow">
                     <h3 class="text-xl font-semibold mb-2 text-gray-800">Tim Proyek</h3>
                     <ul>
                         <li class="flex items-center space-x-2">
-                            <span class="font-bold text-gray-700">Pimpinan Proyek:</span>
-                            <span>{{ $project->leader->name }}</span>
+                            <span class="font-bold text-gray-700">Ketua Tim:</span>
+                            {{-- PERBAIKAN: Menambahkan optional() pada project->leader->name --}}
+                            <span>{{ optional($project->leader)->name ?? 'N/A' }}</span>
                         </li>
                     </ul>
                     <h4 class="font-semibold mt-4 text-gray-800">Anggota:</h4>
@@ -348,10 +325,11 @@
 
                 <div class="bg-white p-6 rounded-lg shadow">
                     <h3 class="text-xl font-semibold mb-2 text-gray-800">Aktivitas Terbaru</h3>
-                    <ul class="space-y-3 max-h-96 overflow-y-auto">
-                        @foreach($project->activities->take(15) as $activity)
+                    <ul class="space-y-3">
+                        @foreach($project->activities->take(10) as $activity)
                             <li class="text-sm text-gray-600 border-b border-gray-200 pb-2">
-                                <span class="font-semibold text-gray-800">{{ $activity->user->name }}</span>
+                                {{-- PERBAIKAN: Ini adalah perbaikan utama untuk error Anda --}}
+                                <span class="font-semibold text-gray-800">{{ optional($activity->user)->name ?? 'User Telah Dihapus' }}</span>
                                 @switch($activity->description)
                                     @case('created_project')
                                         membuat proyek ini
@@ -382,6 +360,7 @@
     </div>
 
     <script>
+        // Inisialisasi Chart.js
         document.addEventListener('DOMContentLoaded', function () {
             const ctx = document.getElementById('taskStatusChart');
             if (ctx) {
@@ -406,6 +385,7 @@
             }
         });
 
+        // Fungsi untuk Time Tracking Timer
         function startTimer(taskId) {
             fetch(`/tasks/${taskId}/time-log/start`, {
                 method: 'POST',
@@ -416,9 +396,8 @@
             })
             .then(res => res.json())
             .then(data => {
-                if(data.message) {
-                    window.location.reload();
-                }
+                console.log(data.message);
+                window.location.reload();
             })
             .catch(error => console.error('Error:', error));
         }
@@ -433,9 +412,8 @@
             })
             .then(res => res.json())
             .then(data => {
-                 if(data.message) {
-                    window.location.reload();
-                }
+                console.log(data.message);
+                window.location.reload();
             })
             .catch(error => console.error('Error:', error));
         }

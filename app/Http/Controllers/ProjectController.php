@@ -14,50 +14,37 @@ class ProjectController extends Controller
 {
     use AuthorizesRequests;
 
-    /**
-     * Menampilkan daftar proyek di dashboard.
-     * Logika ini sekarang disederhanakan berkat HierarchicalScope.
-     */
     public function index()
     {
         $user = Auth::user();
-
-        // Pimpinan tinggi akan diarahkan ke dashboard global.
-        if (in_array($user->role, ['superadmin', 'Eselon I', 'Eselon II'])) {
+        if ($user->isTopLevelManager()) {
             return redirect()->route('global.dashboard');
         }
-
-        // Untuk semua role lain (Koordinator, Staff, dll),
-        // HierarchicalScope akan secara otomatis memfilter proyek yang bisa mereka lihat.
         $projects = Project::with('owner', 'leader')->latest()->get();
-
         return view('dashboard', compact('projects'));
     }
 
-    /**
-     * Menampilkan form untuk membuat proyek baru.
-     * Logika ini sekarang hanya mengambil bawahan dari user yang login.
-     */
     public function create()
     {
         $user = Auth::user();
+        $this->authorize('create', Project::class);
+
         $subordinateIds = $user->getAllSubordinateIds();
+        $subordinateIds[] = $user->id;
         $potentialMembers = User::whereIn('id', $subordinateIds)->orderBy('name')->get();
 
-        return view('projects.create', compact('potentialMembers'));
+        return view('projects.create', ['potentialMembers' => $potentialMembers, 'project' => new Project()]);
     }
 
-    /**
-     * Menyimpan proyek baru ke database.
-     * Owner proyek adalah user yang membuatnya.
-     */
     public function store(Request $request)
     {
         $user = Auth::user();
-        $subordinateIds = $user->getAllSubordinateIds();
-        $subordinateIds[] = $user->id; // User bisa menunjuk dirinya sendiri sebagai pimpinan
+        $this->authorize('create', Project::class);
 
-        $request->validate([
+        $subordinateIds = $user->getAllSubordinateIds();
+        $subordinateIds[] = $user->id;
+
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'required|string',
             'leader_id' => ['required', 'exists:users,id', Rule::in($subordinateIds)],
@@ -68,8 +55,8 @@ class ProjectController extends Controller
         $project = Project::create([
             'name' => $request->name,
             'description' => $request->description,
-            'owner_id' => $user->id, // Pembuat proyek adalah OWNER
-            'leader_id' => $request->leader_id, // Pimpinan proyek adalah yang dipilih
+            'owner_id' => $user->id,
+            'leader_id' => $request->leader_id,
         ]);
 
         $memberIds = collect($request->members);
@@ -82,18 +69,15 @@ class ProjectController extends Controller
         return redirect()->route('dashboard')->with('success', 'Proyek "' . $project->name . '" berhasil dibuat!');
     }
 
-    /**
-     * Menampilkan detail proyek.
-     */
     public function show(Project $project)
     {
-        $this->authorize('view', $project); // Policy 'view' tetap berlaku
+        $this->authorize('view', $project);
 
-        // ... sisa method show tidak perlu diubah signifikan ...
         $project->load('owner', 'leader', 'members', 'tasks.assignedTo', 'tasks.comments.user', 'tasks.attachments', 'activities.user', 'tasks.subTasks');
         $tasksByUser = $project->tasks->groupBy('assigned_to_id');
         $projectMembers = $project->members()->orderBy('name')->get();
         $taskStatuses = $project->tasks->countBy('status');
+        
         $stats = [
             'total' => $project->tasks->count(),
             'pending' => $taskStatuses->get('pending', 0),
@@ -104,7 +88,65 @@ class ProjectController extends Controller
         return view('projects.show', compact('project', 'projectMembers', 'stats', 'tasksByUser'));
     }
 
-    // ... sisa method lain seperti teamDashboard dan downloadReport tidak perlu diubah ...
+    public function edit(Project $project)
+    {
+        $this->authorize('update', $project);
+
+        // PERBAIKAN: Gunakan user yang login sebagai fallback jika owner tidak ada
+        $referenceUser = $project->owner ?? auth()->user();
+
+        $subordinateIds = $referenceUser->getAllSubordinateIds();
+        $subordinateIds[] = $referenceUser->id;
+        $potentialMembers = User::whereIn('id', $subordinateIds)->orderBy('name')->get();
+
+        $taskStatuses = $project->tasks->countBy('status');
+        $stats = [
+            'total' => $project->tasks->count(),
+            'pending' => $taskStatuses->get('pending', 0),
+            'in_progress' => $taskStatuses->get('in_progress', 0),
+            'completed' => $taskStatuses->get('completed', 0),
+        ];
+        
+        return view('projects.edit', compact('project', 'potentialMembers', 'stats'));
+    }
+
+    public function update(Request $request, Project $project)
+    {
+        $this->authorize('update', $project);
+        
+        // PERBAIKAN: Gunakan user yang login sebagai fallback jika owner tidak ada
+        $referenceUser = $project->owner ?? auth()->user();
+
+        $subordinateIds = $referenceUser->getAllSubordinateIds();
+        $subordinateIds[] = $referenceUser->id;
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'required|string',
+            'leader_id' => ['required', 'exists:users,id', Rule::in($subordinateIds)],
+            'members' => 'required|array',
+            'members.*' => ['exists:users,id', Rule::in($subordinateIds)],
+        ]);
+        
+        $project->update($validated);
+        
+        $memberIds = collect($request->members);
+        if (!$memberIds->contains($request->leader_id)) {
+            $memberIds->push($request->leader_id);
+        }
+        $project->members()->sync($memberIds->unique());
+
+        return redirect()->route('projects.show', $project)->with('success', 'Proyek berhasil diperbarui.');
+    }
+
+    public function destroy(Project $project)
+    {
+        $this->authorize('delete', $project);
+        $projectName = $project->name;
+        $project->delete();
+        return redirect()->route('dashboard')->with('success', "Proyek '{$projectName}' berhasil dihapus.");
+    }
+
     public function teamDashboard(Project $project)
     {
         $this->authorize('viewTeamDashboard', $project);
@@ -129,7 +171,7 @@ class ProjectController extends Controller
 
     public function downloadReport(Project $project)
     {
-        if (!in_array(auth()->user()->role, ['superadmin', 'Eselon I', 'Eselon II'])) {
+        if (!auth()->user()->isTopLevelManager()) {
             abort(403);
         }
         $project->load('leader', 'members', 'tasks.assignedTo', 'tasks.timeLogs');
@@ -150,52 +192,5 @@ class ProjectController extends Controller
         ];
         $pdf = Pdf::loadView('reports.project-summary', $data);
         return $pdf->download('laporan-proyek-' . $project->name . '-' . now()->format('Y-m-d') . '.pdf');
-    }
-
-    public function edit(Project $project)
-    {
-        $this->authorize('update', $project);
-
-        $owner = $project->owner;
-        $subordinateIds = $owner->getAllSubordinateIds();
-        $subordinateIds[] = $owner->id; // Owner bisa memilih dirinya sendiri
-        $potentialMembers = User::whereIn('id', $subordinateIds)->orderBy('name')->get();
-
-        return view('projects.edit', compact('project', 'potentialMembers'));
-    }
-
-    public function update(Request $request, Project $project)
-    {
-        $this->authorize('update', $project);
-
-        $owner = $project->owner;
-        $subordinateIds = $owner->getAllSubordinateIds();
-        $subordinateIds[] = $owner->id;
-
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'required|string',
-            'leader_id' => ['required', 'exists:users,id', Rule::in($subordinateIds)],
-            'members' => 'required|array',
-            'members.*' => ['exists:users,id', Rule::in($subordinateIds)],
-        ]);
-
-        $project->update($validated);
-
-        $memberIds = collect($request->members);
-        if (!$memberIds->contains($request->leader_id)) {
-            $memberIds->push($request->leader_id);
-        }
-        $project->members()->sync($memberIds->unique());
-
-        return redirect()->route('projects.show', $project)->with('success', 'Proyek berhasil diperbarui.');
-    }
-
-    public function destroy(Project $project)
-    {
-        $this->authorize('delete', $project);
-        $projectName = $project->name;
-        $project->delete();
-        return redirect()->route('dashboard')->with('success', "Proyek '{$projectName}' berhasil dihapus.");
     }
 }
