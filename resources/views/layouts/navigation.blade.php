@@ -13,14 +13,12 @@
                         {{ __('Dashboard') }}
                     </x-nav-link>
 
-                    {{-- Tampilkan untuk semua yang bisa manage user --}}
                     @if(Auth::user()->canManageUsers())
                         <x-nav-link :href="route('users.index')" :active="request()->routeIs('users.index*')">
                             {{ __('User Management') }}
                         </x-nav-link>
                     @endif
-
-                    {{-- Tampilkan untuk pimpinan tingkat atas --}}
+                    
                     @if(Auth::user()->isTopLevelManager())
                         <x-nav-link :href="route('workload.analysis')" :active="request()->routeIs('workload.analysis')">
                             {{ __('Analisis Beban Kerja') }}
@@ -48,7 +46,7 @@
                                 Notifikasi ({{ auth()->user()->unreadNotifications->count() }})
                             </div>
                             @forelse(auth()->user()->unreadNotifications->take(5) as $notification)
-                                <a href="{{ $notification->data['url'] }}?notification_id={{ $notification->id }}" class="block w-full px-4 py-2 text-start text-sm leading-5 text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 transition duration-150 ease-in-out">
+                                <a href="{{ $notification->data['url'] ?? '#' }}?notification_id={{ $notification->id }}" class="block w-full px-4 py-2 text-start text-sm leading-5 text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 transition duration-150 ease-in-out">
                                     {{ $notification->data['message'] }}
                                 </a>
                             @empty
@@ -76,6 +74,12 @@
                         <x-dropdown-link :href="route('profile.edit')">
                             {{ __('Profile') }}
                         </x-dropdown-link>
+
+                        {{-- PENAMBAHAN LINK SK PENUGASAN --}}
+                        <x-dropdown-link :href="route('special-assignments.index')">
+                            {{ __('SK Penugasan Saya') }}
+                        </x-dropdown-link>
+
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
                             <x-dropdown-link :href="route('logout')"
@@ -105,9 +109,15 @@
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
             
-            @if(Auth::user()->role === 'superadmin')
+            @if(Auth::user()->canManageUsers())
                 <x-responsive-nav-link :href="route('users.index')" :active="request()->routeIs('users.index*')">
                     {{ __('User Management') }}
+                </x-responsive-nav-link>
+            @endif
+
+            @if(Auth::user()->isTopLevelManager())
+                <x-responsive-nav-link :href="route('workload.analysis')" :active="request()->routeIs('workload.analysis')">
+                    {{ __('Analisis Beban Kerja') }}
                 </x-responsive-nav-link>
             @endif
         </div>
@@ -121,6 +131,12 @@
                 <x-responsive-nav-link :href="route('profile.edit')">
                     {{ __('Profile') }}
                 </x-responsive-nav-link>
+
+                {{-- PENAMBAHAN LINK SK PENUGASAN (MOBILE) --}}
+                <x-responsive-nav-link :href="route('special-assignments.index')">
+                    {{ __('SK Penugasan Saya') }}
+                </x-responsive-nav-link>
+
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
                     <x-responsive-nav-link :href="route('logout')"

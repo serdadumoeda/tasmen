@@ -136,4 +136,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(TimeLog::class);
     }
+
+    public function specialAssignments()
+    {
+        return $this->hasMany(SpecialAssignment::class);
+    }
 }

@@ -12,6 +12,7 @@ use App\Http\Controllers\TimeLogController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SubTaskController;
 use App\Http\Controllers\BudgetItemController;
+use App\Http\Controllers\SpecialAssignmentController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -75,6 +76,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('projects.budget-items', BudgetItemController::class)
         ->except(['show'])
         ->parameters(['budget-items' => 'budgetItem']); 
+    Route::resource('special-assignments', SpecialAssignmentController::class)->except(['show']);
 });
 
 require __DIR__.'/auth.php';

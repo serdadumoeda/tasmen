@@ -24,15 +24,19 @@ class WorkloadAnalysisController extends Controller
             $userQuery->whereIn('id', $subordinateIds);
         }
 
-        // Ambil hanya user yang punya peran untuk mengerjakan tugas
+        // Ambil hanya user yang relevan
         $users = $userQuery->whereIn('role', ['Koordinator', 'Ketua Tim', 'Sub Koordinator', 'Staff'])
             ->with(['tasks' => function ($query) {
                 $query->whereIn('status', ['pending', 'in_progress']);
             }])
+            // PERBAIKAN: Hitung jumlah SK yang aktif secara efisien
+            ->withCount(['specialAssignments' => function ($query) {
+                $query->where('status', 'AKTIF');
+            }])
             ->get();
 
         $userWorkload = $users->map(function ($user) {
-            $weeklyCapacity = 40; // Kapasitas kerja standar per minggu (jam)
+            $weeklyCapacity = 40;
             $totalAssignedHours = $user->tasks->sum('estimated_hours');
             $utilization = ($weeklyCapacity > 0) ? round(($totalAssignedHours / $weeklyCapacity) * 100) : 0;
 
@@ -42,9 +46,11 @@ class WorkloadAnalysisController extends Controller
                 'active_tasks_count' => $user->tasks->count(),
                 'total_assigned_hours' => $totalAssignedHours,
                 'utilization' => $utilization,
+                // Tambahkan data jumlah SK
+                'special_assignments_count' => $user->special_assignments_count,
             ];
         })->sortByDesc('utilization');
-
+        
         return view('workload-analysis', compact('userWorkload'));
     }
 }
