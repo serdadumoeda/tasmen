@@ -10,30 +10,51 @@ use Illuminate\Support\Facades\Auth;
 
 class AdHocTaskController extends Controller
 {
-    // ... method index() dan create() tidak berubah ...
+    /**
+     * Menampilkan daftar tugas ad-hoc.
+     */
     public function index()
     {
         $user = Auth::user();
-        $assignedTasks = Task::whereNull('project_id')
-            ->whereHas('assignees', function ($query) use ($user) {
-                $query->where('user_id', $user->id);
-            })
-            ->with('assignees')
-            ->latest()
-            ->get();
+        
+        $query = Task::whereNull('project_id')->with('assignees')->latest();
+
+        // Jika Pimpinan, tampilkan semua tugas ad-hoc yang melibatkan dirinya atau bawahannya.
+        if ($user->canManageUsers()) {
+            $subordinateIds = $user->getAllSubordinateIds();
+            $subordinateIds[] = $user->id; // Termasuk diri sendiri
+
+            $query->whereHas('assignees', function ($q) use ($subordinateIds) {
+                $q->whereIn('user_id', $subordinateIds);
+            });
+        } else {
+            // Jika Staf, hanya tampilkan tugas yang ditugaskan kepadanya.
+            $query->whereHas('assignees', function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            });
+        }
+
+        $assignedTasks = $query->get();
 
         return view('adhoc-tasks.index', compact('assignedTasks'));
     }
 
+    /**
+     * Menampilkan form untuk membuat tugas ad-hoc baru.
+     */
     public function create()
     {
         $user = Auth::user();
         $assignableUsers = collect();
 
+        // Jika manajer, bisa menugaskan ke diri sendiri dan bawahan
         if ($user->canManageUsers()) {
-            $subordinateIds = $user->children()->pluck('id')->toArray();
+            $subordinateIds = $user->getAllSubordinateIds();
             $subordinateIds[] = $user->id; 
             $assignableUsers = User::whereIn('id', $subordinateIds)->orderBy('name')->get();
+        } else {
+            // Jika staf, list hanya berisi diri sendiri (meskipun tidak ditampilkan di form)
+            $assignableUsers->push($user);
         }
         
         return view('adhoc-tasks.create', compact('assignableUsers'));
@@ -46,8 +67,7 @@ class AdHocTaskController extends Controller
     {
         $user = Auth::user();
         
-        // MODIFIKASI: Menambahkan validasi untuk field baru
-        $validated = $request->validate([
+        $validatedData = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'deadline' => 'required|date',
@@ -63,19 +83,17 @@ class AdHocTaskController extends Controller
             $request->validate(['assignees' => 'required|array', 'assignees.*' => 'exists:users,id']);
             $assigneeIds = $request->assignees;
         } else {
+            // Staf hanya bisa menugaskan ke diri sendiri
             $assigneeIds[] = $user->id;
         }
 
         // Simpan data tugas utama terlebih dahulu untuk mendapatkan ID
         $task = new Task();
-        $task->fill($validated); // Mengisi title, desc, deadline, dll dari hasil validasi
-        $task->project_id = null;
-        // Status dan progress sekarang diambil dari form, bukan di-hardcode
-        $task->status = $request->status;
-        $task->progress = $request->progress;
+        $task->fill($validatedData);
+        $task->project_id = null; // Tanda sebagai tugas ad-hoc
         $task->save();
         
-        // BARU: Proses file lampiran SETELAH tugas disimpan
+        // Proses file lampiran SETELAH tugas disimpan
         if ($request->hasFile('file_upload')) {
             $file = $request->file('file_upload');
             $path = $file->store('attachments', 'public');
@@ -93,7 +111,9 @@ class AdHocTaskController extends Controller
         // Kirim notifikasi
         $usersToNotify = User::find($assigneeIds);
         foreach ($usersToNotify as $recipient) {
-            $recipient->notify(new TaskAssigned($task));
+            if ($recipient) {
+                $recipient->notify(new TaskAssigned($task));
+            }
         }
 
         // Kembalikan ke halaman daftar setelah semua selesai
