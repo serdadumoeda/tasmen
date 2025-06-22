@@ -1,9 +1,19 @@
 @php
-    $totalAssignedHours = $user->tasks->sum('estimated_hours');
-    $weeklyCapacity = 40;
+    // MODIFIKASI: Ambil data dari properti yang sudah kita "suntikkan" di controller
+    // Ini membuat view menjadi lebih bersih dan logikanya terpusat di controller.
+    $totalAssignedHours = $user->total_assigned_hours ?? 0;
+    
+    // Kita masih perlu melakukan query ini di sini karena kita ingin menampilkan jumlah tugas spesifik di baris ini.
+    // Controller hanya menyediakan total jam, bukan jumlah tugas.
+    $activeTasksCount = $user->tasks()->whereIn('status', ['pending', 'in_progress'])->count();
+
+    $weeklyCapacity = 40; // Kapasitas kerja standar per minggu
     $utilization = ($weeklyCapacity > 0) ? round(($totalAssignedHours / $weeklyCapacity) * 100) : 0;
+    
+    // Menghitung jumlah SK, sama seperti sebelumnya.
     $skCount = $user->special_assignments_count ?? $user->specialAssignments->count();
 
+    // Logika untuk menentukan teks dan warna status beban kerja (tidak berubah)
     $statusText = 'Ideal';
     $statusColor = 'text-green-600';
     if ($utilization > 100 || $skCount >= 3) {
@@ -14,17 +24,17 @@
         $statusColor = 'text-amber-600';
     }
     
-    // Gunakan relasi 'children' yang asli dari model
+    // Menggunakan relasi 'children' yang asli dari model untuk tombol expand/collapse
     $hasChildren = $user->children && $user->children->isNotEmpty();
 @endphp
 
 {{-- 
-  PERBAIKAN STRUKTUR FINAL:
-  Setiap 'keluarga' (induk + anak) dibungkus dalam <tbody>-nya sendiri yang memiliki scope `x-data`.
-  Ini adalah cara yang paling andal untuk membuat komponen interaktif di dalam tabel.
+  Setiap 'keluarga' (induk + anak) dibungkus dalam <tbody>-nya sendiri yang memiliki scope `x-data` dari Alpine.js.
+  Ini memastikan setiap tombol expand/collapse bekerja secara independen.
 --}}
 <tbody x-data="{ open: true }" class="border-t border-gray-200">
     <tr class="bg-white hover:bg-gray-50">
+        {{-- Kolom Nama Personil & Role --}}
         <td class="px-6 py-4 whitespace-nowrap" style="padding-left: {{ $level * 1.5 + 1.5 }}rem;">
             <div class="flex items-center">
                 @if($hasChildren)
@@ -40,30 +50,38 @@
                 </div>
             </div>
         </td>
-        <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">{{ $user->tasks->count() }}</td>
+
+        {{-- MODIFIKASI: Kolom Tugas Proyek sekarang menampilkan jumlah tugas aktif (Proyek + Ad-Hoc) --}}
+        <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">{{ $activeTasksCount }}</td>
+        
+        {{-- Kolom Utilisasi Proyek (Jam) --}}
         <td class="px-6 py-4 whitespace-nowrap text-center">
             <div class="w-full bg-gray-200 rounded-full h-2.5">
                 <div class="{{ $utilization > 100 ? 'bg-red-500' : ($utilization > 85 ? 'bg-yellow-500' : 'bg-green-500') }} h-2.5 rounded-full" style="width: {{ min($utilization, 100) }}%"></div>
             </div>
+            {{-- MODIFIKASI: Menggunakan variabel baru dari controller --}}
             <div class="text-xs text-gray-500 mt-1">{{ $totalAssignedHours }} jam ({{ $utilization }}%)</div>
         </td>
+        
+        {{-- Kolom Beban SK Aktif --}}
         <td class="px-6 py-4 whitespace-nowrap text-center">
             <a href="{{ route('special-assignments.index', ['personnel_id' => $user->id]) }}" class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800 hover:bg-purple-200">
                 {{ $skCount }} SK
             </a>
         </td>
+
+        {{-- Kolom Status Beban --}}
         <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-semibold {{ $statusColor }}">
             {{ $statusText }}
         </td>
     </tr>
 
+    {{-- Logika rekursif untuk menampilkan bawahan (tidak berubah) --}}
     @if ($hasChildren)
-        {{-- Baris ini hanya akan muncul jika `open` bernilai true --}}
         <tr x-show="open" x-transition.opacity>
             <td colspan="5" class="p-0 border-0">
                  @foreach ($user->children as $child)
                     <table class="w-full">
-                         {{-- Panggil partial ini lagi secara rekursif --}}
                         @include('workload-analysis._workload-row', ['user' => $child, 'level' => $level + 1])
                     </table>
                 @endforeach

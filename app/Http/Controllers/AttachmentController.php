@@ -12,7 +12,7 @@ class AttachmentController extends Controller
 {
     public function store(Request $request, Task $task)
     {
-        Gate::authorize('view', $task->project);
+        Gate::authorize('update', $task);
 
         $request->validate([
             'file' => 'required|file|max:5120' // Maksimal 5MB
@@ -34,16 +34,16 @@ class AttachmentController extends Controller
     {
        
 
-        // Pertama, ambil relasi tugas.
         $task = $attachment->task;
 
-        // Jika tugasnya ADA, baru lakukan otorisasi berdasarkan proyeknya.
-        if ($task) {
-            Gate::authorize('view', $task->project);
+        // Jika karena suatu hal tugasnya tidak ada, izinkan penghapusan untuk membersihkan data.
+        if (!$task) {
+            $attachment->delete();
+            return back()->with('success', 'Lampiran berhasil dihapus.');
         }
 
-        // Jika tugasnya sudah tidak ada (orphaned record), atau jika otorisasi berhasil,
-        // lanjutkan proses penghapusan file dan record database.
+        // MODIFIKASI: Otorisasi berdasarkan hak 'update' pada tugas terkait.
+        Gate::authorize('update', $task);
 
         // Hapus file dari storage
         Storage::disk('public')->delete($attachment->path);
@@ -52,7 +52,6 @@ class AttachmentController extends Controller
         $attachment->delete();
 
         return back()->with('success', 'File berhasil dihapus.');
-        
 
     }
 }

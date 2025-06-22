@@ -13,6 +13,10 @@
                         {{ __('Dashboard') }}
                     </x-nav-link>
 
+                    <x-nav-link :href="route('adhoc-tasks.index')" :active="request()->routeIs('adhoc-tasks.*')">
+                        {{ __('Tugas Harian') }}
+                    </x-nav-link>
+
                     @if(Auth::user()->canManageUsers())
                         <x-nav-link :href="route('users.index')" :active="request()->routeIs('users.index*')">
                             {{ __('User Management') }}

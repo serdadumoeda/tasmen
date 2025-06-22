@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use App\Notifications\TaskAssigned;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Facades\Auth; 
 
 class TaskController extends Controller
 {
@@ -42,10 +43,20 @@ class TaskController extends Controller
 
     public function edit(Task $task)
     {
+        $task->load('assignees', 'attachments');
         $this->authorize('update', $task);
         
-        $project = $task->project;
-        $projectMembers = $project->members()->orderBy('name')->get();
+        // MODIFIKASI: Jika tidak ada project, jangan ambil projectMembers
+        if ($task->project_id) {
+            $project = $task->project;
+            $projectMembers = $project->members()->orderBy('name')->get();
+        } else {
+            // Untuk tugas ad-hoc, penerima tugas adalah pembuat dan bawahannya
+            $user = Auth::user();
+            $subordinateIds = $user->children()->pluck('id')->toArray();
+            $subordinateIds[] = $user->id;
+            $projectMembers = User::whereIn('id', $subordinateIds)->orderBy('name')->get();
+        }
 
         return view('tasks.edit', compact('task', 'projectMembers'));
     }
@@ -67,19 +78,29 @@ class TaskController extends Controller
         
         $task->update($request->except('assignees'));
         
-        // Perbarui relasi many-to-many
         $task->assignees()->sync($request->assignees);
 
-        return redirect()->route('projects.show', $task->project)->with('success', 'Tugas berhasil diperbarui!');
+        // MODIFIKASI: Logika redirect cerdas
+        if ($task->project_id) {
+            return redirect()->route('projects.show', $task->project)->with('success', 'Tugas berhasil diperbarui!');
+        } else {
+            return redirect()->route('adhoc-tasks.index')->with('success', 'Tugas harian berhasil diperbarui!');
+        }
     }
 
     public function destroy(Task $task)
     {
         $this->authorize('delete', $task);
         
-        $task->assignees()->detach(); // Hapus relasi di pivot table
+        $projectId = $task->project_id;
+        $task->assignees()->detach();
         $task->delete();
         
-        return redirect()->route('projects.show', $task->project)->with('success', 'Tugas berhasil dihapus.');
+        // MODIFIKASI: Logika redirect cerdas
+        if ($projectId) {
+            return redirect()->route('projects.show', $projectId)->with('success', 'Tugas berhasil dihapus.');
+        } else {
+            return redirect()->route('adhoc-tasks.index')->with('success', 'Tugas harian berhasil dihapus.');
+        }
     }
 }

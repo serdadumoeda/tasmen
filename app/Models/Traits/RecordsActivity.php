@@ -55,14 +55,19 @@ trait RecordsActivity
 
     protected function activityOwner()
     {
-        // ✅ PERBAIKAN UTAMA ADA DI SINI
         // Jika model ini adalah Project, pemiliknya adalah leader-nya sendiri.
         if (class_basename($this) === 'Project') {
             return $this->leader;
         }
-
-        // Jika model ini adalah Task (atau lainnya), pemiliknya adalah leader dari project terkait.
-        return $this->project->leader;
+    
+        // PERBAIKAN: Jika tugasnya ada proyek, pemiliknya adalah leader proyek
+        if (isset($this->project)) {
+            return $this->project->leader;
+        }
+    
+        // Jika tidak ada proyek (misal: tugas ad-hoc atau model User),
+        // pemilik aktivitas adalah user yang sedang login atau user itu sendiri.
+        return auth()->user() ?? $this;
     }
 
     public function getActivityChanges($type)

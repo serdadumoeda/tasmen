@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SubTaskController;
 use App\Http\Controllers\BudgetItemController;
 use App\Http\Controllers\SpecialAssignmentController;
+use App\Http\Controllers\AdHocTaskController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -77,6 +78,11 @@ Route::middleware('auth')->group(function () {
         ->except(['show'])
         ->parameters(['budget-items' => 'budgetItem']); 
     Route::resource('special-assignments', SpecialAssignmentController::class)->except(['show']);
+    Route::controller(AdHocTaskController::class)->prefix('adhoc-tasks')->name('adhoc-tasks.')->group(function() {
+        Route::get('/', 'index')->name('index');
+        Route::get('/create', 'create')->name('create');
+        Route::post('/', 'store')->name('store');
+    });
 });
 
 require __DIR__.'/auth.php';

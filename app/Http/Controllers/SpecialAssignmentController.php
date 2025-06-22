@@ -3,9 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\SpecialAssignment;
-use App\Models\User; // <-- TAMBAHKAN BARIS INI
+use App\Models\User; 
 use Illuminate\Http\Request;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Facades\Storage;
 
 class SpecialAssignmentController extends Controller
 {
@@ -64,15 +65,28 @@ class SpecialAssignmentController extends Controller
     {
         $this->authorize('create', SpecialAssignment::class);
         $assignment = new SpecialAssignment();
-        $subordinateIds = auth()->user()->getAllSubordinateIds();
-        $assignableUsers = User::whereIn('id', $subordinateIds)->orWhere('id', auth()->id())->orderBy('name')->get();
+        $user = auth()->user();
+
+        // MODIFIKASI: Siapkan data 'assignableUsers' secara kondisional
+        $assignableUsers = collect();
+        if ($user->canManageUsers()) {
+            // Jika manajer, bisa menugaskan ke diri sendiri dan bawahan
+            $subordinateIds = $user->getAllSubordinateIds();
+            $subordinateIds[] = $user->id;
+            $assignableUsers = User::whereIn('id', $subordinateIds)->orderBy('name')->get();
+        } else {
+            // Jika staf, hanya bisa menugaskan ke diri sendiri
+            $assignableUsers->push($user);
+        }
+
         return view('special-assignments.create', compact('assignment', 'assignableUsers'));
     }
 
     public function store(Request $request)
     {
-        
         $this->authorize('create', SpecialAssignment::class);
+        $user = auth()->user();
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'sk_number' => 'nullable|string|max:255',
@@ -80,32 +94,34 @@ class SpecialAssignmentController extends Controller
             'end_date' => 'nullable|date|after_or_equal:start_date',
             'status' => 'required|in:AKTIF,SELESAI',
             'description' => 'nullable|string',
-            'members' => 'required|array',
-            'members.*.user_id' => 'required|exists:users,id',
-            'members.*.role_in_sk' => 'required|string|max:255',
             'file_upload' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
+            // Validasi members hanya untuk manajer
+            'members' => ($user->canManageUsers() ? 'required|array' : 'nullable|array'),
+            'members.*.user_id' => ($user->canManageUsers() ? 'required|exists:users,id' : 'nullable|exists:users,id'),
+            'members.*.role_in_sk' => ($user->canManageUsers() ? 'required|string|max:255' : 'nullable|string|max:255'),
         ]);
+
+        $dataToCreate = $request->except(['members', 'file_upload']);
+        $dataToCreate['creator_id'] = $user->id;
+
         if ($request->hasFile('file_upload')) {
-            $validated['file_path'] = $request->file('file_upload')->store('sk_files', 'public');
+            $dataToCreate['file_path'] = $request->file('file_upload')->store('sk_files', 'public');
         }
 
-        $validated['creator_id'] = auth()->id();
-        $sk = SpecialAssignment::create($validated);
+        $sk = SpecialAssignment::create($dataToCreate);
 
-        $sk = SpecialAssignment::create([
-            'creator_id' => auth()->id(),
-            'title' => $validated['title'],
-            'sk_number' => $validated['sk_number'],
-            'start_date' => $validated['start_date'],
-            'end_date' => $validated['end_date'],
-            'status' => $validated['status'],
-            'description' => $validated['description'],
-        ]);
-
+        // MODIFIKASI: Logika sinkronisasi anggota yang kondisional
         $membersToSync = [];
-        foreach ($validated['members'] as $member) {
-            $membersToSync[$member['user_id']] = ['role_in_sk' => $member['role_in_sk']];
+        if ($user->canManageUsers()) {
+            // Jika manajer, ambil data dari form
+            foreach ($validated['members'] as $member) {
+                $membersToSync[$member['user_id']] = ['role_in_sk' => $member['role_in_sk']];
+            }
+        } else {
+            // Jika staf, paksakan untuk diri sendiri dengan peran 'Pelaksana'
+            $membersToSync[$user->id] = ['role_in_sk' => 'Pelaksana'];
         }
+
         $sk->members()->sync($membersToSync);
 
         return redirect()->route('special-assignments.index')->with('success', 'SK Penugasan berhasil dibuat.');

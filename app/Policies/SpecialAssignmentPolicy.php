@@ -14,7 +14,8 @@ class SpecialAssignmentPolicy
     public function create(User $user): bool
     {
         // Pimpinan (Koordinator ke atas) bisa membuat SK baru untuk timnya.
-        return $user->canManageUsers(); 
+        // return $user->canManageUsers(); 
+        return true; 
     }
 
     /**

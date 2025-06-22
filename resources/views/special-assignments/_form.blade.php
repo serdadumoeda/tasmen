@@ -94,31 +94,41 @@
             @endif
         </div>
         
-        <div class="border-t pt-6">
-            <h3 class="text-lg font-medium mb-2">Anggota Penugasan <span class="text-red-600">*</span></h3>
-            <div class="space-y-3">
-                <template x-for="(member, index) in members" :key="index">
-                    <div class="flex items-center space-x-2 border p-2 rounded-md bg-gray-50">
-                        <div class="flex-grow">
-                            <label class="text-xs text-gray-600">Personil</label>
-                            <select :name="`members[${index}][user_id]`" class="w-full rounded-md border-gray-300 text-sm" x-model.number="member.user_id">
-                                <option value="">-- Pilih Personil --</option>
-                                @foreach($assignableUsers as $user)
-                                    <option value="{{ $user->id }}">{{ $user->name }}</option>
-                                @endforeach
-                            </select>
+        {{-- MODIFIKASI: Tampilkan bagian ini hanya untuk Manajer --}}
+        @if(auth()->user()->canManageUsers())
+            <div class="border-t pt-6">
+                <h3 class="text-lg font-medium mb-2">Anggota Penugasan <span class="text-red-600">*</span></h3>
+                <div class="space-y-3">
+                    <template x-for="(member, index) in members" :key="index">
+                        <div class="flex items-center space-x-2 border p-2 rounded-md bg-gray-50">
+                            <div class="flex-grow">
+                                <label class="text-xs text-gray-600">Personil</label>
+                                <select :name="`members[${index}][user_id]`" class="w-full rounded-md border-gray-300 text-sm" x-model.number="member.user_id">
+                                    <option value="">-- Pilih Personil --</option>
+                                    @foreach($assignableUsers as $user)
+                                        <option value="{{ $user->id }}">{{ $user->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="w-2/5">
+                                 <label class="text-xs text-gray-600">Peran dalam SK</label>
+                                <input type="text" :name="`members[${index}][role_in_sk]`" x-model="member.role_in_sk" placeholder="Contoh: Ketua, Anggota" class="w-full rounded-md border-gray-300 text-sm">
+                            </div>
+                            <button type="button" @click="removeMember(index)" class="text-red-500 hover:text-red-700 p-2 mt-5 self-start">&times;</button>
                         </div>
-                        <div class="w-2/5">
-                             <label class="text-xs text-gray-600">Peran dalam SK</label>
-                            <input type="text" :name="`members[${index}][role_in_sk]`" x-model="member.role_in_sk" placeholder="Contoh: Ketua, Anggota" class="w-full rounded-md border-gray-300 text-sm">
-                        </div>
-                        <button type="button" @click="removeMember(index)" class="text-red-500 hover:text-red-700 p-2 mt-5 self-start">&times;</button>
-                    </div>
-                </template>
-                 @error('members') <span class="text-sm text-red-600 mt-1">{{ $message }}</span> @enderror
+                    </template>
+                     @error('members') <span class="text-sm text-red-600 mt-1">{{ $message }}</span> @enderror
+                </div>
+                <button type="button" @click="addMember()" class="mt-3 text-sm font-semibold text-blue-600 hover:text-blue-800">+ Tambah Anggota</button>
             </div>
-            <button type="button" @click="addMember()" class="mt-3 text-sm font-semibold text-blue-600 hover:text-blue-800">+ Tambah Anggota</button>
-        </div>
+        @else
+            {{-- Untuk Staf, cukup tampilkan teks informasi --}}
+            <div class="border-t pt-4">
+                <h3 class="text-sm font-medium text-gray-700">Anggota Penugasan</h3>
+                <p class="mt-1 text-sm text-gray-600 bg-gray-100 p-3 rounded-md">Penugasan ini akan secara otomatis ditetapkan untuk Anda sebagai **Pelaksana**.</p>
+            </div>
+        @endif
+        {{-- AKHIR MODIFIKASI --}}
     </div>
 
     <div class="flex items-center justify-end mt-8 pt-4 border-t">
