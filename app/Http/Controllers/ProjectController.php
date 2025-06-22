@@ -18,10 +18,12 @@ class ProjectController extends Controller
     public function index()
     {
         $user = Auth::user();
+        // Logika ini sudah benar, jika top level manager, arahkan ke global dashboard.
         if ($user->isTopLevelManager()) {
             return redirect()->route('global.dashboard');
         }
-        $projects = Project::with('owner', 'leader')->latest()->get();
+        // Staff biasa akan melihat proyek di mana mereka menjadi anggota.
+        $projects = $user->projects()->with('owner', 'leader')->latest()->get();
         return view('dashboard', compact('projects'));
     }
 
@@ -54,9 +56,16 @@ class ProjectController extends Controller
             'members' => 'required|array',
             'members.*' => ['exists:users,id', Rule::in($subordinateIds)],
         ]);
-
-        $project = Project::create($validated);
         
+        // MODIFIKASI DIMULAI DI SINI
+        $dataToCreate = $validated;
+        // INI ADALAH PERBAIKAN UTAMA:
+        // Tetapkan 'owner_id' sebagai ID pengguna yang sedang membuat proyek.
+        $dataToCreate['owner_id'] = $user->id;
+
+        $project = Project::create($dataToCreate);
+        // AKHIR MODIFIKASI
+
         $memberIds = collect($request->members);
         if (!$memberIds->contains($request->leader_id)) {
             $memberIds->push($request->leader_id);
@@ -71,11 +80,8 @@ class ProjectController extends Controller
     {
         $this->authorize('view', $project);
 
-        // PERBAIKAN DI SINI: ganti tasks.assignedTo menjadi tasks.assignees
         $project->load('owner', 'leader', 'members', 'tasks.assignees', 'tasks.comments.user', 'tasks.attachments', 'activities.user', 'tasks.subTasks');
         
-        // Logika ini perlu disesuaikan karena satu tugas bisa dimiliki banyak orang
-        // Untuk sementara kita biarkan, namun idealnya ini perlu refactor cara menampilkannya
         $tasksByUser = $project->tasks->groupBy(function($task) {
             return $task->assignees->first()->id ?? 0;
         });
@@ -197,7 +203,6 @@ class ProjectController extends Controller
         $project->load(['members', 'tasks.assignees']);
         $teamSummary = collect();
         foreach ($project->members as $member) {
-            // Dapatkan tugas di mana user ini adalah salah satu assignee
             $memberTasks = $project->tasks->filter(function ($task) use ($member) {
                 return $task->assignees->contains($member);
             });
@@ -221,7 +226,6 @@ class ProjectController extends Controller
         if (!auth()->user()->isTopLevelManager()) {
             abort(403);
         }
-        // PERBAIKAN DI SINI: ganti tasks.assignedTo menjadi tasks.assignees
         $project->load('leader', 'members', 'tasks.assignees', 'tasks.timeLogs');
         $taskStatuses = $project->tasks->countBy('status');
         $stats = [

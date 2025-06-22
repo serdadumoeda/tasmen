@@ -81,31 +81,39 @@
             <div class="lg:col-span-2 space-y-6">
 
                 <div class="bg-white p-6 rounded-lg shadow">
-                    <h3 class="text-xl font-semibold mb-4 border-b border-gray-200 pb-2 text-gray-800">Tambah Tugas Baru</h3>
-                    <form action="{{ route('tasks.store', $project) }}" method="POST">
-                        @csrf
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label for="title" class="block text-sm font-medium text-gray-700">Judul Tugas</label>
-                                <input type="text" name="title" id="title" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
+                        <h3 class="text-xl font-semibold mb-4 border-b border-gray-200 pb-2 text-gray-800">Tambah Tugas Baru</h3>
+                        <form action="{{ route('tasks.store', $project) }}" method="POST">
+                            @csrf
+                            <div class="space-y-4">
+                                <div>
+                                    <label for="title" class="block text-sm font-medium text-gray-700">Judul Tugas</label>
+                                    <input type="text" name="title" id="title" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="deadline" class="block text-sm font-medium text-gray-700">Deadline</label>
+                                        <input type="date" name="deadline" id="deadline" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
+                                    </div>
+                                    <div>
+                                        <label for="estimated_hours" class="block text-sm font-medium text-gray-700">Estimasi Jam (Opsional)</label>
+                                        <input type="number" step="0.5" name="estimated_hours" id="estimated_hours" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="assignees" class="block text-sm font-medium text-gray-700">Tugaskan Kepada (Bisa lebih dari satu)</label>
+                                    {{-- 1. Ganti 'name' menjadi 'assignees[]' --}}
+                                    {{-- 2. Tambahkan atribut 'multiple' --}}
+                                    <select name="assignees[]" id="assignees" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 h-24" multiple required>
+                                        @foreach($projectMembers as $member)
+                                        <option value="{{ $member->id }}">{{ $member->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    <p class="text-xs text-gray-500 mt-1">Gunakan Ctrl/Cmd + Klik untuk memilih beberapa orang.</p>
+                                </div>
                             </div>
-                            <div>
-                                <label for="deadline" class="block text-sm font-medium text-gray-700">Deadline</label>
-                                <input type="date" name="deadline" id="deadline" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
-                            </div>
-                            <div class="md:col-span-2">
-                                <label for="assigned_to_id" class="block text-sm font-medium text-gray-700">Tugaskan Kepada</label>
-                                <select name="assigned_to_id" id="assigned_to_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
-                                    <option value="">-- Pilih Anggota --</option>
-                                    @foreach($projectMembers as $member)
-                                    <option value="{{ $member->id }}">{{ $member->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </div>
-                        <button type="submit" class="mt-4 inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700">Tambah Tugas</button>
-                    </form>
-                </div>
+                            <button type="submit" class="mt-4 inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700">Tambah Tugas</button>
+                        </form>
+                    </div>
 
                 <div class="bg-white p-6 rounded-lg shadow">
                     <h3 class="text-xl font-semibold mb-4 border-b border-gray-200 pb-2 text-gray-800">Daftar Tugas</h3>
