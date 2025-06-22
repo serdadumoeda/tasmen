@@ -15,7 +15,7 @@
                     {{-- ====================================================================== --}}
                     @can('approve', $task)
                         @if ($task->status === 'pending_review')
-                            <div class="mb-6 p-4 bg-yellow-50 border-l-4 border-yellow-400">
+                            <div class="mb-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-lg">
                                 <h3 class="font-bold text-yellow-800">Tugas ini Menunggu Persetujuan Anda</h3>
                                 <p class="text-sm text-yellow-700 mt-1">Tugas ini telah ditandai selesai oleh anggota tim. Silakan review dan berikan persetujuan atau kembalikan tugas.</p>
                                 
@@ -90,14 +90,26 @@
                             </div>
 
                             <div class="mb-4">
-                                <label for="assignees" class="block font-medium text-sm text-gray-700">Ditugaskan Kepada (bisa pilih lebih dari satu)</label>
-                                <select name="assignees[]" id="assignees" class="block mt-1 w-full rounded-md border-gray-300 shadow-sm" multiple required>
-                                    @foreach ($projectMembers as $member)
-                                        <option value="{{ $member->id }}" @selected(in_array($member->id, old('assignees', $task->assignees->pluck('id')->toArray())))>
-                                            {{ $member->name }}
-                                        </option>
+                                <label for="assignees" class="block font-medium text-sm text-gray-700">Ditugaskan Kepada</label>
+                                @if (auth()->user()->can('update', $task))
+                                    <select name="assignees[]" id="assignees" class="block mt-1 w-full tom-select-multiple" multiple required>
+                                        @foreach ($projectMembers as $member)
+                                            <option value="{{ $member->id }}" @selected(in_array($member->id, old('assignees', $task->assignees->pluck('id')->toArray())))>
+                                                {{ $member->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    <p class="text-xs text-gray-500 mt-1">Ketik nama untuk mencari atau tekan (x) untuk menghapus.</p>
+                                @else
+                                    <div class="mt-1 p-2 bg-gray-100 border border-gray-300 rounded-md">
+                                        @foreach($task->assignees as $assignee)
+                                            {{ $assignee->name }}{{ !$loop->last ? ',' : '' }}
+                                        @endforeach
+                                    </div>
+                                    @foreach($task->assignees as $assignee)
+                                        <input type="hidden" name="assignees[]" value="{{ $assignee->id }}">
                                     @endforeach
-                                </select>
+                                @endif
                             </div>
 
                             <div class="mb-4">
@@ -145,7 +157,7 @@
                         @endif
                     </form>
                     
-                    {{-- Bagian Lampiran --}}
+                    {{-- BAGIAN LAMPIRAN --}}
                     <div class="mt-6 border-t pt-6">
                         <h3 class="text-base font-medium text-gray-800 mb-3">Lampiran</h3>
                         <ul class="list-disc list-inside space-y-1 mb-4">

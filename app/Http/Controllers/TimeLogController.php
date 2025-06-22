@@ -39,8 +39,20 @@ class TimeLogController extends Controller
         }
 
         $runningLog->end_time = now();
-        $runningLog->duration_in_minutes = $runningLog->start_time->diffInMinutes($runningLog->end_time);
+
+        // ==========================================================
+        // PERBAIKAN: Pastikan durasi selalu berupa angka bulat (integer)
+        // ==========================================================
+        // Hitung selisih dalam detik untuk presisi
+        $diffInSeconds = $runningLog->start_time->diffInSeconds($runningLog->end_time);
+        // Konversi ke menit dan bulatkan ke angka bulat terdekat
+        $runningLog->duration_in_minutes = round($diffInSeconds / 60);
+        // ==========================================================
+        
         $runningLog->save();
+        
+        // Muat ulang relasi agar data yang dikirim ke frontend adalah yang terbaru
+        $runningLog->load('task.timeLogs');
 
         return response()->json(['message' => 'Timer dihentikan.', 'time_log' => $runningLog]);
     }
@@ -54,13 +66,11 @@ class TimeLogController extends Controller
 
         $logTime = Carbon::parse($validated['log_date']);
         
-
         $durationInMinutes = (int) $validated['duration_in_minutes'];
 
         $timeLog = $task->timeLogs()->create([
             'user_id' => Auth::id(),
             'start_time' => $logTime,
-
             'end_time' => $logTime->copy()->addMinutes($durationInMinutes), 
             'duration_in_minutes' => $durationInMinutes,
         ]);

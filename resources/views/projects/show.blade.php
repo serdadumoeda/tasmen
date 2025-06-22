@@ -11,7 +11,70 @@
         .progress-bar { transition: width 0.6s ease; }
     </style>
 </head>
-<body class="bg-gray-100">
+{{-- ========================================================== --}}
+{{-- PERBAIKAN 1: Logika Timer dipindahkan ke dalam x-data --}}
+{{-- ========================================================== --}}
+<body class="bg-gray-100" 
+    x-data="{ 
+        runningTaskGlobal: {{ optional(Auth::user()->timeLogs()->whereNull('end_time')->first())->task_id ?? 'null' }},
+
+        // Fungsi pembantu untuk mengirim request POST
+        async postData(url) {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json',
+                },
+            });
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Terjadi kesalahan pada server.');
+            }
+            return response.json();
+        },
+
+        // Fungsi startTimer yang sekarang menjadi bagian dari Alpine
+        async startTimer(taskId) {
+            try {
+                const data = await this.postData(`/tasks/${taskId}/time-log/start`);
+                console.log(data.message);
+                this.runningTaskGlobal = taskId; // Mengubah state global
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Gagal memulai timer: ' + error.message);
+            }
+        },
+
+        // Fungsi stopTimer yang sekarang menjadi bagian dari Alpine
+        async stopTimer(taskId) {
+            try {
+                const data = await this.postData(`/tasks/${taskId}/time-log/stop`);
+                console.log(data.message);
+                this.runningTaskGlobal = null; // Mengosongkan state global
+                
+                let totalMinutes = 0;
+                if (data.time_log.task && data.time_log.task.time_logs) {
+                    totalMinutes = data.time_log.task.time_logs.reduce((sum, log) => {
+                        return sum + (log.duration_in_minutes || 0);
+                    }, 0);
+                }
+                
+                const hours = Math.floor(totalMinutes / 60);
+                const minutes = totalMinutes % 60;
+                
+                const displayElement = document.querySelector(`#time-log-display-${taskId} .text-blue-600`);
+                if(displayElement) {
+                    displayElement.textContent = `${hours} jam ${minutes} menit`;
+                }
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Gagal menghentikan timer: ' + error.message);
+            }
+        }
+    }"
+>
     <div class="container mx-auto p-4 md:p-8">
 
         <div class="mb-6">
@@ -19,7 +82,6 @@
             <div class="flex items-center mt-2">
                 <h1 class="text-4xl font-bold text-gray-800">{{ $project->name }}</h1>
                 <div class="ms-auto flex items-center space-x-3">
-                    {{-- PERBAIKAN: Menambahkan optional() untuk keamanan --}}
                     @can('viewTeamDashboard', $project)
                         <a href="{{ route('projects.team.dashboard', $project) }}" class="inline-block bg-blue-600 text-white font-bold text-sm px-4 py-2 rounded-lg shadow-md hover:bg-blue-700 transition-colors">
                             Lihat Dashboard Tim
@@ -55,6 +117,18 @@
             </div>
         @endif
 
+        @if ($errors->any())
+            <div class="mb-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-r-lg" role="alert">
+                <p class="font-bold">Oops! Terjadi kesalahan saat menambah tugas:</p>
+                <ul class="list-disc list-inside">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
+
         <div class="mb-8">
             <h2 class="text-2xl font-semibold text-gray-700 mb-4">Ringkasan Proyek</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -81,39 +155,37 @@
             <div class="lg:col-span-2 space-y-6">
 
                 <div class="bg-white p-6 rounded-lg shadow">
-                        <h3 class="text-xl font-semibold mb-4 border-b border-gray-200 pb-2 text-gray-800">Tambah Tugas Baru</h3>
-                        <form action="{{ route('tasks.store', $project) }}" method="POST">
-                            @csrf
-                            <div class="space-y-4">
+                    <h3 class="text-xl font-semibold mb-4 border-b border-gray-200 pb-2 text-gray-800">Tambah Tugas Baru</h3>
+                    <form action="{{ route('tasks.store', $project) }}" method="POST">
+                        @csrf
+                        <div class="space-y-4">
+                            <div>
+                                <label for="title" class="block text-sm font-medium text-gray-700">Judul Tugas</label>
+                                <input type="text" name="title" id="title" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" value="{{ old('title') }}" required>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label for="title" class="block text-sm font-medium text-gray-700">Judul Tugas</label>
-                                    <input type="text" name="title" id="title" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
-                                </div>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label for="deadline" class="block text-sm font-medium text-gray-700">Deadline</label>
-                                        <input type="date" name="deadline" id="deadline" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
-                                    </div>
-                                    <div>
-                                        <label for="estimated_hours" class="block text-sm font-medium text-gray-700">Estimasi Jam (Opsional)</label>
-                                        <input type="number" step="0.5" name="estimated_hours" id="estimated_hours" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                                    </div>
+                                    <label for="deadline" class="block text-sm font-medium text-gray-700">Deadline</label>
+                                    <input type="date" name="deadline" id="deadline" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" value="{{ old('deadline') }}" required>
                                 </div>
                                 <div>
-                                    <label for="assignees" class="block text-sm font-medium text-gray-700">Tugaskan Kepada (Bisa lebih dari satu)</label>
-                                    {{-- 1. Ganti 'name' menjadi 'assignees[]' --}}
-                                    {{-- 2. Tambahkan atribut 'multiple' --}}
-                                    <select name="assignees[]" id="assignees" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 h-24" multiple required>
-                                        @foreach($projectMembers as $member)
-                                        <option value="{{ $member->id }}">{{ $member->name }}</option>
-                                        @endforeach
-                                    </select>
-                                    <p class="text-xs text-gray-500 mt-1">Gunakan Ctrl/Cmd + Klik untuk memilih beberapa orang.</p>
+                                    <label for="estimated_hours" class="block text-sm font-medium text-gray-700">Estimasi Jam (Opsional)</label>
+                                    <input type="number" step="0.5" name="estimated_hours" id="estimated_hours" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" value="{{ old('estimated_hours') }}">
                                 </div>
                             </div>
-                            <button type="submit" class="mt-4 inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700">Tambah Tugas</button>
-                        </form>
-                    </div>
+                            <div>
+                                <label for="assignees" class="block text-sm font-medium text-gray-700">Tugaskan Kepada</label>
+                                <select name="assignees[]" id="assignees" class="tom-select-multiple mt-1 block w-full" multiple required>
+                                    @foreach($projectMembers as $member)
+                                    <option value="{{ $member->id }}">{{ $member->name }}</option>
+                                    @endforeach
+                                </select>
+                                <p class="text-xs text-gray-500 mt-1">Ketik nama untuk mencari anggota.</p>
+                            </div>
+                        </div>
+                        <button type="submit" class="mt-4 inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700">Tambah Tugas</button>
+                    </form>
+                </div>
 
                 <div class="bg-white p-6 rounded-lg shadow">
                     <h3 class="text-xl font-semibold mb-4 border-b border-gray-200 pb-2 text-gray-800">Daftar Tugas</h3>
@@ -127,7 +199,6 @@
                                 <div class="flex justify-between items-start">
                                     <div>
                                         <h4 class="font-bold text-lg text-gray-800">{{ $task->title }}</h4>
-                                        {{-- PERBAIKAN: Menambahkan optional() pada assignedTo->name --}}
                                         <p class="text-sm text-gray-600">Untuk: 
                                             <strong>
                                                 @foreach($task->assignees as $assignee)
@@ -199,15 +270,10 @@
                                     </form>
                                 </div>
                                 
-                                <div class="mt-4 border-t border-gray-200 pt-4"
-                                     x-data="{
-                                        showManualForm: false,
-                                        runningTaskForThisUser: {{ optional(Auth::user()->timeLogs()->whereNull('end_time')->first())->task_id ?? 'null' }}
-                                     }"
-                                >
+                                <div class="mt-4 border-t border-gray-200 pt-4" x-data="{ showManualForm: false }">
                                     <h5 class="font-semibold text-sm mb-2 text-gray-700">Pencatatan Waktu</h5>
                                     <div class="flex justify-between items-center text-sm">
-                                        <div>
+                                        <div id="time-log-display-{{ $task->id }}">
                                             @php
                                                 $totalMinutes = $task->timeLogs->sum('duration_in_minutes');
                                                 $hours = floor($totalMinutes / 60);
@@ -217,12 +283,14 @@
                                             <p>Waktu Tercatat: <span class="font-bold text-blue-600">{{ $hours }} jam {{ $minutes }} menit</span></p>
                                         </div>
                                         <div class="flex items-center space-x-2">
-                                            <template x-if="runningTaskForThisUser !== {{ $task->id }}">
-                                                <button @click="startTimer({{ $task->id }})" class="px-3 py-1 bg-green-500 text-white text-xs font-bold rounded hover:bg-green-600" :disabled="runningTaskForThisUser !== null">
+                                            <template x-if="runningTaskGlobal !== {{ $task->id }}">
+                                                {{-- PERBAIKAN 2A: Hapus parameter $event dari pemanggilan fungsi --}}
+                                                <button @click="startTimer({{ $task->id }})" class="px-3 py-1 bg-green-500 text-white text-xs font-bold rounded hover:bg-green-600" :disabled="runningTaskGlobal !== null">
                                                     START
                                                 </button>
                                             </template>
-                                            <template x-if="runningTaskForThisUser === {{ $task->id }}">
+                                            <template x-if="runningTaskGlobal === {{ $task->id }}">
+                                                 {{-- PERBAIKAN 2B: Hapus parameter $event dari pemanggilan fungsi --}}
                                                  <button @click="stopTimer({{ $task->id }})" class="px-3 py-1 bg-red-500 text-white text-xs font-bold rounded hover:bg-red-600 animate-pulse">
                                                     STOP
                                                 </button>
@@ -276,7 +344,6 @@
                                     <div class="space-y-3 mb-4">
                                         @forelse($task->comments as $comment)
                                         <div class="flex items-start space-x-2 text-sm">
-                                            {{-- PERBAIKAN: Menambahkan optional() pada comment->user->name --}}
                                             <span class="font-bold text-gray-800">{{ optional($comment->user)->name ?? 'User Dihapus' }}:</span>
                                             <p class="text-gray-700">{{ $comment->body }}</p>
                                         </div>
@@ -301,23 +368,19 @@
             </div>
 
             <div class="lg:col-span-1 space-y-6">
-
                 <div class="bg-white p-6 rounded-lg shadow">
                     <h3 class="text-xl font-semibold mb-2 text-gray-800">Distribusi Status Tugas</h3>
                     <canvas id="taskStatusChart"></canvas>
                 </div>
-
                 <div class="bg-white p-6 rounded-lg shadow">
                     <h3 class="text-xl font-semibold mb-2 text-gray-800">Detail Proyek</h3>
                     <p class="text-gray-700">{{ $project->description }}</p>
                 </div>
-
                 <div class="bg-white p-6 rounded-lg shadow">
                     <h3 class="text-xl font-semibold mb-2 text-gray-800">Tim Proyek</h3>
                     <ul>
                         <li class="flex items-center space-x-2">
                             <span class="font-bold text-gray-700">Ketua Tim:</span>
-                            {{-- PERBAIKAN: Menambahkan optional() pada project->leader->name --}}
                             <span>{{ optional($project->leader)->name ?? 'N/A' }}</span>
                         </li>
                     </ul>
@@ -328,7 +391,6 @@
                         @endforeach
                     </ul>
                 </div>
-
                 <div class="bg-white p-6 rounded-lg shadow">
                     <h3 class="text-xl font-semibold mb-2 text-gray-800">Beban Tugas Tim</h3>
                     <ul class="space-y-2">
@@ -345,13 +407,11 @@
                         @endforeach
                     </ul>
                 </div>
-
                 <div class="bg-white p-6 rounded-lg shadow">
                     <h3 class="text-xl font-semibold mb-2 text-gray-800">Aktivitas Terbaru</h3>
                     <ul class="space-y-3">
                         @foreach($project->activities->take(10) as $activity)
                             <li class="text-sm text-gray-600 border-b border-gray-200 pb-2">
-                                {{-- PERBAIKAN: Ini adalah perbaikan utama untuk error Anda --}}
                                 <span class="font-semibold text-gray-800">{{ optional($activity->user)->name ?? 'User Telah Dihapus' }}</span>
                                 @switch($activity->description)
                                     @case('created_project')
@@ -382,8 +442,8 @@
         </div>
     </div>
 
+    {{-- PERBAIKAN 3: Hapus tag <script> lama, karena semua logika sudah ada di dalam x-data --}}
     <script>
-        // Inisialisasi Chart.js
         document.addEventListener('DOMContentLoaded', function () {
             const ctx = document.getElementById('taskStatusChart');
             if (ctx) {
@@ -407,39 +467,6 @@
                 });
             }
         });
-
-        // Fungsi untuk Time Tracking Timer
-        function startTimer(taskId) {
-            fetch(`/tasks/${taskId}/time-log/start`, {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'Accept': 'application/json',
-                },
-            })
-            .then(res => res.json())
-            .then(data => {
-                console.log(data.message);
-                window.location.reload();
-            })
-            .catch(error => console.error('Error:', error));
-        }
-
-        function stopTimer(taskId) {
-            fetch(`/tasks/${taskId}/time-log/stop`, {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'Accept': 'application/json',
-                },
-            })
-            .then(res => res.json())
-            .then(data => {
-                console.log(data.message);
-                window.location.reload();
-            })
-            .catch(error => console.error('Error:', error));
-        }
     </script>
 </body>
 </html>

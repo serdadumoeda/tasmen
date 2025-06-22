@@ -43,8 +43,9 @@
 
 {{-- PERBAIKAN 2: Gunakan $potentialMembers, bukan $users --}}
 <div class="mb-4">
-    <label for="members" class="block font-medium text-sm text-gray-700">Anggota Tim (pilih beberapa dengan Ctrl/Cmd + Klik)</label>
-    <select name="members[]" id="members" class="block mt-1 w-full rounded-md shadow-sm border-gray-300 h-40" multiple required>
+    <label for="members" class="block font-medium text-sm text-gray-700">Anggota Tim</label>
+    {{-- MODIFIKASI: tambahkan class 'tom-select-multiple' --}}
+    <select name="members[]" id="members" class="block mt-1 w-full rounded-md shadow-sm border-gray-300 h-40 tom-select-multiple" multiple required>
         @php
             $projectMemberIds = collect(old('members', isset($project) ? $project->members->pluck('id') : []));
         @endphp
@@ -54,4 +55,5 @@
             </option>
         @endforeach
     </select>
+    <p class="text-xs text-gray-500 mt-1">Anda bisa mengetik nama untuk mencari dan menekan backspace untuk menghapus.</p>
 </div>
