@@ -18,19 +18,18 @@ class HierarchicalScope implements Scope
      */
     public function apply(Builder $builder, Model $model)
     {
-        // Hanya terapkan scope jika ada user yang login
         if (Auth::check()) {
             $user = Auth::user();
 
-            // Superadmin dan Eselon I bisa melihat semua data, jadi tidak perlu filter.
-            if ($user->role === 'superadmin' || $user->role === 'Eselon I') {
-                return; // Langsung keluar, jangan terapkan filter apapun.
+            // MODIFIKASI: Hanya superadmin yang bisa melihat semua data tanpa filter.
+            if ($user->role === 'superadmin') {
+                return; // Langsung keluar, jangan terapkan filter.
             }
 
-            // Untuk role lain, dapatkan semua ID bawahan mereka.
+            // Untuk semua role lain (Eselon I, II, Koordinator, dst.),
+            // dapatkan semua ID bawahan mereka.
             $subordinateIds = $user->getAllSubordinateIds();
-            // Tambahkan ID user itu sendiri ke dalam daftar agar bisa melihat proyek milik sendiri
-            $subordinateIds[] = $user->id;
+            $subordinateIds[] = $user->id; // Termasuk diri sendiri
 
             // Terapkan filter utama:
             // User hanya bisa melihat proyek yang 'owner_id'-nya adalah
