@@ -65,39 +65,39 @@ class AdHocTaskController extends Controller
      */
     public function store(Request $request)
     {
-        $user = Auth::user();
+        $user = auth()->user();
         
-        $validatedData = $request->validate([
+        // MODIFIKASI: Perbarui aturan validasi untuk 'status'
+        $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'deadline' => 'required|date',
             'estimated_hours' => 'required|numeric|min:0.1',
-            'status' => 'required|in:pending,in_progress,completed',
+            // Ganti 'in:...' dengan daftar status yang lengkap
+            'status' => 'required|in:pending,in_progress,completed,pending_review',
             'progress' => 'required|integer|min:0|max:100',
-            'file_upload' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx,xls,xlsx|max:5120', // Max 5MB
+            'file_upload' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx,xls,xlsx|max:5120',
         ]);
         
+        // ... sisa kode di dalam method store tetap sama ...
         $assigneeIds = [];
-
         if ($user->canManageUsers()) {
             $request->validate(['assignees' => 'required|array', 'assignees.*' => 'exists:users,id']);
             $assigneeIds = $request->assignees;
         } else {
-            // Staf hanya bisa menugaskan ke diri sendiri
             $assigneeIds[] = $user->id;
         }
 
-        // Simpan data tugas utama terlebih dahulu untuk mendapatkan ID
         $task = new Task();
-        $task->fill($validatedData);
-        $task->project_id = null; // Tanda sebagai tugas ad-hoc
+        $task->fill($validated);
+        $task->project_id = null;
+        $task->status = $request->status;
+        $task->progress = $request->progress;
         $task->save();
         
-        // Proses file lampiran SETELAH tugas disimpan
         if ($request->hasFile('file_upload')) {
             $file = $request->file('file_upload');
             $path = $file->store('attachments', 'public');
-
             $task->attachments()->create([
                 'user_id' => $user->id,
                 'filename' => $file->getClientOriginalName(),
@@ -105,18 +105,12 @@ class AdHocTaskController extends Controller
             ]);
         }
         
-        // Lampirkan penerima tugas
         $task->assignees()->sync($assigneeIds);
-
-        // Kirim notifikasi
         $usersToNotify = User::find($assigneeIds);
         foreach ($usersToNotify as $recipient) {
-            if ($recipient) {
-                $recipient->notify(new TaskAssigned($task));
-            }
+            $recipient->notify(new \App\Notifications\TaskAssigned($task));
         }
 
-        // Kembalikan ke halaman daftar setelah semua selesai
-        return redirect()->route('adhoc-tasks.index')->with('success', 'Tugas harian berhasil ditambahkan!');
+        return redirect()->route('tasks.edit', $task)->with('success', 'Tugas berhasil dibuat. Anda sekarang bisa menambahkan lampiran.');
     }
 }

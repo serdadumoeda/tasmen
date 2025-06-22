@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Gate;
 use App\Notifications\TaskAssigned;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Auth; 
+use App\Notifications\TaskRequiresApproval; 
 
 class TaskController extends Controller
 {
@@ -63,6 +64,7 @@ class TaskController extends Controller
 
     public function update(Request $request, Task $task)
     {
+        $user = auth()->user();
         $this->authorize('update', $task);
 
         $validated = $request->validate([
@@ -75,12 +77,52 @@ class TaskController extends Controller
             'assignees' => 'required|array',
             'assignees.*' => 'exists:users,id',
         ]);
-        
-        $task->update($request->except('assignees'));
+
+        $newStatus = $request->status;
+        $newProgress = $request->progress;
+
+        // LOGIKA INTI ALUR PERSETUJUAN
+        try {
+            // Kasus 1: Staf menyelesaikan tugas (mengajukan untuk review)
+            if ($newProgress == 100 && $task->status != 'completed' && !$this->authorizer->isAllowed('approve', $task)) {
+                $newStatus = 'pending_review';
+            
+                // Kirim notifikasi ke pimpinan
+                if ($task->project && $task->project->leader) {
+                    $task->project->leader->notify(new TaskRequiresApproval($task, $user));
+                }
+                // Tambahkan logika notifikasi untuk atasan tugas ad-hoc jika perlu
+            }
+            
+            // Kasus 2: Pimpinan melakukan review (menyetujui atau menolak)
+            if ($task->status === 'pending_review' && $this->authorizer->isAllowed('approve', $task)) {
+                // Pimpinan hanya boleh mengubah ke 'completed' atau kembali ke 'in_progress'
+                if (!in_array($newStatus, ['completed', 'in_progress'])) {
+                    return back()->with('error', 'Aksi tidak valid untuk tugas yang sedang direview.');
+                }
+                // Jika ditolak (kembali in_progress), progress jangan 100%
+                if ($newStatus === 'in_progress' && $newProgress == 100) {
+                    $newProgress = 90; // Set progress kembali ke 90%
+                }
+            }
+        } catch (\Exception $e) {
+            // Tangani jika authorizer tidak ditemukan
+        }
+
+
+        // Update tugas dengan data yang sudah diproses
+        $task->update([
+            'title' => $validated['title'],
+            'description' => $validated['description'],
+            'deadline' => $validated['deadline'],
+            'estimated_hours' => $validated['estimated_hours'],
+            'status' => $newStatus,
+            'progress' => $newProgress,
+        ]);
         
         $task->assignees()->sync($request->assignees);
 
-        // MODIFIKASI: Logika redirect cerdas
+        // Redirect kembali sesuai jenis tugas
         if ($task->project_id) {
             return redirect()->route('projects.show', $task->project)->with('success', 'Tugas berhasil diperbarui!');
         } else {
