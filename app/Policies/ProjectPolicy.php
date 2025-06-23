@@ -9,50 +9,39 @@ use Illuminate\Auth\Access\Response;
 class ProjectPolicy
 {
     /**
-     * MODIFIKASI: Method 'before' tidak lagi diperlukan di sini karena sudah ditangani
-     * oleh AppServiceProvider yang hanya meloloskan superadmin.
+     * Helper function terpusat untuk memeriksa hak akses ke sebuah proyek.
      */
-
-    /**
-     * Helper function untuk memeriksa apakah proyek berada dalam hirarki pengguna.
-     * Ini adalah satu-satunya sumber kebenaran untuk kebijakan ini.
-     */
-    private function isWithinHierarchy(User $user, Project $project): bool
+    private function hasAccess(User $user, Project $project): bool
     {
-        // Jika pimpinan, periksa apakah pemilik proyek adalah bawahan atau dirinya sendiri.
-        if ($user->canManageUsers()) {
-             // Fallback untuk proyek lama yang mungkin tidak punya owner
-            if (!$project->owner) {
-                return $user->id === $project->leader_id;
-            }
-            return $user->id === $project->owner_id || $project->owner->isSubordinateOf($user);
+        // Aturan 1: User adalah pemilik proyek.
+        if ($project->owner_id === $user->id) {
+            return true;
         }
 
-        // Jika bukan pimpinan (misal: Staf), mereka hanya bisa melihat jika mereka adalah anggota.
-        return $project->members->contains($user);
-    }
+        // Aturan 2: User adalah ketua tim proyek.
+        if ($project->leader_id === $user->id) {
+            return true;
+        }
 
-    /**
-     * Tentukan apakah user bisa melihat daftar proyek.
-     * Selalu true, karena filtering utama dilakukan oleh HierarchicalScope.
-     */
-    public function viewAny(User $user): bool
-    {
-        return true;
+        // Aturan 3: User adalah atasan langsung dari pemilik proyek.
+        if ($project->owner && $project->owner->isSubordinateOf($user)) {
+            return true;
+        }
+        
+        // Aturan 4: User adalah anggota tim proyek (pengecekan terakhir ke database).
+        return $project->members()->where('user_id', $user->id)->exists();
     }
 
     /**
      * Tentukan apakah user bisa melihat detail proyek.
-     * Aturan: Proyek berada dalam hirarki pimpinan, atau user adalah anggota tim.
      */
     public function view(User $user, Project $project): bool
     {
-        return $this->isWithinHierarchy($user, $project);
+        return $this->hasAccess($user, $project);
     }
 
     /**
      * Tentukan apakah user bisa membuat proyek baru.
-     * Aturan tidak berubah: Hanya pimpinan yang bisa.
      */
     public function create(User $user): bool
     {
@@ -61,37 +50,19 @@ class ProjectPolicy
 
     /**
      * Tentukan apakah user bisa mengupdate proyek.
-     * Aturan baru: Proyek berada dalam hirarki pimpinan.
+     * Hanya pemilik dan ketua tim yang bisa edit.
      */
     public function update(User $user, Project $project): bool
     {
-        return $this->isWithinHierarchy($user, $project);
-    }
-
-    /**
-     * Tentukan apakah user bisa mengelola anggota tim.
-     * Aturan baru: Proyek berada dalam hirarki pimpinan.
-     */
-    public function manageMembers(User $user, Project $project): bool
-    {
-        return $this->isWithinHierarchy($user, $project);
+        return $project->owner_id === $user->id || $project->leader_id === $user->id;
     }
 
     /**
      * Tentukan apakah user bisa menghapus proyek.
-     * Aturan baru: Proyek berada dalam hirarki pimpinan.
+     * Hanya pemilik asli yang bisa menghapus.
      */
     public function delete(User $user, Project $project): bool
     {
-        return $this->isWithinHierarchy($user, $project);
-    }
-
-    /**
-     * Tentukan apakah user bisa melihat dasbor tim.
-     * Aturan baru: Proyek berada dalam hirarki pimpinan.
-     */
-    public function viewTeamDashboard(User $user, Project $project): bool
-    {
-        return $this->isWithinHierarchy($user, $project);
+        return $project->owner_id === $user->id;
     }
 }
