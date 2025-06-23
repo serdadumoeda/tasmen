@@ -245,4 +245,59 @@ class ProjectController extends Controller
         $pdf = Pdf::loadView('reports.project-summary', $data);
         return $pdf->download('laporan-proyek-' . $project->name . '-' . now()->format('Y-m-d') . '.pdf');
     }
+
+    public function showKanban(Project $project)
+    {
+        $this->authorize('view', $project);
+
+        $tasks = $project->tasks()->with('assignees')->get();
+
+        // Kelompokkan tugas berdasarkan status
+        $groupedTasks = [
+            'pending' => $tasks->where('progress', '==', 0)->where('pending_review', false),
+            'in_progress' => $tasks->where('progress', '>', 0)->where('progress', '<', 100)->where('pending_review', false),
+            'for_review' => $tasks->where('pending_review', true),
+            'completed' => $tasks->where('progress', '==', 100)->where('pending_review', false),
+        ];
+
+        return view('projects.kanban', compact('project', 'groupedTasks'));
+    }
+
+    public function showCalendar(Project $project)
+    {
+        $this->authorize('view', $project);
+        return view('projects.calendar', compact('project'));
+    }
+
+    public function tasksJson(Project $project)
+    {
+        $this->authorize('view', $project);
+
+        $tasks = $project->tasks()
+            ->whereNotNull('deadline')
+            ->get(['id', 'name', 'deadline', 'progress', 'project_id']);
+
+        $events = $tasks->map(function ($task) {
+            $isOverdue = $task->deadline < now() && $task->progress < 100;
+            $isCompleted = $task->progress == 100;
+            
+            // Logika pewarnaan event
+            $color = '#3b82f6'; // Biru untuk tugas normal
+            if ($isCompleted) {
+                $color = '#22c55e'; // Hijau untuk selesai
+            } elseif ($isOverdue) {
+                $color = '#ef4444'; // Merah untuk terlambat
+            }
+
+            return [
+                'title' => $task->name,
+                'start' => $task->deadline,
+                'url'   => route('projects.show', $task->project_id) . '#task-' . $task->id,
+                'color' => $color,
+                'borderColor' => $color
+            ];
+        });
+
+        return response()->json($events);
+    }
 }

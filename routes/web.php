@@ -83,6 +83,11 @@ Route::middleware('auth')->group(function () {
         Route::get('/create', 'create')->name('create');
         Route::post('/', 'store')->name('store');
     });
+    Route::post('/tasks/{task}/approve', [\App\Http\Controllers\TaskController::class, 'approve'])->name('tasks.approve')->middleware('auth');
+    Route::get('/projects/{project}/kanban', [\App\Http\Controllers\ProjectController::class, 'showKanban'])->name('projects.kanban')->middleware('auth');
+    Route::post('/tasks/{task}/update-status', [\App\Http\Controllers\TaskController::class, 'updateStatus'])->name('tasks.update-status')->middleware('auth');
+    Route::get('/projects/{project}/calendar', [\App\Http\Controllers\ProjectController::class, 'showCalendar'])->name('projects.calendar')->middleware('auth');
+Route::get('/projects/{project}/tasks-json', [\App\Http\Controllers\ProjectController::class, 'tasksJson'])->name('projects.tasks-json')->middleware('auth');
 });
 
 require __DIR__.'/auth.php';

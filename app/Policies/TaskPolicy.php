@@ -53,7 +53,7 @@ class TaskPolicy
                 }
             }
         }
-        return false;
+        return $user->id === optional($task->project)->owner_id || $user->id === optional($task->project)->leader_id;
     }
 
     /**
@@ -64,4 +64,6 @@ class TaskPolicy
     {
         return $this->update($user, $task);
     }
+
+
 }

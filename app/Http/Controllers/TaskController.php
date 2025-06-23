@@ -64,70 +64,50 @@ class TaskController extends Controller
 
     public function update(Request $request, Task $task)
     {
-        $user = auth()->user();
         $this->authorize('update', $task);
 
         $validated = $request->validate([
-            'title' => 'required|string|max:255',
+            'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'deadline' => 'required|date',
+            'deadline' => 'nullable|date',
             'progress' => 'required|integer|min:0|max:100',
-            'status' => 'required|string',
-            'estimated_hours' => 'nullable|numeric|min:0',
-            'assignees' => 'required|array',
+            'priority' => 'required|in:low,medium,high',
+            'assignees' => 'nullable|array',
             'assignees.*' => 'exists:users,id',
         ]);
 
-        $newStatus = $request->status;
-        $newProgress = $request->progress;
-
-        // LOGIKA INTI ALUR PERSETUJUAN
-        try {
-            // Kasus 1: Staf menyelesaikan tugas (mengajukan untuk review)
-            if ($newProgress == 100 && $task->status != 'completed' && !$this->authorizer->isAllowed('approve', $task)) {
-                $newStatus = 'pending_review';
-            
-                // Kirim notifikasi ke pimpinan
-                if ($task->project && $task->project->leader) {
-                    $task->project->leader->notify(new TaskRequiresApproval($task, $user));
-                }
-                // Tambahkan logika notifikasi untuk atasan tugas ad-hoc jika perlu
-            }
-            
-            // Kasus 2: Pimpinan melakukan review (menyetujui atau menolak)
-            if ($task->status === 'pending_review' && $this->authorizer->isAllowed('approve', $task)) {
-                // Pimpinan hanya boleh mengubah ke 'completed' atau kembali ke 'in_progress'
-                if (!in_array($newStatus, ['completed', 'in_progress'])) {
-                    return back()->with('error', 'Aksi tidak valid untuk tugas yang sedang direview.');
-                }
-                // Jika ditolak (kembali in_progress), progress jangan 100%
-                if ($newStatus === 'in_progress' && $newProgress == 100) {
-                    $newProgress = 90; // Set progress kembali ke 90%
-                }
-            }
-        } catch (\Exception $e) {
-            // Tangani jika authorizer tidak ditemukan
-        }
-
-
-        // Update tugas dengan data yang sudah diproses
-        $task->update([
-            'title' => $validated['title'],
-            'description' => $validated['description'],
-            'deadline' => $validated['deadline'],
-            'estimated_hours' => $validated['estimated_hours'],
-            'status' => $newStatus,
-            'progress' => $newProgress,
-        ]);
+        // --- LOGIKA ALUR PERSETUJUAN DIMULAI DI SINI ---
+        $user = auth()->user();
         
-        $task->assignees()->sync($request->assignees);
+        // Jika progres diubah menjadi 100%
+        if ((int)$validated['progress'] === 100) {
+            // Cek apakah pengguna BUKAN pimpinan proyek atau pemilik proyek
+            if ($user->id !== $task->project->leader_id && $user->id !== $task->project->owner_id) {
+                // Jika ya, maka set tugas sebagai 'pending_review' dan JANGAN ubah statusnya.
+                $validated['pending_review'] = true;
+                
+                // Kirim notifikasi ke pimpinan proyek
+                if ($task->project->leader) {
+                    $task->project->leader->notify(new \App\Notifications\TaskRequiresApproval($task));
+                }
 
-        // Redirect kembali sesuai jenis tugas
-        if ($task->project_id) {
-            return redirect()->route('projects.show', $task->project)->with('success', 'Tugas berhasil diperbarui!');
+            } else {
+                // Jika yang mengubah adalah pimpinan, langsung setujui.
+                $validated['pending_review'] = false;
+            }
         } else {
-            return redirect()->route('adhoc-tasks.index')->with('success', 'Tugas harian berhasil diperbarui!');
+            // Jika progres < 100, pastikan status review juga false.
+            $validated['pending_review'] = false;
         }
+        // --- LOGIKA ALUR PERSETUJUAN SELESAI ---
+        
+        $task->update($validated);
+
+        if ($request->has('assignees')) {
+            $task->assignees()->sync($request->input('assignees', []));
+        }
+
+        return redirect()->back()->with('success', 'Tugas berhasil diperbarui.');
     }
 
     public function destroy(Task $task)
@@ -144,5 +124,67 @@ class TaskController extends Controller
         } else {
             return redirect()->route('adhoc-tasks.index')->with('success', 'Tugas harian berhasil dihapus.');
         }
+    }
+
+    public function approve(Task $task)
+    {
+        // Otorisasi: Hanya user yang berhak bisa menyetujui
+        $this->authorize('approve', $task);
+
+        // Setujui tugasnya
+        $task->update([
+            'progress' => 100,
+            'pending_review' => false,
+        ]);
+
+        // Beri notifikasi ke anggota tim bahwa tugas mereka telah disetujui (opsional)
+        // foreach ($task->assignees as $assignee) {
+        //     $assignee->notify(new \App\Notifications\TaskApproved($task));
+        // }
+
+        return redirect()->back()->with('success', 'Tugas telah disetujui dan diselesaikan.');
+    }
+
+    public function updateStatus(Request $request, Task $task)
+    {
+        $this->authorize('update', $task);
+
+        $request->validate([
+            'status' => 'required|string|in:pending,in_progress,for_review,completed',
+        ]);
+
+        $status = $request->input('status');
+        $updateData = [];
+
+        // Logika baru yang lebih eksplisit untuk setiap status
+        switch ($status) {
+            case 'pending':
+                $updateData = ['progress' => 0, 'pending_review' => false];
+                break;
+            case 'in_progress':
+                // Jika tugas belum pernah dikerjakan (progres 0), set ke 10%. Jika sudah, biarkan.
+                $updateData = ['progress' => $task->progress > 0 ? $task->progress : 10, 'pending_review' => false];
+                break;
+            case 'for_review':
+                // Ini memperbaiki masalah "tidak bisa diletakkan di review".
+                // Jika digeser ke 'Review', set progres ke 100% dan tandai untuk direview.
+                $updateData = ['progress' => 100, 'pending_review' => true];
+                break;
+            case 'completed':
+                 // Hanya pimpinan yang bisa langsung geser ke 'completed'
+                if (auth()->id() === $task->project->leader_id || auth()->id() === $task->project->owner_id) {
+                    $updateData = ['progress' => 100, 'pending_review' => false];
+                } else {
+                    // Jika staf yang menggeser, akan tetap masuk ke 'for_review' sebagai pengajuan.
+                    $updateData = ['progress' => 100, 'pending_review' => true];
+                }
+                break;
+        }
+
+        if (!empty($updateData)) {
+            $task->update($updateData);
+        }
+
+        return response()->json(['message' => 'Status tugas berhasil diperbarui.']);
     }
 }
