@@ -14,6 +14,7 @@ use App\Http\Controllers\SubTaskController;
 use App\Http\Controllers\BudgetItemController;
 use App\Http\Controllers\SpecialAssignmentController;
 use App\Http\Controllers\AdHocTaskController;
+use App\Http\Controllers\ExecutiveSummaryController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -87,7 +88,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/projects/{project}/kanban', [\App\Http\Controllers\ProjectController::class, 'showKanban'])->name('projects.kanban')->middleware('auth');
     Route::post('/tasks/{task}/update-status', [\App\Http\Controllers\TaskController::class, 'updateStatus'])->name('tasks.update-status')->middleware('auth');
     Route::get('/projects/{project}/calendar', [\App\Http\Controllers\ProjectController::class, 'showCalendar'])->name('projects.calendar')->middleware('auth');
-Route::get('/projects/{project}/tasks-json', [\App\Http\Controllers\ProjectController::class, 'tasksJson'])->name('projects.tasks-json')->middleware('auth');
+    Route::get('/projects/{project}/tasks-json', [\App\Http\Controllers\ProjectController::class, 'tasksJson'])->name('projects.tasks-json')->middleware('auth');
+    Route::get('/executive-summary', [ExecutiveSummaryController::class, 'index'])->name('executive.summary');
 });
 
 require __DIR__.'/auth.php';

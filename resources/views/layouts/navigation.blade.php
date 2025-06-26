@@ -9,9 +9,15 @@
                 </div>
 
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
+                @if(Auth::user()->isTopLevelManager())
+                    <x-nav-link :href="route('executive.summary')" :active="request()->routeIs('executive.summary')">
+                        {{ __('Executive Summary') }}
+                    </x-nav-link>
+                @else
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         {{ __('Dashboard') }}
                     </x-nav-link>
+                @endif
 
                     {{-- PERBAIKAN: Mengembalikan link Tugas Harian yang hilang --}}
                     <x-nav-link :href="route('adhoc-tasks.index')" :active="request()->routeIs('adhoc-tasks.*')">
