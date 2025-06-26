@@ -31,7 +31,10 @@
             <x-input-label for="role" :value="__('Role / Jabatan')" />
             <select name="role" id="role" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
                 @php
-                    $roles = ['superadmin', 'Eselon I', 'Eselon II', 'Koordinator', 'Ketua Tim', 'Sub Koordinator', 'Staff'];
+                    // --- BAGIAN YANG DIPERBAIKI ---
+                    // 'Ketua Tim' telah dihapus dari daftar peran yang valid.
+                    // Penulisan diseragamkan dengan huruf kapital di awal agar konsisten.
+                    $roles = ['Superadmin', 'Eselon I', 'Eselon II', 'Koordinator', 'Sub Koordinator', 'Staf'];
                 @endphp
                 <option value="">-- Pilih Role --</option>
                 @foreach($roles as $role)

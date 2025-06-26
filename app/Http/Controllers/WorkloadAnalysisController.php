@@ -3,75 +3,61 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use App\Models\Task;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class WorkloadAnalysisController extends Controller
 {
     public function index()
     {
-        $currentUser = auth()->user();
-        if (!$currentUser->isTopLevelManager()) {
+        $manager = Auth::user();
+
+        if (!$manager->isTopLevelManager()) {
             abort(403, 'Anda tidak memiliki hak akses untuk halaman ini.');
         }
-        
-        // MODIFIKASI: Kita akan memuat relasi tugas secara terpisah untuk akurasi
-        $relations = [
-            'specialAssignments' => fn($q) => $q->where('status', 'AKTIF')
-        ];
 
-        $loadRecursively = function ($query) use (&$loadRecursively, $relations) {
-            return $query->with(array_merge($relations, ['children' => $loadRecursively]));
-        };
-
-        $userQuery = User::query();
-
-        if ($currentUser->role === 'Eselon II') {
-            $topLevelUsers = $userQuery->where('id', $currentUser->id)->with(['children' => $loadRecursively] + $relations)->get();
+        if ($manager->role === 'Superadmin') {
+            $subordinates = User::where('id', '!=', $manager->id)->get();
         } else {
-            $topLevelUsers = $userQuery->whereNull('parent_id')->with(['children' => $loadRecursively] + $relations)->get();
+            $subordinates = $manager->getAllSubordinates();
         }
-
-        // BARU: Dapatkan semua ID pengguna dalam hirarki untuk satu query efisien
-        $allUserIds = $this->fetchAllUserIdsFromCollection($topLevelUsers);
-
-        // BARU: Hitung total jam tugas (proyek & ad-hoc) untuk semua pengguna dalam satu query
-        $tasksHoursByUser = Task::whereIn('status', ['pending', 'in_progress'])
-            ->whereHas('assignees', function($q) use ($allUserIds) {
-                $q->whereIn('user_id', $allUserIds);
-            })
-            ->join('task_user', 'tasks.id', '=', 'task_user.task_id')
-            ->selectRaw('task_user.user_id, sum(tasks.estimated_hours) as total_hours')
-            ->groupBy('task_user.user_id')
-            ->pluck('total_hours', 'user_id');
-
-        // BARU: "Suntikkan" data jam kerja ke setiap model user
-        $this->injectTaskHours($topLevelUsers, $tasksHoursByUser);
         
-        return view('workload-analysis', compact('topLevelUsers'));
+        return view('workload-analysis.index', compact('manager', 'subordinates'));
     }
 
-    // BARU: Helper function untuk mengambil semua ID user secara rekursif
-    private function fetchAllUserIdsFromCollection($users)
+    /**
+     * Update penilaian perilaku kerja oleh atasan.
+     * Logika otorisasi diubah sesuai aturan baru.
+     */
+    public function updateBehavior(Request $request, User $user)
     {
-        $ids = [];
-        foreach ($users as $user) {
-            $ids[] = $user->id;
-            if ($user->children->isNotEmpty()) {
-                $ids = array_merge($ids, $this->fetchAllUserIdsFromCollection($user->children));
-            }
-        }
-        return array_unique($ids);
-    }
+        $manager = Auth::user();
+        $canRate = false;
 
-    // BARU: Helper function untuk "menyuntikkan" data jam ke model user
-    private function injectTaskHours($users, $hoursData)
-    {
-        foreach ($users as $user) {
-            $user->total_assigned_hours = $hoursData->get($user->id, 0);
-            if ($user->children->isNotEmpty()) {
-                $this->injectTaskHours($user->children, $hoursData);
+        // Aturan 1: Eselon I bisa menilai Eselon II
+        if ($manager->role === 'Eselon I' && $user->role === 'Eselon II' && $user->parent_id === $manager->id) {
+            $canRate = true;
+        }
+
+        // Aturan 2: Eselon II bisa menilai SEMUA di bawah hierarkinya
+        if ($manager->role === 'Eselon II') {
+            // Cek apakah user yang dinilai ada dalam daftar bawahan si manajer
+            if ($manager->getAllSubordinateIds()->contains($user->id)) {
+                $canRate = true;
             }
         }
+        
+        // Jika tidak memenuhi syarat, tolak akses
+        if (!$canRate) {
+            abort(403, 'Anda tidak memiliki hak untuk menilai pegawai ini.');
+        }
+
+        $validated = $request->validate([
+            'work_behavior_rating' => 'required|string|in:Diatas Ekspektasi,Sesuai Ekspektasi,Dibawah Ekspektasi',
+        ]);
+
+        $user->update($validated);
+
+        return back()->with('success', "Penilaian perilaku kerja untuk {$user->name} berhasil diperbarui.");
     }
 }

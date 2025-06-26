@@ -54,8 +54,8 @@ Route::middleware('auth')->group(function () {
 
     Route::resource('users', UserController::class);
 
-    Route::get('/workload-analysis', [WorkloadAnalysisController::class, 'index'])
-    ->name('workload.analysis');
+    Route::get('/workload-analysis', [WorkloadAnalysisController::class, 'index'])->name('workload.analysis');
+    Route::patch('/workload-analysis/{user}/update-behavior', [WorkloadAnalysisController::class, 'updateBehavior'])->name('workload.updateBehavior');
 
     Route::prefix('tasks/{task}/time-log')->name('timelogs.')->group(function () {
         Route::post('/start', [TimeLogController::class, 'start'])->name('start');

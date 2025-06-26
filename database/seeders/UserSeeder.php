@@ -4,9 +4,8 @@ namespace Database\Seeders;
 
 use App\Models\User;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Schema; // <-- TAMBAHKAN BARIS INI
 
 class UserSeeder extends Seeder
 {
@@ -17,7 +16,7 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        // PERBAIKAN: Gunakan metode Laravel yang kompatibel dengan banyak database
+        // Mengosongkan tabel user dengan aman
         Schema::disableForeignKeyConstraints();
         User::truncate();
         Schema::enableForeignKeyConstraints();
@@ -27,7 +26,7 @@ class UserSeeder extends Seeder
             'name' => 'Super Admin',
             'email' => 'superadmin@example.com',
             'password' => Hash::make('password'),
-            'role' => 'superadmin',
+            'role' => 'Superadmin', // 'superadmin' diubah menjadi 'Superadmin' agar konsisten
             'parent_id' => null,
         ]);
 
@@ -37,7 +36,7 @@ class UserSeeder extends Seeder
             'email' => 'kepala.badan@example.com',
             'password' => Hash::make('password'),
             'role' => 'Eselon I',
-            'parent_id' => null,
+            'parent_id' => null, // Kepala Badan tidak memiliki atasan di sistem ini
         ]);
 
         // 3. ESELON II (Di bawah Kepala Badan)
@@ -54,13 +53,14 @@ class UserSeeder extends Seeder
         $koorKeu = User::create(['name' => 'Koordinator Bidang Pengelolaan Keuangan', 'email' => 'koor.keu@example.com', 'password' => Hash::make('password'), 'role' => 'Koordinator', 'parent_id' => $sekban->id]);
         $koorSDMA = User::create(['name' => 'Koord. Bid. Pengelolaan SDMA, Ortala, RB, P2UUKS, Persuratan, dan Kearsipan', 'email' => 'koor.sdma@example.com', 'password' => Hash::make('password'), 'role' => 'Koordinator', 'parent_id' => $sekban->id]);
 
-        // Ketua Tim (di bawah Koordinator)
-        User::create(['name' => 'Ketua Tim Rencana dan Program', 'email' => 'k팀.renprogev@example.com', 'password' => Hash::make('password'), 'role' => 'Ketua Tim', 'parent_id' => $koorRenprogev->id]);
-        User::create(['name' => 'Ketua Tim Anggaran', 'email' => 'k팀.keu@example.com', 'password' => Hash::make('password'), 'role' => 'Ketua Tim', 'parent_id' => $koorKeu->id]);
+        // --- MODIFIKASI: 'Ketua Tim' diubah menjadi peran struktural ---
+        User::create(['name' => 'Analis (Tim Renprogev)', 'email' => 'tim.renprogev@example.com', 'password' => Hash::make('password'), 'role' => 'Staf', 'parent_id' => $koorRenprogev->id]);
+        User::create(['name' => 'Analis (Tim Keuangan)', 'email' => 'tim.keu@example.com', 'password' => Hash::make('password'), 'role' => 'Staf', 'parent_id' => $koorKeu->id]);
         
         // Sub Koordinator (di bawah Koordinator masing-masing)
         User::create(['name' => 'Kepala Sub Bagian Rumah Tangga dan Perlengkapan', 'email' => 'subbag.rt@example.com', 'password' => Hash::make('password'), 'role' => 'Sub Koordinator', 'parent_id' => $koorUmum->id]);
         User::create(['name' => 'Sub Koord. Bidang Penyusunan Rencana, Program, dan Anggaran', 'email' => 'subkoor.renprog@example.com', 'password' => Hash::make('password'), 'role' => 'Sub Koordinator', 'parent_id' => $koorRenprogev->id]);
+        // ... (sisa Sub Koordinator tetap sama)
         User::create(['name' => 'Sub Koord. Bidang Evaluasi dan Pelaporan', 'email' => 'subkoor.evlap@example.com', 'password' => Hash::make('password'), 'role' => 'Sub Koordinator', 'parent_id' => $koorRenprogev->id]);
         User::create(['name' => 'Sub Koord. Bidang Pelaksanaan Anggaran', 'email' => 'subkoor.pelaksanaan@example.com', 'password' => Hash::make('password'), 'role' => 'Sub Koordinator', 'parent_id' => $koorKeu->id]);
         User::create(['name' => 'Sub Koord. Bidang Perbendaharaan dan Tata Usaha Keuangan', 'email' => 'subkoor.perbendaharaan@example.com', 'password' => Hash::make('password'), 'role' => 'Sub Koordinator', 'parent_id' => $koorKeu->id]);
@@ -79,9 +79,11 @@ class UserSeeder extends Seeder
         $koorMakro = User::create(['name' => 'Koordinator Bid. Perencanaan Ketenagakerjaan Makro', 'email' => 'koor.makro@example.com', 'password' => Hash::make('password'), 'role' => 'Koordinator', 'parent_id' => $kapusren->id]);
         $koorMikro = User::create(['name' => 'Koordinator Bid. Perencanaan Ketenagakerjaan Mikro', 'email' => 'koor.mikro@example.com', 'password' => Hash::make('password'), 'role' => 'Koordinator', 'parent_id' => $kapusren->id]);
         
-        User::create(['name' => 'Ketua Tim Perencanaan Makro', 'email' => 'k팀.makro@example.com', 'password' => Hash::make('password'), 'role' => 'Ketua Tim', 'parent_id' => $koorMakro->id]);
+        // --- MODIFIKASI: 'Ketua Tim' diubah menjadi peran struktural ---
+        User::create(['name' => 'Analis (Tim Makro)', 'email' => 'tim.makro@example.com', 'password' => Hash::make('password'), 'role' => 'Staf', 'parent_id' => $koorMakro->id]);
 
         User::create(['name' => 'Sub Koord. Bid. Pengukuran Pembangunan Ketenagakerjaan', 'email' => 'subkoor.pengukuran@example.com', 'password' => Hash::make('password'), 'role' => 'Sub Koordinator', 'parent_id' => $koorPengukuran->id]);
+        // ... (sisa Sub Koordinator tetap sama)
         User::create(['name' => 'Sub Koord. Bid. Evaluasi Pembangunan Ketenagakerjaan', 'email' => 'subkoor.evaluasi@example.com', 'password' => Hash::make('password'), 'role' => 'Sub Koordinator', 'parent_id' => $koorPengukuran->id]);
         User::create(['name' => 'Sub Koord. Bid. Perencanaan Ketenagakerjaan Nasional', 'email' => 'subkoor.rennas@example.com', 'password' => Hash::make('password'), 'role' => 'Sub Koordinator', 'parent_id' => $koorMakro->id]);
         User::create(['name' => 'Sub Koord. Bid. Perencanaan Ketenagakerjaan Daerah', 'email' => 'subkoor.renda@example.com', 'password' => Hash::make('password'), 'role' => 'Sub Koordinator', 'parent_id' => $koorMakro->id]);
@@ -97,10 +99,12 @@ class UserSeeder extends Seeder
         $koorPengembanganSI = User::create(['name' => 'Koordinator Bid. Pengembangan Sistem Informasi Ketenagakerjaan', 'email' => 'koor.pengembangansi@example.com', 'password' => Hash::make('password'), 'role' => 'Koordinator', 'parent_id' => $kapusdatik->id]);
         $koorInfra = User::create(['name' => 'Koordinator Bid. Pengembangan Infrastuktur Teknologi Ketenagakerjaan serta Keamanan Datik', 'email' => 'koor.infra@example.com', 'password' => Hash::make('password'), 'role' => 'Koordinator', 'parent_id' => $kapusdatik->id]);
 
-        User::create(['name' => 'Ketua Tim Sistem Informasi', 'email' => 'k팀.si@example.com', 'password' => Hash::make('password'), 'role' => 'Ketua Tim', 'parent_id' => $koorPengembanganSI->id]);
-        User::create(['name' => 'Ketua Tim Infrastruktur', 'email' => 'k팀.infra@example.com', 'password' => Hash::make('password'), 'role' => 'Ketua Tim', 'parent_id' => $koorInfra->id]);
+        // --- MODIFIKASI: 'Ketua Tim' diubah menjadi peran struktural ---
+        User::create(['name' => 'Programmer (Tim SI)', 'email' => 'tim.si@example.com', 'password' => Hash::make('password'), 'role' => 'Staf', 'parent_id' => $koorPengembanganSI->id]);
+        User::create(['name' => 'Network Engineer (Tim Infra)', 'email' => 'tim.infra@example.com', 'password' => Hash::make('password'), 'role' => 'Staf', 'parent_id' => $koorInfra->id]);
 
         User::create(['name' => 'Sub Koord. Bid. Penyediaan Data Ketenagakerjaan', 'email' => 'subkoor.penyediaandata@example.com', 'password' => Hash::make('password'), 'role' => 'Sub Koordinator', 'parent_id' => $koorData->id]);
+        // ... (sisa Sub Koordinator tetap sama)
         User::create(['name' => 'Sub Koord. Bid. Analisis Data Ketenagakerjaan', 'email' => 'subkoor.analisisdata@example.com', 'password' => Hash::make('password'), 'role' => 'Sub Koordinator', 'parent_id' => $koorData->id]);
         User::create(['name' => 'Sub Koord. Bid. Penyajian Data dan Informasi Ketenagakerjaan', 'email' => 'subkoor.penyajiandata@example.com', 'password' => Hash::make('password'), 'role' => 'Sub Koordinator', 'parent_id' => $koorDiseminasi->id]);
         User::create(['name' => 'Sub Koord. Bid. Pelayanan Data dan Informasi Ketenagakerjaan', 'email' => 'subkoor.pelayanandata@example.com', 'password' => Hash::make('password'), 'role' => 'Sub Koordinator', 'parent_id' => $koorDiseminasi->id]);
@@ -117,10 +121,12 @@ class UserSeeder extends Seeder
         $koorWasnaker = User::create(['name' => 'Koordinator Bid. Pengembangan Kebijakan Bid. Wasnaker, K3, HI Jamsos', 'email' => 'koor.wasnaker@example.com', 'password' => Hash::make('password'), 'role' => 'Koordinator', 'parent_id' => $kapusbangjak->id]);
         $koorEvpro = User::create(['name' => 'Koordinator Bid. Pengembangan Kebijakan Bid. Evaluasi Program Prioritas Nasional dan Kementerian', 'email' => 'koor.evpro@example.com', 'password' => Hash::make('password'), 'role' => 'Koordinator', 'parent_id' => $kapusbangjak->id]);
         
-        User::create(['name' => 'Ketua Tim Lavotas', 'email' => 'k팀.lavotas@example.com', 'password' => Hash::make('password'), 'role' => 'Ketua Tim', 'parent_id' => $koorLatvokas->id]);
-        User::create(['name' => 'Ketua Tim Evaluasi Program', 'email' => 'k팀.evpro@example.com', 'password' => Hash::make('password'), 'role' => 'Ketua Tim', 'parent_id' => $koorEvpro->id]);
+        // --- MODIFIKASI: 'Ketua Tim' diubah menjadi peran struktural ---
+        User::create(['name' => 'Analis (Tim Lavotas)', 'email' => 'tim.lavotas@example.com', 'password' => Hash::make('password'), 'role' => 'Staf', 'parent_id' => $koorLatvokas->id]);
+        User::create(['name' => 'Analis (Tim Evpro)', 'email' => 'tim.evpro@example.com', 'password' => Hash::make('password'), 'role' => 'Staf', 'parent_id' => $koorEvpro->id]);
 
         User::create(['name' => 'Sub Koord. Bid. Pengembangan Kebijakan Bidang Lavotas', 'email' => 'subkoor.lavotas@example.com', 'password' => Hash::make('password'), 'role' => 'Sub Koordinator', 'parent_id' => $koorLatvokas->id]);
+        // ... (sisa Sub Koordinator tetap sama)
         User::create(['name' => 'Sub Koord. Bid. Pengembangan Kebijakan Bid. Pentakerja dan PKK', 'email' => 'subkoor.pentakerja@example.com', 'password' => Hash::make('password'), 'role' => 'Sub Koordinator', 'parent_id' => $koorLatvokas->id]);
         User::create(['name' => 'Sub Koord. Bid. Pengembangan Kebijakan Bid. Wasnaker dan K3', 'email' => 'subkoor.wasnakerk3@example.com', 'password' => Hash::make('password'), 'role' => 'Sub Koordinator', 'parent_id' => $koorWasnaker->id]);
         User::create(['name' => 'Sub Koord. Bid. Pengembangan Kebijakan Bid. HI dan Jamsostek', 'email' => 'subkoor.hijamsostek@example.com', 'password' => Hash::make('password'), 'role' => 'Sub Koordinator', 'parent_id' => $koorWasnaker->id]);
@@ -132,13 +138,13 @@ class UserSeeder extends Seeder
         // =========================================================================
         $subkoorBangsi = User::where('email', 'subkoor.bangsi@example.com')->first();
         if ($subkoorBangsi) {
-            User::create(['name' => 'Staff Pengembangan SI 1', 'email' => 'staff.bangsi1@example.com', 'password' => Hash::make('password'), 'role' => 'Staff', 'parent_id' => $subkoorBangsi->id]);
-            User::create(['name' => 'Staff Pengembangan SI 2', 'email' => 'staff.bangsi2@example.com', 'password' => Hash::make('password'), 'role' => 'Staff', 'parent_id' => $subkoorBangsi->id]);
+            User::create(['name' => 'Staff Pengembangan SI 1', 'email' => 'staff.bangsi1@example.com', 'password' => Hash::make('password'), 'role' => 'Staf', 'parent_id' => $subkoorBangsi->id]);
+            User::create(['name' => 'Staff Pengembangan SI 2', 'email' => 'staff.bangsi2@example.com', 'password' => Hash::make('password'), 'role' => 'Staf', 'parent_id' => $subkoorBangsi->id]);
         }
 
         $subkoorLavotas = User::where('email', 'subkoor.lavotas@example.com')->first();
         if ($subkoorLavotas) {
-            User::create(['name' => 'Staff Analis Lavotas', 'email' => 'staff.lavotas1@example.com', 'password' => Hash::make('password'), 'role' => 'Staff', 'parent_id' => $subkoorLavotas->id]);
+            User::create(['name' => 'Staff Analis Lavotas', 'email' => 'staff.lavotas1@example.com', 'password' => Hash::make('password'), 'role' => 'Staf', 'parent_id' => $subkoorLavotas->id]);
         }
     }
 }
