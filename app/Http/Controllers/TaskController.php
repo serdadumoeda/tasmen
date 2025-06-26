@@ -62,49 +62,58 @@ class TaskController extends Controller
         return view('tasks.edit', compact('task', 'projectMembers'));
     }
 
+    /**
+     * Memperbarui tugas yang ada di database.
+     */
     public function update(Request $request, Task $task)
     {
         $this->authorize('update', $task);
 
+        // Validasi, termasuk file unggahan baru
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'deadline' => 'nullable|date',
             'progress' => 'required|integer|min:0|max:100',
             'priority' => 'required|in:low,medium,high',
             'assignees' => 'nullable|array',
             'assignees.*' => 'exists:users,id',
+            // PERBAIKAN: Menambahkan validasi untuk unggahan file
+            'file_upload' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx,xls,xlsx|max:5120',
         ]);
 
-        // --- LOGIKA ALUR PERSETUJUAN DIMULAI DI SINI ---
-        $user = auth()->user();
+        $task->fill($validated);
         
-        // Jika progres diubah menjadi 100%
-        if ((int)$validated['progress'] === 100) {
-            // Cek apakah pengguna BUKAN pimpinan proyek atau pemilik proyek
-            if ($user->id !== $task->project->leader_id && $user->id !== $task->project->owner_id) {
-                // Jika ya, maka set tugas sebagai 'pending_review' dan JANGAN ubah statusnya.
-                $validated['pending_review'] = true;
-                
-                // Kirim notifikasi ke pimpinan proyek
-                if ($task->project->leader) {
-                    $task->project->leader->notify(new \App\Notifications\TaskRequiresApproval($task));
+        // --- LOGIKA ALUR PERSETUJUAN (jika tugas proyek) ---
+        if($task->project_id){
+            $user = auth()->user();
+            if ((int)$validated['progress'] === 100) {
+                if ($user->id !== $task->project->leader_id && $user->id !== $task->project->owner_id) {
+                    $task->status = 'pending_review';
+                } else {
+                    $task->status = 'completed';
                 }
-
-            } else {
-                // Jika yang mengubah adalah pimpinan, langsung setujui.
-                $validated['pending_review'] = false;
+            } elseif ($task->progress == 100 && (int)$validated['progress'] < 100) {
+                // Jika progres diubah dari 100 ke < 100
+                $task->status = 'in_progress';
             }
-        } else {
-            // Jika progres < 100, pastikan status review juga false.
-            $validated['pending_review'] = false;
         }
-        // --- LOGIKA ALUR PERSETUJUAN SELESAI ---
         
-        $task->update($validated);
+        $task->save();
 
         if ($request->has('assignees')) {
             $task->assignees()->sync($request->input('assignees', []));
+        }
+        
+       
+        if ($request->hasFile('file_upload')) {
+            $file = $request->file('file_upload');
+            $path = $file->store('attachments', 'public');
+            $task->attachments()->create([
+                'user_id' => auth()->id(),
+                'filename' => $file->getClientOriginalName(),
+                'path' => $path
+            ]);
         }
 
         return redirect()->back()->with('success', 'Tugas berhasil diperbarui.');

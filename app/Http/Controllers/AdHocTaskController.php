@@ -67,19 +67,17 @@ class AdHocTaskController extends Controller
     {
         $user = auth()->user();
         
-        // MODIFIKASI: Perbarui aturan validasi untuk 'status'
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'deadline' => 'required|date',
             'estimated_hours' => 'required|numeric|min:0.1',
-            // Ganti 'in:...' dengan daftar status yang lengkap
-            'status' => 'required|in:pending,in_progress,completed,pending_review',
+            // PERBAIKAN: Memastikan status yang dikirim valid.
+            'status' => 'required|in:pending,in_progress,completed',
             'progress' => 'required|integer|min:0|max:100',
             'file_upload' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx,xls,xlsx|max:5120',
         ]);
         
-        // ... sisa kode di dalam method store tetap sama ...
         $assigneeIds = [];
         if ($user->canManageUsers()) {
             $request->validate(['assignees' => 'required|array', 'assignees.*' => 'exists:users,id']);
@@ -88,11 +86,10 @@ class AdHocTaskController extends Controller
             $assigneeIds[] = $user->id;
         }
 
+        // Menggunakan fill untuk keamanan dan kemudahan
         $task = new Task();
         $task->fill($validated);
-        $task->project_id = null;
-        $task->status = $request->status;
-        $task->progress = $request->progress;
+        $task->project_id = null; // Menandakan ini tugas ad-hoc
         $task->save();
         
         if ($request->hasFile('file_upload')) {
@@ -111,6 +108,7 @@ class AdHocTaskController extends Controller
             $recipient->notify(new \App\Notifications\TaskAssigned($task));
         }
 
-        return redirect()->route('tasks.edit', $task)->with('success', 'Tugas berhasil dibuat. Anda sekarang bisa menambahkan lampiran.');
+       
+        return redirect()->route('adhoc-tasks.index')->with('success', 'Tugas harian berhasil dibuat.');
     }
 }
