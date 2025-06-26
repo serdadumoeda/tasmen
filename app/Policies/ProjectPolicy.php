@@ -65,4 +65,10 @@ class ProjectPolicy
     {
         return $project->owner_id === $user->id;
     }
+
+    public function viewTeamDashboard(User $user, Project $project): bool
+    {
+        // Izinkan jika pengguna adalah pemilik proyek ATAU ketua tim proyek.
+        return $user->id === $project->owner_id || $user->id === $project->leader_id;
+    }
 }

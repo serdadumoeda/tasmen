@@ -22,14 +22,14 @@ class GlobalDashboardController extends Controller
         $taskQuery = Task::query();
         $userQuery = User::query();
 
-        if ($currentUser->role === 'Eselon II') {
-            $subordinateIds = $currentUser->getAllSubordinateIds();
-            $subordinateIds[] = $currentUser->id;
+        // if ($currentUser->role === 'Eselon II') {
+        //     $subordinateIds = $currentUser->getAllSubordinateIds();
+        //     $subordinateIds[] = $currentUser->id;
             
-            $projectQuery->whereIn('owner_id', $subordinateIds);
-            $taskQuery->whereIn('project_id', $projectQuery->pluck('id'));
-            $userQuery->whereIn('id', $subordinateIds);
-        }
+        //     $projectQuery->whereIn('owner_id', $subordinateIds);
+        //     $taskQuery->whereIn('project_id', $projectQuery->pluck('id'));
+        //     $userQuery->whereIn('id', $subordinateIds);
+        // }
  
         $stats = [
             'total_projects' => $projectQuery->count(),

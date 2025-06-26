@@ -82,9 +82,15 @@ class ProjectController extends Controller
 
         $project->load('owner', 'leader', 'members', 'tasks.assignees', 'tasks.comments.user', 'tasks.attachments', 'activities.user', 'tasks.subTasks');
         
-        $tasksByUser = $project->tasks->groupBy(function($task) {
-            return $task->assignees->first()->id ?? 0;
-        });
+        $tasksByUser = collect();
+        foreach ($project->tasks as $task) {
+            foreach ($task->assignees as $assignee) {
+                if (!$tasksByUser->has($assignee->id)) {
+                    $tasksByUser->put($assignee->id, collect());
+                }
+                $tasksByUser->get($assignee->id)->push($task);
+            }
+        }
 
         $projectMembers = $project->members()->orderBy('name')->get();
         $taskStatuses = $project->tasks->countBy('status');
