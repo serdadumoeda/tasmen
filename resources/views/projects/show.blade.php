@@ -151,7 +151,7 @@
                         <div class="space-y-4">
                             <div>
                                 <label for="title" class="block text-sm font-medium text-gray-700">Judul Tugas</label>
-                                <input type="text" name="name" id="title" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" value="{{ old('name') }}" required>
+                                <input type="text" name="title" id="title" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" value="{{ old('title') }}" required>
                             </div>
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div>
@@ -195,7 +195,7 @@
                                 
                                 <div class="flex justify-between items-start">
                                     <div>
-                                        <h4 class="font-bold text-lg text-gray-800">{{ $task->name }}</h4>
+                                        <h4 class="font-bold text-lg text-gray-800">{{ $task->title }}</h4>
                                         <p class="text-sm text-gray-600">Untuk: 
                                             <strong>
                                                 @foreach($task->assignees as $assignee)
@@ -442,10 +442,10 @@
                                         memperbarui proyek ini
                                         @break
                                     @case('created_task')
-                                        membuat tugas "{{ optional($activity->subject)->name ?? 'Tugas yang telah dihapus' }}"
+                                        membuat tugas "{{ optional($activity->subject)->title ?? 'Tugas yang telah dihapus' }}"
                                         @break
                                     @case('updated_task')
-                                        memperbarui tugas "{{ optional($activity->subject)->name ?? 'Tugas yang telah dihapus' }}"
+                                        memperbarui tugas "{{ optional($activity->subject)->title ?? 'Tugas yang telah dihapus' }}"
                                         @break
                                     @case('deleted_task')
                                         menghapus sebuah tugas
