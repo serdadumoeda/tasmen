@@ -35,11 +35,6 @@
     </x-slot>
 
     <div class="py-2 sm:py-6">
-        {{-- =================================================================== --}}
-        {{-- =============      PERBAIKAN KOMPOSISI DENGAN FLEXBOX     ============ --}}
-        {{-- Kontainer ini akan menempatkan papan kanban di tengah dan        --}}
-        {{-- membuatnya bisa digulir (scroll) ke samping dengan rapi.           --}}
-        {{-- =================================================================== --}}
         <div id="kanban-container" class="max-w-full mx-auto overflow-x-auto">
             <div id="kanban-board" class="inline-flex space-x-4 p-4 min-w-full">
 
@@ -64,21 +59,14 @@
                         </div>
                         {{-- Area Kartu Tugas --}}
                         <div id="status-{{ $statusKey }}" data-status="{{ $statusKey }}" class="kanban-column p-4 min-h-[600px] space-y-4">
-                            
-                            {{-- ========================================================== --}}
-                            {{-- =============      DESAIN KARTU TUGAS DETAIL      ============ --}}
-                            {{-- ========================================================== --}}
                             @forelse ($groupedTasks[$statusKey] as $task)
                                 <div id="task-{{ $task->id }}" data-task-id="{{ $task->id }}" class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 cursor-grab active:cursor-grabbing hover:shadow-lg hover:border-indigo-500 transition-all duration-300 ease-in-out">
-                                    
-                                    {{-- 1. Prioritas & Nama Tugas (TIDAK ADA LAGI SINGKATAN) --}}
+                                    {{-- Detail Kartu (tidak diubah) --}}
                                     <div class="mb-3">
                                         @php $priorityColor = $task->priority === 'high' ? 'bg-red-100 text-red-800' : ($task->priority === 'medium' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'); @endphp
                                         <span class="px-2 py-1 text-xs font-semibold rounded-full {{ $priorityColor }}">{{ ucfirst($task->priority) }}</span>
                                         <p class="font-bold text-lg text-gray-800 mt-2">{{ $task->name }}</p>
                                     </div>
-
-                                    {{-- 2. Rincian: Deadline & Sub-tugas --}}
                                     <div class="flex flex-wrap gap-x-4 gap-y-2 text-sm text-gray-600 mb-4 border-t pt-3">
                                         @if($task->deadline)
                                             <div class="flex items-center" title="Deadline">
@@ -93,8 +81,6 @@
                                             </div>
                                         @endif
                                     </div>
-                                    
-                                    {{-- 3. Avatar Anggota Tim & Progress Bar --}}
                                     <div class="flex items-center justify-between">
                                         <div class="flex -space-x-2">
                                             @foreach($task->assignees as $assignee)
@@ -104,7 +90,6 @@
                                                      title="{{ $assignee->name }}">
                                             @endforeach
                                         </div>
-                                        {{-- PERBAIKAN PERSENTASE & PROGRESS BAR --}}
                                         <div class="w-1/2 flex items-center">
                                             <div class="w-full bg-gray-200 rounded-full h-2 mr-2">
                                                 <div class="bg-blue-600 h-2 rounded-full" style="width: {{ $task->progress }}%"></div>
@@ -125,10 +110,36 @@
         </div>
     </div>
 
+    {{-- =================================================================== --}}
+    {{-- =============      KODE BARU: PUSTAKA & SCRIPT NOTIFIKASI     ============ --}}
+    {{-- =================================================================== --}}
+    
+    {{-- 1. Tambahkan pustaka SweetAlert2 --}}
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    
+    {{-- 2. Logika JavaScript yang diperbarui dengan notifikasi --}}
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const columns = document.querySelectorAll('.kanban-column');
+            
+            // Fungsi untuk mengembalikan kartu jika terjadi error
+            const revertCard = (taskEl, fromColumn, oldIndex) => {
+                fromColumn.insertBefore(taskEl, fromColumn.children[oldIndex]);
+                taskEl.style.opacity = '1';
+            };
+
+            // Fungsi untuk menampilkan notifikasi menggunakan SweetAlert2
+            const showNotification = (icon, title, text) => {
+                Swal.fire({
+                    icon: icon,
+                    title: title,
+                    text: text,
+                    timer: 3000,
+                    timerProgressBar: true,
+                    showConfirmButton: false
+                });
+            };
 
             columns.forEach(column => {
                 new Sortable(column, {
@@ -138,9 +149,12 @@
                     onEnd: function (evt) {
                         const taskEl = evt.item;
                         const toColumn = evt.to;
+                        const fromColumn = evt.from;
                         const taskId = taskEl.dataset.taskId;
                         const newStatus = toColumn.dataset.status;
+                        const oldIndex = evt.oldDraggableIndex;
                         
+                        // Beri efek visual saat proses update
                         taskEl.style.opacity = '0.5';
 
                         fetch(`{{ url('/tasks') }}/${taskId}/update-status`, {
@@ -152,18 +166,39 @@
                             body: JSON.stringify({ status: newStatus })
                         })
                         .then(response => {
-                            if (!response.ok) throw new Error('Update gagal');
+                            // Cek status HTTP untuk menentukan notifikasi yang tepat
+                            if (response.status === 403) {
+                                revertCard(taskEl, fromColumn, oldIndex);
+                                showNotification('error', 'Akses Ditolak!', 'Anda tidak punya hak untuk memindahkan tugas ini. Hanya pemilik, pimpinan, atau penerima tugas yang bisa.');
+                                return Promise.reject('Forbidden'); // Hentikan proses
+                            }
+                            if (!response.ok) {
+                                revertCard(taskEl, fromColumn, oldIndex);
+                                showNotification('error', 'Terjadi Kesalahan', 'Gagal memperbarui status karena masalah pada server.');
+                                return Promise.reject('Server Error'); // Hentikan proses
+                            }
                             return response.json();
                         })
                         .then(data => {
-                            console.log(data.message);
-                            location.reload(); 
+                            // Jika respons mengandung pesan khusus untuk review
+                            if (data.special_case === 'moved_to_review') {
+                                showNotification('info', 'Tugas Menunggu Review', 'Tugas telah selesai dan dipindahkan ke kolom Review untuk diperiksa oleh pimpinan.');
+                            } else {
+                                showNotification('success', 'Berhasil!', 'Status tugas telah diperbarui.');
+                            }
+
+                            // Muat ulang halaman untuk sinkronisasi data
+                            setTimeout(() => {
+                                location.reload();
+                            }, 1500);
                         })
                         .catch(error => {
+                            // Error akan ditangani di blok .then(), bagian ini untuk error jaringan
+                            if (error !== 'Forbidden' && error !== 'Server Error') {
+                                revertCard(taskEl, fromColumn, oldIndex);
+                                showNotification('error', 'Koneksi Gagal', 'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.');
+                            }
                             console.error('Error:', error);
-                            evt.from.insertBefore(taskEl, evt.from.children[evt.oldDraggableIndex]);
-                            taskEl.style.opacity = '1';
-                            alert('Gagal memperbarui status tugas.');
                         });
                     }
                 });
