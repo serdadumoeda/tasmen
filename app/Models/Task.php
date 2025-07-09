@@ -57,13 +57,37 @@ class Task extends Model
     public function recalculateProgress()
     {
         $totalSubTasks = $this->subTasks()->count();
-        if ($totalSubTasks === 0) {
-            // Jika tidak ada sub-task, progress bisa dianggap 0 atau 100 tergantung status
-            $this->progress = ($this->status === 'completed') ? 100 : 0;
-        } else {
+        
+        if ($totalSubTasks > 0) {
+            // Jika ada sub-tugas, hitung progress berdasarkan jumlah yang selesai.
             $completedSubTasks = $this->subTasks()->where('is_completed', true)->count();
             $this->progress = round(($completedSubTasks / $totalSubTasks) * 100);
+        } else {
+            // Jika tidak ada sub-tugas, progress ditentukan oleh status manual.
+            // Ini untuk tugas sederhana tanpa rincian.
+            if ($this->status === 'completed') {
+                $this->progress = 100;
+            } elseif ($this->status === 'pending') {
+                $this->progress = 0;
+            }
+            // Jika statusnya in_progress tapi tidak punya sub-tugas, progress-nya tidak diubah.
         }
+
+        // ==========================================================
+        // =============      LOGIKA PERPINDAHAN OTOMATIS      ============
+        // ==========================================================
+        // Logika ini hanya berjalan jika tugas tidak sedang dalam proses review manual.
+        if (!$this->pending_review) {
+            if ($this->progress >= 100) {
+                $this->status = 'completed'; // Jika progress 100%, otomatis pindah ke Selesai.
+            } elseif ($this->progress > 0) {
+                $this->status = 'in_progress'; // Jika progress antara 1-99%, otomatis pindah ke Dikerjakan.
+            } else {
+                $this->status = 'pending'; // Jika progress 0%, kembali ke Menunggu.
+            }
+        }
+        
+        // Simpan semua perubahan (progress dan status) ke database.
         $this->save();
     }
 }
