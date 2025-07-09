@@ -11,6 +11,7 @@ use App\Notifications\TaskAssigned;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Auth; 
 use App\Notifications\TaskRequiresApproval; 
+use App\Models\SubTask;
 
 class TaskController extends Controller
 {
@@ -156,44 +157,57 @@ class TaskController extends Controller
 
     public function updateStatus(Request $request, Task $task)
     {
+        // Otorisasi, pastikan user yang berhak yang bisa memindahkan kartu.
         $this->authorize('update', $task);
 
-        $request->validate([
-            'status' => 'required|string|in:pending,in_progress,for_review,completed',
+        // Validasi input status dari frontend.
+        $validated = $request->validate([
+            'status' => ['required', 'string', 'in:pending,in_progress,for_review,completed'],
         ]);
 
-        $status = $request->input('status');
-        $updateData = [];
+        $newStatus = $validated['status'];
+        
+        // Perbarui status dan progress secara logis dan sederhana.
+        $task->status = $newStatus;
 
-        // Logika baru yang lebih eksplisit untuk setiap status
-        switch ($status) {
-            case 'pending':
-                $updateData = ['progress' => 0, 'pending_review' => false];
-                break;
-            case 'in_progress':
-                // Jika tugas belum pernah dikerjakan (progres 0), set ke 10%. Jika sudah, biarkan.
-                $updateData = ['progress' => $task->progress > 0 ? $task->progress : 10, 'pending_review' => false];
-                break;
-            case 'for_review':
-                // Ini memperbaiki masalah "tidak bisa diletakkan di review".
-                // Jika digeser ke 'Review', set progres ke 100% dan tandai untuk direview.
-                $updateData = ['progress' => 100, 'pending_review' => true];
-                break;
-            case 'completed':
-                 // Hanya pimpinan yang bisa langsung geser ke 'completed'
-                if (auth()->id() === $task->project->leader_id || auth()->id() === $task->project->owner_id) {
-                    $updateData = ['progress' => 100, 'pending_review' => false];
-                } else {
-                    // Jika staf yang menggeser, akan tetap masuk ke 'for_review' sebagai pengajuan.
-                    $updateData = ['progress' => 100, 'pending_review' => true];
-                }
-                break;
+        if ($newStatus === 'completed') {
+            $task->progress = 100;
+        } elseif ($newStatus === 'pending') {
+            $task->progress = 0;
+        } elseif ($task->progress == 100) {
+            // Jika kartu ditarik dari 'Selesai' ke kolom lain, set progress agar tidak 100% lagi.
+            $task->progress = 90;
         }
 
-        if (!empty($updateData)) {
-            $task->update($updateData);
-        }
+        $task->save();
 
-        return response()->json(['message' => 'Status tugas berhasil diperbarui.']);
+        // Kirim respons sukses.
+        return response()->json([
+            'message' => 'Status tugas berhasil diperbarui ke: ' . $newStatus
+        ]);
     }
+
+    public function toggleSubTask(SubTask $subTask)
+    {
+        // Otorisasi: Pastikan pengguna yang login boleh mengubah tugas ini
+        $this->authorize('update', $subTask->task);
+
+        // Ubah status selesai (jika true jadi false, jika false jadi true)
+        $subTask->update(['is_completed' => !$subTask->is_completed]);
+
+        // Hitung ulang progress tugas utama
+        $subTask->task->recalculateProgress();
+
+        // Siapkan data untuk dikirim kembali sebagai JSON
+        $completed_subtasks = $subTask->task->subTasks()->where('is_completed', true)->count();
+        $total_subtasks = $subTask->task->subTasks()->count();
+
+        return response()->json([
+            'message' => 'Status sub-tugas berhasil diperbarui.',
+            'task_progress' => $subTask->task->progress,
+            'completed_subtasks' => $completed_subtasks,
+            'total_subtasks' => $total_subtasks,
+        ]);
+    }
+
 }

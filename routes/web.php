@@ -90,6 +90,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/projects/{project}/calendar', [\App\Http\Controllers\ProjectController::class, 'showCalendar'])->name('projects.calendar')->middleware('auth');
     Route::get('/projects/{project}/tasks-json', [\App\Http\Controllers\ProjectController::class, 'tasksJson'])->name('projects.tasks-json')->middleware('auth');
     Route::get('/executive-summary', [ExecutiveSummaryController::class, 'index'])->name('executive.summary');
+    Route::post('/subtasks/{subTask}/toggle', [TaskController::class, 'toggleSubTask'])->name('subtasks.toggle');
+    
 });
 
 require __DIR__.'/auth.php';

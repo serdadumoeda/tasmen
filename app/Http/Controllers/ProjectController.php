@@ -255,17 +255,18 @@ class ProjectController extends Controller
     public function showKanban(Project $project)
     {
         $this->authorize('view', $project);
-
-        $tasks = $project->tasks()->with('assignees')->get();
-
-        // Kelompokkan tugas berdasarkan status
-        $groupedTasks = [
-            'pending' => $tasks->where('progress', '==', 0)->where('pending_review', false),
-            'in_progress' => $tasks->where('progress', '>', 0)->where('progress', '<', 100)->where('pending_review', false),
-            'for_review' => $tasks->where('pending_review', true),
-            'completed' => $tasks->where('progress', '==', 100)->where('pending_review', false),
-        ];
-
+    
+        // Eager load semua relasi yang dibutuhkan untuk efisiensi.
+        $tasks = $project->tasks()->with(['assignees', 'comments', 'subTasks'])->get();
+    
+        // Logika pengelompokan BARU yang lebih sederhana dan andal, berdasarkan kolom status.
+        $groupedTasks = $tasks->groupBy('status')->union([
+            'pending'     => collect(),
+            'in_progress' => collect(),
+            'for_review'  => collect(),
+            'completed'   => collect(),
+        ]);
+    
         return view('projects.kanban', compact('project', 'groupedTasks'));
     }
 
