@@ -54,7 +54,7 @@
                                 @forelse ($groupedTasks[$statusKey] as $task)
                                     <div id="task-{{ $task->id }}" data-task-id="{{ $task->id }}" class="task-card cursor-grab active:cursor-grabbing">
                                         {{-- Memanggil komponen task-card yang ringkas --}}
-                                        <x-task-card :task="$task"/>
+                                        <x-kanban-card :task="$task"/>
                                     </div>
                                 @empty
                                     <div class="text-center text-gray-400 py-10 px-4 flex flex-col items-center justify-center h-full">
