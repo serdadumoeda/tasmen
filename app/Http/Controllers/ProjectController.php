@@ -15,14 +15,14 @@ class ProjectController extends Controller
 {
     use AuthorizesRequests;
 
+    // ... (metode index, create, store, show, edit, update, destroy, dll tidak berubah) ...
+
     public function index()
     {
         $user = Auth::user();
-        // Logika ini sudah benar, jika top level manager, arahkan ke global dashboard.
         if ($user->isTopLevelManager()) {
             return redirect()->route('global.dashboard');
         }
-        // Staff biasa akan melihat proyek di mana mereka menjadi anggota.
         $projects = $user->projects()->with('owner', 'leader')->latest()->get();
         return view('dashboard', compact('projects'));
     }
@@ -57,14 +57,10 @@ class ProjectController extends Controller
             'members.*' => ['exists:users,id', Rule::in($subordinateIds)],
         ]);
         
-        // MODIFIKASI DIMULAI DI SINI
         $dataToCreate = $validated;
-        // INI ADALAH PERBAIKAN UTAMA:
-        // Tetapkan 'owner_id' sebagai ID pengguna yang sedang membuat proyek.
         $dataToCreate['owner_id'] = $user->id;
 
         $project = Project::create($dataToCreate);
-        // AKHIR MODIFIKASI
 
         $memberIds = collect($request->members);
         if (!$memberIds->contains($request->leader_id)) {
@@ -256,10 +252,8 @@ class ProjectController extends Controller
     {
         $this->authorize('view', $project);
     
-        // Eager load semua relasi yang dibutuhkan untuk efisiensi.
         $tasks = $project->tasks()->with(['assignees', 'comments', 'subTasks'])->get();
     
-        // Logika pengelompokan BARU yang lebih sederhana dan andal, berdasarkan kolom status.
         $groupedTasks = $tasks->groupBy('status')->union([
             'pending'     => collect(),
             'in_progress' => collect(),
@@ -276,32 +270,47 @@ class ProjectController extends Controller
         return view('projects.calendar', compact('project'));
     }
 
+    /**
+     * Menyediakan data tugas dalam format JSON untuk FullCalendar.
+     */
     public function tasksJson(Project $project)
     {
         $this->authorize('view', $project);
 
+        // Ambil tugas dengan relasi 'assignees' untuk mendapatkan nama pengerja
         $tasks = $project->tasks()
             ->whereNotNull('deadline')
-            ->get(['id', 'name', 'deadline', 'progress', 'project_id']);
+            ->with('assignees') // Eager load pengerja
+            ->get(['id', 'title', 'deadline', 'status', 'project_id']);
 
-        $events = $tasks->map(function ($task) {
-            $isOverdue = $task->deadline < now() && $task->progress < 100;
-            $isCompleted = $task->progress == 100;
-            
-            // Logika pewarnaan event
-            $color = '#3b82f6'; // Biru untuk tugas normal
-            if ($isCompleted) {
-                $color = '#22c55e'; // Hijau untuk selesai
-            } elseif ($isOverdue) {
-                $color = '#ef4444'; // Merah untuk terlambat
+        $events = $tasks->map(function ($task) use ($project) {
+            // Logika pewarnaan berdasarkan status
+            $color = '#3b82f6'; // Biru (in_progress) sebagai default
+            switch ($task->status) {
+                case 'pending': $color = '#facc15'; break; // Kuning
+                case 'completed': $color = '#22c55e'; break; // Hijau
+                case 'for_review': $color = '#f97316'; break; // Oranye
+            }
+            // Prioritaskan warna merah jika terlambat
+            if ($task->deadline < now() && $task->status !== 'completed') {
+                $color = '#ef4444';
             }
 
+            // Gabungkan nama pengerja menjadi satu string
+            $assigneeNames = $task->assignees->pluck('name')->join(', ');
+
             return [
-                'title' => $task->name,
+                'title' => $task->title,
                 'start' => $task->deadline,
-                'url'   => route('projects.show', $task->project_id) . '#task-' . $task->id,
+                'url'   => route('projects.show', $project->id) . '#task-' . $task->id,
                 'color' => $color,
-                'borderColor' => $color
+                'borderColor' => $color,
+                // Data tambahan untuk ditampilkan di tooltip
+                'extendedProps' => [
+                    'project_name' => $project->name,
+                    'assignees' => $assigneeNames ?: 'Belum ditugaskan',
+                    'status' => ucfirst(str_replace('_', ' ', $task->status))
+                ]
             ];
         });
 

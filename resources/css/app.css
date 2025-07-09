@@ -1,6 +1,9 @@
-@import "tom-select/dist/css/tom-select.bootstrap5.css";
+/* Hapus atau ganti baris ini */
+/* @import "tom-select/dist/css/tom-select.bootstrap5.css"; */
+
+/* Gunakan baris ini sebagai gantinya */
+@import "tom-select/dist/css/tom-select.default.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-

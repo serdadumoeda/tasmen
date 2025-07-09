@@ -18,25 +18,26 @@
     {{ $styles ?? '' }}
 </head>
 <body class="font-sans antialiased">
-    {{-- Latar belakang utama adalah abu-abu muda --}}
-    <div class="min-h-screen bg-gray-100">
+    <div class="min-h-screen bg-gray-100 flex flex-col">
         
-        @include('layouts.navigation')
+        <header class="sticky top-0 z-20">
+            @include('layouts.navigation')
 
-        @if (isset($header))
-            {{-- Header diberi background putih dan bayangan --}}
-            <header class="bg-white shadow">
-                <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-                    {{ $header }}
+            @if (isset($header))
+                <div class="bg-white shadow">
+                    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+                        {{ $header }}
+                    </div>
                 </div>
-            </header>
-        @endif
+            @endif
+        </header>
 
-        <main>
+        <main class="flex-grow">
             {{ $slot }}
         </main>
         
-        <footer class="text-center py-4 text-sm text-gray-500 border-t border-gray-200 mt-8">
+        {{-- Footer dipindahkan ke sini agar lebarnya penuh --}}
+        <footer class="text-center py-4 text-sm text-gray-500 border-t border-gray-200 bg-gray-100">
             © {{ date('Y') }} {{ config('app.name', 'Tasmen') }}. All Rights Reserved.
         </footer>
     </div>
