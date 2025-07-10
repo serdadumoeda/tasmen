@@ -10,18 +10,23 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Carbon;
+// Pastikan baris ini ada dan benar setelah menginstal Sanctum
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable;
+    // Trait HasApiTokens sekarang akan ditemukan
+    use HasApiTokens, HasFactory, Notifiable;
 
     protected $fillable = [
         'name',
         'email',
         'password',
         'role',
-        'parent_id',
+        'parent_id', // Nama kolom atasan di DB Anda
         'work_behavior_rating',
+        'is_in_resource_pool',
+        'pool_availability_notes',
     ];
 
     protected $hidden = [
@@ -33,6 +38,8 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+
+    // ... sisa kode model Anda tidak perlu diubah ...
 
     // --- RELASI ---
 
@@ -74,26 +81,16 @@ class User extends Authenticatable
 
     // --- FUNGSI BANTUAN & HAK AKSES ---
     
-    /**
-     * FUNGSI YANG HILANG - DITAMBAHKAN KEMBALI
-     * Mengecek secara rekursif apakah user ini adalah bawahan dari seorang manajer.
-     *
-     * @param User $manager
-     * @return boolean
-     */
     public function isSubordinateOf(User $manager)
     {
         $currentParent = $this->parent;
-
-        // Telusuri hierarki ke atas
         while ($currentParent) {
             if ($currentParent->id === $manager->id) {
-                return true; // Ditemukan sebagai bawahan
+                return true;
             }
             $currentParent = $currentParent->parent;
         }
-
-        return false; // Bukan bawahan
+        return false;
     }
     
     public function getAllSubordinateIds(array &$visited = [])

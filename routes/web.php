@@ -15,6 +15,10 @@ use App\Http\Controllers\BudgetItemController;
 use App\Http\Controllers\SpecialAssignmentController;
 use App\Http\Controllers\AdHocTaskController;
 use App\Http\Controllers\ExecutiveSummaryController;
+use App\Http\Controllers\ResourcePoolController;
+use App\Http\Controllers\PeminjamanRequestController;
+
+
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -91,6 +95,19 @@ Route::middleware('auth')->group(function () {
     Route::get('/projects/{project}/tasks-json', [\App\Http\Controllers\ProjectController::class, 'tasksJson'])->name('projects.tasks-json')->middleware('auth');
     Route::get('/executive-summary', [ExecutiveSummaryController::class, 'index'])->name('executive.summary');
     Route::post('/subtasks/{subTask}/toggle', [TaskController::class, 'toggleSubTask'])->name('subtasks.toggle');
+
+    // Rute untuk Manajemen Resource Pool
+    Route::get('/resource-pool', [ResourcePoolController::class, 'index'])->name('resource-pool.index');
+    Route::put('/resource-pool/update/{user}', [ResourcePoolController::class, 'update'])->name('resource-pool.update');
+
+    // Rute API untuk mengambil anggota pool (digunakan oleh AJAX di halaman proyek)
+    Route::get('/api/resource-pool/members', [ResourcePoolController::class, 'getAvailableMembers'])->name('api.resource-pool.members');
+    Route::controller(PeminjamanRequestController::class)->middleware('auth')->group(function () {
+        Route::get('/peminjaman-requests', 'index')->name('peminjaman-requests.index');
+        Route::post('/peminjaman-requests', 'store')->name('peminjaman-requests.store');
+        Route::post('/peminjaman-requests/{peminjamanRequest}/approve', 'approve')->name('peminjaman-requests.approve');
+        Route::post('/peminjaman-requests/{peminjamanRequest}/reject', 'reject')->name('peminjaman-requests.reject');
+    });
     
 });
 
