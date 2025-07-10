@@ -17,6 +17,8 @@ use App\Http\Controllers\AdHocTaskController;
 use App\Http\Controllers\ExecutiveSummaryController;
 use App\Http\Controllers\ResourcePoolController;
 use App\Http\Controllers\PeminjamanRequestController;
+use App\Http\Controllers\WeeklyWorkloadController;
+
 
 
 
@@ -110,6 +112,7 @@ Route::middleware('auth')->group(function () {
     });
     Route::get('/api/users/{user}/workload', [App\Http\Controllers\UserController::class, 'getWorkloadSummary'])
     ->name('api.users.workload');
+    Route::get('/weekly-workload', [App\Http\Controllers\WeeklyWorkloadController::class, 'index'])->name('weekly-workload.index');
     
 });
 

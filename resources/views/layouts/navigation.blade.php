@@ -84,6 +84,9 @@
                         @if(Auth::user()->isTopLevelManager())
                             <x-dropdown-link :href="route('workload.analysis')"><i class="fa-solid fa-chart-line w-4 mr-2"></i>{{ __('Beban Kerja') }}</x-dropdown-link>
                         @endif
+                        <x-dropdown-link :href="route('weekly-workload.index')">
+                            <i class="fa-solid fa-tachometer-alt fa-fw w-4 mr-2"></i>Beban Kerja Mingguan
+                        </x-dropdown-link>
                         <div class="border-t border-gray-200"></div>
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\WeeklyWorkloadController;
 
 class ResourcePoolController extends Controller
 {
@@ -13,14 +14,30 @@ class ResourcePoolController extends Controller
      */
     public function index()
     {
-        // Ambil ID pengguna yang sedang login
         $manager = Auth::user();
-
-        // --- PERBAIKAN DI SINI ---
-        // Ganti 'atasan_id' menjadi 'parent_id' sesuai dengan skema database Anda.
         $teamMembers = $manager->getAllSubordinates();
 
-        return view('resource_pool.index', compact('teamMembers'));
+        $workloadData = $teamMembers->map(function ($member) {
+            // Hitung total jam dari tugas yang belum selesai
+            $totalAssignedHours = $member->tasks()
+                ->where('status', '!=', 'Selesai')
+                ->sum('estimated_hours');
+
+            // Hitung persentase beban kerja
+            $workloadPercentage = (WeeklyWorkloadController::STANDARD_WEEKLY_HOURS > 0)
+                ? ($totalAssignedHours / WeeklyWorkloadController::STANDARD_WEEKLY_HOURS) * 100
+                : 0;
+
+            return [
+                'user' => $member,
+                'workload_percentage' => round($workloadPercentage)
+            ];
+        });
+
+        // PERBAIKAN: Kita tidak lagi memerlukan $averageWorkload
+        return view('resource_pool.index', [
+            'workloadData' => $workloadData,
+        ]);
     }
 
     /**
@@ -28,12 +45,11 @@ class ResourcePoolController extends Controller
      */
     public function update(Request $request, User $user)
     {
-        // --- PERBAIKAN DI SINI ---
-        // Validasi keamanan: Pastikan yang mengubah adalah atasan langsung
-        // Ganti 'atasan_id' menjadi 'parent_id'.
-        if ($user->parent_id != Auth::id()) {
+
+        if (!Auth::user()->is($user->parent) && !$user->isSubordinateOf(Auth::user())) {
             return response()->json(['success' => false, 'message' => 'Anda tidak berwenang mengubah status pengguna ini.'], 403);
         }
+        
 
         $request->validate([
             'is_in_resource_pool' => 'required|boolean',
@@ -47,7 +63,6 @@ class ResourcePoolController extends Controller
 
         return response()->json(['success' => true, 'message' => 'Status anggota berhasil diperbarui.']);
     }
-
     /**
      * API untuk mengambil daftar anggota yang tersedia di pool
      * untuk digunakan di halaman pembuatan proyek.
