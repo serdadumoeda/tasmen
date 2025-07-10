@@ -14,11 +14,11 @@ class ResourcePoolController extends Controller
     public function index()
     {
         // Ambil ID pengguna yang sedang login
-        $managerId = Auth::id();
+        $manager = Auth::user();
 
         // --- PERBAIKAN DI SINI ---
         // Ganti 'atasan_id' menjadi 'parent_id' sesuai dengan skema database Anda.
-        $teamMembers = User::where('parent_id', $managerId)->get();
+        $teamMembers = $manager->getAllSubordinates();
 
         return view('resource_pool.index', compact('teamMembers'));
     }
