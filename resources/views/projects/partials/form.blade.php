@@ -31,6 +31,9 @@
     </div>
 </div>
 
+{{-- ====================================================================== --}}
+{{-- PERBAIKAN DIMULAI DI SINI --}}
+{{-- ====================================================================== --}}
 <div class="mb-4">
     <label for="leader_id" class="block font-medium text-sm text-gray-700">Pimpinan Proyek</label>
     <select name="leader_id" id="leader_id" class="block mt-1 w-full rounded-md shadow-sm border-gray-300" required>
@@ -41,22 +44,28 @@
             </option>
         @endforeach
     </select>
+    
+    {{-- "Wadah" untuk menampilkan info beban kerja --}}
+    <div id="leaderWorkloadInfo" class="mt-2 text-sm">
+        {{-- Konten akan diisi oleh JavaScript saat pimpinan dipilih --}}
+    </div>
 </div>
+{{-- ====================================================================== --}}
+{{-- PERBAIKAN SELESAI --}}
+{{-- ====================================================================== --}}
 
 
 
-{{-- PERBAIKAN: Sederhanakan bagian Anggota Tim --}}
+{{-- Bagian Anggota Tim --}}
 <div class="mb-4">
     <div class="flex justify-between items-center mb-1">
         <label for="members" class="block font-medium text-sm text-gray-700">Anggota Tim</label>
-        {{-- Tombol ini akan kita fungsikan dengan script baru --}}
         <button type="button" id="showResourcePoolBtn" class="px-3 py-1 bg-blue-500 text-white text-xs font-semibold rounded-md hover:bg-blue-600">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block -mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
             Pilih dari Tim Terbuka
         </button>
     </div>
 
-    {{-- Hapus class 'tom-select-multiple' dan 'h-40' agar menjadi select biasa --}}
     <select name="members[]" id="members" class="block mt-1 w-full rounded-md shadow-sm border-gray-300" multiple required>
         @php
             $projectMemberIds = collect(old('members', isset($project) ? $project->members->pluck('id') : []));
@@ -68,10 +77,15 @@
         @endforeach
     </select>
     <p class="text-xs text-gray-500 mt-1">Tahan tombol Ctrl (atau Cmd di Mac) untuk memilih lebih dari satu anggota.</p>
+    
+    
+    <div id="membersWorkloadInfo" class="mt-2 text-sm">
+        {{-- Konten akan diisi oleh JavaScript saat anggota dipilih --}}
+    </div>
 </div>
 
 
-{{-- Modal (pop-up) tidak perlu diubah, biarkan seperti ini --}}
+{{-- Modal (pop-up) untuk Tim Terbuka --}}
 <div id="resourcePoolModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 hidden">
     <div class="relative top-20 mx-auto p-5 border w-full max-w-3xl shadow-lg rounded-md bg-white">
         <div class="flex justify-between items-center pb-3 border-b">
@@ -92,7 +106,6 @@
                         </tr>
                     </thead>
                     <tbody id="resourcePoolMembers" class="bg-white divide-y divide-gray-200">
-                        {{-- Data akan diisi oleh AJAX --}}
                         <tr><td colspan="4" class="text-center p-4">Memuat data...</td></tr>
                     </tbody>
                 </table>

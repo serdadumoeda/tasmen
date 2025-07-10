@@ -108,6 +108,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/peminjaman-requests/{peminjamanRequest}/approve', 'approve')->name('peminjaman-requests.approve');
         Route::post('/peminjaman-requests/{peminjamanRequest}/reject', 'reject')->name('peminjaman-requests.reject');
     });
+    Route::get('/api/users/{user}/workload', [App\Http\Controllers\UserController::class, 'getWorkloadSummary'])
+    ->name('api.users.workload');
     
 });
 

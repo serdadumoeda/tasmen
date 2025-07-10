@@ -6,7 +6,8 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests; // TAMBAHKAN BARIS INI
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests; 
+use Illuminate\Support\Carbon;
 
 class UserController extends Controller
 {
@@ -157,5 +158,36 @@ class UserController extends Controller
         $subordinateIds[] = $eselon2->id;
         $usersInUnit = User::whereIn('id', $subordinateIds)->orderBy('name')->get(['id', 'name', 'role']);
         return response()->json($usersInUnit);
+    }
+
+    public function getWorkloadSummary(User $user)
+    {
+        // Hitung jumlah proyek aktif dengan memeriksa end_date
+        $activeProjectsCount = $user->projects()
+            ->where(function ($query) {
+                // Proyek dianggap aktif jika end_date belum diisi ATAU end_date masih di masa depan
+                $query->whereNull('end_date')
+                      ->orWhere('end_date', '>=', Carbon::today());
+            })
+            ->count();
+
+        // Hitung jumlah tugas harian/adhoc aktif (query ini sudah benar karena tabel tasks punya 'status')
+        $activeAdhocTasksCount = $user->tasks()
+                                     ->whereNull('project_id')
+                                     ->where('status', '!=', 'Selesai')
+                                     ->count();
+        
+        // Ambil jumlah SK aktif dari accessor yang sudah ada di model User
+        $activeSkCount = $user->getActiveSkCountAttribute();
+
+        // Kembalikan data dalam format JSON
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'active_projects' => $activeProjectsCount,
+                'active_adhoc_tasks' => $activeAdhocTasksCount,
+                'active_sks' => $activeSkCount,
+            ]
+        ]);
     }
 }
