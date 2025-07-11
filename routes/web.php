@@ -18,6 +18,8 @@ use App\Http\Controllers\ExecutiveSummaryController;
 use App\Http\Controllers\ResourcePoolController;
 use App\Http\Controllers\PeminjamanRequestController;
 use App\Http\Controllers\WeeklyWorkloadController;
+use App\Http\Controllers\BudgetRealizationController;
+
 
 
 
@@ -113,6 +115,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/api/users/{user}/workload', [App\Http\Controllers\UserController::class, 'getWorkloadSummary'])
     ->name('api.users.workload');
     Route::get('/weekly-workload', [App\Http\Controllers\WeeklyWorkloadController::class, 'index'])->name('weekly-workload.index');
+    Route::resource('projects.budget-items', BudgetItemController::class);
+
+    // Route untuk realisasi, di-nest di dalam budget-items
+    Route::post('budget-items/{budgetItem}/realizations', [BudgetRealizationController::class, 'store'])
+        ->name('budget-items.realizations.store');
+    Route::delete('budget-realizations/{realization}', [BudgetRealizationController::class, 'destroy'])
+        ->name('budget-realizations.destroy');
     
 });
 

@@ -46,4 +46,25 @@ class BudgetItem extends Model
     {
         return $this->belongsTo(Task::class);
     }
+
+    public function realizations()
+    {
+        return $this->hasMany(BudgetRealization::class);
+    }
+
+    // Tambahkan accessor untuk menghitung total realisasi dengan mudah
+    public function getRealizedCostAttribute()
+    {
+        // Menggunakan cache agar tidak query berulang kali
+        if (! $this->relationLoaded('realizations')) {
+            $this->load('realizations');
+        }
+        return $this->realizations->sum('amount');
+    }
+
+    // Accessor untuk sisa anggaran
+    public function getRemainingCostAttribute()
+    {
+        return $this->total_cost - $this->realized_cost;
+    }
 }

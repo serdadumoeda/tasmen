@@ -6,6 +6,8 @@ use App\Models\Project;
 use App\Models\BudgetItem;
 use Illuminate\Http\Request;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use App\Models\BudgetRealization;
+
 
 class BudgetItemController extends Controller
 {
@@ -14,11 +16,29 @@ class BudgetItemController extends Controller
     public function index(Project $project)
     {
         $this->authorize('view', $project);
-        
-        $budgetItems = $project->budgetItems()->orderBy('category')->get()->groupBy('category');
+    
+        // Eager load relasi 'realizations' untuk menghindari N+1 query problem
+        $budgetItems = $project->budgetItems()
+                               ->with('realizations') // <--- TAMBAHKAN INI
+                               ->orderBy('category')
+                               ->get()
+                               ->groupBy('category');
+                               
         $totalBudget = $project->budgetItems()->sum('total_cost');
-
-        return view('projects.budget.index', compact('project', 'budgetItems', 'totalBudget'));
+    
+        // Total realisasi bisa dihitung di sini agar lebih efisien
+        $totalRealization = BudgetRealization::whereIn(
+            'budget_item_id',
+            $project->budgetItems()->pluck('id')
+        )->sum('amount');
+    
+    
+        return view('projects.budget.index', compact(
+            'project',
+            'budgetItems',
+            'totalBudget',
+            'totalRealization' // <-- Kirim ke view
+        ));
     }
 
     public function create(Project $project)
