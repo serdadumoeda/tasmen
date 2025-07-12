@@ -9,7 +9,6 @@
     </div>
 @endif
 
-{{-- Bagian form yang sudah ada --}}
 <div class="mb-4">
     <label for="name" class="block font-medium text-sm text-gray-700">Nama Proyek</label>
     <input type="text" name="name" id="name" class="block mt-1 w-full rounded-md shadow-sm border-gray-300" value="{{ old('name', $project->name ?? '') }}" required>
@@ -31,9 +30,6 @@
     </div>
 </div>
 
-{{-- ====================================================================== --}}
-{{-- PERBAIKAN DIMULAI DI SINI --}}
-{{-- ====================================================================== --}}
 <div class="mb-4">
     <label for="leader_id" class="block font-medium text-sm text-gray-700">Pimpinan Proyek</label>
     <select name="leader_id" id="leader_id" class="block mt-1 w-full rounded-md shadow-sm border-gray-300" required>
@@ -44,31 +40,21 @@
             </option>
         @endforeach
     </select>
-    
-    {{-- "Wadah" untuk menampilkan info beban kerja --}}
-    <div id="leaderWorkloadInfo" class="mt-2 text-sm">
-        {{-- Konten akan diisi oleh JavaScript saat pimpinan dipilih --}}
-    </div>
+    <div id="leaderWorkloadInfo" class="mt-2 text-sm"></div>
 </div>
-{{-- ====================================================================== --}}
-{{-- PERBAIKAN SELESAI --}}
-{{-- ====================================================================== --}}
 
-
-
-{{-- Bagian Anggota Tim --}}
 <div class="mb-4">
     <div class="flex justify-between items-center mb-1">
         <label for="members" class="block font-medium text-sm text-gray-700">Anggota Tim</label>
-        <button type="button" id="showResourcePoolBtn" class="px-3 py-1 bg-blue-500 text-white text-xs font-semibold rounded-md hover:bg-blue-600">
+        <button type="button" id="showMemberModalBtn" class="px-3 py-1 bg-blue-500 text-white text-xs font-semibold rounded-md hover:bg-blue-600">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block -mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
-            Pilih dari Tim Terbuka
+            Tambah Anggota
         </button>
     </div>
 
     <select name="members[]" id="members" class="block mt-1 w-full rounded-md shadow-sm border-gray-300" multiple required>
         @php
-            $projectMemberIds = collect(old('members', isset($project) ? $project->members->pluck('id') : []));
+            $projectMemberIds = collect(old('members', isset($project) ? $project->members->pluck('id')->all() : []));
         @endphp
         @foreach ($potentialMembers as $member)
             <option value="{{ $member->id }}" @selected($projectMemberIds->contains($member->id))>
@@ -77,42 +63,41 @@
         @endforeach
     </select>
     <p class="text-xs text-gray-500 mt-1">Tahan tombol Ctrl (atau Cmd di Mac) untuk memilih lebih dari satu anggota.</p>
-    
-    
-    <div id="membersWorkloadInfo" class="mt-2 text-sm">
-        {{-- Konten akan diisi oleh JavaScript saat anggota dipilih --}}
-    </div>
+    <div id="membersWorkloadInfo" class="mt-2 text-sm"></div>
 </div>
 
-
-{{-- Modal (pop-up) untuk Tim Terbuka --}}
-<div id="resourcePoolModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 hidden">
-    <div class="relative top-20 mx-auto p-5 border w-full max-w-3xl shadow-lg rounded-md bg-white">
+<div id="memberSelectionModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 hidden">
+    <div class="relative top-10 mx-auto p-5 border w-full max-w-4xl shadow-lg rounded-md bg-white">
         <div class="flex justify-between items-center pb-3 border-b">
-            <p class="text-2xl font-bold">Pilih Anggota dari Tim Terbuka</p>
-            <button type="button" id="closeModalBtn" class="cursor-pointer z-50">
+            <p class="text-2xl font-bold">Pilih Anggota</p>
+            <button type="button" id="closeMemberModalBtn" class="cursor-pointer z-50">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
         </div>
-        <div class="mt-4">
-            <div class="overflow-y-auto" style="max-height: 50vh;">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12">Pilih</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit Kerja</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Catatan Ketersediaan</th>
-                        </tr>
-                    </thead>
-                    <tbody id="resourcePoolMembers" class="bg-white divide-y divide-gray-200">
-                        <tr><td colspan="4" class="text-center p-4">Memuat data...</td></tr>
-                    </tbody>
-                </table>
+
+        <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+            {{-- KOLOM KIRI: TIM TERBUKA --}}
+            <div>
+                <h3 class="font-semibold text-gray-800">Tim Terbuka (Direkomendasikan)</h3>
+                <p class="text-xs text-gray-500 mb-2">Anggota yang tersedia tanpa perlu persetujuan.</p>
+                <div id="resourcePoolContainer" class="border rounded-md p-2 space-y-1 overflow-y-auto" style="max-height: 300px;">
+                    <p class="text-center text-gray-400 p-4">Memuat...</p>
+                </div>
+            </div>
+
+            {{-- KOLOM KANAN: CARI & MINTA --}}
+            <div>
+                <h3 class="font-semibold text-gray-800">Cari & Minta dari Tim Lain</h3>
+                <p class="text-xs text-gray-500 mb-2">Memerlukan persetujuan dari atasan yang bersangkutan.</p>
+                <input type="text" id="userSearchInput" placeholder="Ketik nama untuk mencari..." class="w-full rounded-md border-gray-300 shadow-sm text-sm">
+                <div id="userSearchResults" class="border rounded-md p-2 space-y-1 mt-2 overflow-y-auto" style="max-height: 258px;">
+                    <p class="text-center text-gray-400 p-4">Hasil pencarian akan muncul di sini.</p>
+                </div>
             </div>
         </div>
+
         <div class="flex justify-end pt-4 border-t mt-4">
-            <button type="button" id="addMembersFromPoolBtn" class="px-4 py-2 bg-gray-800 text-white text-base font-medium rounded-md hover:bg-gray-700">
+            <button type="button" id="addMemberFromModalBtn" class="px-4 py-2 bg-gray-800 text-white text-base font-medium rounded-md hover:bg-gray-700">
                 Tambahkan Anggota Terpilih
             </button>
         </div>

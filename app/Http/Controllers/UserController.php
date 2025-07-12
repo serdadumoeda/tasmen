@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use App\Models\Project;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests; 
@@ -162,32 +163,53 @@ class UserController extends Controller
 
     public function getWorkloadSummary(User $user)
     {
-        // Hitung jumlah proyek aktif dengan memeriksa end_date
+        // Hitung proyek aktif berdasarkan end_date
         $activeProjectsCount = $user->projects()
             ->where(function ($query) {
-                // Proyek dianggap aktif jika end_date belum diisi ATAU end_date masih di masa depan
                 $query->whereNull('end_date')
-                      ->orWhere('end_date', '>=', Carbon::today());
+                      ->orWhere('end_date', '>=', \Illuminate\Support\Carbon::today());
             })
             ->count();
 
-        // Hitung jumlah tugas harian/adhoc aktif (query ini sudah benar karena tabel tasks punya 'status')
+        // Hitung tugas ad-hoc aktif berdasarkan status
         $activeAdhocTasksCount = $user->tasks()
                                      ->whereNull('project_id')
                                      ->where('status', '!=', 'Selesai')
                                      ->count();
         
-        // Ambil jumlah SK aktif dari accessor yang sudah ada di model User
         $activeSkCount = $user->getActiveSkCountAttribute();
 
-        // Kembalikan data dalam format JSON
+        // KEMBALIKAN HANYA DATA BEBAN KERJA
         return response()->json([
             'success' => true,
             'data' => [
                 'active_projects' => $activeProjectsCount,
                 'active_adhoc_tasks' => $activeAdhocTasksCount,
                 'active_sks' => $activeSkCount,
+                // Pastikan tidak ada 'skills' atau data lain di sini
             ]
         ]);
     }
+
+    public function search(Request $request)
+    {
+        // Hanya pengguna yang bisa membuat proyek yang boleh mencari user lain.
+        $this->authorize('create', Project::class);
+
+        $query = $request->input('q');
+
+        // Jika query kosong, kembalikan array kosong.
+        if (empty($query)) {
+            return response()->json([]);
+        }
+
+        // Cari pengguna berdasarkan nama, jangan tampilkan diri sendiri, dan batasi hasilnya.
+        $users = User::where('name', 'ilike', "%{$query}%")
+                    ->where('id', '!=', auth()->id())
+                    ->limit(10)
+                    ->get(['id', 'name', 'role']);
+
+        return response()->json($users);
+    }
+
 }

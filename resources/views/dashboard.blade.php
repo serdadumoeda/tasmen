@@ -47,15 +47,6 @@
             </div>
         </div>
 
-        <div class="flex justify-between items-center mb-6">
-            <h3 class="text-2xl font-bold">Semua Proyek</h3>
-             @can('create', App\Models\Project::class)
-                <a href="{{ route('projects.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2 rounded-lg flex items-center space-x-2 shadow">
-                    <span>Proyek Baru</span>
-                    <i class="bi bi-plus-circle-fill text-white"></i>
-                </a>
-            @endcan
-        </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div class="lg:col-span-2 space-y-6">

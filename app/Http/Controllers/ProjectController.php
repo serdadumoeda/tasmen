@@ -104,10 +104,22 @@ class ProjectController extends Controller
     public function edit(Project $project)
     {
         $this->authorize('update', $project);
+
+        // --- LOGIKA BARU UNTUK MENGGABUNGKAN ANGGOTA ---
+        // 1. Ambil semua anggota yang saat ini sudah ada di dalam proyek.
+        $currentMembers = $project->members;
+
+        // 2. Ambil semua calon anggota dari hierarki pemilik proyek.
         $referenceUser = $project->owner ?? auth()->user();
         $subordinateIds = $referenceUser->getAllSubordinateIds();
-        $subordinateIds[] = $referenceUser->id;
-        $potentialMembers = User::whereIn('id', $subordinateIds)->orderBy('name')->get();
+        $subordinateIds[] = $referenceUser->id; // Pastikan diri sendiri termasuk dalam daftar
+        $subordinates = User::whereIn('id', $subordinateIds)->get();
+
+        // 3. Gabungkan kedua koleksi data, hapus duplikat berdasarkan ID, lalu urutkan berdasarkan nama.
+        $potentialMembers = $currentMembers->merge($subordinates)->unique('id')->sortBy('name');
+        // --- AKHIR LOGIKA BARU ---
+        
+        // Bagian statistik tidak berubah
         $taskStatuses = $project->tasks->countBy('status');
         $stats = [
             'total' => $project->tasks->count(),
@@ -115,6 +127,7 @@ class ProjectController extends Controller
             'in_progress' => $taskStatuses->get('in_progress', 0),
             'completed' => $taskStatuses->get('completed', 0),
         ];
+
         return view('projects.edit', compact('project', 'potentialMembers', 'stats'));
     }
 

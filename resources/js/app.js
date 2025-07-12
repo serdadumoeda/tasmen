@@ -4,126 +4,219 @@ import Alpine from 'alpinejs';
 window.Alpine = Alpine;
 
 // ======================================================================
-// FUNGSI UNTUK FITUR "WORKLOAD INSIGHT" PADA FORM PIMPINAN PROYEK
+// FUNGSI UNTUK MENAMPILKAN INFO BEBAN KERJA (GABUNGAN)
 // ======================================================================
 const initWorkloadInsight = () => {
-    const leaderSelect = document.getElementById('leader_id');
-    const workloadInfoContainer = document.getElementById('leaderWorkloadInfo');
+    const setupListener = (selectId, containerId) => {
+        const selectElement = document.getElementById(selectId);
+        const infoContainer = document.getElementById(containerId);
 
-    if (!leaderSelect || !workloadInfoContainer) {
-        return; // Hentikan jika form pimpinan proyek tidak ada di halaman ini
-    }
+        if (!selectElement || !infoContainer) return;
 
-    console.log("✔️ Fitur 'Workload Insight' diinisialisasi.");
+        let lastValues = [];
+        selectElement.addEventListener('change', function() {
+            let userId;
+            if (this.multiple) {
+                const currentValues = Array.from(this.selectedOptions).map(opt => opt.value);
+                const newlySelected = currentValues.filter(id => !lastValues.includes(id));
+                lastValues = currentValues;
+                if (newlySelected.length === 0) {
+                    infoContainer.innerHTML = '';
+                    return;
+                }
+                userId = newlySelected[newlySelected.length - 1];
+            } else {
+                userId = this.value;
+            }
 
-    leaderSelect.addEventListener('change', function() {
-        const selectedUserId = this.value;
+            if (!userId) {
+                infoContainer.innerHTML = '';
+                return;
+            }
 
-        if (!selectedUserId) {
-            workloadInfoContainer.innerHTML = '';
-            return;
-        }
+            infoContainer.innerHTML = `<p class="text-gray-500 italic mt-2">Memeriksa beban kerja...</p>`;
 
-        workloadInfoContainer.innerHTML = `<p class="text-gray-500 italic">Memeriksa beban kerja...</p>`;
+            fetch(`/api/users/${userId}/workload`)
+                .then(response => {
+                    if (!response.ok) return response.json().then(err => { throw new Error(err.message || 'Gagal mengambil data.') });
+                    return response.json();
+                })
+                .then(result => {
+                    if (result.success) {
+                        const data = result.data;
+                        const userName = this.querySelector(`option[value="${userId}"]`).textContent.split('(')[0].trim();
+                        let skillsHtml = '<p class="text-xs text-gray-500 italic">Belum ada portofolio keahlian.</p>';
+                        if (data.skills && data.skills.length > 0) {
+                            skillsHtml = data.skills.map(skill => `<span class="inline-block bg-teal-100 text-teal-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full">${skill}</span>`).join('');
+                        }
 
-        // PERBAIKAN: Gunakan URL statis yang benar
-        fetch(`/api/users/${selectedUserId}/workload`)
-            .then(response => {
-                if (!response.ok) throw new Error('Gagal mengambil data beban kerja.');
-                return response.json();
-            })
-            .then(result => {
-                if (result.success) {
-                    const data = result.data;
-                    workloadInfoContainer.innerHTML = `
+                        infoContainer.innerHTML = `
                         <div class="p-3 mt-2 bg-gray-50 border rounded-md">
-                            <h4 class="font-semibold text-gray-800 mb-2">Ringkasan Beban Kerja:</h4>
-                            <ul class="space-y-1 text-gray-700">
+                            <h4 class="font-semibold text-gray-800 mb-2">Ringkasan Beban Kerja: <span class="font-normal">${userName}</span></h4>
+                            <ul class="space-y-1 text-gray-700 text-sm">
                                 <li class="flex items-center"><i class="fas fa-briefcase text-blue-500 fa-fw w-5 mr-2"></i> ${data.active_projects} Proyek Aktif</li>
                                 <li class="flex items-center"><i class="fas fa-bolt text-yellow-500 fa-fw w-5 mr-2"></i> ${data.active_adhoc_tasks} Tugas Harian</li>
                                 <li class="flex items-center"><i class="fas fa-file-signature text-green-500 fa-fw w-5 mr-2"></i> ${data.active_sks} SK Aktif</li>
                             </ul>
                         </div>`;
                 } else {
-                    workloadInfoContainer.innerHTML = `<p class="text-red-500">Gagal memuat info beban kerja.</p>`;
+                     infoContainer.innerHTML = `<p class="text-red-500 mt-2">Gagal memuat info: ${result.message}</p>`;
                 }
             })
-            .catch(error => {
-                console.error('Error fetching workload:', error);
-                workloadInfoContainer.innerHTML = `<p class="text-red-500">Terjadi kesalahan koneksi.</p>`;
-            });
-    });
+                .catch(error => {
+                    console.error('Error fetching workload:', error);
+                    infoContainer.innerHTML = `<p class="text-red-500 mt-2">Terjadi kesalahan: ${error.message}</p>`;
+                });
+        });
+    };
+
+    console.log("✔️ Menginisialisasi fitur 'Workload Insight'...");
+    setupListener('leader_id', 'leaderWorkloadInfo');
+    setupListener('members', 'membersWorkloadInfo');
 };
 
 // ======================================================================
-// FUNGSI UNTUK FITUR MODAL "PILIH DARI TIM TERBUKA"
+// FUNGSI UNTUK MODAL PEMILIHAN ANGGOTA
 // ======================================================================
-const initTeamSelectionModal = () => {
-    const showBtn = document.getElementById('showResourcePoolBtn');
-    if (!showBtn) {
-        return; // Hentikan jika tombol tidak ada
-    }
+const initMemberSelectionModal = () => {
+    const showBtn = document.getElementById('showMemberModalBtn');
+    if (!showBtn) return;
 
-    console.log("✔️ Fitur Modal 'Tim Terbuka' diinisialisasi.");
-
-    const modal = document.getElementById('resourcePoolModal');
-    const closeBtn = document.getElementById('closeModalBtn');
-    const addBtn = document.getElementById('addMembersFromPoolBtn');
-    const membersContainer = document.getElementById('resourcePoolMembers');
+    const modal = document.getElementById('memberSelectionModal');
+    const closeBtn = document.getElementById('closeMemberModalBtn');
+    const addBtn = document.getElementById('addMemberFromModalBtn');
+    const poolContainer = document.getElementById('resourcePoolContainer');
+    const searchInput = document.getElementById('userSearchInput');
+    const searchResultsContainer = document.getElementById('userSearchResults');
     const membersSelect = document.getElementById('members');
 
-    if (!modal || !closeBtn || !addBtn || !membersSelect) {
-        console.error("❌ Kesalahan: Elemen modal atau tombol di dalamnya tidak ditemukan.");
+    if (!modal || !closeBtn || !addBtn || !poolContainer || !searchInput || !searchResultsContainer || !membersSelect) {
+        console.error("Satu atau lebih elemen untuk modal anggota tidak ditemukan.");
         return;
     }
+    
+    console.log("✔️ Fitur Modal Pemilihan Anggota diinisialisasi.");
 
-    showBtn.addEventListener('click', function() {
+    const renderUserRow = (user, type) => {
+        let note = type === 'pool' ? `<span class="text-green-600 font-semibold">Tersedia</span>` : `<span class="text-orange-600 font-semibold">Butuh Persetujuan</span>`;
+        return `
+            <label class="flex items-center p-2 rounded-md hover:bg-gray-100 cursor-pointer">
+                <input type="radio" name="modal_member_selection" class="h-4 w-4 border-gray-300 member-radio" value="${user.id}" data-name="${user.name} (${user.role})" data-type="${type}">
+                <span class="ml-3 text-sm text-gray-800">${user.name} <span class="text-gray-500">(${user.role})</span></span>
+                <span class="ml-auto text-xs">${note}</span>
+            </label>`;
+    };
+
+    showBtn.addEventListener('click', () => {
         modal.classList.remove('hidden');
-        membersContainer.innerHTML = '<tr><td colspan="4" class="text-center p-4">Memuat data...</td></tr>';
+        poolContainer.innerHTML = `<p class="text-center text-gray-400 p-4">Memuat...</p>`;
         
-        // PERBAIKAN: Gunakan URL statis yang benar
         fetch('/api/resource-pool/members')
             .then(response => response.json())
             .then(members => {
-                membersContainer.innerHTML = '';
+                poolContainer.innerHTML = '';
                 if (members.length === 0) {
-                    membersContainer.innerHTML = '<tr><td colspan="4" class="text-center p-4">Tidak ada anggota yang tersedia.</td></tr>';
-                    return;
+                    poolContainer.innerHTML = `<p class="text-center text-gray-400 p-4">Tidak ada anggota di Tim Terbuka.</p>`;
+                } else {
+                    members.forEach(member => {
+                        poolContainer.insertAdjacentHTML('beforeend', renderUserRow(member, 'pool'));
+                    });
                 }
-                members.forEach(member => {
-                    let unit = member.role || 'N/A';
-                    let row = `
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-4"><input type="checkbox" class="rounded border-gray-300 shadow-sm pool-member-select" value="${member.id}" data-name="${member.name} (Tim Terbuka)"></td>
-                            <td class="px-6 py-4 text-sm font-medium text-gray-900">${member.name}</td>
-                            <td class="px-6 py-4 text-sm text-gray-500">${unit}</td>
-                            <td class="px-6 py-4 text-sm text-gray-500">${member.pool_availability_notes || ''}</td>
-                        </tr>`;
-                    membersContainer.insertAdjacentHTML('beforeend', row);
-                });
             });
     });
 
     const closeModal = () => modal.classList.add('hidden');
     closeBtn.addEventListener('click', closeModal);
-    modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
 
-    addBtn.addEventListener('click', function() {
-        const selectedCheckboxes = document.querySelectorAll('.pool-member-select:checked');
-        selectedCheckboxes.forEach(checkbox => {
-            const memberId = checkbox.value;
-            const memberName = checkbox.getAttribute('data-name');
-            if (!membersSelect.querySelector(`option[value="${memberId}"]`)) {
-                const newOption = document.createElement('option');
-                newOption.value = memberId;
-                newOption.textContent = memberName;
-                membersSelect.appendChild(newOption);
-            }
-            const optionToSelect = membersSelect.querySelector(`option[value="${memberId}"]`);
-            if(optionToSelect) optionToSelect.selected = true;
-        });
+    let searchTimeout;
+    searchInput.addEventListener('keyup', () => {
+        clearTimeout(searchTimeout);
+        const query = searchInput.value;
+        if (query.length < 3) {
+            searchResultsContainer.innerHTML = `<p class="text-center text-gray-400 p-4">Ketik min. 3 huruf untuk mencari.</p>`;
+            return;
+        }
+        searchResultsContainer.innerHTML = `<p class="text-center text-gray-400 p-4">Mencari...</p>`;
+        searchTimeout = setTimeout(() => {
+            fetch(`/api/users/search?q=${query}`)
+                .then(response => response.json())
+                .then(users => {
+                    searchResultsContainer.innerHTML = '';
+                    if (users.length === 0) {
+                        searchResultsContainer.innerHTML = `<p class="text-center text-gray-400 p-4">Tidak ada pengguna ditemukan.</p>`;
+                    } else {
+                        users.forEach(user => {
+                            searchResultsContainer.insertAdjacentHTML('beforeend', renderUserRow(user, 'request'));
+                        });
+                    }
+                });
+        }, 500);
+    });
+
+    addBtn.addEventListener('click', () => {
+        const selectedRadio = document.querySelector('.member-radio:checked');
+        if (!selectedRadio) {
+            alert('Silakan pilih satu anggota untuk ditambahkan.');
+            return;
+        }
+        
+        const memberId = selectedRadio.value;
+        const memberName = selectedRadio.getAttribute('data-name');
+        const type = selectedRadio.getAttribute('data-type');
+            
+        if (membersSelect.querySelector(`option[value="${memberId}"]`)) {
+            alert(`${memberName} sudah ada di dalam tim.`);
+            return;
+        }
+
+        if (type === 'pool') {
+            const newOption = document.createElement('option');
+            newOption.value = memberId;
+            newOption.textContent = memberName;
+            newOption.selected = true;
+            membersSelect.appendChild(newOption);
+            membersSelect.dispatchEvent(new Event('change'));
+        } else {
+            sendBorrowRequest(memberId, memberName);
+        }
+        
         closeModal();
     });
+
+    function sendBorrowRequest(memberId, memberName) {
+        const form = document.querySelector('form[action*="/projects"]');
+        const formAction = form.action;
+        let projectId;
+        
+        const urlParts = formAction.split('/');
+        // Cek apakah ada input _method 'PUT' untuk mendeteksi form edit
+        const isEditForm = form.querySelector('input[name="_method"][value="PUT"]');
+        
+        if (isEditForm) {
+            projectId = urlParts[urlParts.length - 1];
+        }
+
+        if (!projectId) {
+            alert("Fitur 'Minta dari Tim Lain' hanya dapat digunakan saat MENGEDIT proyek yang sudah ada, karena memerlukan ID Proyek untuk membuat permintaan.");
+            return;
+        }
+
+        let message = prompt(`Anda akan mengirim permintaan untuk meminjam "${memberName}".\nTambahkan pesan untuk atasan mereka (opsional):`);
+        
+        fetch(`/peminjaman-requests`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content') },
+            body: JSON.stringify({ project_id: projectId, requested_user_id: memberId, message: message })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(`Permintaan untuk ${memberName} telah terkirim.`);
+            } else {
+                alert(`Gagal mengirim permintaan: ${data.message}`);
+            }
+        });
+    }
 };
 
 // ======================================================================
@@ -131,12 +224,10 @@ const initTeamSelectionModal = () => {
 // ======================================================================
 const initResourcePoolPage = () => {
     const resourcePoolTable = document.querySelector('table .pool-toggle');
-    if (!resourcePoolTable) {
-        return;
-    }
-
-    console.log("✔️ Halaman Manajemen Resource Pool terdeteksi.");
-
+    if (!resourcePoolTable) return;
+    
+    console.log("✔️ Halaman Manajemen Resource Pool diinisialisasi.");
+    
     function updateMemberStatus(memberId) {
         const isChecked = document.getElementById(`poolSwitch${memberId}`).checked;
         const notesInput = document.querySelector(`tr#member-${memberId} .notes-input`);
@@ -145,14 +236,8 @@ const initResourcePoolPage = () => {
 
         fetch(url, {
             method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-            },
-            body: JSON.stringify({
-                is_in_resource_pool: isChecked,
-                pool_availability_notes: notes
-            })
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content') },
+            body: JSON.stringify({ is_in_resource_pool: isChecked, pool_availability_notes: notes })
         })
         .then(response => response.json())
         .then(data => {
@@ -161,10 +246,7 @@ const initResourcePoolPage = () => {
                 document.getElementById(`poolSwitch${memberId}`).checked = !isChecked;
             }
         })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Terjadi kesalahan koneksi.');
-        });
+        .catch(error => { console.error('Error:', error); alert('Terjadi kesalahan koneksi.'); });
     }
 
     document.querySelectorAll('.pool-toggle').forEach(toggle => {
@@ -184,82 +266,14 @@ const initResourcePoolPage = () => {
     });
 };
 
-const initTeamWorkloadInsight = () => {
-    const membersSelect = document.getElementById('members');
-    const workloadInfoContainer = document.getElementById('membersWorkloadInfo');
-
-    if (!membersSelect || !workloadInfoContainer) {
-        return; // Hentikan jika form anggota tim tidak ada
-    }
-
-    console.log("✔️ Fitur 'Workload Insight' untuk Anggota Tim diinisialisasi.");
-
-    let lastSelectedValues = []; // Simpan pilihan sebelumnya
-
-    membersSelect.addEventListener('change', function() {
-        const currentSelectedValues = Array.from(this.selectedOptions).map(option => option.value);
-        
-        // Temukan anggota yang baru saja ditambahkan
-        const newlySelected = currentSelectedValues.filter(id => !lastSelectedValues.includes(id));
-        
-        // Update pilihan sebelumnya
-        lastSelectedValues = currentSelectedValues;
-
-        // Jika tidak ada anggota baru yang dipilih (misal: saat menghapus), kosongkan info
-        if (newlySelected.length === 0) {
-            workloadInfoContainer.innerHTML = '';
-            return;
-        }
-
-        // Ambil ID anggota terakhir yang dipilih untuk ditampilkan bebannya
-        const lastSelectedUserId = newlySelected[newlySelected.length - 1];
-
-        if (!lastSelectedUserId) {
-            workloadInfoContainer.innerHTML = '';
-            return;
-        }
-
-        workloadInfoContainer.innerHTML = `<p class="text-gray-500 italic">Memeriksa beban kerja anggota terakhir...</p>`;
-
-        fetch(`/api/users/${lastSelectedUserId}/workload`)
-            .then(response => {
-                if (!response.ok) throw new Error('Gagal mengambil data beban kerja.');
-                return response.json();
-            })
-            .then(result => {
-                if (result.success) {
-                    const data = result.data;
-                    const userName = this.querySelector(`option[value="${lastSelectedUserId}"]`).textContent.split('(')[0].trim();
-                    workloadInfoContainer.innerHTML = `
-                        <div class="p-3 mt-2 bg-gray-50 border rounded-md">
-                            <h4 class="font-semibold text-gray-800 mb-2">Ringkasan Beban Kerja: <span class="font-normal">${userName}</span></h4>
-                            <ul class="space-y-1 text-gray-700">
-                                <li class="flex items-center"><i class="fas fa-briefcase text-blue-500 fa-fw w-5 mr-2"></i> ${data.active_projects} Proyek Aktif</li>
-                                <li class="flex items-center"><i class="fas fa-bolt text-yellow-500 fa-fw w-5 mr-2"></i> ${data.active_adhoc_tasks} Tugas Harian</li>
-                                <li class="flex items-center"><i class="fas fa-file-signature text-green-500 fa-fw w-5 mr-2"></i> ${data.active_sks} SK Aktif</li>
-                            </ul>
-                        </div>`;
-                } else {
-                    workloadInfoContainer.innerHTML = `<p class="text-red-500">Gagal memuat info beban kerja.</p>`;
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching workload:', error);
-                workloadInfoContainer.innerHTML = `<p class="text-red-500">Terjadi kesalahan koneksi.</p>`;
-            });
-    });
-};
 
 // ======================================================================
 // JALANKAN SEMUA FUNGSI INISIALISASI SETELAH HALAMAN DIMUAT
 // ======================================================================
 document.addEventListener('DOMContentLoaded', () => {
-    // Jalankan semua fungsi inisialisasi.
-    // Setiap fungsi akan memeriksa sendiri apakah perlu dijalankan atau tidak.
     initWorkloadInsight();
-    initTeamSelectionModal();
+    initMemberSelectionModal();
     initResourcePoolPage();
-    initTeamWorkloadInsight();
     
     Alpine.start();
 });

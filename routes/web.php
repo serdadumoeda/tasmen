@@ -62,6 +62,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/global-dashboard', [GlobalDashboardController::class, 'index'])->name('global.dashboard');
 
     Route::resource('users', UserController::class);
+    Route::get('/api/users/search', [App\Http\Controllers\UserController::class, 'search'])->name('api.users.search');
 
     Route::get('/workload-analysis', [WorkloadAnalysisController::class, 'index'])->name('workload.analysis');
     Route::patch('/workload-analysis/{user}/update-behavior', [WorkloadAnalysisController::class, 'updateBehavior'])->name('workload.updateBehavior');

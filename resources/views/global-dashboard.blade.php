@@ -70,11 +70,11 @@
                                         <p class="font-bold text-blue-600">{{ $project->name }}</p>
                                         <p class="text-sm text-gray-600">Ketua: {{ $project->leader->name }}</p>
                                         
-                                        {{-- PENAMBAHAN KODE UNTUK ANGGARAN --}}
+                                        
                                         <p class="text-sm text-gray-600 mt-1">
                                             <span class="font-semibold">Anggaran:</span> Rp {{ number_format($project->budget_items_sum_total_cost ?? 0, 0, ',', '.') }}
                                         </p>
-                                        {{-- AKHIR PENAMBAHAN --}}
+                                        
 
                                     </div>
                                     <div class="text-right flex-shrink-0 ml-4">
