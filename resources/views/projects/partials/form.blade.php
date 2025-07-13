@@ -46,10 +46,12 @@
 <div class="mb-4">
     <div class="flex justify-between items-center mb-1">
         <label for="members" class="block font-medium text-sm text-gray-700">Anggota Tim</label>
+        @if ($project->exists)
         <button type="button" id="showMemberModalBtn" class="px-3 py-1 bg-blue-500 text-white text-xs font-semibold rounded-md hover:bg-blue-600">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block -mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
             Tambah Anggota
         </button>
+        @endif
     </div>
 
     <select name="members[]" id="members" class="block mt-1 w-full rounded-md shadow-sm border-gray-300" multiple required>

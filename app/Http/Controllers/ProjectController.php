@@ -44,6 +44,7 @@ class ProjectController extends Controller
         $user = Auth::user();
         $this->authorize('create', Project::class);
 
+       
         $subordinateIds = $user->getAllSubordinateIds();
         $subordinateIds[] = $user->id;
 
@@ -53,25 +54,47 @@ class ProjectController extends Controller
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
             'leader_id' => ['required', 'exists:users,id', Rule::in($subordinateIds)],
-            'members' => 'required|array',
+            'members' => 'nullable|array',
             'members.*' => ['exists:users,id', Rule::in($subordinateIds)],
+            'requested_members' => 'nullable|array', 
+            'requested_members.*' => 'exists:users,id',
         ]);
         
-        $dataToCreate = $validated;
+        $dataToCreate = $request->only('name', 'description', 'start_date', 'end_date', 'leader_id');
         $dataToCreate['owner_id'] = $user->id;
 
         $project = Project::create($dataToCreate);
 
+        
         $memberIds = collect($request->members);
         if (!$memberIds->contains($request->leader_id)) {
             $memberIds->push($request->leader_id);
         }
-        
         $project->members()->sync($memberIds->unique());
 
-        return redirect()->route('dashboard')->with('success', 'Proyek "' . $project->name . '" berhasil dibuat!');
+        
+        if ($request->has('requested_members')) {
+            foreach ($request->requested_members as $requestedUserId) {
+                $requestedUser = User::find($requestedUserId);
+                if ($requestedUser && $requestedUser->parent_id) {
+                    PeminjamanRequest::create([
+                        'project_id' => $project->id,
+                        'requested_user_id' => $requestedUser->id,
+                        'requester_id' => $user->id,
+                        'approver_id' => $requestedUser->parent_id,
+                        'due_date' => Carbon::now()->addWeekday(),
+                    ]);
+                }
+            }
+        }
+        
+        // ==========================================================
+        // PERBAIKAN UTAMA
+        // ==========================================================
+        // Sebelumnya: return redirect()->route('dashboard')...
+        // Diarahkan ke halaman detail proyek yang baru dibuat dengan pesan sukses.
+        return redirect()->route('projects.show', $project)->with('success', 'Proyek berhasil dibuat! Anda sekarang dapat mengelola tugas dan anggota secara detail.');
     }
-
     public function show(Project $project)
     {
         $this->authorize('view', $project);
@@ -105,7 +128,7 @@ class ProjectController extends Controller
     {
         $this->authorize('update', $project);
 
-        // --- LOGIKA BARU UNTUK MENGGABUNGKAN ANGGOTA ---
+        
         // 1. Ambil semua anggota yang saat ini sudah ada di dalam proyek.
         $currentMembers = $project->members;
 
@@ -117,7 +140,7 @@ class ProjectController extends Controller
 
         // 3. Gabungkan kedua koleksi data, hapus duplikat berdasarkan ID, lalu urutkan berdasarkan nama.
         $potentialMembers = $currentMembers->merge($subordinates)->unique('id')->sortBy('name');
-        // --- AKHIR LOGIKA BARU ---
+        
         
         // Bagian statistik tidak berubah
         $taskStatuses = $project->tasks->countBy('status');
