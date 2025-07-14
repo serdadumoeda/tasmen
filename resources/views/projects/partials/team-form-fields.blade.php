@@ -25,9 +25,34 @@
             $projectMemberIds = collect(old('members', isset($project) ? $project->members->pluck('id')->all() : []));
         @endphp
         @foreach ($potentialMembers as $member)
+            {{-- --- AWAL PERBAIKAN LOGIKA TAMPILAN --- --}}
+            @php
+                // Siapkan nama tampilan default
+                $displayName = "{$member->name} ({$member->role})";
+
+                // Cek apakah anggota ini BUKAN dari hierarki kita (berarti anggota pinjaman)
+                $isExternal = isset($subordinateIds) && !$subordinateIds->contains($member->id);
+                $request = isset($loanRequests) ? $loanRequests->get($member->id) : null;
+
+                // Jika dia anggota pinjaman dan ada data permintaannya, tambahkan status sebagai teks
+                if ($isExternal && $request) {
+                    $statusText = '';
+                    if ($request->status == 'approved') {
+                        $statusText = ' [Disetujui]';
+                    } elseif ($request->status == 'pending') {
+                        $statusText = ' [Menunggu]';
+                    } elseif ($request->status == 'rejected') {
+                        $statusText = ' [Ditolak]';
+                    }
+                    $displayName .= $statusText;
+                }
+            @endphp
+
             <option value="{{ $member->id }}" @selected($projectMemberIds->contains($member->id))>
-                {{ $member->name }} ({{ $member->role }})
+                {{-- Tampilkan nama yang sudah dimodifikasi dengan status --}}
+                {{ $displayName }}
             </option>
+            {{-- --- AKHIR PERBAIKAN LOGIKA TAMPILAN --- --}}
         @endforeach
     </select>
     <p class="text-xs text-gray-500 mt-1">Tahan tombol Ctrl (atau Cmd di Mac) untuk memilih lebih dari satu anggota.</p>

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Project;
 use App\Models\User;
+use App\Models\PeminjamanRequest; 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
@@ -11,12 +12,11 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\DB;
 
-
 class ProjectController extends Controller
 {
     use AuthorizesRequests;
 
-    // ... (method index, createStep1, storeStep1, createStep2 tidak perlu diubah) ...
+    
     public function index()
     {
         $user = Auth::user();
@@ -67,31 +67,22 @@ class ProjectController extends Controller
 
         return view('projects.create_step2', compact('project', 'potentialMembers'));
     }
-
-    /**
-     * LANGKAH 2: Menyimpan data Pimpinan & Anggota Tim.
-     */
+    
     public function storeStep2(Request $request, Project $project)
     {
         $this->authorize('update', $project);
 
         $user = Auth::user();
-
-        // 1. Ambil semua bawahan dari pembuat proyek
         $subordinateIds = collect($user->getAllSubordinateIds());
-        $subordinateIds->push($user->id); // Jangan lupa tambahkan diri sendiri
+        $subordinateIds->push($user->id);
 
-        // 2. Ambil semua anggota yang sudah "dipinjam" dan ada di proyek
         $existingMemberIds = $project->members()->pluck('users.id');
-
-        // 3. Gabungkan keduanya untuk mendapatkan daftar ID yang valid
         $validMemberIds = $subordinateIds->merge($existingMemberIds)->unique();
 
-        // 4. Lakukan validasi menggunakan daftar gabungan tersebut
         $validated = $request->validate([
             'leader_id' => ['required', 'exists:users,id', Rule::in($validMemberIds)],
             'members' => 'required|array',
-            'members.*' => ['exists:users,id', Rule::in($validMemberIds)], // Gunakan validasi yang sama
+            'members.*' => ['exists:users,id', Rule::in($validMemberIds)],
         ]);
 
         $project->update(['leader_id' => $validated['leader_id']]);
@@ -104,8 +95,7 @@ class ProjectController extends Controller
 
         return redirect()->route('projects.show', $project)->with('success', 'Tim proyek berhasil dibentuk!');
     }
-    
-    // ... (method show dan edit tidak perlu diubah) ...
+
     public function show(Project $project)
     {
         $this->authorize('view', $project);
@@ -138,14 +128,27 @@ class ProjectController extends Controller
     public function edit(Project $project)
     {
         $this->authorize('update', $project);
-
+        
+        // --- AWAL PERBAIKAN ---
         $currentMembers = $project->members;
         $referenceUser = $project->owner ?? auth()->user();
-        $subordinateIds = $referenceUser->getAllSubordinateIds();
-        $subordinateIds[] = $referenceUser->id;
+
+        // Ambil ID bawahan sebagai Collection untuk kemudahan pengecekan di view
+        $subordinateIds = collect($referenceUser->getAllSubordinateIds());
+        $subordinateIds->push($referenceUser->id);
+        
         $subordinates = User::whereIn('id', $subordinateIds)->get();
         $potentialMembers = $currentMembers->merge($subordinates)->unique('id')->sortBy('name');
+
+        // 2. Ambil semua permintaan peminjaman untuk proyek ini.
+        // `keyBy` digunakan agar kita bisa mencari status dengan mudah berdasarkan ID user di view.
+        $loanRequests = PeminjamanRequest::where('project_id', $project->id)
+            ->latest() // Ambil yang terbaru jika ada permintaan ganda
+            ->get()
+            ->keyBy('requested_user_id');
         
+        // --- AKHIR PERBAIKAN ---
+
         $taskStatuses = $project->tasks->countBy('status');
         $stats = [
             'total' => $project->tasks->count(),
@@ -153,31 +156,22 @@ class ProjectController extends Controller
             'in_progress' => $taskStatuses->get('in_progress', 0),
             'completed' => $taskStatuses->get('completed', 0),
         ];
-
-        return view('projects.edit', compact('project', 'potentialMembers', 'stats'));
+        
+        // 3. Kirim data baru ($loanRequests dan $subordinateIds) ke view
+        return view('projects.edit', compact('project', 'potentialMembers', 'stats', 'loanRequests', 'subordinateIds'));
     }
-
-    /**
-     * Method `update` dengan logika validasi yang diperbaiki.
-     */
+    
     public function update(Request $request, Project $project)
     {
         $this->authorize('update', $project);
 
-        // --- AWAL PERBAIKAN ---
         $referenceUser = $project->owner ?? auth()->user();
-
-        // 1. Ambil ID semua bawahan dari pembuat/pemilik proyek
         $subordinateIds = collect($referenceUser->getAllSubordinateIds());
         $subordinateIds->push($referenceUser->id);
 
-        // 2. Ambil ID semua anggota yang saat ini SUDAH ADA di dalam proyek
         $existingMemberIds = $project->members()->pluck('users.id');
-
-        // 3. Gabungkan kedua daftar tersebut menjadi satu daftar ID yang valid
         $validMemberIds = $subordinateIds->merge($existingMemberIds)->unique();
 
-        // 4. Gunakan daftar ID yang sudah diperluas ini untuk validasi
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'required|string',
@@ -185,9 +179,8 @@ class ProjectController extends Controller
             'end_date' => 'nullable|date|after_or_equal:start_date',
             'leader_id' => ['required', 'exists:users,id', Rule::in($validMemberIds)],
             'members' => 'required|array',
-            'members.*' => ['exists:users,id', Rule::in($validMemberIds)], // Perbaikan utama di sini
+            'members.*' => ['exists:users,id', Rule::in($validMemberIds)],
         ]);
-        // --- AKHIR PERBAIKAN ---
 
         $project->update($validated);
         
@@ -367,5 +360,4 @@ class ProjectController extends Controller
 
         return response()->json($events);
     }
-
 }
