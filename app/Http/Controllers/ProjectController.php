@@ -102,6 +102,14 @@ class ProjectController extends Controller
 
         $project->load('owner', 'leader', 'members', 'tasks.assignees', 'tasks.comments.user', 'tasks.attachments', 'activities.user', 'tasks.subTasks');
         
+        // --- AWAL PERBAIKAN ---
+        // Ambil data riwayat permintaan peminjaman yang terkait dengan proyek ini
+        $loanRequests = PeminjamanRequest::where('project_id', $project->id)
+                            ->with(['requester', 'requestedUser', 'approver'])
+                            ->latest()
+                            ->get();
+        // --- AKHIR PERBAIKAN ---
+
         $tasksByUser = collect();
         foreach ($project->tasks as $task) {
             foreach ($task->assignees as $assignee) {
@@ -122,8 +130,10 @@ class ProjectController extends Controller
             'completed' => $taskStatuses->get('completed', 0),
         ];
 
-        return view('projects.show', compact('project', 'projectMembers', 'stats', 'tasksByUser'));
+        // Kirim variabel $loanRequests ke view
+        return view('projects.show', compact('project', 'projectMembers', 'stats', 'tasksByUser', 'loanRequests'));
     }
+
 
     public function edit(Project $project)
     {
