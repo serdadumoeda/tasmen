@@ -184,37 +184,53 @@ const initMemberSelectionModal = () => {
     });
 
     function sendBorrowRequest(memberId, memberName) {
-        const form = document.querySelector('form[action*="/projects"]');
-        const formAction = form.action;
+        // --- BAGIAN YANG DIPERBAIKI ---
+        // Mengambil ID proyek dari URL halaman saat ini, bukan dari form action.
+        // Ini akan bekerja baik di halaman 'create step 2' maupun 'edit'.
         let projectId;
-        
-        const urlParts = formAction.split('/');
-        // Cek apakah ada input _method 'PUT' untuk mendeteksi form edit
-        const isEditForm = form.querySelector('input[name="_method"][value="PUT"]');
-        
-        if (isEditForm) {
-            projectId = urlParts[urlParts.length - 1];
+        const match = window.location.pathname.match(/\/projects\/(\d+)/);
+        if (match && match[1]) {
+            projectId = match[1];
         }
 
         if (!projectId) {
-            alert("Fitur 'Minta dari Tim Lain' hanya dapat digunakan saat MENGEDIT proyek yang sudah ada, karena memerlukan ID Proyek untuk membuat permintaan.");
+            alert("Tidak dapat menemukan ID Proyek dari URL. Fitur ini tidak dapat dilanjutkan.");
+            console.error("Gagal mengekstrak ID Proyek dari URL:", window.location.pathname);
             return;
         }
+        // --- AKHIR PERBAIKAN ---
 
         let message = prompt(`Anda akan mengirim permintaan untuk meminjam "${memberName}".\nTambahkan pesan untuk atasan mereka (opsional):`);
         
+        // Cek jika pengguna menekan tombol "Cancel" pada prompt
+        if (message === null) {
+            return; // Hentikan fungsi jika permintaan dibatalkan
+        }
+
         fetch(`/peminjaman-requests`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content') },
             body: JSON.stringify({ project_id: projectId, requested_user_id: memberId, message: message })
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                 // Jika respons tidak OK, coba baca pesan error dari JSON
+                return response.json().then(err => Promise.reject(err));
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.success) {
                 alert(`Permintaan untuk ${memberName} telah terkirim.`);
             } else {
-                alert(`Gagal mengirim permintaan: ${data.message}`);
+                // Pesan error dari server (jika ada) akan ditampilkan di sini
+                alert(`Gagal mengirim permintaan: ${data.message || 'Terjadi kesalahan yang tidak diketahui.'}`);
             }
+        })
+        .catch(error => {
+            // Menangkap error dari fetch atau dari Promise.reject
+            console.error('Error sending borrow request:', error);
+            alert(`Gagal mengirim permintaan: ${error.message || 'Terjadi kesalahan koneksi.'}`);
         });
     }
 };
