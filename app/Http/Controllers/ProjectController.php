@@ -11,12 +11,12 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\DB;
 
+
 class ProjectController extends Controller
 {
     use AuthorizesRequests;
 
-
-
+    // ... (method index, createStep1, storeStep1, createStep2 tidak perlu diubah) ...
     public function index()
     {
         $user = Auth::user();
@@ -27,18 +27,12 @@ class ProjectController extends Controller
         return view('dashboard', compact('projects'));
     }
 
-   /**
-     * LANGKAH 1: Menampilkan form untuk data dasar proyek.
-     */
     public function createStep1()
     {
         $this->authorize('create', Project::class);
         return view('projects.create_step1', ['project' => new Project()]);
     }
 
-    /**
-     * LANGKAH 1: Menyimpan data dasar proyek dan mengarahkan ke langkah 2.
-     */
     public function storeStep1(Request $request)
     {
         $this->authorize('create', Project::class);
@@ -56,19 +50,15 @@ class ProjectController extends Controller
             'start_date' => $validated['start_date'],
             'end_date' => $validated['end_date'],
             'owner_id' => Auth::id(),
-            'leader_id' => Auth::id(), // Leader sementara adalah si pembuat
+            'leader_id' => Auth::id(),
         ]);
 
-        // Langsung arahkan ke langkah 2 dengan membawa ID proyek
         return redirect()->route('projects.create.step2', $project);
     }
 
-    /**
-     * LANGKAH 2: Menampilkan form untuk penugasan tim.
-     */
     public function createStep2(Project $project)
     {
-        $this->authorize('update', $project); // Gunakan otorisasi 'update'
+        $this->authorize('update', $project);
 
         $user = Auth::user();
         $subordinateIds = $user->getAllSubordinateIds();
@@ -81,34 +71,31 @@ class ProjectController extends Controller
     /**
      * LANGKAH 2: Menyimpan data Pimpinan & Anggota Tim.
      */
-    /**
-     * LANGKAH 2: Menyimpan data Pimpinan & Anggota Tim.
-     */
     public function storeStep2(Request $request, Project $project)
     {
         $this->authorize('update', $project);
 
         $user = Auth::user();
-        $subordinateIds = $user->getAllSubordinateIds();
-        $subordinateIds[] = $user->id;
 
-        // --- PERBAIKAN DI SINI ---
-        // Secara eksplisit memberitahu untuk mengambil 'id' dari tabel 'users'.
+        // 1. Ambil semua bawahan dari pembuat proyek
+        $subordinateIds = collect($user->getAllSubordinateIds());
+        $subordinateIds->push($user->id); // Jangan lupa tambahkan diri sendiri
+
+        // 2. Ambil semua anggota yang sudah "dipinjam" dan ada di proyek
         $existingMemberIds = $project->members()->pluck('users.id');
-        // --- AKHIR PERBAIKAN ---
-        
-        $validMemberIds = collect($subordinateIds)->merge($existingMemberIds)->unique();
 
+        // 3. Gabungkan keduanya untuk mendapatkan daftar ID yang valid
+        $validMemberIds = $subordinateIds->merge($existingMemberIds)->unique();
+
+        // 4. Lakukan validasi menggunakan daftar gabungan tersebut
         $validated = $request->validate([
             'leader_id' => ['required', 'exists:users,id', Rule::in($validMemberIds)],
             'members' => 'required|array',
-            'members.*' => ['exists:users,id'],
+            'members.*' => ['exists:users,id', Rule::in($validMemberIds)], // Gunakan validasi yang sama
         ]);
 
-        // Update Pimpinan Proyek
         $project->update(['leader_id' => $validated['leader_id']]);
 
-        // Update Anggota Tim
         $memberIds = collect($request->members);
         if (!$memberIds->contains($request->leader_id)) {
             $memberIds->push($request->leader_id);
@@ -117,7 +104,8 @@ class ProjectController extends Controller
 
         return redirect()->route('projects.show', $project)->with('success', 'Tim proyek berhasil dibentuk!');
     }
-
+    
+    // ... (method show dan edit tidak perlu diubah) ...
     public function show(Project $project)
     {
         $this->authorize('view', $project);
@@ -151,21 +139,13 @@ class ProjectController extends Controller
     {
         $this->authorize('update', $project);
 
-        
-        // 1. Ambil semua anggota yang saat ini sudah ada di dalam proyek.
         $currentMembers = $project->members;
-
-        // 2. Ambil semua calon anggota dari hierarki pemilik proyek.
         $referenceUser = $project->owner ?? auth()->user();
         $subordinateIds = $referenceUser->getAllSubordinateIds();
-        $subordinateIds[] = $referenceUser->id; // Pastikan diri sendiri termasuk dalam daftar
+        $subordinateIds[] = $referenceUser->id;
         $subordinates = User::whereIn('id', $subordinateIds)->get();
-
-        // 3. Gabungkan kedua koleksi data, hapus duplikat berdasarkan ID, lalu urutkan berdasarkan nama.
         $potentialMembers = $currentMembers->merge($subordinates)->unique('id')->sortBy('name');
         
-        
-        // Bagian statistik tidak berubah
         $taskStatuses = $project->tasks->countBy('status');
         $stats = [
             'total' => $project->tasks->count(),
@@ -177,30 +157,50 @@ class ProjectController extends Controller
         return view('projects.edit', compact('project', 'potentialMembers', 'stats'));
     }
 
+    /**
+     * Method `update` dengan logika validasi yang diperbaiki.
+     */
     public function update(Request $request, Project $project)
     {
         $this->authorize('update', $project);
+
+        // --- AWAL PERBAIKAN ---
         $referenceUser = $project->owner ?? auth()->user();
-        $subordinateIds = $referenceUser->getAllSubordinateIds();
-        $subordinateIds[] = $referenceUser->id;
+
+        // 1. Ambil ID semua bawahan dari pembuat/pemilik proyek
+        $subordinateIds = collect($referenceUser->getAllSubordinateIds());
+        $subordinateIds->push($referenceUser->id);
+
+        // 2. Ambil ID semua anggota yang saat ini SUDAH ADA di dalam proyek
+        $existingMemberIds = $project->members()->pluck('users.id');
+
+        // 3. Gabungkan kedua daftar tersebut menjadi satu daftar ID yang valid
+        $validMemberIds = $subordinateIds->merge($existingMemberIds)->unique();
+
+        // 4. Gunakan daftar ID yang sudah diperluas ini untuk validasi
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'required|string',
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
-            'leader_id' => ['required', 'exists:users,id', Rule::in($subordinateIds)],
+            'leader_id' => ['required', 'exists:users,id', Rule::in($validMemberIds)],
             'members' => 'required|array',
-            'members.*' => ['exists:users,id', Rule::in($subordinateIds)],
+            'members.*' => ['exists:users,id', Rule::in($validMemberIds)], // Perbaikan utama di sini
         ]);
+        // --- AKHIR PERBAIKAN ---
+
         $project->update($validated);
+        
         $memberIds = collect($request->members);
         if (!$memberIds->contains($request->leader_id)) {
             $memberIds->push($request->leader_id);
         }
         $project->members()->sync($memberIds->unique());
+        
         return redirect()->route('projects.show', $project)->with('success', 'Proyek berhasil diperbarui.');
     }
 
+    // ... (Sisa method tidak perlu diubah) ...
     public function destroy(Project $project)
     {
         $this->authorize('delete', $project);
@@ -328,34 +328,27 @@ class ProjectController extends Controller
         $this->authorize('view', $project);
         return view('projects.calendar', compact('project'));
     }
-
-    /**
-     * Menyediakan data tugas dalam format JSON untuk FullCalendar.
-     */
+    
     public function tasksJson(Project $project)
     {
         $this->authorize('view', $project);
 
-        // Ambil tugas dengan relasi 'assignees' untuk mendapatkan nama pengerja
         $tasks = $project->tasks()
             ->whereNotNull('deadline')
-            ->with('assignees') // Eager load pengerja
+            ->with('assignees')
             ->get(['id', 'title', 'deadline', 'status', 'project_id']);
 
         $events = $tasks->map(function ($task) use ($project) {
-            // Logika pewarnaan berdasarkan status
-            $color = '#3b82f6'; // Biru (in_progress) sebagai default
+            $color = '#3b82f6'; 
             switch ($task->status) {
-                case 'pending': $color = '#facc15'; break; // Kuning
-                case 'completed': $color = '#22c55e'; break; // Hijau
-                case 'for_review': $color = '#f97316'; break; // Oranye
+                case 'pending': $color = '#facc15'; break;
+                case 'completed': $color = '#22c55e'; break;
+                case 'for_review': $color = '#f97316'; break;
             }
-            // Prioritaskan warna merah jika terlambat
             if ($task->deadline < now() && $task->status !== 'completed') {
                 $color = '#ef4444';
             }
 
-            // Gabungkan nama pengerja menjadi satu string
             $assigneeNames = $task->assignees->pluck('name')->join(', ');
 
             return [
@@ -364,7 +357,6 @@ class ProjectController extends Controller
                 'url'   => route('projects.show', $project->id) . '#task-' . $task->id,
                 'color' => $color,
                 'borderColor' => $color,
-                // Data tambahan untuk ditampilkan di tooltip
                 'extendedProps' => [
                     'project_name' => $project->name,
                     'assignees' => $assigneeNames ?: 'Belum ditugaskan',
@@ -375,4 +367,5 @@ class ProjectController extends Controller
 
         return response()->json($events);
     }
+
 }

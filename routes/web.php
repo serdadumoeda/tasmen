@@ -119,10 +119,11 @@ Route::middleware('auth')->group(function () {
     // Rute API untuk mengambil anggota pool (digunakan oleh AJAX di halaman proyek)
     Route::get('/api/resource-pool/members', [ResourcePoolController::class, 'getAvailableMembers'])->name('api.resource-pool.members');
     Route::controller(PeminjamanRequestController::class)->middleware('auth')->group(function () {
-        Route::get('/peminjaman-requests', 'index')->name('peminjaman-requests.index');
-        Route::post('/peminjaman-requests', 'store')->name('peminjaman-requests.store');
-        Route::post('/peminjaman-requests/{peminjamanRequest}/approve', 'approve')->name('peminjaman-requests.approve');
-        Route::post('/peminjaman-requests/{peminjamanRequest}/reject', 'reject')->name('peminjaman-requests.reject');
+       Route::get('/my-loan-requests', 'myRequests')->name('peminjaman-requests.my-requests');
+       Route::get('/peminjaman-requests', 'index')->name('peminjaman-requests.index');
+       Route::post('/peminjaman-requests', 'store')->name('peminjaman-requests.store');
+       Route::post('/peminjaman-requests/{peminjamanRequest}/approve', 'approve')->name('peminjaman-requests.approve');
+       Route::post('/peminjaman-requests/{peminjamanRequest}/reject', 'reject')->name('peminjaman-requests.reject');
     });
     Route::get('/api/users/{user}/workload', [App\Http\Controllers\UserController::class, 'getWorkloadSummary'])
     ->name('api.users.workload');
