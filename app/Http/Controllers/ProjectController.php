@@ -15,7 +15,7 @@ class ProjectController extends Controller
 {
     use AuthorizesRequests;
 
-    // ... (metode index, create, store, show, edit, update, destroy, dll tidak berubah) ...
+
 
     public function index()
     {
@@ -27,74 +27,97 @@ class ProjectController extends Controller
         return view('dashboard', compact('projects'));
     }
 
-    public function create()
+   /**
+     * LANGKAH 1: Menampilkan form untuk data dasar proyek.
+     */
+    public function createStep1()
     {
-        $user = Auth::user();
+        $this->authorize('create', Project::class);
+        return view('projects.create_step1', ['project' => new Project()]);
+    }
+
+    /**
+     * LANGKAH 1: Menyimpan data dasar proyek dan mengarahkan ke langkah 2.
+     */
+    public function storeStep1(Request $request)
+    {
         $this->authorize('create', Project::class);
 
+        $validated = $request->validate([
+            'name' => 'required|string|max:255|unique:projects,name',
+            'description' => 'required|string',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date',
+        ]);
+
+        $project = Project::create([
+            'name' => $validated['name'],
+            'description' => $validated['description'],
+            'start_date' => $validated['start_date'],
+            'end_date' => $validated['end_date'],
+            'owner_id' => Auth::id(),
+            'leader_id' => Auth::id(), // Leader sementara adalah si pembuat
+        ]);
+
+        // Langsung arahkan ke langkah 2 dengan membawa ID proyek
+        return redirect()->route('projects.create.step2', $project);
+    }
+
+    /**
+     * LANGKAH 2: Menampilkan form untuk penugasan tim.
+     */
+    public function createStep2(Project $project)
+    {
+        $this->authorize('update', $project); // Gunakan otorisasi 'update'
+
+        $user = Auth::user();
         $subordinateIds = $user->getAllSubordinateIds();
         $subordinateIds[] = $user->id;
         $potentialMembers = User::whereIn('id', $subordinateIds)->orderBy('name')->get();
 
-        return view('projects.create', ['potentialMembers' => $potentialMembers, 'project' => new Project()]);
+        return view('projects.create_step2', compact('project', 'potentialMembers'));
     }
 
-    public function store(Request $request)
+    /**
+     * LANGKAH 2: Menyimpan data Pimpinan & Anggota Tim.
+     */
+    /**
+     * LANGKAH 2: Menyimpan data Pimpinan & Anggota Tim.
+     */
+    public function storeStep2(Request $request, Project $project)
     {
-        $user = Auth::user();
-        $this->authorize('create', Project::class);
+        $this->authorize('update', $project);
 
-       
+        $user = Auth::user();
         $subordinateIds = $user->getAllSubordinateIds();
         $subordinateIds[] = $user->id;
 
+        // --- PERBAIKAN DI SINI ---
+        // Secara eksplisit memberitahu untuk mengambil 'id' dari tabel 'users'.
+        $existingMemberIds = $project->members()->pluck('users.id');
+        // --- AKHIR PERBAIKAN ---
+        
+        $validMemberIds = collect($subordinateIds)->merge($existingMemberIds)->unique();
+
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'required|string',
-            'start_date' => 'nullable|date',
-            'end_date' => 'nullable|date|after_or_equal:start_date',
-            'leader_id' => ['required', 'exists:users,id', Rule::in($subordinateIds)],
-            'members' => 'nullable|array',
-            'members.*' => ['exists:users,id', Rule::in($subordinateIds)],
-            'requested_members' => 'nullable|array', 
-            'requested_members.*' => 'exists:users,id',
+            'leader_id' => ['required', 'exists:users,id', Rule::in($validMemberIds)],
+            'members' => 'required|array',
+            'members.*' => ['exists:users,id'],
         ]);
-        
-        $dataToCreate = $request->only('name', 'description', 'start_date', 'end_date', 'leader_id');
-        $dataToCreate['owner_id'] = $user->id;
 
-        $project = Project::create($dataToCreate);
+        // Update Pimpinan Proyek
+        $project->update(['leader_id' => $validated['leader_id']]);
 
-        
+        // Update Anggota Tim
         $memberIds = collect($request->members);
         if (!$memberIds->contains($request->leader_id)) {
             $memberIds->push($request->leader_id);
         }
         $project->members()->sync($memberIds->unique());
 
-        
-        if ($request->has('requested_members')) {
-            foreach ($request->requested_members as $requestedUserId) {
-                $requestedUser = User::find($requestedUserId);
-                if ($requestedUser && $requestedUser->parent_id) {
-                    PeminjamanRequest::create([
-                        'project_id' => $project->id,
-                        'requested_user_id' => $requestedUser->id,
-                        'requester_id' => $user->id,
-                        'approver_id' => $requestedUser->parent_id,
-                        'due_date' => Carbon::now()->addWeekday(),
-                    ]);
-                }
-            }
-        }
-        
-        // ==========================================================
-        // PERBAIKAN UTAMA
-        // ==========================================================
-        // Sebelumnya: return redirect()->route('dashboard')...
-        // Diarahkan ke halaman detail proyek yang baru dibuat dengan pesan sukses.
-        return redirect()->route('projects.show', $project)->with('success', 'Proyek berhasil dibuat! Anda sekarang dapat mengelola tugas dan anggota secara detail.');
+        return redirect()->route('projects.show', $project)->with('success', 'Tim proyek berhasil dibentuk!');
     }
+
     public function show(Project $project)
     {
         $this->authorize('view', $project);

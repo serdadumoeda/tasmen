@@ -58,7 +58,7 @@
                                 @endforelse
                                 @can('create', App\Models\Project::class)
                                 <div class="border-t border-gray-200"></div>
-                                <x-dropdown-link :href="route('projects.create')" class="font-semibold text-blue-600">
+                                <x-dropdown-link :href="route('projects.create.step1')" class="font-semibold text-blue-600">
                                     <i class="fa-solid fa-plus-circle mr-2"></i>Buat Proyek Baru
                                 </x-dropdown-link>
                                 @endcan

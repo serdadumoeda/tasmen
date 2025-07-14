@@ -38,17 +38,28 @@ Route::middleware('auth')->group(function () {
     
     Route::get('/dashboard', [ProjectController::class, 'index'])->name('dashboard');
 
-    // Route untuk menampilkan, membuat, dan menyimpan proyek
-    Route::get('/projects/create', [ProjectController::class, 'create'])->name('projects.create');
-    Route::post('/projects', [ProjectController::class, 'store'])->name('projects.store');
-    Route::get('/projects/{project}', [ProjectController::class, 'show'])->name('projects.show'); 
+    // Langkah 1: Menampilkan form inisiasi proyek
+    Route::get('/projects/create-step-1', [ProjectController::class, 'createStep1'])->name('projects.create.step1');
+    Route::post('/projects/store-step-1', [ProjectController::class, 'storeStep1'])->name('projects.store.step1');
+
+    // Rute dengan parameter {project} dimulai setelahnya.
+    // Langkah 2: Menampilkan form penugasan anggota & menyimpannya
+    Route::get('/projects/{project}/create-step-2', [ProjectController::class, 'createStep2'])->name('projects.create.step2');
+    Route::post('/projects/{project}/store-step-2', [ProjectController::class, 'storeStep2'])->name('projects.store.step2');
+    
+    // Rute detail dan fitur lain yang menggunakan {project}
+    Route::get('/projects/{project}', [ProjectController::class, 'show'])->name('projects.show');
+    Route::get('/projects/{project}/edit', [ProjectController::class, 'edit'])->name('projects.edit');
+    Route::put('/projects/{project}', [ProjectController::class, 'update'])->name('projects.update');
+    Route::delete('/projects/{project}', [ProjectController::class, 'destroy'])->name('projects.destroy');
+    Route::post('/projects/{project}/tasks', [TaskController::class, 'store'])->name('tasks.store');
 
     // Route profile bawaan Breeze
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    Route::post('/projects/{project}/tasks', [TaskController::class, 'store'])->name('tasks.store');
+
     Route::get('/tasks/{task}/edit', [TaskController::class, 'edit'])->name('tasks.edit');
     Route::put('/tasks/{task}', [TaskController::class, 'update'])->name('tasks.update');
     Route::delete('/tasks/{task}', [TaskController::class, 'destroy'])->name('tasks.destroy');
