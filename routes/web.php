@@ -19,6 +19,7 @@ use App\Http\Controllers\ResourcePoolController;
 use App\Http\Controllers\PeminjamanRequestController;
 use App\Http\Controllers\WeeklyWorkloadController;
 use App\Http\Controllers\BudgetRealizationController;
+use App\Http\Controllers\NotificationController;
 
 
 
@@ -135,6 +136,9 @@ Route::middleware('auth')->group(function () {
         ->name('budget-items.realizations.store');
     Route::delete('budget-realizations/{realization}', [BudgetRealizationController::class, 'destroy'])
         ->name('budget-realizations.destroy');
+
+    Route::get('/notifications/unread', [NotificationController::class, 'getUnread'])->name('notifications.unread');
+    Route::post('/notifications/mark-as-read', [NotificationController::class, 'markAsRead'])->name('notifications.markAsRead');
     
 });
 

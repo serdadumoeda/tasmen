@@ -10,27 +10,32 @@ class PeminjamanRequest extends Model
 {
     use HasFactory;
 
-    // Izinkan semua kolom untuk diisi secara massal
     protected $guarded = [];
 
-    // Definisikan relasi untuk mempermudah pengambilan data terkait
+
+
     public function project(): BelongsTo
     {
-        return $this->belongsTo(Project::class, 'project_id');
+        // Peminjaman ini milik sebuah Project, melalui kolom 'project_id'.
+        return $this->belongsTo(Project::class, 'project_id', 'id');
     }
 
     public function requester(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'requester_id');
+        // Peminjaman ini dibuat oleh seorang User, melalui kolom 'requester_id'.
+        return $this->belongsTo(User::class, 'requester_id', 'id');
     }
 
     public function requestedUser(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'requested_user_id');
+        // User yang diminta untuk dipinjam, melalui kolom 'requested_user_id'.
+        return $this->belongsTo(User::class, 'requested_user_id', 'id');
     }
 
     public function approver(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'approver_id');
+        // User yang harus menyetujui, melalui kolom 'approver_id'.
+        return $this->belongsTo(User::class, 'approver_id', 'id');
     }
+    // --- AKHIR PERBAIKAN FINAL ---
 }
