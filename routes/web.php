@@ -125,6 +125,7 @@ Route::middleware('auth')->group(function () {
        Route::post('/peminjaman-requests', 'store')->name('peminjaman-requests.store');
        Route::post('/peminjaman-requests/{peminjamanRequest}/approve', 'approve')->name('peminjaman-requests.approve');
        Route::post('/peminjaman-requests/{peminjamanRequest}/reject', 'reject')->name('peminjaman-requests.reject');
+       Route::delete('/peminjaman-requests/{peminjamanRequest}', 'destroy')->name('peminjaman-requests.destroy');
     });
     Route::get('/api/users/{user}/workload', [App\Http\Controllers\UserController::class, 'getWorkloadSummary'])
     ->name('api.users.workload');
