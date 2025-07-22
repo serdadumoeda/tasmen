@@ -34,12 +34,14 @@ class Unit extends Model
 
     public function getAllSubordinateUnitIds(): array
     {
-        $subordinateIds = [$this->id];
+        return Cache::remember('subordinate_unit_ids_for_unit_'.$this->id, 3600, function () {
+            $subordinateIds = [$this->id];
 
-        foreach ($this->childUnits as $childUnit) {
-            $subordinateIds = array_merge($subordinateIds, $childUnit->getAllSubordinateUnitIds());
-        }
+            foreach ($this->childUnits as $childUnit) {
+                $subordinateIds = array_merge($subordinateIds, $childUnit->getAllSubordinateUnitIds());
+            }
 
-        return $subordinateIds;
+            return $subordinateIds;
+        });
     }
 }

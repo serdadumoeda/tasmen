@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Scope;
 use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 
 class HierarchicalScope implements Scope
 {
@@ -37,7 +38,9 @@ class HierarchicalScope implements Scope
             // Jika pengguna adalah manajer, ia JUGA dapat melihat
             // semua proyek yang dimiliki oleh tim bawahannya berdasarkan unit.
             if ($user->isManager() && $user->unit) {
-                $subordinateUnitIds = $user->unit->getAllSubordinateUnitIds();
+                $subordinateUnitIds = Cache::remember('subordinate_unit_ids_for_user_'.$user->id, 3600, function () use ($user) {
+                    return $user->unit->getAllSubordinateUnitIds();
+                });
 
                 if (!empty($subordinateUnitIds)) {
                     // Dapatkan semua ID pengguna di unit bawahan
