@@ -107,32 +107,23 @@ class ExecutiveSummaryController extends Controller
     
     private function getAllSubordinatesIteratively(User $user, $includeSelf = false): Collection
     {
-        $subordinates = collect();
-        $queue = new Collection();
-        $visitedIds = [];
-        if ($includeSelf) {
-            if (!in_array($user->id, $visitedIds)) {
-                $subordinates->push($user);
-                $visitedIds[] = $user->id;
-            }
+        if ($user->role === User::ROLE_SUPERADMIN) {
+            return User::where('id', '!=', $user->id)->get();
         }
-        foreach($user->children as $child) {
-            $queue->push($child);
+
+        if (!$user->unit) {
+            return collect();
         }
-        while ($queue->isNotEmpty()) {
-            $currentUser = $queue->shift();
-            if (!in_array($currentUser->id, $visitedIds)) {
-                $subordinates->push($currentUser);
-                $visitedIds[] = $currentUser->id;
-                $currentUser->loadMissing('children');
-                foreach ($currentUser->children as $child) {
-                    if (!in_array($child->id, $visitedIds)) {
-                        $queue->push($child);
-                    }
-                }
-            }
+
+        $subordinateUnitIds = $user->unit->getAllSubordinateUnitIds();
+
+        $query = User::whereIn('unit_id', $subordinateUnitIds);
+
+        if (!$includeSelf) {
+            $query->where('id', '!=', $user->id);
         }
-        return $subordinates;
+
+        return $query->get();
     }
 
     private function getPerformanceTrends(Collection $projects): array
