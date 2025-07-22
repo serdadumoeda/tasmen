@@ -179,26 +179,29 @@ class User extends Authenticatable
         });
     }
 
-    public function getManagerialPerformanceScoreAttribute()
+    public function getManagerialPerformanceScoreAttribute($visited = [])
     {
         // Pass false to exclude self
         $subordinates = $this->getAllSubordinates(false);
         if ($subordinates->isEmpty()) {
             return 0;
         }
-        return $subordinates->avg(function ($subordinate) {
-            // Important: Call a non-recursive performance metric here if needed,
-            // or ensure the logic doesn't lead back to this same calculation for the same user.
-            // For now, we assume getFinalPerformanceValueAttribute is safe.
-            return $subordinate->getFinalPerformanceValueAttribute();
+        return $subordinates->avg(function ($subordinate) use ($visited) {
+            return $subordinate->getFinalPerformanceValueAttribute($visited);
         });
     }
 
-    public function getFinalPerformanceValueAttribute()
+    public function getFinalPerformanceValueAttribute($visited = [])
     {
+        if (in_array($this->id, $visited)) {
+            return $this->individual_performance_index; // Base case for recursion
+        }
+
         if (!$this->isManager()) {
             return $this->individual_performance_index;
         }
+
+        $visited[] = $this->id;
 
         $managerialWeights = [
             self::ROLE_ESELON_I => 0.9,
@@ -209,12 +212,16 @@ class User extends Authenticatable
         
         $weight = $managerialWeights[$this->role] ?? 0.5;
         
-        $individualScore = $this->individual_performance_index;
-        $managerialScore = $this->managerial_performance_score;
+        $individualScore = $this->getIndividualPerformanceIndexAttribute();
 
-        if ($managerialScore == 0 && $this->getAllSubordinates()->isEmpty()) {
+        $subordinates = $this->getAllSubordinates(false);
+        if ($subordinates->isEmpty()) {
             return $individualScore;
         }
+
+        $managerialScore = $subordinates->avg(function ($subordinate) use ($visited) {
+            return $subordinate->getFinalPerformanceValueAttribute($visited);
+        });
 
         return ($individualScore * (1 - $weight)) + ($managerialScore * $weight);
     }
