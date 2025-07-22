@@ -1,4 +1,4 @@
-<div class="p-4 border-b border-gray-200" style="margin-left: {{ ($user->unit->level ?? 1) * 10 }}px;">
+<div class="p-4 border-b border-gray-200" style="margin-left: {{ ($user->unit ? $user->unit->getLevelNumber() : 0) * 10 }}px;">
     <div class="flex justify-between items-center">
         <div>
             <p class="font-bold text-gray-900">{{ $user->name }}</p>

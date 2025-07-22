@@ -45,4 +45,15 @@ class Unit extends Model
             return $subordinateIds;
         });
     }
+
+    public function getLevelNumber(): int
+    {
+        return match ($this->level) {
+            self::LEVEL_ESELON_I => 1,
+            self::LEVEL_ESELON_II => 2,
+            self::LEVEL_KOORDINATOR => 3,
+            self::LEVEL_SUB_KOORDINATOR => 4,
+            default => 0,
+        };
+    }
 }
