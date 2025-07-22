@@ -179,15 +179,17 @@
     <div class="right-side">
       <form class="form-box" method="POST" action="{{ route('register') }}"
             x-data="{
+                name: '{{ old('name', '') }}',
+                email: '{{ old('email', '') }}',
                 eselon1Units: [],
                 eselon2Units: [],
                 koordinatorUnits: [],
                 subKoordinatorUnits: [],
-                selectedEselon1: '',
-                selectedEselon2: '',
-                selectedKoordinator: '',
-                selectedSubKoordinator: '',
-                finalUnitId: '',
+                selectedEselon1: '{{ old('eselon1', '') }}',
+                selectedEselon2: '{{ old('eselon2', '') }}',
+                selectedKoordinator: '{{ old('koordinator', '') }}',
+                selectedSubKoordinator: '{{ old('subkoordinator', '') }}',
+                finalUnitId: '{{ old('unit_id', '') }}',
 
                 init() {
                     fetch('/api/units/eselon-i')
@@ -218,13 +220,13 @@
         <h2>DAFTAR AKUN</h2>
 
         <div class="input-group">
-          <input type="text" name="name" placeholder="Nama Lengkap" :value="old('name')" required autofocus>
+          <input type="text" name="name" placeholder="Nama Lengkap" x-model="name" required autofocus>
           <i class="fas fa-user"></i>
           <x-input-error :messages="$errors->get('name')" class="mt-2" />
         </div>
 
         <div class="input-group">
-          <input type="email" name="email" placeholder="Email" :value="old('email')" required>
+          <input type="email" name="email" placeholder="Email" x-model="email" required>
           <i class="fas fa-envelope"></i>
           <x-input-error :messages="$errors->get('email')" class="mt-2" />
         </div>
