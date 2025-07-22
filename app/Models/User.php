@@ -107,14 +107,20 @@ class User extends Authenticatable
         return User::whereIn('unit_id', $unitIds)->pluck('id')->toArray();
     }
     
-    public function getAllSubordinates()
+    public function getAllSubordinates($includeSelf = false)
     {
         if (!$this->unit) {
             return collect();
         }
 
         $unitIds = $this->unit->getAllSubordinateUnitIds();
-        return User::whereIn('unit_id', $unitIds)->get();
+        $query = User::whereIn('unit_id', $unitIds);
+
+        if (!$includeSelf) {
+            $query->where('id', '!=', $this->id);
+        }
+
+        return $query->get();
     }
 
     public function canCreateProjects(): bool
@@ -175,11 +181,15 @@ class User extends Authenticatable
 
     public function getManagerialPerformanceScoreAttribute()
     {
-        $subordinates = $this->getAllSubordinates();
+        // Pass false to exclude self
+        $subordinates = $this->getAllSubordinates(false);
         if ($subordinates->isEmpty()) {
             return 0;
         }
         return $subordinates->avg(function ($subordinate) {
+            // Important: Call a non-recursive performance metric here if needed,
+            // or ensure the logic doesn't lead back to this same calculation for the same user.
+            // For now, we assume getFinalPerformanceValueAttribute is safe.
             return $subordinate->getFinalPerformanceValueAttribute();
         });
     }
