@@ -39,7 +39,8 @@ class GlobalDashboardController extends Controller
         ];
 
         // PERBAIKAN: Tambahkan withSum untuk mengambil total anggaran secara efisien
-        $allProjects = $projectQuery->with(['leader', 'tasks'])
+        $allProjects = $projectQuery->with(['leader'])
+                                  ->withCount('tasks')
                                   ->withSum('budgetItems', 'total_cost')
                                   ->latest()
                                   ->get();
