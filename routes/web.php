@@ -29,14 +29,13 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
-Route::get('/welcome', function () {
-    return 'Welcome!';
-})->name('welcome');
-
+Route::get('/dashboard', function () {
+    return view('dashboard');
+})->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::get('/get-users-by-unit/{eselon2_id}', [UserController::class, 'getUsersByUnit'])->name('users.by-unit');
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'verified'])->group(function () {
     
     Route::get('/dashboard', [ProjectController::class, 'index'])->name('dashboard');
 
@@ -149,8 +148,10 @@ use App\Http\Controllers\UnitController;
 
 require __DIR__.'/auth.php';
 
-Route::get('/api/units/eselon-i', [UnitApiController::class, 'getEselonIUnits']);
-Route::get('/api/units/{parentUnit}/children', [UnitApiController::class, 'getChildUnits']);
+Route::middleware('auth')->group(function () {
+    Route::get('/api/units/eselon-i', [UnitApiController::class, 'getEselonIUnits']);
+    Route::get('/api/units/{parentUnit}/children', [UnitApiController::class, 'getChildUnits']);
+});
 
 Route::middleware(['auth', 'superadmin'])->prefix('admin')->name('admin.')->group(function () {
     Route::resource('units', UnitController::class);
