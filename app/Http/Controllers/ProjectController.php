@@ -23,7 +23,7 @@ class ProjectController extends Controller
         if ($user->isTopLevelManager()) {
             return redirect()->route('global.dashboard');
         }
-        $projects = $user->projects()->with('owner', 'leader')->latest()->get();
+        $projects = $user->projects()->with(['owner', 'leader', 'tasks', 'budgetItems'])->latest()->get();
         return view('dashboard', compact('projects'));
     }
 
