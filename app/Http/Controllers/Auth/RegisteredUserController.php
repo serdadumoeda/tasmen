@@ -32,6 +32,18 @@ class RegisteredUserController extends Controller
      */
     public function store(RegisterRequest $request): RedirectResponse
     {
+        // Validasi tambahan untuk unit_id
+        if (empty($request->unit_id)) {
+            return back()->withErrors(['unit_id' => 'Anda harus memilih unit kerja minimal sampai Eselon II.'])->withInput();
+        }
+
+        $unit = Unit::find($request->unit_id);
+
+        // Memastikan unit yang dipilih bukan Eselon I (yang parent_id nya null)
+        if ($unit && is_null($unit->parent_id)) {
+            return back()->withErrors(['unit_id' => 'Pemilihan unit kerja tidak boleh hanya sampai Eselon I.'])->withInput();
+        }
+
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,

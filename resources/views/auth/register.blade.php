@@ -242,8 +242,8 @@
         </div>
 
         <div class="input-group">
-            <select x-model="selectedEselon1" @change="fetchChildUnits(selectedEselon1, 'eselon2Units'); selectedEselon2 = ''; selectedKoordinator = ''; selectedSubKoordinator = '';">
-                <option value="">Pilih Unit Eselon I</option>
+            <select x-model="selectedEselon1" @change="fetchChildUnits(selectedEselon1, 'eselon2Units'); selectedEselon2 = ''; selectedKoordinator = ''; selectedSubKoordinator = '';" required>
+                <option value="">Pilih Unit Eselon I*</option>
                 <template x-for="unit in eselon1Units" :key="unit.id">
                     <option :value="unit.id" x-text="unit.name"></option>
                 </template>
@@ -251,8 +251,8 @@
         </div>
 
         <div class="input-group" x-show="selectedEselon1">
-            <select x-model="selectedEselon2" @change="fetchChildUnits(selectedEselon2, 'koordinatorUnits'); selectedKoordinator = ''; selectedSubKoordinator = '';">
-                <option value="">Pilih Unit Eselon II</option>
+            <select x-model="selectedEselon2" @change="fetchChildUnits(selectedEselon2, 'koordinatorUnits'); selectedKoordinator = ''; selectedSubKoordinator = '';" required>
+                <option value="">Pilih Unit Eselon II*</option>
                 <template x-for="unit in eselon2Units" :key="unit.id">
                     <option :value="unit.id" x-text="unit.name"></option>
                 </template>
