@@ -179,40 +179,19 @@ class User extends Authenticatable
         });
     }
 
-    public function getManagerialPerformanceScoreAttribute($visited = [])
-    {
-        // Pass false to exclude self
-        $subordinates = $this->getAllSubordinates(false);
-        if ($subordinates->isEmpty()) {
-            return 0;
-        }
-        return $subordinates->avg(function ($subordinate) use ($visited) {
-            return $subordinate->getFinalPerformanceValueAttribute($visited);
-        });
-    }
-
     public function getFinalPerformanceValueAttribute($visited = [])
     {
         if (in_array($this->id, $visited)) {
-            return $this->individual_performance_index; // Base case for recursion
+            return 1.0; // Return a neutral value to break the cycle
         }
 
+        $individualScore = $this->getIndividualPerformanceIndexAttribute();
+
         if (!$this->isManager()) {
-            return $this->individual_performance_index;
+            return $individualScore;
         }
 
         $visited[] = $this->id;
-
-        $managerialWeights = [
-            self::ROLE_ESELON_I => 0.9,
-            self::ROLE_ESELON_II => 0.8,
-            self::ROLE_KOORDINATOR => 0.7,
-            self::ROLE_SUB_KOORDINATOR => 0.6,
-        ];
-        
-        $weight = $managerialWeights[$this->role] ?? 0.5;
-        
-        $individualScore = $this->getIndividualPerformanceIndexAttribute();
 
         $subordinates = $this->getAllSubordinates(false);
         if ($subordinates->isEmpty()) {
@@ -222,6 +201,14 @@ class User extends Authenticatable
         $managerialScore = $subordinates->avg(function ($subordinate) use ($visited) {
             return $subordinate->getFinalPerformanceValueAttribute($visited);
         });
+
+        $managerialWeights = [
+            self::ROLE_ESELON_I => 0.9,
+            self::ROLE_ESELON_II => 0.8,
+            self::ROLE_KOORDINATOR => 0.7,
+            self::ROLE_SUB_KOORDINATOR => 0.6,
+        ];
+        $weight = $managerialWeights[$this->role] ?? 0.5;
 
         return ($individualScore * (1 - $weight)) + ($managerialScore * $weight);
     }
