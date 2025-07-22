@@ -29,6 +29,10 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
+Route::get('/welcome', function () {
+    return 'Welcome!';
+})->name('welcome');
+
 
 Route::get('/get-users-by-unit/{eselon2_id}', [UserController::class, 'getUsersByUnit'])->name('users.by-unit');
 
