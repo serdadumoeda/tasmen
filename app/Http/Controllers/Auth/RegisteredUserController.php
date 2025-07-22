@@ -21,7 +21,7 @@ class RegisteredUserController extends Controller
      */
     public function create(): View
     {
-        $eselon1Units = Unit::where('level', 1)->get();
+        $eselon1Units = Unit::where('level', Unit::LEVEL_ESELON_I)->get();
         return view('auth.register', ['eselon1Units' => $eselon1Units]);
     }
 
