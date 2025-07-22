@@ -211,12 +211,14 @@
                     <option value="{{ $unit->id }}" @if(old('unit_eselon_1') == $unit->id) selected @endif>{{ $unit->name }}</option>
                 @endforeach
             </select>
+            <x-input-error :messages="$errors->get('unit_eselon_1')" class="mt-2" />
         </div>
 
         <div class="input-group">
             <select name="unit_id" id="unit_eselon_2" required>
                 <option value="">Pilih Unit Eselon II*</option>
             </select>
+            <x-input-error :messages="$errors->get('unit_id')" class="mt-2" />
         </div>
         
         <button type="submit" class="register-button">DAFTAR</button>
