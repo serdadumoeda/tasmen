@@ -138,6 +138,16 @@ class User extends Authenticatable
         return in_array($this->role, [self::ROLE_SUPERADMIN, self::ROLE_ESELON_I, self::ROLE_ESELON_II, self::ROLE_KOORDINATOR]);
     }
 
+    public function isSuperAdmin(): bool
+    {
+        return $this->role === self::ROLE_SUPERADMIN;
+    }
+
+    public function isNotSuperAdmin(): bool
+    {
+        return !$this->isSuperAdmin();
+    }
+
     public function isManager(): bool
     {
         $isStructuralManager = in_array($this->role, [self::ROLE_ESELON_I, self::ROLE_ESELON_II, self::ROLE_KOORDINATOR, self::ROLE_SUB_KOORDINATOR]);

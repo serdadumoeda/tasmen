@@ -19,7 +19,25 @@ class ProjectController extends Controller
     
     public function index()
     {
-        return view('dashboard');
+        $user = Auth::user();
+
+        if ($user->isSuperAdmin()) {
+            $ownedProjects = Project::with('owner', 'leader')->latest()->get();
+            $memberProjects = collect(); // Superadmin sees all projects under owned.
+        } else {
+            $ownedProjects = Project::where('owner_id', $user->id)
+                ->with('owner', 'leader')
+                ->latest()
+                ->get();
+
+            $memberProjects = $user->projects()
+                ->where('owner_id', '!=', $user->id)
+                ->with('owner', 'leader')
+                ->latest()
+                ->get();
+        }
+
+        return view('dashboard', compact('ownedProjects', 'memberProjects'));
     }
 
     public function createStep1()
