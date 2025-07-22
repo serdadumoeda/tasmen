@@ -19,12 +19,7 @@ class ProjectController extends Controller
     
     public function index()
     {
-        $user = Auth::user();
-        if ($user->isTopLevelManager()) {
-            return redirect()->route('global.dashboard');
-        }
-        $projects = $user->projects()->with(['owner', 'leader', 'tasks', 'budgetItems'])->latest()->get();
-        return view('dashboard', compact('projects'));
+        return view('dashboard');
     }
 
     public function createStep1()
