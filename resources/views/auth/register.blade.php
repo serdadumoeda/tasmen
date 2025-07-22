@@ -6,7 +6,6 @@
   <title>Registrasi - Kemenaker</title>
   {{-- Font Awesome dari CDN --}}
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
-  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
   <style>
     * {
       box-sizing: border-box;
@@ -177,56 +176,18 @@
     </div>
 
     <div class="right-side">
-      <form class="form-box" method="POST" action="{{ route('register') }}"
-            x-data="{
-                name: '{{ old('name', '') }}',
-                email: '{{ old('email', '') }}',
-                eselon1Units: [],
-                eselon2Units: [],
-                koordinatorUnits: [],
-                subKoordinatorUnits: [],
-                selectedEselon1: '{{ old('eselon1', '') }}',
-                selectedEselon2: '{{ old('eselon2', '') }}',
-                selectedKoordinator: '{{ old('koordinator', '') }}',
-                selectedSubKoordinator: '{{ old('subkoordinator', '') }}',
-                finalUnitId: '{{ old('unit_id', '') }}',
-
-                init() {
-                    fetch('/api/units/eselon-i')
-                        .then(response => response.json())
-                        .then(data => {
-                            this.eselon1Units = data;
-                        });
-                },
-
-                fetchChildUnits(parentId, target) {
-                    if (!parentId) {
-                        this[target] = [];
-                        return;
-                    }
-                    fetch(`/api/units/${parentId}/children`)
-                        .then(response => response.json())
-                        .then(data => {
-                            this[target] = data;
-                        });
-                },
-
-                updateFinalUnitId() {
-                    this.finalUnitId = this.selectedSubKoordinator || this.selectedKoordinator || this.selectedEselon2 || this.selectedEselon1;
-                }
-            }"
-            @change="updateFinalUnitId()">
+      <form class="form-box" method="POST" action="{{ route('register') }}">
         @csrf
         <h2>DAFTAR AKUN</h2>
 
         <div class="input-group">
-          <input type="text" name="name" placeholder="Nama Lengkap" x-model="name" required autofocus>
+          <input type="text" name="name" placeholder="Nama Lengkap" value="{{ old('name') }}" required autofocus>
           <i class="fas fa-user"></i>
           <x-input-error :messages="$errors->get('name')" class="mt-2" />
         </div>
 
         <div class="input-group">
-          <input type="email" name="email" placeholder="Email" x-model="email" required>
+          <input type="email" name="email" placeholder="Email" value="{{ old('email') }}" required>
           <i class="fas fa-envelope"></i>
           <x-input-error :messages="$errors->get('email')" class="mt-2" />
         </div>
@@ -244,43 +205,19 @@
         </div>
 
         <div class="input-group">
-            <select x-model="selectedEselon1" @change="fetchChildUnits(selectedEselon1, 'eselon2Units'); selectedEselon2 = ''; selectedKoordinator = ''; selectedSubKoordinator = '';" required>
+            <select name="unit_eselon_1" id="unit_eselon_1" required>
                 <option value="">Pilih Unit Eselon I*</option>
-                <template x-for="unit in eselon1Units" :key="unit.id">
-                    <option :value="unit.id" x-text="unit.name"></option>
-                </template>
+                @foreach($eselon1Units as $unit)
+                    <option value="{{ $unit->id }}" @if(old('unit_eselon_1') == $unit->id) selected @endif>{{ $unit->name }}</option>
+                @endforeach
             </select>
         </div>
 
-        <div class="input-group" x-show="selectedEselon1">
-            <select x-model="selectedEselon2" @change="fetchChildUnits(selectedEselon2, 'koordinatorUnits'); selectedKoordinator = ''; selectedSubKoordinator = '';" required>
+        <div class="input-group">
+            <select name="unit_id" id="unit_eselon_2" required>
                 <option value="">Pilih Unit Eselon II*</option>
-                <template x-for="unit in eselon2Units" :key="unit.id">
-                    <option :value="unit.id" x-text="unit.name"></option>
-                </template>
             </select>
         </div>
-
-        <div class="input-group" x-show="selectedEselon2">
-            <select x-model="selectedKoordinator" @change="fetchChildUnits(selectedKoordinator, 'subKoordinatorUnits'); selectedSubKoordinator = '';">
-                <option value="">Pilih Unit Koordinator</option>
-                <template x-for="unit in koordinatorUnits" :key="unit.id">
-                    <option :value="unit.id" x-text="unit.name"></option>
-                </template>
-            </select>
-        </div>
-
-        <div class="input-group" x-show="selectedKoordinator">
-            <select x-model="selectedSubKoordinator">
-                <option value="">Pilih Unit Sub Koordinator</option>
-                <template x-for="unit in subKoordinatorUnits" :key="unit.id">
-                    <option :value="unit.id" x-text="unit.name"></option>
-                </template>
-            </select>
-        </div>
-
-        <input type="hidden" name="unit_id" x-model="finalUnitId">
-        <x-input-error :messages="$errors->get('unit_id')" class="mt-2" />
         
         <button type="submit" class="register-button">DAFTAR</button>
         
@@ -290,6 +227,42 @@
       </form>
     </div>
   </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const eselon1Select = document.getElementById('unit_eselon_1');
+    const eselon2Select = document.getElementById('unit_eselon_2');
+
+    function fetchEselon2Units(eselon1Id, eselon2OldValue = null) {
+        if (!eselon1Id) {
+            eselon2Select.innerHTML = '<option value="">Pilih Unit Eselon II*</option>';
+            return;
+        }
+
+        fetch(`/api/units/${eselon1Id}/children`)
+            .then(response => response.json())
+            .then(data => {
+                let options = '<option value="">Pilih Unit Eselon II*</option>';
+                data.forEach(unit => {
+                    const isSelected = unit.id == eselon2OldValue ? 'selected' : '';
+                    options += `<option value="${unit.id}" ${isSelected}>${unit.name}</option>`;
+                });
+                eselon2Select.innerHTML = options;
+            });
+    }
+
+    eselon1Select.addEventListener('change', function () {
+        fetchEselon2Units(this.value);
+    });
+
+    // On page load, if there's an old value for eselon 1, fetch eselon 2
+    const eselon1OldValue = '{{ old('unit_eselon_1') }}';
+    const eselon2OldValue = '{{ old('unit_id') }}';
+    if (eselon1OldValue) {
+        fetchEselon2Units(eselon1OldValue, eselon2OldValue);
+    }
+});
+</script>
 
 </body>
 </html>

@@ -21,8 +21,8 @@ class RegisteredUserController extends Controller
      */
     public function create(): View
     {
-        // Eselon I units akan di-fetch oleh Alpine.js via API
-        return view('auth.register');
+        $eselon1Units = Unit::where('level', 1)->get();
+        return view('auth.register', ['eselon1Units' => $eselon1Units]);
     }
 
     /**
