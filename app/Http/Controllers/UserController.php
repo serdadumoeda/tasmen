@@ -3,88 +3,67 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Unit;
 use Illuminate\Http\Request;
 use App\Models\Project;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests; 
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Carbon;
 
 class UserController extends Controller
 {
-    use AuthorizesRequests; 
+    use AuthorizesRequests;
 
     public function index()
     {
         $this->authorize('viewAny', User::class);
         $currentUser = auth()->user();
 
-        // Ambil semua user yang berada dalam lingkup wewenang user yang sedang login
-        $query = User::query()->with('children'); // Eager load children untuk efisiensi
+        $usersQuery = User::with('unit');
 
-        if ($currentUser->role !== 'superadmin') {
+        if ($currentUser->role !== User::ROLE_SUPERADMIN) {
             $subordinateIds = $currentUser->getAllSubordinateIds();
-            $subordinateIds[] = $currentUser->id; // Pimpinan juga ingin melihat dirinya sendiri
-            $query->whereIn('id', $subordinateIds);
+            $subordinateIds[] = $currentUser->id;
+            $usersQuery->whereIn('id', $subordinateIds);
         }
 
-        $allScopedUsers = $query->get();
+        $users = $usersQuery->get();
 
-        // Filter untuk mendapatkan user level teratas dalam lingkup ini
-        // (yaitu user yang parent_id-nya tidak ada dalam daftar ID yang kita miliki, atau null)
-        $scopedUserIds = $allScopedUsers->pluck('id');
-        $topLevelUsers = $allScopedUsers->filter(function ($user) use ($scopedUserIds) {
-            // User level atas adalah yang tidak punya parent, atau parent-nya di luar lingkup kita
-            return $user->parent_id === null || !$scopedUserIds->contains($user->parent_id);
-        });
-        
-        // Untuk superadmin, user level atas adalah yang tidak punya parent sama sekali
-        if ($currentUser->role === 'superadmin') {
-            $topLevelUsers = $allScopedUsers->where('parent_id', null);
-        }
-
-        return view('users.index', compact('topLevelUsers'));
+        return view('users.index', compact('users'));
     }
 
     public function create()
     {
-        $this->authorize('create', User::class);
+        $this->authorize('create', [User::class, ['role' => 'Staf', 'unit_id' => 1]]); // Dummy data for policy check
         $currentUser = auth()->user();
         
-        // Calon atasan adalah user itu sendiri dan semua bawahannya
-        $subordinateIds = $currentUser->getAllSubordinateIds();
-        $subordinateIds[] = $currentUser->id; // Tambahkan diri sendiri
-        
-        $potentialParents = User::whereIn('id', $subordinateIds)->orderBy('name')->get();
+        $units = $currentUser->unit ? $currentUser->unit->getAllSubordinateUnitIds() : [];
+        $units = Unit::whereIn('id', $units)->get();
 
-        return view('users.create', ['users' => $potentialParents]);
+        return view('users.create', compact('units'));
     }
 
     public function store(Request $request)
     {
-        $this->authorize('create', User::class);
-        $currentUser = auth()->user();
-
-        $request->validate([
+        $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'role' => ['required', 'in:Eselon I,Eselon II,Koordinator,Ketua Tim,Sub Koordinator,Staff'],
-            'parent_id' => ['required', 'exists:users,id'],
+            'role' => ['required', 'in:'.implode(',', [User::ROLE_ESELON_I, User::ROLE_ESELON_II, User::ROLE_KOORDINATOR, User::ROLE_SUB_KOORDINATOR, User::ROLE_STAF])],
+            'unit_id' => ['required', 'exists:units,id'],
+            'status' => ['required', 'in:active,suspended'],
         ]);
 
-        // Pastikan parent_id yang dipilih berada dalam hirarki user yang sedang login
-        $parent = User::find($request->parent_id);
-        if ($parent->id !== $currentUser->id && !$parent->isSubordinateOf($currentUser)) {
-            abort(403, 'Anda tidak dapat membuat user di bawah atasan yang bukan bawahan Anda.');
-        }
+        $this->authorize('create', [User::class, $validated]);
 
         User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'role' => $request->role,
-            'parent_id' => $request->parent_id,
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => Hash::make($validated['password']),
+            'role' => $validated['role'],
+            'unit_id' => $validated['unit_id'],
+            'status' => $validated['status'],
         ]);
 
         return redirect()->route('users.index')->with('success', 'User berhasil dibuat.');
@@ -92,41 +71,29 @@ class UserController extends Controller
     
     public function edit(User $user)
     {
-        $this->authorize('update', $user);
+        $this->authorize('update', [$user, ['role' => $user->role, 'unit_id' => $user->unit_id]]);
         $currentUser = auth()->user();
 
-        // Calon atasan adalah user itu sendiri dan semua bawahannya
-        $subordinateIds = $currentUser->getAllSubordinateIds();
-        $subordinateIds[] = $currentUser->id;
+        $units = $currentUser->unit ? $currentUser->unit->getAllSubordinateUnitIds() : [];
+        $units = Unit::whereIn('id', $units)->get();
         
-        // Calon atasan tidak boleh user yang sedang diedit itu sendiri
-        $potentialParents = User::whereIn('id', $subordinateIds)
-                                ->where('id', '!=', $user->id)
-                                ->orderBy('name')
-                                ->get();
-
-        return view('users.edit', ['user' => $user, 'users' => $potentialParents]);
+        return view('users.edit', compact('user', 'units'));
     }
 
     public function update(Request $request, User $user)
     {
-        $this->authorize('update', $user);
-        $currentUser = auth()->user();
-
-        $request->validate([
+        $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email,'.$user->id],
-            'role' => ['required', 'in:Eselon I,Eselon II,Koordinator,Ketua Tim,Sub Koordinator,Staff'],
-            'parent_id' => ['required', 'exists:users,id', 'not_in:'.$user->id],
+            'role' => ['required', 'in:'.implode(',', [User::ROLE_ESELON_I, User::ROLE_ESELON_II, User::ROLE_KOORDINATOR, User::ROLE_SUB_KOORDINATOR, User::ROLE_STAF])],
+            'unit_id' => ['required', 'exists:units,id'],
+            'status' => ['required', 'in:active,suspended'],
             'password' => ['nullable', 'confirmed', Rules\Password::defaults()],
         ]);
-        
-        $parent = User::find($request->parent_id);
-        if ($parent->id !== $currentUser->id && !$parent->isSubordinateOf($currentUser)) {
-             abort(403, 'Anda tidak dapat memindahkan user ke atasan yang bukan bawahan Anda.');
-        }
 
-        $user->fill($request->only('name', 'email', 'role', 'parent_id'));
+        $this->authorize('update', [$user, $validated]);
+
+        $user->fill($validated);
 
         if ($request->filled('password')) {
             $user->password = Hash::make($request->password);
@@ -141,37 +108,28 @@ class UserController extends Controller
     {
         $this->authorize('delete', $user);
         
-        // Pindahkan bawahan langsung dari user yang akan dihapus ke atasan dari user yang dihapus
-        $newParentId = $user->parent_id;
-        foreach ($user->children as $child) {
-            $child->parent_id = $newParentId;
-            $child->save();
+        // Cek jika user punya bawahan
+        if (User::where('unit_id', $user->unit_id)->where('id', '!=', $user->id)->exists()) {
+             // Cari unit atasan
+             $parentUnit = $user->unit ? $user->unit->parentUnit : null;
+             if ($parentUnit) {
+                 User::where('unit_id', $user->unit_id)->update(['unit_id' => $parentUnit->id]);
+             }
         }
 
         $user->delete();
-        return redirect()->route('users.index')->with('success', 'User berhasil dihapus dan bawahannya telah dipindahkan.');
-    }
-
-    public function getUsersByUnit($eselon2_id)
-    {
-        $eselon2 = User::findOrFail($eselon2_id);
-        $subordinateIds = $eselon2->getAllSubordinateIds();
-        $subordinateIds[] = $eselon2->id;
-        $usersInUnit = User::whereIn('id', $subordinateIds)->orderBy('name')->get(['id', 'name', 'role']);
-        return response()->json($usersInUnit);
+        return redirect()->route('users.index')->with('success', 'User berhasil dihapus.');
     }
 
     public function getWorkloadSummary(User $user)
     {
-        // Hitung proyek aktif berdasarkan end_date
         $activeProjectsCount = $user->projects()
             ->where(function ($query) {
                 $query->whereNull('end_date')
-                      ->orWhere('end_date', '>=', \Illuminate\Support\Carbon::today());
+                      ->orWhere('end_date', '>=', Carbon::today());
             })
             ->count();
 
-        // Hitung tugas ad-hoc aktif berdasarkan status
         $activeAdhocTasksCount = $user->tasks()
                                      ->whereNull('project_id')
                                      ->where('status', '!=', 'Selesai')
@@ -179,31 +137,26 @@ class UserController extends Controller
         
         $activeSkCount = $user->getActiveSkCountAttribute();
 
-        // KEMBALIKAN HANYA DATA BEBAN KERJA
         return response()->json([
             'success' => true,
             'data' => [
                 'active_projects' => $activeProjectsCount,
                 'active_adhoc_tasks' => $activeAdhocTasksCount,
                 'active_sks' => $activeSkCount,
-                // Pastikan tidak ada 'skills' atau data lain di sini
             ]
         ]);
     }
 
     public function search(Request $request)
     {
-        // Hanya pengguna yang bisa membuat proyek yang boleh mencari user lain.
         $this->authorize('create', Project::class);
 
         $query = $request->input('q');
 
-        // Jika query kosong, kembalikan array kosong.
         if (empty($query)) {
             return response()->json([]);
         }
 
-        // Cari pengguna berdasarkan nama, jangan tampilkan diri sendiri, dan batasi hasilnya.
         $users = User::where('name', 'ilike', "%{$query}%")
                     ->where('id', '!=', auth()->id())
                     ->limit(10)
@@ -211,5 +164,4 @@ class UserController extends Controller
 
         return response()->json($users);
     }
-
 }

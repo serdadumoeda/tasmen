@@ -6,6 +6,7 @@
   <title>Registrasi - Kemenaker</title>
   {{-- Font Awesome dari CDN --}}
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
   <style>
     * {
       box-sizing: border-box;
@@ -89,13 +90,14 @@
       position: relative;
     }
 
-    .input-group input {
+    .input-group input, .input-group select {
       width: 100%;
       padding: 12px 40px 12px 12px;
       font-size: 16px;
       border: none;
       border-bottom: 1px solid #aaa;
       outline: none;
+      background-color: transparent;
     }
 
     .input-group i {
@@ -175,7 +177,43 @@
     </div>
 
     <div class="right-side">
-      <form class="form-box" method="POST" action="{{ route('register') }}">
+      <form class="form-box" method="POST" action="{{ route('register') }}"
+            x-data="{
+                eselon1Units: [],
+                eselon2Units: [],
+                koordinatorUnits: [],
+                subKoordinatorUnits: [],
+                selectedEselon1: '',
+                selectedEselon2: '',
+                selectedKoordinator: '',
+                selectedSubKoordinator: '',
+                finalUnitId: '',
+
+                init() {
+                    fetch('/api/units/eselon-i')
+                        .then(response => response.json())
+                        .then(data => {
+                            this.eselon1Units = data;
+                        });
+                },
+
+                fetchChildUnits(parentId, target) {
+                    if (!parentId) {
+                        this[target] = [];
+                        return;
+                    }
+                    fetch(`/api/units/${parentId}/children`)
+                        .then(response => response.json())
+                        .then(data => {
+                            this[target] = data;
+                        });
+                },
+
+                updateFinalUnitId() {
+                    this.finalUnitId = this.selectedSubKoordinator || this.selectedKoordinator || this.selectedEselon2 || this.selectedEselon1;
+                }
+            }"
+            @change="updateFinalUnitId()">
         @csrf
         <h2>DAFTAR AKUN</h2>
 
@@ -202,6 +240,45 @@
           <i class="fas fa-lock"></i>
           <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
         </div>
+
+        <div class="input-group">
+            <select x-model="selectedEselon1" @change="fetchChildUnits(selectedEselon1, 'eselon2Units'); selectedEselon2 = ''; selectedKoordinator = ''; selectedSubKoordinator = '';">
+                <option value="">Pilih Unit Eselon I</option>
+                <template x-for="unit in eselon1Units" :key="unit.id">
+                    <option :value="unit.id" x-text="unit.name"></option>
+                </template>
+            </select>
+        </div>
+
+        <div class="input-group" x-show="selectedEselon1">
+            <select x-model="selectedEselon2" @change="fetchChildUnits(selectedEselon2, 'koordinatorUnits'); selectedKoordinator = ''; selectedSubKoordinator = '';">
+                <option value="">Pilih Unit Eselon II</option>
+                <template x-for="unit in eselon2Units" :key="unit.id">
+                    <option :value="unit.id" x-text="unit.name"></option>
+                </template>
+            </select>
+        </div>
+
+        <div class="input-group" x-show="selectedEselon2">
+            <select x-model="selectedKoordinator" @change="fetchChildUnits(selectedKoordinator, 'subKoordinatorUnits'); selectedSubKoordinator = '';">
+                <option value="">Pilih Unit Koordinator</option>
+                <template x-for="unit in koordinatorUnits" :key="unit.id">
+                    <option :value="unit.id" x-text="unit.name"></option>
+                </template>
+            </select>
+        </div>
+
+        <div class="input-group" x-show="selectedKoordinator">
+            <select x-model="selectedSubKoordinator">
+                <option value="">Pilih Unit Sub Koordinator</option>
+                <template x-for="unit in subKoordinatorUnits" :key="unit.id">
+                    <option :value="unit.id" x-text="unit.name"></option>
+                </template>
+            </select>
+        </div>
+
+        <input type="hidden" name="unit_id" x-model="finalUnitId">
+        <x-input-error :messages="$errors->get('unit_id')" class="mt-2" />
         
         <button type="submit" class="register-button">DAFTAR</button>
         

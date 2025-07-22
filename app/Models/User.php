@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -18,12 +19,23 @@ class User extends Authenticatable
     // Trait HasApiTokens sekarang akan ditemukan
     use HasApiTokens, HasFactory, Notifiable;
 
+    public const ROLE_SUPERADMIN = 'Superadmin';
+    public const ROLE_ESELON_I = 'Eselon I';
+    public const ROLE_ESELON_II = 'Eselon II';
+    public const ROLE_KOORDINATOR = 'Koordinator';
+    public const ROLE_SUB_KOORDINATOR = 'Sub Koordinator';
+    public const ROLE_STAF = 'Staf';
+
+    public const STATUS_ACTIVE = 'active';
+    public const STATUS_SUSPENDED = 'suspended';
+
     protected $fillable = [
         'name',
         'email',
         'password',
         'role',
-        'parent_id', // Nama kolom atasan di DB Anda
+        'unit_id',
+        'status',
         'work_behavior_rating',
         'is_in_resource_pool',
         'pool_availability_notes',
@@ -43,14 +55,9 @@ class User extends Authenticatable
 
     // --- RELASI ---
 
-    public function parent()
+    public function unit(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'parent_id');
-    }
-
-    public function children(): HasMany
-    {
-        return $this->hasMany(User::class, 'parent_id');
+        return $this->belongsTo(Unit::class);
     }
 
     public function tasks(): BelongsToMany
@@ -81,59 +88,53 @@ class User extends Authenticatable
 
     // --- FUNGSI BANTUAN & HAK AKSES ---
     
-    public function isSubordinateOf(User $manager)
+    public function isSubordinateOf(User $manager): bool
     {
-        $currentParent = $this->parent;
-        while ($currentParent) {
-            if ($currentParent->id === $manager->id) {
-                return true;
-            }
-            $currentParent = $currentParent->parent;
-        }
-        return false;
-    }
-    
-    public function getAllSubordinateIds(array &$visited = [])
-    {
-        return $this->getAllSubordinates($visited)->pluck('id');
-    }
-    
-    public function getAllSubordinates(array &$visited = [])
-    {
-        $subordinates = collect();
-        if (empty($visited)) {
-            $visited[] = $this->id;
+        if (!$this->unit || !$manager->unit) {
+            return false;
         }
 
-        foreach ($this->children as $child) {
-            if (in_array($child->id, $visited)) {
-                continue;
-            }
-            $visited[] = $child->id;
-            $subordinates->push($child);
-            $subordinates = $subordinates->merge($child->getAllSubordinates($visited));
+        return in_array($this->unit->id, $manager->unit->getAllSubordinateUnitIds());
+    }
+    
+    public function getAllSubordinateIds(): array
+    {
+        if (!$this->unit) {
+            return [];
         }
-        return $subordinates;
+
+        $unitIds = $this->unit->getAllSubordinateUnitIds();
+        return User::whereIn('unit_id', $unitIds)->pluck('id')->toArray();
+    }
+    
+    public function getAllSubordinates()
+    {
+        if (!$this->unit) {
+            return collect();
+        }
+
+        $unitIds = $this->unit->getAllSubordinateUnitIds();
+        return User::whereIn('unit_id', $unitIds)->get();
     }
 
     public function canCreateProjects(): bool
     {
-        return in_array($this->role, ['Superadmin', 'Eselon I', 'Eselon II', 'Koordinator']);
+        return in_array($this->role, [self::ROLE_SUPERADMIN, self::ROLE_ESELON_I, self::ROLE_ESELON_II, self::ROLE_KOORDINATOR]);
     }
 
     public function isTopLevelManager(): bool
     {
-        return in_array($this->role, ['Superadmin', 'Eselon I', 'Eselon II']);
+        return in_array($this->role, [self::ROLE_SUPERADMIN, self::ROLE_ESELON_I, self::ROLE_ESELON_II]);
     }
 
     public function canManageUsers(): bool
     {
-        return in_array($this->role, ['Superadmin', 'Eselon I', 'Eselon II', 'Koordinator']);
+        return in_array($this->role, [self::ROLE_SUPERADMIN, self::ROLE_ESELON_I, self::ROLE_ESELON_II, self::ROLE_KOORDINATOR]);
     }
 
     public function isManager(): bool
     {
-        $isStructuralManager = in_array($this->role, ['Eselon I', 'Eselon II', 'Koordinator', 'Sub Koordinator']);
+        $isStructuralManager = in_array($this->role, [self::ROLE_ESELON_I, self::ROLE_ESELON_II, self::ROLE_KOORDINATOR, self::ROLE_SUB_KOORDINATOR]);
         $isFunctionalManager = $this->ledProjects()->exists();
         return $isStructuralManager || $isFunctionalManager;
     }
@@ -174,10 +175,11 @@ class User extends Authenticatable
 
     public function getManagerialPerformanceScoreAttribute()
     {
-        if ($this->children->isEmpty()) {
+        $subordinates = $this->getAllSubordinates();
+        if ($subordinates->isEmpty()) {
             return 0;
         }
-        return $this->children->avg(function ($subordinate) {
+        return $subordinates->avg(function ($subordinate) {
             return $subordinate->getFinalPerformanceValueAttribute();
         });
     }
@@ -189,10 +191,10 @@ class User extends Authenticatable
         }
 
         $managerialWeights = [
-            'Eselon I' => 0.9,
-            'Eselon II' => 0.8,
-            'Koordinator' => 0.7,
-            'Sub Koordinator' => 0.6,
+            self::ROLE_ESELON_I => 0.9,
+            self::ROLE_ESELON_II => 0.8,
+            self::ROLE_KOORDINATOR => 0.7,
+            self::ROLE_SUB_KOORDINATOR => 0.6,
         ];
         
         $weight = $managerialWeights[$this->role] ?? 0.5;
@@ -200,7 +202,7 @@ class User extends Authenticatable
         $individualScore = $this->individual_performance_index;
         $managerialScore = $this->managerial_performance_score;
 
-        if ($managerialScore == 0 && $this->children->isEmpty()) {
+        if ($managerialScore == 0 && $this->getAllSubordinates()->isEmpty()) {
             return $individualScore;
         }
 

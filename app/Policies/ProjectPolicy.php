@@ -9,27 +9,13 @@ use Illuminate\Auth\Access\Response;
 class ProjectPolicy
 {
     /**
-     * Helper function terpusat untuk memeriksa hak akses ke sebuah proyek.
+     * Tentukan apakah user bisa melihat daftar proyek.
+     * Superadmin bisa melihat semua.
+     * Manajer bisa melihat proyek milik bawahannya.
      */
-    private function hasAccess(User $user, Project $project): bool
+    public function viewAny(User $user): bool
     {
-        // Aturan 1: User adalah pemilik proyek.
-        if ($project->owner_id === $user->id) {
-            return true;
-        }
-
-        // Aturan 2: User adalah ketua tim proyek.
-        if ($project->leader_id === $user->id) {
-            return true;
-        }
-
-        // Aturan 3: User adalah atasan langsung dari pemilik proyek.
-        if ($project->owner && $project->owner->isSubordinateOf($user)) {
-            return true;
-        }
-        
-        // Aturan 4: User adalah anggota tim proyek (pengecekan terakhir ke database).
-        return $project->members()->where('user_id', $user->id)->exists();
+        return true; // Dikelola oleh scope
     }
 
     /**
@@ -37,7 +23,22 @@ class ProjectPolicy
      */
     public function view(User $user, Project $project): bool
     {
-        return $this->hasAccess($user, $project);
+        // Superadmin bisa melihat semua
+        if ($user->role === User::ROLE_SUPERADMIN) {
+            return true;
+        }
+
+        // Pemilik, leader, atau anggota tim bisa melihat
+        if ($project->owner_id === $user->id || $project->leader_id === $user->id || $project->members()->where('user_id', $user->id)->exists()) {
+            return true;
+        }
+
+        // Manajer bisa melihat proyek milik bawahannya
+        if ($user->isManager() && $user->unit && $project->owner && $project->owner->unit) {
+            return in_array($project->owner->unit->id, $user->unit->getAllSubordinateUnitIds());
+        }
+
+        return false;
     }
 
     /**
@@ -50,20 +51,34 @@ class ProjectPolicy
 
     /**
      * Tentukan apakah user bisa mengupdate proyek.
-     * Hanya pemilik dan ketua tim yang bisa edit.
      */
     public function update(User $user, Project $project): bool
     {
-        return $project->owner_id === $user->id || $project->leader_id === $user->id;
+        // Superadmin bisa update
+        if ($user->role === User::ROLE_SUPERADMIN) {
+            return true;
+        }
+
+        // Pemilik dan leader bisa update
+        if ($project->owner_id === $user->id || $project->leader_id === $user->id) {
+            return true;
+        }
+
+        // Manajer dari pemilik bisa update
+        if ($user->isManager() && $user->unit && $project->owner && $project->owner->unit) {
+            return in_array($project->owner->unit->id, $user->unit->getAllSubordinateUnitIds());
+        }
+
+        return false;
     }
 
     /**
      * Tentukan apakah user bisa menghapus proyek.
-     * Hanya pemilik asli yang bisa menghapus.
      */
     public function delete(User $user, Project $project): bool
     {
-        return $project->owner_id === $user->id;
+        // Hanya superadmin atau pemilik yang bisa hapus
+        return $user->role === User::ROLE_SUPERADMIN || $project->owner_id === $user->id;
     }
 
     public function viewTeamDashboard(User $user, Project $project): bool

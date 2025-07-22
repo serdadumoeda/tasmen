@@ -12,7 +12,7 @@ class UserPolicy
      */
     public function before(User $user, string $ability): bool|null
     {
-        if ($user->role === 'Superadmin') {
+        if ($user->role === User::ROLE_SUPERADMIN) {
             return true;
         }
         return null;
@@ -20,17 +20,14 @@ class UserPolicy
 
     /**
      * Tentukan apakah user bisa melihat daftar user.
-     * Dibuat true agar semua pimpinan bisa masuk ke halaman,
-     * tapi controller akan memfilter daftar yang ditampilkan.
      */
     public function viewAny(User $user): bool
     {
-        return in_array($user->role, ['Eselon I', 'Eselon II', 'Koordinator']);
+        return $user->canManageUsers();
     }
 
     /**
      * Tentukan apakah user bisa melihat detail user lain.
-     * bisa melihat detail bawahan.
      */
     public function view(User $user, User $model): bool
     {
@@ -39,26 +36,67 @@ class UserPolicy
 
     /**
      * Tentukan apakah user bisa membuat user baru.
-     * Semua pimpinan bisa membuat user baru (untuk menjadi bawahannya).
      */
-    public function create(User $user): bool
+    public function create(User $user, array $attributes): bool
     {
-        return in_array($user->role, ['Eselon I', 'Eselon II', 'Koordinator']);
+        if (!$user->canManageUsers()) {
+            return false;
+        }
+
+        // Pastikan manager tidak membuat user dengan role lebih tinggi dari dirinya
+        $roleOrder = [
+            User::ROLE_STAF => 0,
+            User::ROLE_SUB_KOORDINATOR => 1,
+            User::ROLE_KOORDINATOR => 2,
+            User::ROLE_ESELON_II => 3,
+            User::ROLE_ESELON_I => 4,
+            User::ROLE_SUPERADMIN => 5,
+        ];
+
+        if ($roleOrder[$attributes['role']] >= $roleOrder[$user->role]) {
+            return false;
+        }
+
+        // Pastikan manager hanya membuat user di dalam unitnya atau unit bawahannya
+        if ($user->unit) {
+            return in_array($attributes['unit_id'], $user->unit->getAllSubordinateUnitIds());
+        }
+
+        return false;
     }
 
     /**
      * Tentukan apakah user bisa mengedit data user lain.
-     * bisa mengedit data bawahan .
      */
-    public function update(User $user, User $model): bool
+    public function update(User $user, User $model, array $attributes): bool
     {
-        return $model->isSubordinateOf($user);
+        if (!$model->isSubordinateOf($user)) {
+            return false;
+        }
+
+        // Logika yang sama dengan create
+        $roleOrder = [
+            User::ROLE_STAF => 0,
+            User::ROLE_SUB_KOORDINATOR => 1,
+            User::ROLE_KOORDINATOR => 2,
+            User::ROLE_ESELON_II => 3,
+            User::ROLE_ESELON_I => 4,
+            User::ROLE_SUPERADMIN => 5,
+        ];
+
+        if (isset($attributes['role']) && $roleOrder[$attributes['role']] >= $roleOrder[$user->role]) {
+            return false;
+        }
+
+        if (isset($attributes['unit_id']) && $user->unit) {
+            return in_array($attributes['unit_id'], $user->unit->getAllSubordinateUnitIds());
+        }
+
+        return true;
     }
 
     /**
      * Tentukan apakah user bisa menghapus user lain.
-     * bisa menghapus bawahan .
-     * User tidak bisa menghapus dirinya sendiri.
      */
     public function delete(User $user, User $model): bool
     {

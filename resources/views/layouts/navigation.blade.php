@@ -70,6 +70,9 @@ if (count($words) >= 2) {
                                 </button>
                             </x-slot>
                             <x-slot name="content">
+                                @if(Auth::user()->role == 'Superadmin')
+                                    <x-dropdown-link :href="route('admin.units.index')" :active="request()->routeIs('admin.units.*')">Manajemen Unit</x-dropdown-link>
+                                @endif
                                 @can('viewAny', App\Models\User::class)
                                     <x-dropdown-link :href="route('users.index')" :active="request()->routeIs('users.*')">Manajemen Pengguna</x-dropdown-link>
                                 @endcan

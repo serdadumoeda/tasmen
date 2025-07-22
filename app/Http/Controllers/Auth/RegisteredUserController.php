@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\Unit;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -11,6 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\View\View;
+use App\Http\Requests\Auth\RegisterRequest;
 
 class RegisteredUserController extends Controller
 {
@@ -19,9 +21,8 @@ class RegisteredUserController extends Controller
      */
     public function create(): View
     {
-        // Ambil semua user dengan role Eselon II untuk pilihan Unit Kerja
-        $eselon2Users = User::where('role', 'Eselon II')->orderBy('name')->get();
-        return view('auth.register', compact('eselon2Users'));
+        // Eselon I units akan di-fetch oleh Alpine.js via API
+        return view('auth.register');
     }
 
     /**
@@ -29,24 +30,15 @@ class RegisteredUserController extends Controller
      *
      * @throws \Illuminate\Validation\ValidationException
      */
-    public function store(Request $request): RedirectResponse
+    public function store(RegisterRequest $request): RedirectResponse
     {
-        $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'eselon_2_id' => ['required', 'exists:users,id'],
-            'role' => ['required', 'in:Koordinator,Ketua Tim,Sub Koordinator,Staff'],
-            'parent_id' => ['required', 'exists:users,id'],
-        ]);
-
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'role' => $request->role,
-            'eselon_2_id' => $request->eselon_2_id,
-            'parent_id' => $request->parent_id,
+            'unit_id' => $request->unit_id,
+            'role' => User::ROLE_STAF,
+            'status' => User::STATUS_ACTIVE,
         ]);
 
         event(new Registered($user));

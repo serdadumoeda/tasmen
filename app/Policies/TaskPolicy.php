@@ -8,25 +8,61 @@ use App\Models\User;
 class TaskPolicy
 {
     /**
+     * Tentukan apakah pengguna bisa melihat tugas.
+     */
+    public function view(User $user, Task $task): bool
+    {
+        // Superadmin bisa melihat semua
+        if ($user->role === User::ROLE_SUPERADMIN) {
+            return true;
+        }
+
+        // Anggota tim bisa melihat
+        if ($task->assignees->contains($user)) {
+            return true;
+        }
+        
+        // Jika tugas terkait proyek, gunakan ProjectPolicy
+        if ($task->project) {
+            return $user->can('view', $task->project);
+        }
+
+        // Untuk tugas ad-hoc, manajer dari penerima tugas bisa melihat
+        if (!$task->project_id && $user->isManager() && $user->unit) {
+            foreach ($task->assignees as $assignee) {
+                if ($assignee->unit && in_array($assignee->unit->id, $user->unit->getAllSubordinateUnitIds())) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Tentukan apakah pengguna bisa mengupdate tugas.
      */
     public function update(User $user, Task $task): bool
     {
-        // Aturan 1: Penerima tugas (assignee) selalu bisa mengedit tugasnya.
+        // Superadmin bisa update
+        if ($user->role === User::ROLE_SUPERADMIN) {
+            return true;
+        }
+
+        // Penerima tugas bisa update
         if ($task->assignees->contains($user)) {
             return true;
         }
 
-        // Aturan 2: Jika ini tugas proyek, periksa apakah pengguna punya hak akses 'update' pada PROYEK-nya.
-        // Ini akan secara otomatis menggunakan ProjectPolicy yang sudah benar dan hierarkis.
-        if ($task->project && $user->can('update', $task->project)) {
-            return true;
+        // Jika tugas terkait proyek, gunakan ProjectPolicy
+        if ($task->project) {
+            return $user->can('update', $task->project);
         }
-        
-        // Aturan 3: Jika ini tugas ad-hoc (tanpa proyek), periksa apakah pengguna adalah atasan dari penerima tugas.
-        if (!$task->project_id) {
+
+        // Untuk tugas ad-hoc, manajer dari penerima tugas bisa update
+        if (!$task->project_id && $user->isManager() && $user->unit) {
             foreach ($task->assignees as $assignee) {
-                if ($assignee->isSubordinateOf($user)) {
+                if ($assignee->unit && in_array($assignee->unit->id, $user->unit->getAllSubordinateUnitIds())) {
                     return true;
                 }
             }
@@ -40,30 +76,14 @@ class TaskPolicy
      */
     public function approve(User $user, Task $task): bool
     {
-        // Aturan 1: Pimpinan yang berhak mengelola proyek bisa menyetujui.
-        if ($task->project && $user->can('update', $task->project)) {
-            return true;
-        }
-
-        // Aturan 2: Atasan dari penerima tugas ad-hoc bisa menyetujui.
-        if (!$task->project_id) {
-            foreach ($task->assignees as $assignee) {
-                if ($assignee->isSubordinateOf($user)) {
-                    return true;
-                }
-            }
-        }
-        return $user->id === optional($task->project)->owner_id || $user->id === optional($task->project)->leader_id;
+        return $this->update($user, $task);
     }
 
     /**
      * Tentukan apakah pengguna bisa menghapus tugas.
-     * Logikanya sama dengan 'update'.
      */
     public function delete(User $user, Task $task): bool
     {
         return $this->update($user, $task);
     }
-
-
 }

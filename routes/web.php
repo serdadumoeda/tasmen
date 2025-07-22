@@ -143,4 +143,16 @@ Route::middleware('auth')->group(function () {
     
 });
 
+use App\Http\Controllers\Api\UnitApiController;
+use App\Http\Controllers\UnitController;
+
 require __DIR__.'/auth.php';
+
+Route::middleware('auth')->group(function () {
+    Route::get('/api/units/eselon-i', [UnitApiController::class, 'getEselonIUnits']);
+    Route::get('/api/units/{parentUnit}/children', [UnitApiController::class, 'getChildUnits']);
+});
+
+Route::middleware(['auth', 'superadmin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::resource('units', UnitController::class);
+});

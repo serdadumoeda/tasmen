@@ -13,14 +13,9 @@
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                {{-- 
-                Struktur tabel diubah menjadi div untuk mengakomodasi daftar bersarang (nested list).
-                Setiap user level atas akan dipanggil dari sini, dan partial view akan mengurus sisanya.
-                --}}
                 <div class="divide-y divide-gray-200">
-                    @forelse ($topLevelUsers as $user)
-                        {{-- Memanggil partial view rekursif untuk pertama kalinya dengan level 0 --}}
-                        @include('users.partials.user-hierarchy-row', ['user' => $user, 'level' => 0])
+                    @forelse ($users as $user)
+                        @include('users.partials.user-hierarchy-row', ['user' => $user])
                     @empty
                         <p class="p-6 text-gray-500">Tidak ada user yang dapat Anda kelola.</p>
                     @endforelse

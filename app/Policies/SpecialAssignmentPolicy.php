@@ -9,13 +9,34 @@ use Illuminate\Auth\Access\Response;
 class SpecialAssignmentPolicy
 {
     /**
+     * Tentukan apakah user bisa melihat SK penugasan.
+     */
+    public function view(User $user, SpecialAssignment $specialAssignment): bool
+    {
+        // Superadmin bisa melihat semua
+        if ($user->role === User::ROLE_SUPERADMIN) {
+            return true;
+        }
+
+        // Pembuat atau anggota tim bisa melihat
+        if ($specialAssignment->creator_id === $user->id || $specialAssignment->users()->where('user_id', $user->id)->exists()) {
+            return true;
+        }
+
+        // Manajer dari pembuat bisa melihat
+        if ($user->isManager() && $user->unit && $specialAssignment->creator && $specialAssignment->creator->unit) {
+            return in_array($specialAssignment->creator->unit->id, $user->unit->getAllSubordinateUnitIds());
+        }
+
+        return false;
+    }
+
+    /**
      * Tentukan apakah user bisa membuat SK penugasan baru.
      */
     public function create(User $user): bool
     {
-        // Pimpinan (Koordinator ke atas) bisa membuat SK baru untuk timnya.
-        // return $user->canManageUsers(); 
-        return true; 
+        return $user->canManageUsers();
     }
 
     /**
@@ -23,8 +44,22 @@ class SpecialAssignmentPolicy
      */
     public function update(User $user, SpecialAssignment $specialAssignment): bool
     {
-        // Hanya pembuat SK atau atasan dari pembuat yang bisa mengedit.
-        return $user->id === $specialAssignment->creator_id || ($specialAssignment->creator && $specialAssignment->creator->isSubordinateOf($user));
+        // Superadmin bisa update
+        if ($user->role === User::ROLE_SUPERADMIN) {
+            return true;
+        }
+
+        // Pembuat bisa update
+        if ($user->id === $specialAssignment->creator_id) {
+            return true;
+        }
+
+        // Manajer dari pembuat bisa update
+        if ($user->isManager() && $user->unit && $specialAssignment->creator && $specialAssignment->creator->unit) {
+            return in_array($specialAssignment->creator->unit->id, $user->unit->getAllSubordinateUnitIds());
+        }
+
+        return false;
     }
 
     /**
@@ -32,7 +67,6 @@ class SpecialAssignmentPolicy
      */
     public function delete(User $user, SpecialAssignment $specialAssignment): bool
     {
-        // Aturannya sama dengan update.
         return $this->update($user, $specialAssignment);
     }
 }

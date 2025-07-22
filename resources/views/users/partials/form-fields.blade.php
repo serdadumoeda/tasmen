@@ -31,10 +31,13 @@
             <x-input-label for="role" :value="__('Role / Jabatan')" />
             <select name="role" id="role" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
                 @php
-                    // --- BAGIAN YANG DIPERBAIKI ---
-                    // 'Ketua Tim' telah dihapus dari daftar peran yang valid.
-                    // Penulisan diseragamkan dengan huruf kapital di awal agar konsisten.
-                    $roles = ['Superadmin', 'Eselon I', 'Eselon II', 'Koordinator', 'Sub Koordinator', 'Staf'];
+                    $roles = [
+                        App\Models\User::ROLE_ESELON_I,
+                        App\Models\User::ROLE_ESELON_II,
+                        App\Models\User::ROLE_KOORDINATOR,
+                        App\Models\User::ROLE_SUB_KOORDINATOR,
+                        App\Models\User::ROLE_STAF
+                    ];
                 @endphp
                 <option value="">-- Pilih Role --</option>
                 @foreach($roles as $role)
@@ -45,16 +48,25 @@
         </div>
 
         <div class="mt-4">
-            <x-input-label for="parent_id" :value="__('Atasan Langsung')" />
-            <select name="parent_id" id="parent_id" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
-                <option value="">-- Tidak ada atasan (Top Level) --</option>
-                @foreach($users as $potentialParent)
-                    <option value="{{ $potentialParent->id }}" @selected(old('parent_id', $user->parent_id ?? '') == $potentialParent->id)>
-                        {{ $potentialParent->name }} ({{ $potentialParent->role }})
+            <x-input-label for="unit_id" :value="__('Unit Kerja')" />
+            <select name="unit_id" id="unit_id" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
+                <option value="">-- Pilih Unit --</option>
+                @foreach($units as $unit)
+                    <option value="{{ $unit->id }}" @selected(old('unit_id', $user->unit_id ?? '') == $unit->id)>
+                        {{ $unit->name }} ({{ $unit->level }})
                     </option>
                 @endforeach
             </select>
-            <x-input-error :messages="$errors->get('parent_id')" class="mt-2" />
+            <x-input-error :messages="$errors->get('unit_id')" class="mt-2" />
+        </div>
+
+        <div class="mt-4">
+            <x-input-label for="status" :value="__('Status')" />
+            <select name="status" id="status" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
+                <option value="active" @selected(old('status', $user->status ?? '') == 'active')>Aktif</option>
+                <option value="suspended" @selected(old('status', $user->status ?? '') == 'suspended')>Ditangguhkan</option>
+            </select>
+            <x-input-error :messages="$errors->get('status')" class="mt-2" />
         </div>
     </div>
 

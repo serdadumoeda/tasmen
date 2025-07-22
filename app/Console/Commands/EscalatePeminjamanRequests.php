@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use App\Models\PeminjamanRequest;
 use App\Models\User;
+use App\Models\Unit;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 // use Illuminate\Support\Facades\Notification;
@@ -49,18 +50,35 @@ class EscalatePeminjamanRequests extends Command
 
         foreach ($overdueRequests as $request) {
             $currentApprover = User::find($request->approver_id);
+            $requester = $request->requester;
 
-            // Cari atasan dari approver saat ini
-            $nextApprover = $currentApprover->parent;
+            if (!$currentApprover || !$requester || !$requester->unit) {
+                $this->warn("Data tidak lengkap untuk permintaan #{$request->id}. Melewati.");
+                continue;
+            }
+
+            // Cari unit atasan dari unit requester
+            $parentUnit = $requester->unit->parentUnit;
 
             // Jika tidak ada lagi atasan (sudah di puncak hierarki), maka lewati
-            if (!$nextApprover) {
-                $this->warn("Permintaan #{$request->id} untuk user {$request->requestedUser->name} sudah berada di puncak hierarki. Tidak bisa dieskalasi lebih lanjut.");
+            if (!$parentUnit) {
+                $this->warn("Permintaan #{$request->id} untuk user {$requester->name} sudah berada di puncak hierarki unit. Tidak bisa dieskalasi lebih lanjut.");
                 Log::warning("Scheduler Eskalasi Peminjaman: Permintaan #{$request->id} tidak bisa dieskalasi lagi.");
                 // Update due_date agar tidak dicek terus-menerus
                 $request->update(['due_date' => null]);
                 continue;
             }
+
+            // Cari manajer di unit atasan
+            $nextApprover = User::where('unit_id', $parentUnit->id)
+                                ->whereIn('role', [User::ROLE_ESELON_I, User::ROLE_ESELON_II, User::ROLE_KOORDINATOR, User::ROLE_SUB_KOORDINATOR])
+                                ->first();
+
+            if (!$nextApprover) {
+                $this->warn("Tidak ditemukan manajer di unit atasan untuk permintaan #{$request->id}.");
+                continue;
+            }
+
 
             // Lakukan update pada permintaan
             $request->update([

@@ -5,6 +5,7 @@ namespace App\Scopes;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Scope;
+use App\Models\User;
 
 class HierarchicalScope implements Scope
 {
@@ -15,15 +16,14 @@ class HierarchicalScope implements Scope
     {
         $user = auth()->user();
 
-        // Jika tidak ada pengguna yang login, jangan lakukan apa-apa.
-        if (!$user) {
+        // Jika tidak ada pengguna yang login atau superadmin, jangan lakukan apa-apa.
+        if (!$user || $user->role === User::ROLE_SUPERADMIN) {
             return;
         }
 
         // Mulai satu blok query terpadu untuk mencakup semua kondisi.
         $builder->where(function ($query) use ($user) {
             
-            // ATURAN DASAR (berlaku untuk semua peran):
             // Pengguna akan melihat proyek jika ia terlibat langsung sebagai:
             // 1. Pemilik (owner)
             // 2. Ketua Tim (leader)
@@ -34,21 +34,19 @@ class HierarchicalScope implements Scope
                       $subQuery->where('users.id', $user->id);
                   });
 
-            // ATURAN TAMBAHAN (hanya untuk peran manajerial):
-            // Cek apakah pengguna memiliki peran level pimpinan.
-            // Kita gunakan string langsung untuk menghindari potensi error 'Undefined Constant'.
-            $isManagerLevel = $user->canManageUsers() || in_array($user->role, [
-                'koordinator',
-                'sub_koordinator'
-            ]);
+            // Jika pengguna adalah manajer, ia JUGA dapat melihat
+            // semua proyek yang dimiliki oleh tim bawahannya berdasarkan unit.
+            if ($user->isManager() && $user->unit) {
+                $subordinateUnitIds = $user->unit->getAllSubordinateUnitIds();
 
-            // Jika pengguna adalah level pimpinan, ia JUGA dapat melihat
-            // semua proyek yang dimiliki (owner_id) oleh tim bawahannya.
-            if ($isManagerLevel) {
-                $subordinateIds = $user->getAllSubordinateIds();
+                if (!empty($subordinateUnitIds)) {
+                    // Dapatkan semua ID pengguna di unit bawahan
+                    $subordinateUserIds = User::whereIn('unit_id', $subordinateUnitIds)->pluck('id');
 
-                if (!empty($subordinateIds)) {
-                    $query->orWhereIn('owner_id', $subordinateIds);
+                    if ($subordinateUserIds->isNotEmpty()) {
+                        $query->orWhereIn('owner_id', $subordinateUserIds)
+                              ->orWhereIn('leader_id', $subordinateUserIds);
+                    }
                 }
             }
         });
