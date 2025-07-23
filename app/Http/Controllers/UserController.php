@@ -45,7 +45,7 @@ class UserController extends Controller
     public function create()
     {
         $this->authorize('create', User::class);
-        $potentialParents = User::where('role', '!=', User::ROLE_STAF)->orderBy('name')->get();
+        $potentialParents = User::with('unit')->where('role', '!=', User::ROLE_STAF)->orderBy('name')->get();
         return view('users.create', compact('potentialParents'));
     }
 
@@ -102,7 +102,7 @@ class UserController extends Controller
     public function edit(User $user)
     {
         $this->authorize('update', $user);
-        $potentialParents = User::where('role', '!=', User::ROLE_STAF)
+        $potentialParents = User::with('unit')->where('role', '!=', User::ROLE_STAF)
                                  ->where('id', '!=', $user->id)
                                  ->orderBy('name')->get();
         

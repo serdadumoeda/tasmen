@@ -67,7 +67,11 @@
                 <option value="">-- Pilih Atasan Langsung --</option>
                 @if(isset($potentialParents))
                     @foreach($potentialParents as $parent)
-                        <option value="{{ $parent->id }}" @selected(old('parent_user_id', $user->unit->parentUnit->user->id ?? '') == $parent->id)>{{ $parent->name }} ({{ $parent->unit->name ?? $parent->role }})</option>
+                        @if($parent->unit) {{-- Hanya tampilkan user yang punya unit --}}
+                            <option value="{{ $parent->id }}" @selected(old('parent_user_id', $user->unit->parentUnit->user->id ?? '') == $parent->id)>
+                                {{ $parent->unit->name }} ({{ $parent->name }})
+                            </option>
+                        @endif
                     @endforeach
                 @endif
             </select>
