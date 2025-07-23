@@ -67,9 +67,14 @@ class UserController extends Controller
         $parentUser = $parentUserId ? User::find($parentUserId) : null;
 
         // Validasi hierarki role
-        if ($parentUser && isset($this->VALID_PARENT_ROLES[$role]) && !in_array($parentUser->role, $this->VALID_PARENT_ROLES[$role])) {
-            $validRoles = implode(', ', $this->VALID_PARENT_ROLES[$role]);
-            return back()->with('error', "Atasan untuk role '{$role}' harus memiliki role: {$validRoles}.")->withInput();
+        if ($parentUser) {
+            if (!$parentUser->unit) {
+                return back()->with('error', "Atasan yang dipilih tidak memiliki unit kerja yang valid.")->withInput();
+            }
+            if (isset($this->VALID_PARENT_ROLES[$role]) && !in_array($parentUser->unit->level, $this->VALID_PARENT_ROLES[$role])) {
+                $validRoles = implode(', ', $this->VALID_PARENT_ROLES[$role]);
+                return back()->with('error', "Atasan untuk role '{$role}' harus memiliki unit dengan level: {$validRoles}.")->withInput();
+            }
         }
 
         // --- Logika Pembuatan Unit Otomatis ---
@@ -132,12 +137,18 @@ class UserController extends Controller
             $parentUser = $parentUserId ? User::find($parentUserId) : null;
 
             // Validasi hierarki role
-            if ($parentUser && isset($this->VALID_PARENT_ROLES[$role]) && !in_array($parentUser->role, $this->VALID_PARENT_ROLES[$role])) {
-                $validRoles = implode(', ', $this->VALID_PARENT_ROLES[$role]);
-                // Karena ini di dalam transaksi, kita harus melempar exception untuk rollback
-                throw \Illuminate\Validation\ValidationException::withMessages([
-                    'parent_user_id' => "Atasan untuk role '{$role}' harus memiliki role: {$validRoles}."
-                ]);
+            if ($parentUser) {
+                if (!$parentUser->unit) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'parent_user_id' => "Atasan yang dipilih tidak memiliki unit kerja yang valid."
+                    ]);
+                }
+                if (isset($this->VALID_PARENT_ROLES[$role]) && !in_array($parentUser->unit->level, $this->VALID_PARENT_ROLES[$role])) {
+                    $validRoles = implode(', ', $this->VALID_PARENT_ROLES[$role]);
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'parent_user_id' => "Atasan untuk role '{$role}' harus memiliki unit dengan level: {$validRoles}."
+                    ]);
+                }
             }
 
             // Update data pengguna
