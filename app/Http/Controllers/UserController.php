@@ -19,7 +19,7 @@ class UserController extends Controller
         User::ROLE_ESELON_II => [User::ROLE_ESELON_I],
         User::ROLE_KOORDINATOR => [User::ROLE_ESELON_II],
         User::ROLE_SUB_KOORDINATOR => [User::ROLE_KOORDINATOR],
-        User::ROLE_STAF => [User::ROLE_SUB_KOORDINATOR],
+        User::ROLE_STAF => [User::ROLE_KOORDINATOR, User::ROLE_SUB_KOORDINATOR],
     ];
 
     public function index()

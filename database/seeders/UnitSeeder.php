@@ -86,11 +86,11 @@ class UnitSeeder extends Seeder
             'unit_id' => $unitSubKoordinator->id,
         ]);
 
-        // 6. Buat Pengguna Staf di bawah Sub Koordinator
+        // 6. Buat Pengguna Staf di bawah Koordinator
         $unitStaf = Unit::create([
             'name' => 'Staf Pelaksana Produktivitas', // Jabatan Staf
             'level' => User::ROLE_STAF,
-            'parent_unit_id' => $unitSubKoordinator->id,
+            'parent_unit_id' => $unitKoordinator->id,
         ]);
         User::create([
             'name' => 'Andi Staf',
