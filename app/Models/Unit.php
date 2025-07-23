@@ -21,6 +21,7 @@ class Unit extends Model
         'name',
         'level',
         'parent_unit_id',
+        'jabatan',
     ];
 
     public function parentUnit(): BelongsTo

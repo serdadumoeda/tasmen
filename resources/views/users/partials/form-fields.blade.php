@@ -24,9 +24,15 @@
     {{-- Kolom Kiri --}}
     <div>
         <div>
-            <x-input-label for="name" :value="__('Nama Lengkap')" />
+            <x-input-label for="name" :value="__('Nama Lengkap Pengguna')" />
             <x-text-input id="name" class="block mt-1 w-full" type="text" name="name" :value="old('name', $user->name ?? '')" required autofocus />
             <x-input-error :messages="$errors->get('name')" class="mt-2" />
+        </div>
+
+        <div class="mt-4">
+            <x-input-label for="unit_name" :value="__('Nama Jabatan / Unit Kerja')" />
+            <x-text-input id="unit_name" class="block mt-1 w-full" type="text" name="unit_name" :value="old('unit_name', $user->unit->name ?? '')" required />
+            <x-input-error :messages="$errors->get('unit_name')" class="mt-2" />
         </div>
 
         <div class="mt-4">
@@ -36,7 +42,7 @@
         </div>
         
         <div class="mt-4">
-            <x-input-label for="role" :value="__('Role / Jabatan')" />
+            <x-input-label for="role" :value="__('Level Jabatan (Role)')" />
             <select name="role" id="role" required class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
                 @php
                     $roles = [
@@ -61,7 +67,7 @@
                 <option value="">-- Pilih Atasan Langsung --</option>
                 @if(isset($potentialParents))
                     @foreach($potentialParents as $parent)
-                        <option value="{{ $parent->id }}" @selected(old('parent_user_id', $user->unit->parentUnit->user->id ?? '') == $parent->id)>{{ $parent->name }} ({{ $parent->role }})</option>
+                        <option value="{{ $parent->id }}" @selected(old('parent_user_id', $user->unit->parentUnit->user->id ?? '') == $parent->id)>{{ $parent->name }} ({{ $parent->unit->name ?? $parent->role }})</option>
                     @endforeach
                 @endif
             </select>

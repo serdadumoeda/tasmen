@@ -55,6 +55,7 @@ class UserController extends Controller
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
+            'unit_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'role' => ['required', 'in:'.implode(',', [User::ROLE_ESELON_I, User::ROLE_ESELON_II, User::ROLE_KOORDINATOR, User::ROLE_SUB_KOORDINATOR, User::ROLE_STAF])],
@@ -66,7 +67,6 @@ class UserController extends Controller
         $parentUserId = $validated['parent_user_id'] ?? null;
         $parentUser = $parentUserId ? User::find($parentUserId) : null;
 
-        // Validasi hierarki role
         if ($parentUser) {
             if (!$parentUser->unit) {
                 return back()->with('error', "Atasan yang dipilih tidak memiliki unit kerja yang valid.")->withInput();
@@ -77,30 +77,21 @@ class UserController extends Controller
             }
         }
 
-        // --- Logika Pembuatan Unit Otomatis ---
-        $newUnit = null;
-        DB::transaction(function () use ($validated, $role, $parentUser, &$newUnit) {
-            $unitName = $validated['name']; // Nama unit sama dengan nama orang
-            $parentUnitId = null;
+        DB::transaction(function () use ($validated, $role, $parentUser) {
+            $parentUnitId = ($parentUser && $parentUser->unit_id) ? $parentUser->unit_id : null;
 
-            if ($parentUser && $parentUser->unit_id) {
-                $parentUnitId = $parentUser->unit_id;
-            }
-
-            // Buat unit baru untuk pengguna ini
             $newUnit = Unit::create([
-                'name' => $unitName,
-                'level' => $role, // Level unit sama dengan role
+                'name' => $validated['unit_name'],
+                'level' => $role,
                 'parent_unit_id' => $parentUnitId,
             ]);
 
-            // Buat pengguna dan kaitkan dengan unit baru
             User::create([
                 'name' => $validated['name'],
                 'email' => $validated['email'],
                 'password' => Hash::make($validated['password']),
                 'role' => $role,
-                'unit_id' => $newUnit->id, // Tautkan ke unit yang baru dibuat
+                'unit_id' => $newUnit->id,
                 'status' => $validated['status'],
             ]);
         });
@@ -112,7 +103,7 @@ class UserController extends Controller
     {
         $this->authorize('update', $user);
         $potentialParents = User::where('role', '!=', User::ROLE_STAF)
-                                 ->where('id', '!=', $user->id) // Tidak bisa menjadi atasan diri sendiri
+                                 ->where('id', '!=', $user->id)
                                  ->orderBy('name')->get();
         
         return view('users.edit', compact('user', 'potentialParents'));
@@ -124,6 +115,7 @@ class UserController extends Controller
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
+            'unit_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email,'.$user->id],
             'role' => ['required', 'in:'.implode(',', [User::ROLE_ESELON_I, User::ROLE_ESELON_II, User::ROLE_KOORDINATOR, User::ROLE_SUB_KOORDINATOR, User::ROLE_STAF])],
             'status' => ['required', 'in:active,suspended'],
@@ -136,22 +128,16 @@ class UserController extends Controller
             $parentUserId = $validated['parent_user_id'] ?? null;
             $parentUser = $parentUserId ? User::find($parentUserId) : null;
 
-            // Validasi hierarki role
             if ($parentUser) {
                 if (!$parentUser->unit) {
-                    throw \Illuminate\Validation\ValidationException::withMessages([
-                        'parent_user_id' => "Atasan yang dipilih tidak memiliki unit kerja yang valid."
-                    ]);
+                    throw \Illuminate\Validation\ValidationException::withMessages(['parent_user_id' => "Atasan yang dipilih tidak memiliki unit kerja yang valid."]);
                 }
                 if (isset($this->VALID_PARENT_ROLES[$role]) && !in_array($parentUser->unit->level, $this->VALID_PARENT_ROLES[$role])) {
                     $validRoles = implode(', ', $this->VALID_PARENT_ROLES[$role]);
-                    throw \Illuminate\Validation\ValidationException::withMessages([
-                        'parent_user_id' => "Atasan untuk role '{$role}' harus memiliki unit dengan level: {$validRoles}."
-                    ]);
+                    throw \Illuminate\Validation\ValidationException::withMessages(['parent_user_id' => "Atasan untuk role '{$role}' harus memiliki unit dengan level: {$validRoles}."]);
                 }
             }
 
-            // Update data pengguna
             $user->name = $validated['name'];
             $user->email = $validated['email'];
             $user->role = $role;
@@ -160,25 +146,15 @@ class UserController extends Controller
                 $user->password = Hash::make($validated['password']);
             }
 
-            // Update unit kerja
             if ($user->unit) {
-                $user->unit->name = $validated['name'];
+                $user->unit->name = $validated['unit_name'];
                 $user->unit->level = $role;
 
-                $newParentUnitId = null;
-                if ($parentUser) {
-                    $newParentUnitId = $parentUser->unit_id;
-                }
+                $newParentUnitId = ($parentUser) ? $parentUser->unit_id : null;
 
-                // Pengaman untuk mencegah unit menjadi parent dari dirinya sendiri
                 if ($newParentUnitId !== $user->unit_id) {
                     $user->unit->parent_unit_id = $newParentUnitId;
-                } else {
-                    // Jika terdeteksi akan membuat circular reference, batalkan perubahan parent
-                    // atau beri error. Untuk saat ini, kita batalkan saja.
-                    // (Asumsi: UI tidak seharusnya membiarkan ini terjadi)
                 }
-
                 $user->unit->save();
             }
 
@@ -193,11 +169,10 @@ class UserController extends Controller
         $this->authorize('delete', $user);
         
         DB::transaction(function() use ($user) {
-            // Jika user punya unit, hapus unitnya.
-            // Asumsi: bawahan akan otomatis terhapus karena foreign key constraint
-            // atau perlu logika tambahan untuk memindahkan bawahan.
-            // Untuk saat ini, kita hapus unitnya saja.
             if($user->unit) {
+                // Pindahkan bawahan ke unit atasan sebelum menghapus
+                $newParentId = $user->unit->parent_unit_id;
+                Unit::where('parent_unit_id', $user->unit_id)->update(['parent_unit_id' => $newParentId]);
                 $user->unit()->delete();
             }
             $user->delete();
