@@ -196,7 +196,7 @@ class ProjectController extends Controller
         $validMemberIds = $subordinateIds->merge($existingMemberIds)->unique();
 
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => ['required', 'string', 'max:255', Rule::unique('projects')->ignore($project->id)],
             'description' => 'required|string',
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
