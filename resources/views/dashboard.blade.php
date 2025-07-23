@@ -32,14 +32,7 @@
                     @else
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             @foreach ($ownedProjects as $project)
-                                <a href="{{ route('projects.show', $project) }}" class="block p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100">
-                                    <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900">{{ $project->name }}</h5>
-                                    <p class="font-normal text-gray-700">{{ Str::limit($project->description, 100) }}</p>
-                                    <div class="mt-4 text-sm text-gray-500">
-                                        <p>Pemilik: {{ $project->owner->name }}</p>
-                                        <p>Ketua Tim: {{ $project->leader->name }}</p>
-                                    </div>
-                                </a>
+                                <x-kanban-card :item="$project" />
                             @endforeach
                         </div>
                     @endif
@@ -53,14 +46,7 @@
                         <h3 class="font-semibold text-lg mb-4">{{ __('Proyek yang Saya Ikuti') }}</h3>
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             @foreach ($memberProjects as $project)
-                                <a href="{{ route('projects.show', $project) }}" class="block p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100">
-                                    <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900">{{ $project->name }}</h5>
-                                    <p class="font-normal text-gray-700">{{ Str::limit($project->description, 100) }}</p>
-                                    <div class="mt-4 text-sm text-gray-500">
-                                        <p>Pemilik: {{ $project->owner->name }}</p>
-                                        <p>Ketua Tim: {{ $project->leader->name }}</p>
-                                    </div>
-                                </a>
+                                <x-kanban-card :item="$project" />
                             @endforeach
                         </div>
                     </div>

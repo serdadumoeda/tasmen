@@ -36,12 +36,9 @@ class UserController extends Controller
     public function create()
     {
         $this->authorize('create', User::class);
-        $currentUser = auth()->user();
-        
-        $units = $currentUser->unit ? $currentUser->unit->getAllSubordinateUnitIds() : [];
-        $units = Unit::whereIn('id', $units)->get();
+        $eselon1Units = Unit::where('level', Unit::LEVEL_ESELON_I)->get();
 
-        return view('users.create', compact('units'));
+        return view('users.create', compact('eselon1Units'));
     }
 
     public function store(Request $request)
@@ -51,7 +48,8 @@ class UserController extends Controller
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'role' => ['required', 'in:'.implode(',', [User::ROLE_ESELON_I, User::ROLE_ESELON_II, User::ROLE_KOORDINATOR, User::ROLE_SUB_KOORDINATOR, User::ROLE_STAF])],
-            'unit_id' => ['required', 'exists:units,id'],
+            'unit_eselon_1' => ['nullable', 'exists:units,id'],
+            'unit_id' => ['nullable', 'exists:units,id'],
             'status' => ['required', 'in:active,suspended'],
         ]);
 
@@ -81,12 +79,9 @@ class UserController extends Controller
     public function edit(User $user)
     {
         $this->authorize('update', $user);
-        $currentUser = auth()->user();
-
-        $units = $currentUser->unit ? $currentUser->unit->getAllSubordinateUnitIds() : [];
-        $units = Unit::whereIn('id', $units)->get();
+        $eselon1Units = Unit::where('level', Unit::LEVEL_ESELON_I)->get();
         
-        return view('users.edit', compact('user', 'units'));
+        return view('users.edit', compact('user', 'eselon1Units'));
     }
 
     public function update(Request $request, User $user)
@@ -95,7 +90,8 @@ class UserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email,'.$user->id],
             'role' => ['required', 'in:'.implode(',', [User::ROLE_ESELON_I, User::ROLE_ESELON_II, User::ROLE_KOORDINATOR, User::ROLE_SUB_KOORDINATOR, User::ROLE_STAF])],
-            'unit_id' => ['required', 'exists:units,id'],
+            'unit_eselon_1' => ['nullable', 'exists:units,id'],
+            'unit_id' => ['nullable', 'exists:units,id'],
             'status' => ['required', 'in:active,suspended'],
             'password' => ['nullable', 'confirmed', Rules\Password::defaults()],
         ]);

@@ -55,6 +55,11 @@ class Project extends Model
      *
      * @return string
      */
+    public function getTasksCountAttribute()
+    {
+        return $this->tasks()->count();
+    }
+
     public function getStatusColorClassAttribute(): string
     {
         return match ($this->status) { // Sekarang ini akan memanggil accessor getStatusAttribute

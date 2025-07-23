@@ -90,6 +90,6 @@
     @endif
     
     {{-- Slot untuk script tambahan per halaman --}}
-    {{ $scripts ?? '' }}
+    @stack('scripts')
 </body>
 </html>
