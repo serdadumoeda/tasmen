@@ -13,21 +13,25 @@ class ProjectListComposer
         $quickProjects = collect();
         if (Auth::check()) {
             $user = Auth::user();
-    
-            // PERBAIKAN DIMULAI DI SINI
-            // Query ini akan mengambil proyek jika user adalah:
-            // 1. Owner
-            // 2. Leader
-            // 3. ATAU Anggota (member)
-            $quickProjects = Project::where('owner_id', $user->id)
-                                 ->orWhere('leader_id', $user->id)
-                                 ->orWhereHas('members', function ($query) use ($user) {
-                                     $query->where('users.id', $user->id);
-                                 })
-                                 ->latest('updated_at') // Urutkan berdasarkan yang terbaru di-update
-                                 ->take(7)
-                                 ->get();
-            // AKHIR PERBAIKAN
+
+            $query = Project::withoutGlobalScope(HierarchicalScope::class);
+
+            if ($user->isSuperAdmin()) {
+                // Superadmin melihat 7 proyek terbaru di seluruh sistem
+                $quickProjects = $query->latest('updated_at')->take(7)->get();
+            } else {
+                // Pengguna biasa melihat proyek yang terkait dengan mereka
+                $quickProjects = $query->where(function ($q) use ($user) {
+                    $q->where('owner_id', $user->id)
+                      ->orWhere('leader_id', $user->id)
+                      ->orWhereHas('members', function ($subQuery) use ($user) {
+                          $subQuery->where('users.id', $user->id);
+                      });
+                })
+                ->latest('updated_at')
+                ->take(7)
+                ->get();
+            }
         }
         $view->with('quickProjects', $quickProjects);
     }
