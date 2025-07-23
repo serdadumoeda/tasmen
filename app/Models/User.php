@@ -97,14 +97,14 @@ class User extends Authenticatable
         return in_array($this->unit->id, $manager->unit->getAllSubordinateUnitIds());
     }
     
-    public function getAllSubordinateIds(): array
+    public function getAllSubordinateIds()
     {
         if (!$this->unit) {
-            return [];
+            return collect();
         }
 
         $unitIds = $this->unit->getAllSubordinateUnitIds();
-        return User::whereIn('unit_id', $unitIds)->pluck('id')->toArray();
+        return User::whereIn('unit_id', $unitIds)->pluck('id');
     }
     
     public function getAllSubordinates($includeSelf = false)
