@@ -131,11 +131,21 @@ class UserController extends Controller
             if ($user->unit) {
                 $user->unit->name = $validated['name'];
                 $user->unit->level = $role;
+
+                $newParentUnitId = null;
                 if ($parentUser) {
-                    $user->unit->parent_unit_id = $parentUser->unit_id;
-                } else {
-                    $user->unit->parent_unit_id = null; // Untuk Eselon I
+                    $newParentUnitId = $parentUser->unit_id;
                 }
+
+                // Pengaman untuk mencegah unit menjadi parent dari dirinya sendiri
+                if ($newParentUnitId !== $user->unit_id) {
+                    $user->unit->parent_unit_id = $newParentUnitId;
+                } else {
+                    // Jika terdeteksi akan membuat circular reference, batalkan perubahan parent
+                    // atau beri error. Untuk saat ini, kita batalkan saja.
+                    // (Asumsi: UI tidak seharusnya membiarkan ini terjadi)
+                }
+
                 $user->unit->save();
             }
 
