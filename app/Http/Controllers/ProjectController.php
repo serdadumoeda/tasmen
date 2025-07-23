@@ -19,6 +19,7 @@ class ProjectController extends Controller
     
     public function index()
     {
+        dd('Checkpoint 1: ProjectController@index start');
         $user = Auth::user();
 
         if ($user->isSuperAdmin()) {

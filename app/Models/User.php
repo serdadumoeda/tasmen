@@ -189,58 +189,58 @@ class User extends Authenticatable
         });
     }
 
-    public function getFinalPerformanceValueAttribute($visited = [])
-    {
-        if (in_array($this->id, $visited)) {
-            return 1.0; // Return a neutral value to break the cycle
-        }
+    // public function getFinalPerformanceValueAttribute($visited = [])
+    // {
+    //     if (in_array($this->id, $visited)) {
+    //         return 1.0; // Return a neutral value to break the cycle
+    //     }
 
-        $individualScore = $this->getIndividualPerformanceIndexAttribute();
+    //     $individualScore = $this->getIndividualPerformanceIndexAttribute();
 
-        if (!$this->isManager()) {
-            return $individualScore;
-        }
+    //     if (!$this->isManager()) {
+    //         return $individualScore;
+    //     }
 
-        $visited[] = $this->id;
+    //     $visited[] = $this->id;
 
-        $subordinates = $this->getAllSubordinates(false);
-        if ($subordinates->isEmpty()) {
-            return $individualScore;
-        }
+    //     $subordinates = $this->getAllSubordinates(false);
+    //     if ($subordinates->isEmpty()) {
+    //         return $individualScore;
+    //     }
 
-        $managerialScore = $subordinates->avg(function ($subordinate) use ($visited) {
-            return $subordinate->getFinalPerformanceValueAttribute($visited);
-        });
+    //     $managerialScore = $subordinates->avg(function ($subordinate) use ($visited) {
+    //         return $subordinate->getFinalPerformanceValueAttribute($visited);
+    //     });
 
-        $managerialWeights = [
-            self::ROLE_ESELON_I => 0.9,
-            self::ROLE_ESELON_II => 0.8,
-            self::ROLE_KOORDINATOR => 0.7,
-            self::ROLE_SUB_KOORDINATOR => 0.6,
-        ];
-        $weight = $managerialWeights[$this->role] ?? 0.5;
+    //     $managerialWeights = [
+    //         self::ROLE_ESELON_I => 0.9,
+    //         self::ROLE_ESELON_II => 0.8,
+    //         self::ROLE_KOORDINATOR => 0.7,
+    //         self::ROLE_SUB_KOORDINATOR => 0.6,
+    //     ];
+    //     $weight = $managerialWeights[$this->role] ?? 0.5;
 
-        return ($individualScore * (1 - $weight)) + ($managerialScore * $weight);
-    }
+    //     return ($individualScore * (1 - $weight)) + ($managerialScore * $weight);
+    // }
 
-    public function getWorkResultRatingAttribute(): string
-    {
-        $finalScore = $this->getFinalPerformanceValueAttribute();
-        if ($finalScore >= 1.15) return 'Diatas Ekspektasi';
-        if ($finalScore >= 0.90) return 'Sesuai Ekspektasi';
-        return 'Dibawah Ekspektasi';
-    }
+    // public function getWorkResultRatingAttribute(): string
+    // {
+    //     $finalScore = $this->getFinalPerformanceValueAttribute();
+    //     if ($finalScore >= 1.15) return 'Diatas Ekspektasi';
+    //     if ($finalScore >= 0.90) return 'Sesuai Ekspektasi';
+    //     return 'Dibawah Ekspektasi';
+    // }
     
-    public function getPerformancePredicateAttribute(): string
-    {
-        $hasilKerja = $this->work_result_rating;
-        $perilakuKerja = $this->work_behavior_rating ?? 'Sesuai Ekspektasi';
+    // public function getPerformancePredicateAttribute(): string
+    // {
+    //     $hasilKerja = $this->work_result_rating;
+    //     $perilakuKerja = $this->work_behavior_rating ?? 'Sesuai Ekspektasi';
 
-        if ($hasilKerja === 'Diatas Ekspektasi' && $perilakuKerja === 'Diatas Ekspektasi') return 'Sangat Baik';
-        if ($hasilKerja === 'Dibawah Ekspektasi' && $perilakuKerja === 'Dibawah Ekspektasi') return 'Sangat Kurang';
-        if ($hasilKerja === 'Dibawah Ekspektasi' || $perilakuKerja === 'Dibawah Ekspektasi') return 'Butuh Perbaikan';
-        return 'Baik';
-    }
+    //     if ($hasilKerja === 'Diatas Ekspektasi' && $perilakuKerja === 'Diatas Ekspektasi') return 'Sangat Baik';
+    //     if ($hasilKerja === 'Dibawah Ekspektasi' && $perilakuKerja === 'Dibawah Ekspektasi') return 'Sangat Kurang';
+    //     if ($hasilKerja === 'Dibawah Ekspektasi' || $perilakuKerja === 'Dibawah Ekspektasi') return 'Butuh Perbaikan';
+    //     return 'Baik';
+    // }
 
     // --- ACCESSOR BEBAN KERJA ---
     public function getTotalProjectHoursAttribute()

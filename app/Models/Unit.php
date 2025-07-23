@@ -33,22 +33,31 @@ class Unit extends Model
         return $this->hasMany(Unit::class, 'parent_unit_id');
     }
 
-    public function getAllSubordinateUnitIds(array &$visited = []): array
+    public function getAllSubordinateUnitIds(): array
     {
-        if (in_array($this->id, $visited)) {
-            return []; // Mencegah perulangan tak terbatas
-        }
-        $visited[] = $this->id;
+        return Cache::remember('subordinate_unit_ids_for_unit_'.$this->id, 3600, function () {
+            $ids = [];
+            $queue = [$this];
+            $visited = [];
 
-        // Caching tetap digunakan, tetapi logika dipisahkan untuk menangani rekursi
-        return Cache::remember('subordinate_unit_ids_for_unit_'.$this->id, 3600, function () use (&$visited) {
-            $subordinateIds = [$this->id];
+            while (!empty($queue)) {
+                $current = array_shift($queue);
 
-            foreach ($this->childUnits as $childUnit) {
-                $subordinateIds = array_merge($subordinateIds, $childUnit->getAllSubordinateUnitIds($visited));
+                if (in_array($current->id, $visited)) {
+                    continue; // Lewati jika sudah dikunjungi untuk mencegah infinite loop
+                }
+
+                $ids[] = $current->id;
+                $visited[] = $current->id;
+
+                // Eager load child units to avoid N+1 problem
+                $current->load('childUnits');
+
+                foreach ($current->childUnits as $child) {
+                    $queue[] = $child;
+                }
             }
-
-            return $subordinateIds;
+            return $ids;
         });
     }
 
