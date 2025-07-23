@@ -19,11 +19,10 @@ class ProjectController extends Controller
     
     public function index()
     {
-        dd('Checkpoint 1: ProjectController@index start');
         $user = Auth::user();
 
         if ($user->isSuperAdmin()) {
-            $ownedProjects = Project::with('owner', 'leader')->latest()->get();
+            $ownedProjects = Project::withoutGlobalScope(HierarchicalScope::class)->with('owner', 'leader')->latest()->get();
             $memberProjects = collect(); // Superadmin sees all projects under owned.
         } else {
             $ownedProjects = Project::where('owner_id', $user->id)
