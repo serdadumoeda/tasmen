@@ -15,6 +15,13 @@ class UserController extends Controller
 {
     use AuthorizesRequests;
 
+    private $VALID_PARENT_ROLES = [
+        User::ROLE_ESELON_II => [User::ROLE_ESELON_I],
+        User::ROLE_KOORDINATOR => [User::ROLE_ESELON_II],
+        User::ROLE_SUB_KOORDINATOR => [User::ROLE_KOORDINATOR],
+        User::ROLE_STAF => [User::ROLE_SUB_KOORDINATOR],
+    ];
+
     public function index()
     {
         $this->authorize('viewAny', User::class);
@@ -58,6 +65,12 @@ class UserController extends Controller
         $role = $validated['role'];
         $parentUserId = $validated['parent_user_id'] ?? null;
         $parentUser = $parentUserId ? User::find($parentUserId) : null;
+
+        // Validasi hierarki role
+        if ($parentUser && isset($this->VALID_PARENT_ROLES[$role]) && !in_array($parentUser->role, $this->VALID_PARENT_ROLES[$role])) {
+            $validRoles = implode(', ', $this->VALID_PARENT_ROLES[$role]);
+            return back()->with('error', "Atasan untuk role '{$role}' harus memiliki role: {$validRoles}.")->withInput();
+        }
 
         // --- Logika Pembuatan Unit Otomatis ---
         $newUnit = null;
@@ -117,6 +130,15 @@ class UserController extends Controller
             $role = $validated['role'];
             $parentUserId = $validated['parent_user_id'] ?? null;
             $parentUser = $parentUserId ? User::find($parentUserId) : null;
+
+            // Validasi hierarki role
+            if ($parentUser && isset($this->VALID_PARENT_ROLES[$role]) && !in_array($parentUser->role, $this->VALID_PARENT_ROLES[$role])) {
+                $validRoles = implode(', ', $this->VALID_PARENT_ROLES[$role]);
+                // Karena ini di dalam transaksi, kita harus melempar exception untuk rollback
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'parent_user_id' => "Atasan untuk role '{$role}' harus memiliki role: {$validRoles}."
+                ]);
+            }
 
             // Update data pengguna
             $user->name = $validated['name'];
