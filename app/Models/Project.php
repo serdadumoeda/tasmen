@@ -74,7 +74,7 @@ class Project extends Model
     protected static function booted(): void
     {
         
-        static::addGlobalScope(new HierarchicalScope);
+        // static::addGlobalScope(new HierarchicalScope);
     }
 
     /**
