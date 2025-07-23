@@ -24,7 +24,7 @@
     {{-- Kolom Kiri --}}
     <div>
         <div>
-            <x-input-label for="name" :value="__('Nama Jabatan')" />
+            <x-input-label for="name" :value="__('Nama Lengkap')" />
             <x-text-input id="name" class="block mt-1 w-full" type="text" name="name" :value="old('name', $user->name ?? '')" required autofocus />
             <x-input-error :messages="$errors->get('name')" class="mt-2" />
         </div>
@@ -55,23 +55,17 @@
             <x-input-error :messages="$errors->get('role')" class="mt-2" />
         </div>
 
-        <div class="mt-4">
-            <x-input-label for="unit_eselon_1" :value="__('Unit Eselon I (Opsional)')" />
-            <select name="unit_eselon_1" id="unit_eselon_1" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
-                <option value="">-- Pilih Unit Eselon I --</option>
-                @foreach($eselon1Units as $unit)
-                    <option value="{{ $unit->id }}" @selected(old('unit_eselon_1', $user->unit->parentUnit->id ?? '') == $unit->id)>{{ $unit->name }}</option>
-                @endforeach
+        <div class="mt-4" id="parent-user-container" style="display: none;">
+            <x-input-label for="parent_user_id" :value="__('Atasan Langsung')" />
+            <select name="parent_user_id" id="parent_user_id" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
+                <option value="">-- Pilih Atasan Langsung --</option>
+                @if(isset($potentialParents))
+                    @foreach($potentialParents as $parent)
+                        <option value="{{ $parent->id }}" @selected(old('parent_user_id', $user->unit->parentUnit->user->id ?? '') == $parent->id)>{{ $parent->name }} ({{ $parent->role }})</option>
+                    @endforeach
+                @endif
             </select>
-             <x-input-error :messages="$errors->get('unit_eselon_1')" class="mt-2" />
-        </div>
-
-        <div class="mt-4">
-            <x-input-label for="unit_id" :value="__('Unit Eselon II (Opsional)')" />
-            <select name="unit_id" id="unit_eselon_2" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
-                <option value="">-- Pilih Unit Eselon II --</option>
-            </select>
-            <x-input-error :messages="$errors->get('unit_id')" class="mt-2" />
+            <x-input-error :messages="$errors->get('parent_user_id')" class="mt-2" />
         </div>
     </div>
 
@@ -106,50 +100,32 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const eselon1Select = document.getElementById('unit_eselon_1');
-    const eselon2Select = document.getElementById('unit_eselon_2');
+    const roleSelect = document.getElementById('role');
+    const parentUserContainer = document.getElementById('parent-user-container');
+    const parentUserSelect = document.getElementById('parent_user_id');
 
-    function fetchEselon2Units(eselon1Id, selectedEselon2Id = null) {
-        if (!eselon1Id) {
-            eselon2Select.innerHTML = '<option value="">-- Pilih Unit Eselon II --</option>';
-            return;
+    function toggleParentUserDropdown() {
+        const selectedRole = roleSelect.value;
+        const rolesThatNeedParent = [
+            '{{ App\Models\User::ROLE_ESELON_II }}',
+            '{{ App\Models\User::ROLE_KOORDINATOR }}',
+            '{{ App\Models\User::ROLE_SUB_KOORDINATOR }}',
+            '{{ App\Models\User::ROLE_STAF }}'
+        ];
+
+        if (rolesThatNeedParent.includes(selectedRole)) {
+            parentUserContainer.style.display = 'block';
+            parentUserSelect.required = true;
+        } else {
+            parentUserContainer.style.display = 'none';
+            parentUserSelect.required = false;
         }
-
-        // Tampilkan loading
-        eselon2Select.innerHTML = '<option value="">Memuat...</option>';
-
-        fetch(`/api/units/${eselon1Id}/children`)
-            .then(response => {
-                if (!response.ok) throw new Error('Network response was not ok');
-                return response.json();
-            })
-            .then(data => {
-                let options = '<option value="">-- Pilih Unit Eselon II --</option>';
-                data.forEach(unit => {
-                    const isSelected = unit.id == selectedEselon2Id ? 'selected' : '';
-                    options += `<option value="${unit.id}" ${isSelected}>${unit.name}</option>`;
-                });
-                eselon2Select.innerHTML = options;
-            })
-            .catch(error => {
-                console.error('Error fetching Eselon II units:', error);
-                eselon2Select.innerHTML = '<option value="">Gagal memuat data</option>';
-            });
     }
 
-    eselon1Select.addEventListener('change', function () {
-        fetchEselon2Units(this.value);
-    });
+    roleSelect.addEventListener('change', toggleParentUserDropdown);
 
-    // --- Logic for Edit Page ---
-    // Jika ada nilai lama (karena validation error) atau nilai dari model ($user)
-    const eselon1OldValue = '{{ old('unit_eselon_1', $user->unit->parentUnit->id ?? '') }}';
-    const eselon2OldValue = '{{ old('unit_id', $user->unit_id ?? '') }}';
-
-    if (eselon1OldValue) {
-        eselon1Select.value = eselon1OldValue;
-        fetchEselon2Units(eselon1OldValue, eselon2OldValue);
-    }
+    // Initial check on page load
+    toggleParentUserDropdown();
 });
 </script>
 @endpush

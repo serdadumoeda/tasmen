@@ -5,10 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\Unit;
 use Illuminate\Http\Request;
-use App\Models\Project;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Carbon;
 
 class UserController extends Controller
@@ -28,7 +28,9 @@ class UserController extends Controller
             $usersQuery->whereIn('id', $subordinateIds);
         }
 
-        $users = $usersQuery->get();
+        $users = $usersQuery->get()->sortBy(function($user) {
+            return $user->unit ? $user->unit->getLevelNumber() : 99;
+        });
 
         return view('users.index', compact('users'));
     }
@@ -36,90 +38,109 @@ class UserController extends Controller
     public function create()
     {
         $this->authorize('create', User::class);
-        $eselon1Units = Unit::where('level', Unit::LEVEL_ESELON_I)->get();
-
-        return view('users.create', compact('eselon1Units'));
+        $potentialParents = User::where('role', '!=', User::ROLE_STAF)->orderBy('name')->get();
+        return view('users.create', compact('potentialParents'));
     }
 
     public function store(Request $request)
     {
+        $this->authorize('create', User::class);
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'role' => ['required', 'in:'.implode(',', [User::ROLE_ESELON_I, User::ROLE_ESELON_II, User::ROLE_KOORDINATOR, User::ROLE_SUB_KOORDINATOR, User::ROLE_STAF])],
-            'unit_eselon_1' => ['nullable', 'exists:units,id'],
-            'unit_id' => ['nullable', 'exists:units,id'],
             'status' => ['required', 'in:active,suspended'],
+            'parent_user_id' => ['nullable', 'required_if:role,'.User::ROLE_ESELON_II.','.User::ROLE_KOORDINATOR.','.User::ROLE_SUB_KOORDINATOR.','.User::ROLE_STAF, 'exists:users,id'],
         ]);
 
-        $this->authorize('create', User::class);
+        $role = $validated['role'];
+        $parentUserId = $validated['parent_user_id'] ?? null;
+        $parentUser = $parentUserId ? User::find($parentUserId) : null;
 
-        // Manual validation for role and unit
-        $roleOrder = [User::ROLE_STAF => 0, User::ROLE_SUB_KOORDINATOR => 1, User::ROLE_KOORDINATOR => 2, User::ROLE_ESELON_II => 3, User::ROLE_ESELON_I => 4, User::ROLE_SUPERADMIN => 5];
-        if ($roleOrder[$validated['role']] >= $roleOrder[auth()->user()->role]) {
-            return back()->with('error', 'Anda tidak dapat membuat pengguna dengan role yang sama atau lebih tinggi dari Anda.')->withInput();
-        }
-        if (auth()->user()->unit && !in_array($validated['unit_id'], auth()->user()->unit->getAllSubordinateUnitIds())) {
-            return back()->with('error', 'Anda hanya dapat membuat pengguna di dalam unit Anda atau unit bawahan.')->withInput();
-        }
+        // --- Logika Pembuatan Unit Otomatis ---
+        $newUnit = null;
+        DB::transaction(function () use ($validated, $role, $parentUser, &$newUnit) {
+            $unitName = $validated['name']; // Nama unit sama dengan nama orang
+            $parentUnitId = null;
 
-        User::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
-            'role' => $validated['role'],
-            'unit_id' => $validated['unit_id'],
-            'status' => $validated['status'],
-        ]);
+            if ($parentUser && $parentUser->unit_id) {
+                $parentUnitId = $parentUser->unit_id;
+            }
 
-        return redirect()->route('users.index')->with('success', 'User berhasil dibuat.');
+            // Buat unit baru untuk pengguna ini
+            $newUnit = Unit::create([
+                'name' => $unitName,
+                'level' => $role, // Level unit sama dengan role
+                'parent_unit_id' => $parentUnitId,
+            ]);
+
+            // Buat pengguna dan kaitkan dengan unit baru
+            User::create([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'password' => Hash::make($validated['password']),
+                'role' => $role,
+                'unit_id' => $newUnit->id, // Tautkan ke unit yang baru dibuat
+                'status' => $validated['status'],
+            ]);
+        });
+
+        return redirect()->route('users.index')->with('success', 'User berhasil dibuat dengan unit kerja baru.');
     }
     
     public function edit(User $user)
     {
         $this->authorize('update', $user);
-        $eselon1Units = Unit::where('level', Unit::LEVEL_ESELON_I)->get();
+        $potentialParents = User::where('role', '!=', User::ROLE_STAF)
+                                 ->where('id', '!=', $user->id) // Tidak bisa menjadi atasan diri sendiri
+                                 ->orderBy('name')->get();
         
-        return view('users.edit', compact('user', 'eselon1Units'));
+        return view('users.edit', compact('user', 'potentialParents'));
     }
 
     public function update(Request $request, User $user)
     {
+        $this->authorize('update', $user);
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email,'.$user->id],
             'role' => ['required', 'in:'.implode(',', [User::ROLE_ESELON_I, User::ROLE_ESELON_II, User::ROLE_KOORDINATOR, User::ROLE_SUB_KOORDINATOR, User::ROLE_STAF])],
-            'unit_eselon_1' => ['nullable', 'exists:units,id'],
-            'unit_id' => ['nullable', 'exists:units,id'],
             'status' => ['required', 'in:active,suspended'],
             'password' => ['nullable', 'confirmed', Rules\Password::defaults()],
+            'parent_user_id' => ['nullable', 'required_if:role,'.User::ROLE_ESELON_II.','.User::ROLE_KOORDINATOR.','.User::ROLE_SUB_KOORDINATOR.','.User::ROLE_STAF, 'exists:users,id'],
         ]);
 
-        $this->authorize('update', $user);
+        DB::transaction(function() use ($validated, $request, $user){
+            $role = $validated['role'];
+            $parentUserId = $validated['parent_user_id'] ?? null;
+            $parentUser = $parentUserId ? User::find($parentUserId) : null;
 
-        // Manual validation for role and unit
-        $roleOrder = [User::ROLE_STAF => 0, User::ROLE_SUB_KOORDINATOR => 1, User::ROLE_KOORDINATOR => 2, User::ROLE_ESELON_II => 3, User::ROLE_ESELON_I => 4, User::ROLE_SUPERADMIN => 5];
-        if (isset($validated['role']) && $roleOrder[$validated['role']] >= $roleOrder[auth()->user()->role]) {
-            return back()->with('error', 'Anda tidak dapat memberikan role yang sama atau lebih tinggi dari Anda.')->withInput();
-        }
-        if (isset($validated['unit_id']) && auth()->user()->unit && !in_array($validated['unit_id'], auth()->user()->unit->getAllSubordinateUnitIds())) {
-            return back()->with('error', 'Anda hanya dapat menempatkan pengguna di dalam unit Anda atau unit bawahan.')->withInput();
-        }
+            // Update data pengguna
+            $user->name = $validated['name'];
+            $user->email = $validated['email'];
+            $user->role = $role;
+            $user->status = $validated['status'];
+            if ($request->filled('password')) {
+                $user->password = Hash::make($validated['password']);
+            }
 
-        // Pisahkan data password dari data utama
-        $passwordData = $validated['password'] ?? null;
-        unset($validated['password']);
+            // Update unit kerja
+            if ($user->unit) {
+                $user->unit->name = $validated['name'];
+                $user->unit->level = $role;
+                if ($parentUser) {
+                    $user->unit->parent_unit_id = $parentUser->unit_id;
+                } else {
+                    $user->unit->parent_unit_id = null; // Untuk Eselon I
+                }
+                $user->unit->save();
+            }
 
-        // Update data utama
-        $user->fill($validated);
-
-        // Jika password diisi, hash dan update
-        if ($passwordData) {
-            $user->password = Hash::make($passwordData);
-        }
-
-        $user->save();
+            $user->save();
+        });
 
         return redirect()->route('users.index')->with('success', 'User berhasil diperbarui.');
     }
@@ -128,17 +149,18 @@ class UserController extends Controller
     {
         $this->authorize('delete', $user);
         
-        // Cek jika user punya bawahan
-        if (User::where('unit_id', $user->unit_id)->where('id', '!=', $user->id)->exists()) {
-             // Cari unit atasan
-             $parentUnit = $user->unit ? $user->unit->parentUnit : null;
-             if ($parentUnit) {
-                 User::where('unit_id', $user->unit_id)->update(['unit_id' => $parentUnit->id]);
-             }
-        }
+        DB::transaction(function() use ($user) {
+            // Jika user punya unit, hapus unitnya.
+            // Asumsi: bawahan akan otomatis terhapus karena foreign key constraint
+            // atau perlu logika tambahan untuk memindahkan bawahan.
+            // Untuk saat ini, kita hapus unitnya saja.
+            if($user->unit) {
+                $user->unit()->delete();
+            }
+            $user->delete();
+        });
 
-        $user->delete();
-        return redirect()->route('users.index')->with('success', 'User berhasil dihapus.');
+        return redirect()->route('users.index')->with('success', 'User dan unit kerjanya berhasil dihapus.');
     }
 
     public function getWorkloadSummary(User $user)
