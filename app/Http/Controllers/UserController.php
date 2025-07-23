@@ -107,10 +107,16 @@ class UserController extends Controller
             return back()->with('error', 'Anda hanya dapat menempatkan pengguna di dalam unit Anda atau unit bawahan.')->withInput();
         }
 
+        // Pisahkan data password dari data utama
+        $passwordData = $validated['password'] ?? null;
+        unset($validated['password']);
+
+        // Update data utama
         $user->fill($validated);
 
-        if ($request->filled('password')) {
-            $user->password = Hash::make($request->password);
+        // Jika password diisi, hash dan update
+        if ($passwordData) {
+            $user->password = Hash::make($passwordData);
         }
 
         $user->save();
