@@ -35,7 +35,7 @@ class UserController extends Controller
 
     public function create()
     {
-        $this->authorize('create', [User::class, ['role' => 'Staf', 'unit_id' => 1]]); // Dummy data for policy check
+        $this->authorize('create', User::class);
         $currentUser = auth()->user();
         
         $units = $currentUser->unit ? $currentUser->unit->getAllSubordinateUnitIds() : [];
@@ -55,7 +55,16 @@ class UserController extends Controller
             'status' => ['required', 'in:active,suspended'],
         ]);
 
-        $this->authorize('create', [User::class, $validated]);
+        $this->authorize('create', User::class);
+
+        // Manual validation for role and unit
+        $roleOrder = [User::ROLE_STAF => 0, User::ROLE_SUB_KOORDINATOR => 1, User::ROLE_KOORDINATOR => 2, User::ROLE_ESELON_II => 3, User::ROLE_ESELON_I => 4, User::ROLE_SUPERADMIN => 5];
+        if ($roleOrder[$validated['role']] >= $roleOrder[auth()->user()->role]) {
+            return back()->with('error', 'Anda tidak dapat membuat pengguna dengan role yang sama atau lebih tinggi dari Anda.')->withInput();
+        }
+        if (auth()->user()->unit && !in_array($validated['unit_id'], auth()->user()->unit->getAllSubordinateUnitIds())) {
+            return back()->with('error', 'Anda hanya dapat membuat pengguna di dalam unit Anda atau unit bawahan.')->withInput();
+        }
 
         User::create([
             'name' => $validated['name'],
@@ -71,7 +80,7 @@ class UserController extends Controller
     
     public function edit(User $user)
     {
-        $this->authorize('update', [$user, ['role' => $user->role, 'unit_id' => $user->unit_id]]);
+        $this->authorize('update', $user);
         $currentUser = auth()->user();
 
         $units = $currentUser->unit ? $currentUser->unit->getAllSubordinateUnitIds() : [];
@@ -91,7 +100,16 @@ class UserController extends Controller
             'password' => ['nullable', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        $this->authorize('update', [$user, $validated]);
+        $this->authorize('update', $user);
+
+        // Manual validation for role and unit
+        $roleOrder = [User::ROLE_STAF => 0, User::ROLE_SUB_KOORDINATOR => 1, User::ROLE_KOORDINATOR => 2, User::ROLE_ESELON_II => 3, User::ROLE_ESELON_I => 4, User::ROLE_SUPERADMIN => 5];
+        if (isset($validated['role']) && $roleOrder[$validated['role']] >= $roleOrder[auth()->user()->role]) {
+            return back()->with('error', 'Anda tidak dapat memberikan role yang sama atau lebih tinggi dari Anda.')->withInput();
+        }
+        if (isset($validated['unit_id']) && auth()->user()->unit && !in_array($validated['unit_id'], auth()->user()->unit->getAllSubordinateUnitIds())) {
+            return back()->with('error', 'Anda hanya dapat menempatkan pengguna di dalam unit Anda atau unit bawahan.')->withInput();
+        }
 
         $user->fill($validated);
 
