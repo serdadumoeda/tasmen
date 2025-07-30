@@ -29,7 +29,7 @@
             </div>
 
             {{-- Grafik Tren Kinerja --}}
-            <div class="bg-white rounded-lg shadow-sm p-6 mb-8">
+            <div class="bg-white rounded-lg shadow-sm p-6 mb-8 lg:col-span-3">
                 <h3 class="font-semibold text-lg text-gray-800 mb-4">Tren Kinerja Portofolio (6 Bulan Terakhir)</h3>
                 <div>
                     <canvas id="performanceTrendChart"></canvas>
