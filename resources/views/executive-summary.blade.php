@@ -130,14 +130,12 @@
     </div>
 
     {{-- Script untuk Chart.js (tidak ada perubahan) --}}
-    <x-slot name="scripts">
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-        <script>
-            window.performanceTrends = {
-                labels: @json($performanceTrends['labels']),
-                progress: @json($performanceTrends['progress']),
-                absorption: @json($performanceTrends['absorption'])
-            };
-        </script>
-    </x-slot>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        window.performanceTrends = {
+            labels: @json($performanceTrends['labels']),
+            progress: @json($performanceTrends['progress']),
+            absorption: @json($performanceTrends['absorption'])
+        };
+    </script>
 </x-app-layout>
