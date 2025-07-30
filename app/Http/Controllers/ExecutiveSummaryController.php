@@ -136,8 +136,7 @@ class ExecutiveSummaryController extends Controller
         $allBudgetItemIds = $projects->flatMap->budgetItems->pluck('id');
 
         for ($i = 5; $i >= 0; $i--) {
-            $date = Carbon::now()->subMonths($i)->endOfMonth();
-            $startDate = Carbon::now()->subMonths($i)->startOfMonth();
+            $date = Carbon::now()->subMonthsNoOverflow($i)->endOfMonth();
             $labels[] = $date->format('M Y');
             
             // --- Kalkulasi Progres ---

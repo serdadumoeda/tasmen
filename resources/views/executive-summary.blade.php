@@ -130,7 +130,6 @@
     </div>
 
     {{-- Script untuk Chart.js (tidak ada perubahan) --}}
-    @dd($performanceTrends)
     <x-slot name="scripts">
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script>
