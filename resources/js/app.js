@@ -284,12 +284,62 @@ const initResourcePoolPage = () => {
 
 
 // ======================================================================
+// FUNGSI UNTUK HALAMAN EXECUTIVE SUMMARY
+// ======================================================================
+const initExecutiveSummaryChart = () => {
+    const chartCanvas = document.getElementById('performanceTrendChart');
+    if (!chartCanvas) return;
+
+    console.log("✔️ Halaman Executive Summary diinisialisasi.");
+
+    // Ambil data dari window object, yang akan kita definisikan di Blade
+    const trendData = window.performanceTrends;
+
+    if (!trendData || !trendData.labels || !trendData.progress || !trendData.absorption) {
+        console.error("Data tren kinerja tidak ditemukan atau tidak lengkap.");
+        chartCanvas.parentElement.innerHTML = '<p class="text-center text-red-500">Gagal memuat data chart.</p>';
+        return;
+    }
+
+    console.log("Data untuk chart:", trendData);
+
+    new Chart(chartCanvas, {
+        type: 'line',
+        data: {
+            labels: trendData.labels,
+            datasets: [{
+                label: 'Progres Portofolio (%)',
+                data: trendData.progress,
+                borderColor: 'rgb(79, 70, 229)',
+                backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                fill: true,
+                tension: 0.3
+            }, {
+                label: 'Penyerapan Anggaran (%)',
+                data: trendData.absorption,
+                borderColor: 'rgb(22, 163, 74)',
+                backgroundColor: 'rgba(22, 163, 74, 0.1)',
+                fill: true,
+                tension: 0.3
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: { y: { beginAtZero: true, max: 100, ticks: { callback: (value) => value + '%' }}},
+            plugins: { legend: { position: 'top' }, tooltip: { mode: 'index', intersect: false }},
+            interaction: { mode: 'nearest', axis: 'x', intersect: false }
+        }
+    });
+};
+
+// ======================================================================
 // JALANKAN SEMUA FUNGSI INISIALISASI SETELAH HALAMAN DIMUAT
 // ======================================================================
 document.addEventListener('DOMContentLoaded', () => {
     initWorkloadInsight();
     initMemberSelectionModal();
     initResourcePoolPage();
+    initExecutiveSummaryChart();
     
     Alpine.start();
 });

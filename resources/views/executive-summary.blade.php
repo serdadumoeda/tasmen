@@ -133,42 +133,11 @@
     <x-slot name="scripts">
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script>
-            document.addEventListener('DOMContentLoaded', function () {
-                const ctx = document.getElementById('performanceTrendChart');
-                const trendData = {
-                    labels: @json($performanceTrends['labels']),
-                    progress: @json($performanceTrends['progress']),
-                    absorption: @json($performanceTrends['absorption'])
-                };
-
-                new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: trendData.labels,
-                        datasets: [{
-                            label: 'Progres Portofolio (%)',
-                            data: trendData.progress,
-                            borderColor: 'rgb(79, 70, 229)',
-                            backgroundColor: 'rgba(79, 70, 229, 0.1)',
-                            fill: true,
-                            tension: 0.3
-                        }, {
-                            label: 'Penyerapan Anggaran (%)',
-                            data: trendData.absorption,
-                            borderColor: 'rgb(22, 163, 74)',
-                            backgroundColor: 'rgba(22, 163, 74, 0.1)',
-                            fill: true,
-                            tension: 0.3
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        scales: { y: { beginAtZero: true, max: 100, ticks: { callback: (value) => value + '%' }}},
-                        plugins: { legend: { position: 'top' }, tooltip: { mode: 'index', intersect: false }},
-                        interaction: { mode: 'nearest', axis: 'x', intersect: false }
-                    }
-                });
-            });
+            window.performanceTrends = {
+                labels: @json($performanceTrends['labels']),
+                progress: @json($performanceTrends['progress']),
+                absorption: @json($performanceTrends['absorption'])
+            };
         </script>
     </x-slot>
 </x-app-layout>
