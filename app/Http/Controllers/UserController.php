@@ -192,7 +192,7 @@ class UserController extends Controller
         DB::transaction(function() use ($user) {
             $unit = $user->unit;
             $user->delete();
-            if($unit) {
+            if($unit && $unit->users()->count() === 0) {
                 // Pindahkan bawahan ke unit atasan sebelum menghapus
                 $newParentId = $unit->parent_unit_id;
                 Unit::where('parent_unit_id', $unit->id)->update(['parent_unit_id' => $newParentId]);
@@ -200,7 +200,7 @@ class UserController extends Controller
             }
         });
 
-        return redirect()->route('users.index')->with('success', 'User dan unit kerjanya berhasil dihapus.');
+        return redirect()->route('users.index')->with('success', 'User berhasil dihapus.');
     }
 
     public function getWorkloadSummary(User $user)
