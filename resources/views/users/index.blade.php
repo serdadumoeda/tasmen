@@ -48,6 +48,11 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $user->unit->name ?? '-' }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                             <a href="{{ route('users.edit', $user) }}" class="text-indigo-600 hover:text-indigo-900">Edit</a>
+                                            <form action="{{ route('users.destroy', $user) }}" method="POST" class="inline-block ml-2">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="text-red-600 hover:text-red-900" onclick="return confirm('Apakah Anda yakin ingin menghapus pengguna ini?')">Hapus</button>
+                                            </form>
                                         </td>
                                     </tr>
                                 @empty
