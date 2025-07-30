@@ -36,94 +36,9 @@
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-8">
                 <div><h2 class="text-2xl font-semibold text-gray-700 mb-4">Ringkasan Proyek</h2><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"><div class="bg-white p-4 rounded-lg shadow text-center"><p class="text-3xl font-bold text-blue-600">{{ $stats['total'] }}</p><p class="text-gray-500">Total Tugas</p></div><div class="bg-white p-4 rounded-lg shadow text-center"><p class="text-3xl font-bold text-yellow-500">{{ $stats['pending'] }}</p><p class="text-gray-500">Tugas Menunggu</p></div><div class="bg-white p-4 rounded-lg shadow text-center"><p class="text-3xl font-bold text-orange-500">{{ $stats['in_progress'] }}</p><p class="text-gray-500">Dikerjakan</p></div><div class="bg-white p-4 rounded-lg shadow text-center"><p class="text-3xl font-bold text-green-500">{{ $stats['completed'] }}</p><p class="text-gray-500">Selesai</p></div></div></div>
                 <div class="bg-white p-4 sm:p-6 rounded-lg shadow">
-                    <div class="border-b border-gray-200 mb-4"><nav class="-mb-px flex space-x-8" aria-label="Tabs"><button @click="activeTab = 'tasks'" :class="{ 'border-indigo-500 text-indigo-600': activeTab === 'tasks', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'tasks' }" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Daftar Tugas</button><button @click="activeTab = 'info'" :class="{ 'border-indigo-500 text-indigo-600': activeTab === 'info', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'info' }" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Informasi & Aktivitas</button>@can('update', $project)<button @click="activeTab = 'add'" :class="{ 'border-indigo-500 text-indigo-600': activeTab === 'add', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'add' }" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Tambah Tugas Baru</button>@endcan</nav></div>
+                    <div class="border-b border-gray-200 mb-4"><nav class="-mb-px flex space-x-8" aria-label="Tabs"><button @click="activeTab = 'tasks'" :class="{ 'border-indigo-500 text-indigo-600': activeTab === 'tasks', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'tasks' }" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Daftar Tugas</button></nav></div>
                     <div>
                         <div x-show="activeTab === 'tasks'" x-cloak><div class="space-y-4">@forelse($project->tasks()->orderBy('deadline', 'asc')->get() as $task)<x-task-card :task="$task"/>@empty<p class="text-gray-500 text-center py-8">Belum ada tugas di proyek ini.</p>@endforelse</div></div>
-                        <div x-show="activeTab === 'info'" x-cloak>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                <div class="space-y-6">
-                                    <div class="bg-gray-50 p-4 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-2 text-gray-800">Distribusi Status Tugas</h3>
-                                        <canvas id="taskStatusChart"></canvas>
-                                    </div>
-                                    <div class="bg-gray-50 p-4 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-2 text-gray-800">Tim Proyek</h3>
-                                        <ul><li class="flex items-center space-x-2"><span class="font-bold text-gray-700">Ketua Tim:</span><span>{{ optional($project->leader)->name ?? 'N/A' }}</span></li></ul>
-                                        <h4 class="font-semibold mt-4 text-gray-800">Anggota:</h4>
-                                        <ul class="list-disc list-inside mt-2 text-gray-700">
-                                            @foreach($project->members as $member)
-                                                <li>{{ $member->name }}</li>
-                                            @endforeach
-                                        </ul>
-                                    </div>
-                                    
-                                    {{-- --- AWAL PENAMBAHAN BAGIAN RIWAYAT PEMINJAMAN --- --}}
-                                    <div class="bg-gray-50 p-4 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-2 text-gray-800">Riwayat Permintaan Peminjaman</h3>
-                                        <div class="space-y-4">
-                                            @forelse($loanRequests as $request)
-                                                <div class="border-l-4 @if($request->status == 'approved') border-green-500 @elseif($request->status == 'rejected') border-red-500 @else border-yellow-500 @endif bg-white p-3 rounded-r-lg shadow-sm">
-                                                    <p class="text-sm font-medium text-gray-800">
-                                                        Permintaan untuk <strong>{{ $request->requestedUser?->name ?? 'N/A' }}</strong>
-                                                    </p>
-                                                    <p class="text-xs text-gray-500">
-                                                        Oleh: {{ $request->requester?->name ?? 'N/A' }}
-                                                        <span class="mx-1">|</span>
-                                                        {{ $request->created_at->diffForHumans() }}
-                                                    </p>
-                                                    <div class="mt-2">
-                                                        @if ($request->status == 'approved')
-                                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Disetujui oleh {{ $request->approver?->name ?? 'N/A' }}</span>
-                                                        @elseif ($request->status == 'pending')
-                                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">Menunggu persetujuan {{ $request->approver?->name ?? 'N/A' }}</span>
-                                                        @elseif ($request->status == 'rejected')
-                                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Ditolak oleh {{ $request->approver?->name ?? 'N/A' }}</span>
-                                                            @if($request->rejection_reason)
-                                                                <p class="text-xs text-gray-600 mt-1 italic">"{{ $request->rejection_reason }}"</p>
-                                                            @endif
-                                                        @endif
-                                                    </div>
-                                                </div>
-                                            @empty
-                                                <p class="text-sm text-gray-500">Tidak ada riwayat permintaan peminjaman untuk proyek ini.</p>
-                                            @endforelse
-                                        </div>
-                                    </div>
-                                    {{-- --- AKHIR PENAMBAHAN BAGIAN RIWAYAT PEMINJAMAN --- --}}
-
-                                </div>
-                                <div class="space-y-6">
-                                    <div class="bg-gray-50 p-4 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-2 text-gray-800">Detail Proyek</h3>
-                                        <p class="text-gray-700">{{ $project->description }}</p>
-                                        <div class="text-sm mt-4 grid grid-cols-2 gap-2 text-gray-600">
-                                            <p>Dibuat Oleh:</p><p class="font-semibold text-gray-800">{{ $project->owner->name ?? 'N/A' }}</p>
-                                            <p>Tanggal Mulai:</p><p class="font-semibold text-gray-800">{{ $project->start_date ? \Carbon\Carbon::parse($project->start_date)->format('d M Y') : '-' }}</p>
-                                            <p>Tanggal Selesai:</p><p class="font-semibold text-gray-800">{{ $project->end_date ? \Carbon\Carbon::parse($project->end_date)->format('d M Y') : '-' }}</p>
-                                        </div>
-                                    </div>
-                                    <div class="bg-gray-50 p-4 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-2 text-gray-800">Aktivitas Terbaru</h3>
-                                        <ul class="space-y-3">
-                                            @foreach($project->activities->take(5) as $activity)
-                                            <li class="text-sm text-gray-600 border-b pb-2">
-                                                <span class="font-semibold text-gray-800">{{ optional($activity->user)->name ?? 'User Telah Dihapus' }}</span> 
-                                                @switch($activity->description)
-                                                    @case('created_project')membuat proyek ini @break
-                                                    @case('updated_project')memperbarui proyek ini @break
-                                                    @case('created_task')membuat tugas "{{ optional($activity->subject)->title ?? '...' }}" @break
-                                                    @case('updated_task')memperbarui tugas "{{ optional($activity->subject)->title ?? '...' }}" @break
-                                                    @case('deleted_task')menghapus sebuah tugas @break
-                                                    @default melakukan sebuah aktivitas @endswitch
-                                                <span class="block text-xs text-gray-400">{{ $activity->created_at->diffForHumans() }}</span>
-                                            </li>
-                                            @endforeach
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div x-show="activeTab === 'add'" x-cloak><form action="{{ route('tasks.store', $project) }}" method="POST"><div class="space-y-4">@csrf<div><label for="add_title" class="block text-sm font-medium text-gray-700">Judul Tugas</label><input type="text" name="title" id="add_title" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" value="{{ old('title') }}" required></div><div class="grid grid-cols-1 md:grid-cols-3 gap-4"><div><label for="add_deadline" class="block text-sm font-medium text-gray-700">Deadline</label><input type="date" name="deadline" id="add_deadline" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" value="{{ old('deadline') }}"></div><div><label for="add_estimated_hours" class="block text-sm font-medium text-gray-700">Estimasi Jam</label><input type="number" step="0.5" name="estimated_hours" id="add_estimated_hours" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" value="{{ old('estimated_hours') }}"></div><div><label for="add_priority" class="block text-sm font-medium text-gray-700">Prioritas</label><select name="priority" id="add_priority" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"><option value="low">Rendah</option><option value="medium" selected>Sedang</option><option value="high">Tinggi</option></select></div></div><div><label for="add_assignees" class="block text-sm font-medium text-gray-700">Tugaskan Kepada</label><select name="assignees[]" id="add_assignees" multiple>@foreach($projectMembers as $member)<option value="{{ $member->id }}">{{ $member->name }}</option>@endforeach</select></div></div><button type="submit" class="mt-6 inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700">Simpan Tugas</button></form></div>
                     </div>
                 </div>
             </div>
