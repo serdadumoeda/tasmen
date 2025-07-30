@@ -38,6 +38,9 @@ class AttachmentController extends Controller
 
         // Jika karena suatu hal tugasnya tidak ada, izinkan penghapusan untuk membersihkan data.
         if (!$task) {
+            if (Storage::disk('public')->exists($attachment->path)) {
+                Storage::disk('public')->delete($attachment->path);
+            }
             $attachment->delete();
             return back()->with('success', 'Lampiran berhasil dihapus.');
         }
@@ -46,7 +49,9 @@ class AttachmentController extends Controller
         Gate::authorize('update', $task);
 
         // Hapus file dari storage
-        Storage::disk('public')->delete($attachment->path);
+        if (Storage::disk('public')->exists($attachment->path)) {
+            Storage::disk('public')->delete($attachment->path);
+        }
         
         // Hapus record dari database
         $attachment->delete();

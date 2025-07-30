@@ -25,11 +25,7 @@ class CommentController extends Controller
                 ->unique('id') // Pastikan tidak ada duplikat
                 ->where('id', '!=', auth()->id()); // Jangan kirim notif ke diri sendiri
 
-        foreach ($recipients as $recipient) {
-            if ($recipient) { // Pastikan recipient tidak null
-                $recipient->notify(new NewCommentOnTask($comment));
-            }
-        }
+        Notification::send($recipients, new NewCommentOnTask($comment));
         
         return back()->with('success', 'Komentar berhasil ditambahkan.');
     }
