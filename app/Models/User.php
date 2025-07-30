@@ -60,6 +60,11 @@ class User extends Authenticatable
         return $this->belongsTo(Unit::class);
     }
 
+    public function children()
+    {
+        return $this->hasMany(User::class, 'parent_id');
+    }
+
     public function tasks(): BelongsToMany
     {
         return $this->belongsToMany(Task::class);
