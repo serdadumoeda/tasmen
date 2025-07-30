@@ -66,6 +66,9 @@ class UnitController extends Controller
      */
     public function destroy(Unit $unit)
     {
+        if ($unit->users()->count() > 0) {
+            return redirect()->route('admin.units.index')->with('error', 'Unit cannot be deleted because it has users associated with it.');
+        }
         $unit->delete();
         return redirect()->route('admin.units.index')->with('success', 'Unit deleted successfully.');
     }
