@@ -11,20 +11,20 @@
                     <a href="{{ route('users.edit', $user) }}" class="text-indigo-600 hover:text-indigo-900">{{ $user->name }}</a>
                 </div>
                 <div class="text-sm text-gray-500">
+                    {{ $user->unit->name ?? '' }}
+                </div>
+                <div class="text-sm text-gray-500">
                     {{ $user->email }}
                 </div>
             </div>
         </div>
-        <div class="mt-4">
-            <div class="text-sm text-gray-500">
-                <span class="font-semibold">Peran:</span> {{ $user->role }}
-            </div>
-            <div class="text-sm text-gray-500">
-                <span class="font-semibold">Unit:</span> {{ $user->unit->name ?? '-' }}
-            </div>
-        </div>
         <div class="mt-4 flex justify-end">
             <a href="{{ route('users.edit', $user) }}" class="text-sm text-indigo-600 hover:text-indigo-900">Edit</a>
+            <form action="{{ route('users.destroy', $user) }}" method="POST" class="inline-block ml-2">
+                @csrf
+                @method('DELETE')
+                <button type="submit" class="text-red-600 hover:text-red-900" onclick="return confirm('Apakah Anda yakin ingin menghapus pengguna ini?')">Hapus</button>
+            </form>
         </div>
     </div>
 </div>
