@@ -17,80 +17,76 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        // Mengosongkan tabel user dengan aman
         Schema::disableForeignKeyConstraints();
         User::truncate();
         Schema::enableForeignKeyConstraints();
 
-        // Ambil unit yang sudah ada dari UnitSeeder
         $eselon1 = Unit::where('name', 'Kementerian Digital')->first();
         $eselon2_keuangan = Unit::where('name', 'Divisi Keuangan')->first();
         $koordinator_anggaran = Unit::where('name', 'Koordinator Anggaran')->first();
         $sub_koordinator_belanja = Unit::where('name', 'Sub Koordinator Belanja')->first();
 
-        // 1. SUPER ADMIN (Non-hierarki)
         User::create([
             'name' => 'Super Admin',
             'email' => 'superadmin@example.com',
             'password' => Hash::make('password'),
-            'role' => User::ROLE_SUPERADMIN,
-            'unit_id' => null, // Superadmin tidak terikat unit spesifik
-            'status' => User::STATUS_ACTIVE,
+            'role' => 'superadmin',
+            'unit_id' => null,
+            'status' => 'active',
         ]);
 
-        // 2. PENGGUNA DENGAN PERAN DAN UNIT
         User::create([
             'name' => 'Kepala Kementerian',
             'email' => 'ka.kementerian@example.com',
             'password' => Hash::make('password'),
-            'role' => User::ROLE_ESELON_I,
+            'role' => 'eselon_1',
             'unit_id' => $eselon1->id,
-            'status' => User::STATUS_ACTIVE,
+            'status' => 'active',
         ]);
 
         User::create([
             'name' => 'Kepala Divisi Keuangan',
             'email' => 'ka.keuangan@example.com',
             'password' => Hash::make('password'),
-            'role' => User::ROLE_ESELON_II,
+            'role' => 'eselon_2',
             'unit_id' => $eselon2_keuangan->id,
-            'status' => User::STATUS_ACTIVE,
+            'status' => 'active',
         ]);
 
         User::create([
             'name' => 'Koordinator Anggaran',
             'email' => 'koor.anggaran@example.com',
             'password' => Hash::make('password'),
-            'role' => User::ROLE_KOORDINATOR,
+            'role' => 'koordinator',
             'unit_id' => $koordinator_anggaran->id,
-            'status' => User::STATUS_ACTIVE,
+            'status' => 'active',
         ]);
 
         User::create([
             'name' => 'Sub Koordinator Belanja',
             'email' => 'subkoor.belanja@example.com',
             'password' => Hash::make('password'),
-            'role' => User::ROLE_SUB_KOORDINATOR,
+            'role' => 'sub_koordinator',
             'unit_id' => $sub_koordinator_belanja->id,
-            'status' => User::STATUS_ACTIVE,
+            'status' => 'active',
         ]);
 
         User::create([
             'name' => 'Staf Belanja 1',
             'email' => 'staf.belanja1@example.com',
             'password' => Hash::make('password'),
-            'role' => User::ROLE_STAF,
+            'role' => 'staf',
             'unit_id' => $sub_koordinator_belanja->id,
-            'status' => User::STATUS_ACTIVE,
+            'status' => 'active',
         ]);
 
         User::create([
             'name' => 'Staf Belanja 2',
             'email' => 'staf.belanja2@example.com',
             'password' => Hash::make('password'),
-            'role' => User::ROLE_STAF,
+            'role' => 'staf',
             'unit_id' => $sub_koordinator_belanja->id,
-            'status' => User::STATUS_ACTIVE,
+            'status' => 'active',
         ]);
     }
 }
