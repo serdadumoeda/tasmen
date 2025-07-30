@@ -70,6 +70,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/global-dashboard', [GlobalDashboardController::class, 'index'])->name('global.dashboard');
 
+    Route::get('users/hierarchy', [UserController::class, 'hierarchy'])->name('users.hierarchy');
     Route::resource('users', UserController::class);
     Route::get('/api/users/search', [App\Http\Controllers\UserController::class, 'search'])->name('api.users.search');
 
