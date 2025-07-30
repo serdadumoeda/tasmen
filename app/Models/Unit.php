@@ -34,6 +34,11 @@ class Unit extends Model
         return $this->hasMany(Unit::class, 'parent_unit_id');
     }
 
+    public function users()
+    {
+        return $this->hasMany(User::class);
+    }
+
     public function children()
     {
         return $this->hasMany(Unit::class, 'parent_unit_id');
