@@ -16,6 +16,7 @@ class Unit extends Model
     public const LEVEL_ESELON_II = 'Eselon II';
     public const LEVEL_KOORDINATOR = 'Koordinator';
     public const LEVEL_SUB_KOORDINATOR = 'Sub Koordinator';
+    public const LEVEL_STAF = 'Staf';
 
     protected $fillable = [
         'name',

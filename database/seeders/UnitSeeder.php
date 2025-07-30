@@ -22,7 +22,7 @@ class UnitSeeder extends Seeder
         // 1. Eselon I
         Unit::create([
             'name' => 'Kementerian Digital',
-            'level' => 'eselon_1',
+            'level' => Unit::LEVEL_ESELON_I,
             'parent_unit_id' => null,
         ]);
 
@@ -30,12 +30,12 @@ class UnitSeeder extends Seeder
         $eselon1 = Unit::where('name', 'Kementerian Digital')->first();
         Unit::create([
             'name' => 'Divisi Keuangan',
-            'level' => 'eselon_2',
+            'level' => Unit::LEVEL_ESELON_II,
             'parent_unit_id' => $eselon1->id,
         ]);
         Unit::create([
             'name' => 'Divisi SDM',
-            'level' => 'eselon_2',
+            'level' => Unit::LEVEL_ESELON_II,
             'parent_unit_id' => $eselon1->id,
         ]);
 
@@ -43,14 +43,14 @@ class UnitSeeder extends Seeder
         $eselon2_keuangan = Unit::where('name', 'Divisi Keuangan')->first();
         Unit::create([
             'name' => 'Koordinator Anggaran',
-            'level' => 'koordinator',
+            'level' => Unit::LEVEL_KOORDINATOR,
             'parent_unit_id' => $eselon2_keuangan->id,
         ]);
 
         $eselon2_sdm = Unit::where('name', 'Divisi SDM')->first();
         Unit::create([
             'name' => 'Koordinator Rekrutmen',
-            'level' => 'koordinator',
+            'level' => Unit::LEVEL_KOORDINATOR,
             'parent_unit_id' => $eselon2_sdm->id,
         ]);
 
@@ -58,12 +58,12 @@ class UnitSeeder extends Seeder
         $koordinator_anggaran = Unit::where('name', 'Koordinator Anggaran')->first();
         Unit::create([
             'name' => 'Sub Koordinator Belanja',
-            'level' => 'sub_koordinator',
+            'level' => Unit::LEVEL_SUB_KOORDINATOR,
             'parent_unit_id' => $koordinator_anggaran->id,
         ]);
         Unit::create([
             'name' => 'Sub Koordinator Pendapatan',
-            'level' => 'sub_koordinator',
+            'level' => Unit::LEVEL_SUB_KOORDINATOR,
             'parent_unit_id' => $koordinator_anggaran->id,
         ]);
     }
