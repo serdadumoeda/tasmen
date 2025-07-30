@@ -34,6 +34,11 @@ class Unit extends Model
         return $this->hasMany(Unit::class, 'parent_unit_id');
     }
 
+    public function children()
+    {
+        return $this->hasMany(Unit::class, 'parent_unit_id');
+    }
+
     public function getAllSubordinateUnitIds(): array
     {
         return Cache::remember('subordinate_unit_ids_for_unit_'.$this->id, 3600, function () {
