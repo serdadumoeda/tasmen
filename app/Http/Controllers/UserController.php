@@ -22,22 +22,18 @@ class UserController extends Controller
         User::ROLE_STAF => [User::ROLE_KOORDINATOR, User::ROLE_SUB_KOORDINATOR],
     ];
 
-    public function index()
+    public function index(Request $request)
     {
         $this->authorize('viewAny', User::class);
-        $currentUser = auth()->user();
 
-        $usersQuery = User::with('unit');
+        $query = User::with('unit')->orderBy('name');
 
-        if ($currentUser->role !== User::ROLE_SUPERADMIN) {
-            $subordinateIds = $currentUser->getAllSubordinateIds();
-            $subordinateIds[] = $currentUser->id;
-            $usersQuery->whereIn('id', $subordinateIds);
+        if ($request->has('search')) {
+            $query->where('name', 'like', '%' . $request->search . '%')
+                  ->orWhere('email', 'like', '%' . $request->search . '%');
         }
 
-        $users = $usersQuery->get()->sortBy(function($user) {
-            return $user->unit ? $user->unit->getLevelNumber() : 99;
-        });
+        $users = $query->paginate(15)->withQueryString();
 
         return view('users.index', compact('users'));
     }
