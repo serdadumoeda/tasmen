@@ -101,18 +101,20 @@ class UserController extends Controller
         DB::transaction(function () use ($validated, $role, $parentUser) {
             $parentUnitId = ($parentUser && $parentUser->unit_id) ? $parentUser->unit_id : null;
 
-            $newUnit = Unit::create([
-                'name' => $validated['unit_name'],
-                'level' => $role,
-                'parent_unit_id' => $parentUnitId,
-            ]);
+            $unit = Unit::firstOrCreate(
+                ['name' => $validated['unit_name']],
+                [
+                    'level' => $role,
+                    'parent_unit_id' => $parentUnitId,
+                ]
+            );
 
             User::create([
                 'name' => $validated['name'],
                 'email' => $validated['email'],
                 'password' => Hash::make($validated['password']),
                 'role' => $role,
-                'unit_id' => $newUnit->id,
+                'unit_id' => $unit->id,
                 'status' => $validated['status'],
             ]);
         });
