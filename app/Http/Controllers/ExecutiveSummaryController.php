@@ -133,11 +133,14 @@ class ExecutiveSummaryController extends Controller
         $absorptionData = [];
 
         $projectIds = $projects->pluck('id');
+        $allBudgetItemIds = $projects->flatMap->budgetItems->pluck('id');
 
         for ($i = 5; $i >= 0; $i--) {
             $date = Carbon::now()->subMonths($i)->endOfMonth();
+            $startDate = Carbon::now()->subMonths($i)->startOfMonth();
             $labels[] = $date->format('M Y');
             
+            // --- Kalkulasi Progres ---
             $totalTasks = Task::whereIn('project_id', $projectIds)
                               ->where('created_at', '<=', $date)
                               ->count();
@@ -149,11 +152,13 @@ class ExecutiveSummaryController extends Controller
 
             $progressData[] = $totalTasks > 0 ? round(($completedTasks / $totalTasks) * 100) : 0;
 
-            $allBudgetItemIds = $projects->flatMap->budgetItems->pluck('id');
-            $totalBudgetInMonth = \App\Models\BudgetItem::whereIn('id', $allBudgetItemIds)->sum('total_cost');
+            // --- Kalkulasi Penyerapan Anggaran ---
+            $totalBudgetInMonth = \App\Models\BudgetItem::whereIn('id', $allBudgetItemIds)
+                                                        ->where('created_at', '<=', $date) // Anggaran yang sudah dibuat s/d bulan tsb
+                                                        ->sum('total_cost');
 
             $realizationInMonth = BudgetRealization::whereIn('budget_item_id', $allBudgetItemIds)
-                ->where('created_at', '<=', $date)
+                ->where('created_at', '<=', $date) // Realisasi yang terjadi s/d bulan tsb
                 ->sum('amount');
             
             $absorptionData[] = $totalBudgetInMonth > 0 ? round(($realizationInMonth / $totalBudgetInMonth) * 100) : 0;
