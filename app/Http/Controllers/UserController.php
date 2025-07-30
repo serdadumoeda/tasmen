@@ -16,10 +16,10 @@ class UserController extends Controller
     use AuthorizesRequests;
 
     private $VALID_PARENT_ROLES = [
-        User::ROLE_ESELON_II => [User::ROLE_ESELON_I],
-        User::ROLE_KOORDINATOR => [User::ROLE_ESELON_II],
-        User::ROLE_SUB_KOORDINATOR => [User::ROLE_KOORDINATOR],
-        User::ROLE_STAF => [User::ROLE_KOORDINATOR, User::ROLE_SUB_KOORDINATOR],
+        'eselon_2' => ['eselon_1'],
+        'koordinator' => ['eselon_2'],
+        'sub_koordinator' => ['koordinator'],
+        'staf' => ['koordinator', 'sub_koordinator'],
     ];
 
     public function index(Request $request)
@@ -92,9 +92,9 @@ class UserController extends Controller
             if (!$parentUser->unit) {
                 return back()->with('error', "Atasan yang dipilih tidak memiliki unit kerja yang valid.")->withInput();
             }
-            if (isset($this->VALID_PARENT_ROLES[$role]) && !in_array($parentUser->unit->level, $this->VALID_PARENT_ROLES[$role])) {
+            if (isset($this->VALID_PARENT_ROLES[$role]) && !in_array($parentUser->role, $this->VALID_PARENT_ROLES[$role])) {
                 $validRoles = implode(', ', $this->VALID_PARENT_ROLES[$role]);
-                return back()->with('error', "Atasan untuk role '{$role}' harus memiliki unit dengan level: {$validRoles}.")->withInput();
+                return back()->with('error', "Atasan untuk role '{$role}' harus memiliki role: {$validRoles}.")->withInput();
             }
         }
 
@@ -153,9 +153,9 @@ class UserController extends Controller
                 if (!$parentUser->unit) {
                     throw \Illuminate\Validation\ValidationException::withMessages(['parent_user_id' => "Atasan yang dipilih tidak memiliki unit kerja yang valid."]);
                 }
-                if (isset($this->VALID_PARENT_ROLES[$role]) && !in_array($parentUser->unit->level, $this->VALID_PARENT_ROLES[$role])) {
+                if (isset($this->VALID_PARENT_ROLES[$role]) && !in_array($parentUser->role, $this->VALID_PARENT_ROLES[$role])) {
                     $validRoles = implode(', ', $this->VALID_PARENT_ROLES[$role]);
-                    throw \Illuminate\Validation\ValidationException::withMessages(['parent_user_id' => "Atasan untuk role '{$role}' harus memiliki unit dengan level: {$validRoles}."]);
+                    throw \Illuminate\Validation\ValidationException::withMessages(['parent_user_id' => "Atasan untuk role '{$role}' harus memiliki role: {$validRoles}."]);
                 }
             }
 
