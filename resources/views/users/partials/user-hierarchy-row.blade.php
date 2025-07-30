@@ -8,10 +8,12 @@
             <a href="{{ route('users.edit', $user) }}" class="text-indigo-600 hover:text-indigo-900">Edit</a>
         </div>
     </div>
-    @if($user->children->count() > 0)
+    @if($user->unit && $user->unit->children->count() > 0)
         <div class="mt-2 space-y-2">
-            @foreach($user->children as $child)
-                @include('users.partials.user-hierarchy-row', ['user' => $child, 'level' => $level + 1])
+            @foreach($user->unit->children as $childUnit)
+                @foreach($childUnit->users as $childUser)
+                    @include('users.partials.user-hierarchy-row', ['user' => $childUser, 'level' => $level + 1])
+                @endforeach
             @endforeach
         </div>
     @endif

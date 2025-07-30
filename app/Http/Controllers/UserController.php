@@ -43,7 +43,7 @@ class UserController extends Controller
         $this->authorize('viewAny', User::class);
         $users = User::whereHas('unit', function ($query) {
             $query->whereNull('parent_unit_id');
-        })->with('children')->get();
+        })->with('unit.children.users')->get();
         return view('users.hierarchy', compact('users'));
     }
 
