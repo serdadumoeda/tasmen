@@ -190,13 +190,14 @@ class UserController extends Controller
         $this->authorize('delete', $user);
         
         DB::transaction(function() use ($user) {
-            if($user->unit) {
-                // Pindahkan bawahan ke unit atasan sebelum menghapus
-                $newParentId = $user->unit->parent_unit_id;
-                Unit::where('parent_unit_id', $user->unit_id)->update(['parent_unit_id' => $newParentId]);
-                $user->unit()->delete();
-            }
+            $unit = $user->unit;
             $user->delete();
+            if($unit) {
+                // Pindahkan bawahan ke unit atasan sebelum menghapus
+                $newParentId = $unit->parent_unit_id;
+                Unit::where('parent_unit_id', $unit->id)->update(['parent_unit_id' => $newParentId]);
+                $unit->delete();
+            }
         });
 
         return redirect()->route('users.index')->with('success', 'User dan unit kerjanya berhasil dihapus.');
