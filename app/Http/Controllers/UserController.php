@@ -47,6 +47,22 @@ class UserController extends Controller
         return view('users.hierarchy', compact('users'));
     }
 
+    public function modern(Request $request)
+    {
+        $this->authorize('viewAny', User::class);
+
+        $query = User::with('unit')->orderBy('name');
+
+        if ($request->has('search')) {
+            $query->where('name', 'like', '%' . $request->search . '%')
+                  ->orWhere('email', 'like', '%' . $request->search . '%');
+        }
+
+        $users = $query->paginate(15)->withQueryString();
+
+        return view('users.modern', compact('users'));
+    }
+
     public function create()
     {
         $this->authorize('create', User::class);
