@@ -35,7 +35,7 @@
                                     Tambah Anggota
                                 </button>
                             </div>
-                            <select name="members[]" id="members" class="block mt-1 w-full rounded-md shadow-sm border-gray-300" multiple required>
+                            <select name="members[]" id="members" class="block mt-1 w-full rounded-md shadow-sm border-gray-300 tom-select" multiple required>
                                 @php
                                     $projectMemberIds = collect(old('members', isset($project) ? $project->members->pluck('id')->all() : []));
                                 @endphp
@@ -62,4 +62,17 @@
     
     {{-- Memuat modal dari file partial --}}
     @include('projects.partials.modal-members')
+
+    @push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            new TomSelect('.tom-select',{
+                plugins: ['remove_button'],
+                create: false,
+                maxItems: null,
+                placeholder: 'Pilih Anggota Tim'
+            });
+        });
+    </script>
+    @endpush
 </x-app-layout>

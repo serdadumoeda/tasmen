@@ -31,5 +31,16 @@
     </div>
 
 
-
+    @push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            new TomSelect('.tom-select',{
+                plugins: ['remove_button'],
+                create: false,
+                maxItems: null,
+                placeholder: 'Pilih Anggota Tim'
+            });
+        });
+    </script>
+    @endpush
 </x-app-layout>
