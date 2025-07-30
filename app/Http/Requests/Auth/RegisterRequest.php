@@ -27,7 +27,6 @@ class RegisterRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'unit_eselon_1' => ['required', 'exists:units,id'],
             'unit_id' => ['required', 'exists:units,id'],
         ];
     }

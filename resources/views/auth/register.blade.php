@@ -118,6 +118,11 @@
       cursor: pointer;
     }
 
+    .register-button:disabled {
+        background-color: #aaa;
+        cursor: not-allowed;
+    }
+
     .bottom-links {
       text-align: center;
       font-size: 14px;
@@ -215,13 +220,19 @@
         </div>
 
         <div class="input-group">
-            <select name="unit_id" id="unit_eselon_2" required>
+            <select id="unit_eselon_2" required>
                 <option value="">Pilih Unit Eselon II*</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <select name="unit_id" id="unit_koordinator" required>
+                <option value="">Pilih Unit Koordinator*</option>
             </select>
             <x-input-error :messages="$errors->get('unit_id')" class="mt-2" />
         </div>
         
-        <button type="submit" class="register-button">DAFTAR</button>
+        <button type="submit" id="register_button" class="register-button" disabled>DAFTAR</button>
         
         <div class="bottom-links">
           <a href="{{ route('login') }}">Sudah Punya Akun? Login</a>
@@ -234,34 +245,47 @@
 document.addEventListener('DOMContentLoaded', function () {
     const eselon1Select = document.getElementById('unit_eselon_1');
     const eselon2Select = document.getElementById('unit_eselon_2');
+    const koordinatorSelect = document.getElementById('unit_koordinator');
+    const registerButton = document.getElementById('register_button');
 
-    function fetchEselon2Units(eselon1Id, eselon2OldValue = null) {
-        if (!eselon1Id) {
-            eselon2Select.innerHTML = '<option value="">Pilih Unit Eselon II*</option>';
+    function fetchUnits(parentId, childSelect, placeholder) {
+        if (!parentId) {
+            childSelect.innerHTML = `<option value="">${placeholder}</option>`;
+            childSelect.dispatchEvent(new Event('change'));
             return;
         }
 
-        fetch(`/api/units/${eselon1Id}/children`)
+        fetch(`/api/units/${parentId}/children`)
             .then(response => response.json())
             .then(data => {
-                let options = '<option value="">Pilih Unit Eselon II*</option>';
+                let options = `<option value="">${placeholder}</option>`;
                 data.forEach(unit => {
-                    const isSelected = unit.id == eselon2OldValue ? 'selected' : '';
-                    options += `<option value="${unit.id}" ${isSelected}>${unit.name}</option>`;
+                    options += `<option value="${unit.id}">${unit.name}</option>`;
                 });
-                eselon2Select.innerHTML = options;
+                childSelect.innerHTML = options;
             });
     }
 
     eselon1Select.addEventListener('change', function () {
-        fetchEselon2Units(this.value);
+        fetchUnits(this.value, eselon2Select, 'Pilih Unit Eselon II*');
+    });
+
+    eselon2Select.addEventListener('change', function () {
+        fetchUnits(this.value, koordinatorSelect, 'Pilih Unit Koordinator*');
+    });
+
+    koordinatorSelect.addEventListener('change', function () {
+        if(this.value) {
+            registerButton.disabled = false;
+        } else {
+            registerButton.disabled = true;
+        }
     });
 
     // On page load, if there's an old value for eselon 1, fetch eselon 2
     const eselon1OldValue = '{{ old('unit_eselon_1') }}';
-    const eselon2OldValue = '{{ old('unit_id') }}';
     if (eselon1OldValue) {
-        fetchEselon2Units(eselon1OldValue, eselon2OldValue);
+        fetchUnits(eselon1OldValue, eselon2Select, 'Pilih Unit Eselon II*');
     }
 });
 </script>

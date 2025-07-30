@@ -21,7 +21,7 @@ class RegisteredUserController extends Controller
      */
     public function create(): View
     {
-        $eselon1Units = Unit::where('level', Unit::LEVEL_ESELON_I)->get();
+        $eselon1Units = Unit::where('level', 'eselon_1')->get();
         return view('auth.register', ['eselon1Units' => $eselon1Units]);
     }
 
@@ -32,20 +32,13 @@ class RegisteredUserController extends Controller
      */
     public function store(RegisterRequest $request): RedirectResponse
     {
-        $unit = Unit::find($request->unit_id);
-
-        // Memastikan unit yang dipilih bukan Eselon I (yang parent_id nya null)
-        if ($unit && is_null($unit->parent_id)) {
-            return back()->withErrors(['unit_id' => 'Pemilihan unit kerja tidak boleh hanya sampai Eselon I.'])->withInput();
-        }
-
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'unit_id' => $request->unit_id,
-            'role' => User::ROLE_STAF,
-            'status' => User::STATUS_ACTIVE,
+            'role' => 'staf',
+            'status' => 'active',
         ]);
 
         event(new Registered($user));
