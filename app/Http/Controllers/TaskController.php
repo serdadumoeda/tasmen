@@ -32,13 +32,11 @@ class TaskController extends Controller
         $task = $project->tasks()->create($request->except('assignees'));
         
         // Simpan relasi many-to-many
-        $task->assignees()->sync($request->assignees);
+        $task->assignees()->sync($validated['assignees']);
 
         // Kirim notifikasi ke semua user yang ditugaskan
-        $usersToNotify = User::find($request->assignees);
-        foreach ($usersToNotify as $user) {
-            $user->notify(new TaskAssigned($task));
-        }
+        $usersToNotify = User::find($validated['assignees']);
+        Notification::send($usersToNotify, new TaskAssigned($task));
 
         return redirect()->route('projects.show', $project)->with('success', 'Tugas baru berhasil ditambahkan!');
     }

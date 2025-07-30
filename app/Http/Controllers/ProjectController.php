@@ -100,11 +100,7 @@ class ProjectController extends Controller
 
         $project->update(['leader_id' => $validated['leader_id']]);
 
-        $memberIds = collect($request->members);
-        if (!$memberIds->contains($request->leader_id)) {
-            $memberIds->push($request->leader_id);
-        }
-        $project->members()->sync($memberIds->unique());
+        $this->syncMembers($project, $validated['leader_id'], $validated['members']);
 
         return redirect()->route('projects.show', $project)->with('success', 'Tim proyek berhasil dibentuk!');
     }
@@ -206,14 +202,19 @@ class ProjectController extends Controller
         ]);
 
         $project->update($validated);
-        
-        $memberIds = collect($request->members);
-        if (!$memberIds->contains($request->leader_id)) {
-            $memberIds->push($request->leader_id);
-        }
-        $project->members()->sync($memberIds->unique());
+
+        $this->syncMembers($project, $validated['leader_id'], $validated['members']);
         
         return redirect()->route('projects.show', $project)->with('success', 'Proyek berhasil diperbarui.');
+    }
+
+    private function syncMembers(Project $project, int $leaderId, array $memberIds): void
+    {
+        $memberIds = collect($memberIds);
+        if (!$memberIds->contains($leaderId)) {
+            $memberIds->push($leaderId);
+        }
+        $project->members()->sync($memberIds->unique());
     }
 
     // ... (Sisa method tidak perlu diubah) ...
@@ -231,6 +232,11 @@ class ProjectController extends Controller
         if (!$project->start_date || !$project->end_date) {
             return back()->with('error', 'Proyek ini belum memiliki tanggal mulai dan selesai untuk membuat Kurva S.');
         }
+
+        if ($project->tasks()->count() === 0) {
+            return back()->with('error', 'Proyek ini belum memiliki tugas untuk membuat Kurva S.');
+        }
+
         $startDate = \Carbon\Carbon::parse($project->start_date);
         $endDate = \Carbon\Carbon::parse($project->end_date);
         $period = \Carbon\CarbonPeriod::create($startDate, $endDate);
