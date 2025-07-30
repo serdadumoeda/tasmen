@@ -16,7 +16,7 @@ class DatabaseSeeder extends Seeder
         // User::factory(10)->create();
         $this->call([
             UnitSeeder::class,
-            // UserSeeder::class, // UserSeeder is now consolidated into UnitSeeder
+            UserSeeder::class,
             ProjectSeeder::class,
             TaskSeeder::class,
         ]);
