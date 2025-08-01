@@ -14,31 +14,17 @@
                         <i class="fas fa-arrow-left mr-2"></i> Kembali ke Detail Proyek
                     </a>
                     
-                    <div class="bg-gray-50 p-5 rounded-lg border border-gray-200 shadow-sm mb-6 space-y-3">
-                        <div class="flex items-center justify-between flex-wrap gap-3">
-                            <p class="text-base text-gray-700 flex items-center">
-                                <i class="fas fa-info-circle mr-3 text-blue-500 fa-lg"></i>
-                                Grafik ini membandingkan akumulasi jam kerja yang direncanakan (biru) dengan jam kerja aktual yang tercatat (hijau).
-                            </p>
-                            <p class="text-lg font-bold text-gray-800 flex items-center flex-shrink-0">
-                                <i class="fas fa-hourglass-half mr-2 text-indigo-600"></i> Total Jam Direncanakan: <span class="text-indigo-700 ml-2">{{ $chartData['total_hours'] }} jam</span>
-                            </p>
-                        </div>
-                        @if(!$chartData['has_planned_data'])
-                        <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4" role="alert">
-                            <p class="font-bold">Kurva Rencana Kosong</p>
-                            <p>Tidak ada tugas dengan "Estimasi Jam" yang ditemukan di proyek ini. Kurva rencana tidak dapat dibuat.</p>
-                        </div>
-                        @endif
-                        @if(!$chartData['has_actual_data'])
-                        <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4" role="alert">
-                            <p class="font-bold">Kurva Aktual Kosong</p>
-                            <p>Tidak ada "Time Log" (catatan waktu kerja) yang ditemukan di proyek ini. Kurva aktual tidak dapat dibuat.</p>
-                        </div>
-                        @endif
+                    <div class="bg-gray-50 p-5 rounded-lg border border-gray-200 shadow-sm mb-6 flex items-center justify-between flex-wrap gap-3"> {{-- Info total jam lebih menonjol --}}
+                        <p class="text-base text-gray-700 flex items-center">
+                            <i class="fas fa-info-circle mr-3 text-blue-500 fa-lg"></i>
+                            Grafik ini membandingkan akumulasi jam kerja yang direncanakan (biru) dengan jam kerja aktual yang tercatat (hijau).
+                        </p>
+                        <p class="text-lg font-bold text-gray-800 flex items-center flex-shrink-0">
+                            <i class="fas fa-hourglass-half mr-2 text-indigo-600"></i> Total Jam Direncanakan: <span class="text-indigo-700 ml-2">{{ $chartData['total_hours'] }} jam</span>
+                        </p>
                     </div>
 
-                    <div class="mt-4 bg-white p-5 rounded-lg shadow-lg border border-gray-100">
+                    <div class="mt-4 bg-white p-5 rounded-lg shadow-lg border border-gray-100"> {{-- Container chart lebih menonjol --}}
                         <canvas id="sCurveChart"></canvas>
                     </div>
                 </div>
@@ -78,49 +64,75 @@
 
 
             new Chart(ctx, {
-                type: 'bar', // Mengubah tipe chart menjadi 'bar'
+                type: 'line',
                 data: {
                     labels: chartData.labels,
                     datasets: [
                         {
-                            label: 'Rencana Harian (Jam)', // Mengubah label
+                            label: 'Rencana Kumulatif (Jam)',
                             data: chartData.planned,
-                            backgroundColor: 'rgba(99, 102, 241, 0.6)', // Warna solid dengan transparansi
-                            borderColor: 'rgb(99, 102, 241)',
-                            borderWidth: 1
+                            borderColor: 'rgb(99, 102, 241)', // indigo-500
+                            backgroundColor: 'rgba(99, 102, 241, 0.1)', // Isi area di bawah garis
+                            tension: 0.3, // Membuat garis sedikit melengkung
+                            fill: true, // Mengisi area di bawah garis
+                            pointBackgroundColor: 'rgb(99, 102, 241)',
+                            pointBorderColor: '#fff',
+                            pointHoverBackgroundColor: '#fff',
+                            pointHoverBorderColor: 'rgb(99, 102, 241)',
+                            pointRadius: 4,
+                            pointHoverRadius: 6
                         },
                         {
-                            label: 'Aktual Harian (Jam)', // Mengubah label
+                            label: 'Aktual Kumulatif (Jam)',
                             data: chartData.actual,
-                            backgroundColor: 'rgba(34, 197, 94, 0.6)', // Warna solid dengan transparansi
-                            borderColor: 'rgb(34, 197, 94)',
-                            borderWidth: 1
+                            borderColor: 'rgb(34, 197, 94)', // green-500
+                            backgroundColor: 'rgba(34, 197, 94, 0.1)', // Isi area di bawah garis
+                            tension: 0.3,
+                            fill: true,
+                            pointBackgroundColor: 'rgb(34, 197, 94)',
+                            pointBorderColor: '#fff',
+                            pointHoverBackgroundColor: '#fff',
+                            pointHoverBorderColor: 'rgb(34, 197, 94)',
+                            pointRadius: 4,
+                            pointHoverRadius: 6
                         }
                     ]
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: false,
+                    maintainAspectRatio: false, // Penting untuk mengontrol tinggi dengan CSS jika diperlukan
                     plugins: {
                         legend: {
-                            position: 'bottom',
-                            labels: { font: { size: 14, family: 'Figtree' }, color: '#374151' }
+                            position: 'bottom', // Pindahkan legend ke bawah
+                            labels: {
+                                font: {
+                                    size: 14,
+                                    family: 'Figtree' // Menggunakan font konsisten
+                                },
+                                color: '#374151' // Warna teks legend
+                            }
                         },
                         title: {
                             display: true,
-                            text: 'Perbandingan Jam Kerja Harian (Rencana vs Aktual)', // Mengubah judul
-                            font: { size: 18, weight: 'bold', family: 'Figtree' },
+                            text: 'Perbandingan Progres Rencana vs Aktual',
+                            font: {
+                                size: 18,
+                                weight: 'bold',
+                                family: 'Figtree'
+                            },
                             color: '#374151'
                         },
-                        tooltip: {
+                        tooltip: { // Styling tooltip
                             mode: 'index',
                             intersect: false,
                             callbacks: {
                                 label: function(context) {
                                     let label = context.dataset.label || '';
-                                    if (label) { label += ': '; }
+                                    if (label) {
+                                        label += ': ';
+                                    }
                                     if (context.parsed.y !== null) {
-                                        label += context.parsed.y + ' Jam';
+                                        label += context.parsed.y + ' Jam'; // Tambahkan 'Jam'
                                     }
                                     return label;
                                 }
@@ -132,22 +144,44 @@
                             beginAtZero: true,
                             title: {
                                 display: true,
-                                text: 'Jam Kerja Harian', // Mengubah label sumbu Y
-                                font: { size: 14, family: 'Figtree' },
+                                text: 'Akumulasi Jam Kerja',
+                                font: {
+                                    size: 14,
+                                    family: 'Figtree'
+                                },
                                 color: '#4b5563'
                             },
-                            ticks: { font: { family: 'Figtree' }, color: '#4b5563' },
-                            grid: { color: '#e5e7eb' }
+                            ticks: {
+                                font: {
+                                    family: 'Figtree'
+                                },
+                                color: '#4b5563'
+                            },
+                            grid: {
+                                color: '#e5e7eb' // Warna grid horizontal
+                            },
+                            // Tambahkan suggestedMax untuk skala yang lebih baik
+                            suggestedMax: Math.max(...chartData.planned, ...chartData.actual) * 1.2
                         },
                         x: {
                             title: {
                                 display: true,
                                 text: 'Tanggal',
-                                font: { size: 14, family: 'Figtree' },
+                                font: {
+                                    size: 14,
+                                    family: 'Figtree'
+                                },
                                 color: '#4b5563'
                             },
-                            ticks: { font: { family: 'Figtree' }, color: '#4b5563' },
-                            grid: { display: false }
+                            ticks: {
+                                font: {
+                                    family: 'Figtree'
+                                },
+                                color: '#4b5563'
+                            },
+                            grid: {
+                                display: false // Sembunyikan grid vertikal
+                            }
                         }
                     }
                 }
