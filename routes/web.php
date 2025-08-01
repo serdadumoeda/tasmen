@@ -104,9 +104,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/create', 'create')->name('create');
         Route::post('/', 'store')->name('store');
         // PERBAIKAN: Menambahkan rute untuk edit, update, dan delete ad-hoc task
-        Route::get('/{adhocTask}/edit', [TaskController::class, 'edit'])->name('edit');
-        Route::put('/{adhocTask}', [TaskController::class, 'update'])->name('update');
-        Route::delete('/{adhocTask}', [TaskController::class, 'destroy'])->name('destroy');
+        Route::get('/{task}/edit', [TaskController::class, 'edit'])->name('edit');
+        Route::put('/{task}', [TaskController::class, 'update'])->name('update');
+        Route::delete('/{task}', [TaskController::class, 'destroy'])->name('destroy');
     });
     Route::post('/tasks/{task}/approve', [\App\Http\Controllers\TaskController::class, 'approve'])->name('tasks.approve')->middleware('auth');
     Route::get('/projects/{project}/kanban', [\App\Http\Controllers\ProjectController::class, 'showKanban'])->name('projects.kanban')->middleware('auth');

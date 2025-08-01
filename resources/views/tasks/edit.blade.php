@@ -71,7 +71,10 @@
                         </div>
                     @endif
 
-                    <form action="{{ route('tasks.update', $task) }}" method="POST" enctype="multipart/form-data">
+                    @php
+                        $updateRoute = $task->project_id ? route('tasks.update', $task) : route('adhoc-tasks.update', $task);
+                    @endphp
+                    <form action="{{ $updateRoute }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         @method('PUT')
                         
