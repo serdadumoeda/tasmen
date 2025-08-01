@@ -68,7 +68,17 @@
                         <div class="rounded-xl shadow-2xl py-1 bg-white ring-1 ring-black ring-opacity-10"> {{-- Dropdown Content: rounded-xl, shadow-2xl --}}
                             <x-dropdown-link :href="route('projects.kanban', $project)" class="hover:bg-gray-100 transition-colors duration-100"><i class="fas fa-th-large w-4 mr-2 text-gray-600"></i> Papan Kanban</x-dropdown-link>
                             <x-dropdown-link :href="route('projects.calendar', $project)" class="hover:bg-gray-100 transition-colors duration-100"><i class="fas fa-calendar-alt w-4 mr-2 text-gray-600"></i> Kalender</x-dropdown-link>
-                            @if(($project->start_date && $project->end_date) || (Auth::check() && Auth::user()->role === 'superadmin'))
+                            @php
+                                $user = Auth::user();
+                                $canViewSCurve = ($project->start_date && $project->end_date) ||
+                                                 ($user && (
+                                                     $user->role === \App\Models\User::ROLE_SUPERADMIN ||
+                                                     $user->role === \App\Models\User::ROLE_ESELON_I ||
+                                                     $user->role === \App\Models\User::ROLE_ESELON_II ||
+                                                     $user->id === $project->owner_id
+                                                 ));
+                            @endphp
+                            @if($canViewSCurve)
                                 <x-dropdown-link :href="route('projects.s-curve', $project)" class="hover:bg-gray-100 transition-colors duration-100"><i class="fas fa-chart-area w-4 mr-2 text-gray-600"></i> Kurva S</x-dropdown-link>
                             @endif
                             @can('viewTeamDashboard', $project)<x-dropdown-link :href="route('projects.team.dashboard', $project)" class="hover:bg-gray-100 transition-colors duration-100"><i class="fas fa-users-viewfinder w-4 mr-2 text-gray-600"></i> Dashboard Tim</x-dropdown-link>@endcan 

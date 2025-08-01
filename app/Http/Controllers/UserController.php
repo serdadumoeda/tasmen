@@ -27,11 +27,26 @@ class UserController extends Controller
     {
         $this->authorize('viewAny', User::class);
 
+        $loggedInUser = Auth::user();
         $query = User::with('unit')->orderBy('name');
 
-        // Jika pengguna yang login bukan Superadmin, jangan tampilkan Superadmin di daftar
-        if (Auth::user()->role !== User::ROLE_SUPERADMIN) {
+        // Jika pengguna yang login bukan Superadmin, batasi daftar pengguna
+        if (!$loggedInUser->isSuperAdmin()) {
+            // 1. Jangan tampilkan superadmin lain
             $query->where('role', '!=', User::ROLE_SUPERADMIN);
+
+            // 2. Ambil semua ID unit bawahan
+            if ($loggedInUser->unit) {
+                $subordinateUnitIds = $loggedInUser->unit->getAllSubordinateUnitIds();
+                // Tambahkan unit pengguna itu sendiri ke dalam daftar
+                $subordinateUnitIds[] = $loggedInUser->unit->id;
+
+                // Filter pengguna berdasarkan unit-unit ini
+                $query->whereIn('unit_id', $subordinateUnitIds);
+            } else {
+                // Jika pengguna tidak punya unit, dia hanya bisa melihat dirinya sendiri
+                $query->where('id', $loggedInUser->id);
+            }
         }
 
         if ($request->has('search')) {
