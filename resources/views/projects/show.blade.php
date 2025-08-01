@@ -481,7 +481,7 @@
                         if (!title) return;
 
                         try {
-                            const response = await fetch(`/tasks/${taskId}/subtasks`, {
+                            const response = await fetch(form.action, { // Corrected to use form.action
                                 method: 'POST',
                                 body: formData,
                                 headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'), 'Accept': 'application/json' },

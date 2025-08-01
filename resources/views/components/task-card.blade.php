@@ -77,7 +77,7 @@
                         <p class="text-xs text-gray-500" id="no-subtask-message-{{ $task->id }}">Belum ada rincian tugas.</p>
                     @endforelse
                 </div>
-                <form @submit.prevent="submitSubtask($event, {{ $task->id }})" class="mt-3 flex space-x-2">
+                <form @submit.prevent="submitSubtask($event, {{ $task->id }})" action="{{ route('subtasks.store', $task) }}" method="POST" class="mt-3 flex space-x-2">
                     @csrf
                     <input type="text" name="title" class="flex-grow block w-full rounded-md border-gray-300 shadow-sm text-sm" placeholder="Tambah rincian baru..." required>
                     <button type="submit" class="px-3 py-1 bg-gray-700 text-white text-xs font-bold rounded hover:bg-gray-800">Tambah</button>
@@ -95,7 +95,7 @@
                         <li class="text-sm text-gray-500 list-none" id="no-attachment-message-{{ $task->id }}">Belum ada lampiran.</li>
                     @endforelse
                 </ul>
-                <form @submit.prevent="submitAttachment($event, {{ $task->id }})" enctype="multipart/form-data">
+                <form @submit.prevent="submitAttachment($event, {{ $task->id }})" action="{{ route('tasks.attachments.store', $task) }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     <div class="flex items-center space-x-2">
                         <input type="file" name="file" class="text-sm file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" required>
@@ -113,7 +113,7 @@
                         <p class="text-sm text-gray-500" id="no-comment-message-{{ $task->id }}">Belum ada komentar.</p>
                     @endforelse
                 </div>
-                <form @submit.prevent="submitComment($event, {{ $task->id }})">
+                <form @submit.prevent="submitComment($event, {{ $task->id }})" action="{{ route('tasks.comments.store', $task) }}" method="POST">
                     @csrf
                     <div class="flex space-x-2">
                         <input type="text" name="body" x-model="newComment" class="flex-grow w-full rounded-md border-gray-300 shadow-sm text-sm" placeholder="Tulis komentar..." required>
