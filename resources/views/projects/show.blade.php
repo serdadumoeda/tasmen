@@ -409,9 +409,9 @@
 
                     async startTimer(taskId) {
                         try {
-                            await this.postData(`/tasks/${taskId}/time-log/start`);
-                            this.runningTaskGlobal = taskId;
-                            location.reload();
+                            const data = await this.postData(`/tasks/${taskId}/time-log/start`);
+                            this.runningTaskGlobal = data.running_task_id;
+                            // Tidak perlu reload, Alpine akan reaktif
                         } catch (error) {
                             alert('Gagal memulai timer: ' + error.message);
                         }
@@ -419,11 +419,165 @@
 
                     async stopTimer(taskId) {
                         try {
-                            await this.postData(`/tasks/${taskId}/time-log/stop`);
+                            const data = await this.postData(`/tasks/${taskId}/time-log/stop`);
                             this.runningTaskGlobal = null;
-                            location.reload();
+                            this.updateTaskTimeLogDisplay(taskId, data.time_log_summary);
                         } catch (error) {
                             alert('Gagal menghentikan timer: ' + error.message);
+                        }
+                    },
+
+                    updateTaskTimeLogDisplay(taskId, summary) {
+                        const displayDiv = document.getElementById(`time-log-display-${taskId}`);
+                        if (displayDiv) {
+                            displayDiv.innerHTML = `
+                                <p>Waktu Estimasi: <span class="font-bold">${summary.estimated} jam</span></p>
+                                <p>Waktu Tercatat: <span class="font-bold text-blue-600">${summary.logged}</span></p>
+                            `;
+                        }
+                    },
+
+                    async submitComment(event, taskId) {
+                        const form = event.target;
+                        const formData = new FormData(form);
+                        const commentBody = formData.get('body').trim();
+
+                        if (!commentBody) return;
+
+                        try {
+                            const response = await fetch(form.action, {
+                                method: 'POST',
+                                body: formData,
+                                headers: {
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                                    'Accept': 'application/json',
+                                },
+                            });
+
+                            if (!response.ok) {
+                                const errorData = await response.json().catch(() => ({ message: 'Terjadi kesalahan pada server.' }));
+                                throw new Error(errorData.message);
+                            }
+
+                            const data = await response.json();
+
+                            const commentList = document.getElementById(`comment-list-${taskId}`);
+                            const noCommentMessage = document.getElementById(`no-comment-message-${taskId}`);
+                            if (noCommentMessage) {
+                                noCommentMessage.remove();
+                            }
+                            commentList.insertAdjacentHTML('beforeend', data.comment_html);
+                            form.querySelector('input[name="body"]').value = '';
+
+                        } catch (error) {
+                            alert('Gagal mengirim komentar: ' + error.message);
+                        }
+                    },
+
+                    async submitSubtask(event, taskId) {
+                        const form = event.target;
+                        const formData = new FormData(form);
+                        const title = formData.get('title').trim();
+                        if (!title) return;
+
+                        try {
+                            const response = await fetch(`/tasks/${taskId}/subtasks`, {
+                                method: 'POST',
+                                body: formData,
+                                headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'), 'Accept': 'application/json' },
+                            });
+                             if (!response.ok) throw new Error('Gagal menambahkan sub-tugas.');
+                            const data = await response.json();
+
+                            const subtaskList = document.getElementById(`subtask-list-${taskId}`);
+                            const noSubtaskMessage = document.getElementById(`no-subtask-message-${taskId}`);
+                            if (noSubtaskMessage) noSubtaskMessage.remove();
+
+                            subtaskList.insertAdjacentHTML('beforeend', data.subtask_html);
+                            form.querySelector('input[name="title"]').value = '';
+                        } catch (error) {
+                            alert(error.message);
+                        }
+                    },
+
+                    async toggleSubtask(subtaskId, taskId) {
+                        try {
+                             const response = await fetch(`/subtasks/${subtaskId}`, {
+                                method: 'PATCH',
+                                headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'), 'Accept': 'application/json', 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ is_completed: document.querySelector(`#subtask-${subtaskId} input[type=checkbox]`).checked })
+                            });
+                            if (!response.ok) throw new Error('Gagal memperbarui sub-tugas.');
+                            const data = await response.json();
+                            this.updateTaskProgress(taskId, data.task_progress);
+                        } catch (error) {
+                             alert(error.message);
+                        }
+                    },
+
+                    async deleteSubtask(event, subtaskId) {
+                        if (!confirm('Yakin ingin menghapus rincian tugas ini?')) return;
+
+                        const form = event.target;
+                        try {
+                            const response = await fetch(`/subtasks/${subtaskId}`, {
+                                method: 'DELETE',
+                                headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'), 'Accept': 'application/json' },
+                            });
+                            if (!response.ok) throw new Error('Gagal menghapus sub-tugas.');
+                            document.getElementById(`subtask-${subtaskId}`).remove();
+                        } catch (error) {
+                            alert(error.message);
+                        }
+                    },
+
+                    updateTaskProgress(taskId, progress) {
+                        const taskCard = document.getElementById(`task-${taskId}`);
+                        if (taskCard) {
+                            const progressBar = taskCard.querySelector('.progress-bar');
+                            const progressText = taskCard.querySelector('.text-sm.font-medium.text-blue-700');
+                            if (progressBar) progressBar.style.width = `${progress}%`;
+                            if (progressText) progressText.textContent = `${progress}%`;
+                        }
+                    },
+
+                    async submitAttachment(event, taskId) {
+                        const form = event.target;
+                        const formData = new FormData(form);
+                        if (!formData.get('file').name) return;
+
+                        try {
+                            const response = await fetch(`/tasks/${taskId}/attachments`, {
+                                method: 'POST',
+                                body: formData,
+                                headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'), 'Accept': 'application/json' },
+                            });
+                            if (!response.ok) throw new Error('Gagal mengunggah file.');
+                            const data = await response.json();
+
+                            const attachmentList = document.getElementById(`attachment-list-${taskId}`);
+                            const noAttachmentMessage = document.getElementById(`no-attachment-message-${taskId}`);
+                            if (noAttachmentMessage) noAttachmentMessage.remove();
+
+                            attachmentList.insertAdjacentHTML('beforeend', data.attachment_html);
+                            form.reset();
+                        } catch (error) {
+                            alert(error.message);
+                        }
+                    },
+
+                    async deleteAttachment(event, attachmentId) {
+                        if (!confirm('Yakin ingin menghapus file ini?')) return;
+
+                        try {
+                             const response = await fetch(`/attachments/${attachmentId}`, {
+                                method: 'DELETE',
+                                headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'), 'Accept': 'application/json' },
+                            });
+                            if (!response.ok) throw new Error('Gagal menghapus file.');
+                            document.getElementById(`attachment-${attachmentId}`).remove();
+                        } catch (error) {
+                            alert(error.message);
                         }
                     }
                 }

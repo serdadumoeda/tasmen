@@ -23,7 +23,10 @@ class TimeLogController extends Controller
             'start_time' => now(),
         ]);
 
-        return response()->json(['message' => 'Timer dimulai.', 'time_log' => $timeLog]);
+        return response()->json([
+            'message' => 'Timer dimulai.',
+            'running_task_id' => $task->id
+        ]);
     }
 
     // Menghentikan timer yang sedang berjalan
@@ -39,22 +42,22 @@ class TimeLogController extends Controller
         }
 
         $runningLog->end_time = now();
-
-        // ==========================================================
-        // PERBAIKAN: Pastikan durasi selalu berupa angka bulat (integer)
-        // ==========================================================
-        // Hitung selisih dalam detik untuk presisi
         $diffInSeconds = $runningLog->start_time->diffInSeconds($runningLog->end_time);
-        // Konversi ke menit dan bulatkan ke angka bulat terdekat
         $runningLog->duration_in_minutes = round($diffInSeconds / 60);
-        // ==========================================================
-        
         $runningLog->save();
         
-        // Muat ulang relasi agar data yang dikirim ke frontend adalah yang terbaru
-        $runningLog->load('task.timeLogs');
+        // Hitung ulang total waktu tercatat untuk tugas ini
+        $totalMinutes = $task->timeLogs()->sum('duration_in_minutes');
+        $hours = floor($totalMinutes / 60);
+        $minutes = $totalMinutes % 60;
 
-        return response()->json(['message' => 'Timer dihentikan.', 'time_log' => $runningLog]);
+        return response()->json([
+            'message' => 'Timer dihentikan.',
+            'time_log_summary' => [
+                'estimated' => (float)$task->estimated_hours ?? 0,
+                'logged' => "{$hours} jam {$minutes} menit"
+            ]
+        ]);
     }
 
     public function storeManual(Request $request, Task $task)

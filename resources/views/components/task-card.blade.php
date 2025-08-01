@@ -68,13 +68,59 @@
 
         <div x-show="open" x-transition class="mt-4 space-y-4">
             {{-- Rincian Tugas (Subtask) --}}
-            <div class="border-t pt-4"><h5 class="font-semibold text-sm mb-2 text-gray-700">Rincian Tugas</h5><div class="space-y-2">@forelse($task->subTasks as $subTask)<div class="flex items-center justify-between"><form action="{{ route('subtasks.update', $subTask) }}" method="POST" class="flex items-center">@csrf @method('PATCH')<input type="checkbox" name="is_completed" class="h-4 w-4 rounded border-gray-300" onchange="this.form.submit()" @if($subTask->is_completed) checked @endif><label class="ml-3 text-sm {{ $subTask->is_completed ? 'line-through text-gray-500' : 'text-gray-800' }}">{{ $subTask->title }}</label></form><form action="{{ route('subtasks.destroy', $subTask) }}" method="POST" onsubmit="return confirm('Hapus rincian tugas ini?');">@csrf @method('DELETE')<button type="submit" class="text-xs text-red-400 hover:text-red-600">&times;</button></form></div>@empty<p class="text-xs text-gray-500">Belum ada rincian tugas.</p>@endforelse</div><form action="{{ route('subtasks.store', $task) }}" method="POST" class="mt-3 flex space-x-2">@csrf<input type="text" name="title" class="flex-grow block w-full rounded-md border-gray-300 shadow-sm text-sm" placeholder="Tambah rincian baru..." required><button type="submit" class="px-3 py-1 bg-gray-700 text-white text-xs font-bold rounded hover:bg-gray-800">Tambah</button></form></div>
+            <div class="border-t pt-4">
+                <h5 class="font-semibold text-sm mb-2 text-gray-700">Rincian Tugas</h5>
+                <div class="space-y-2" id="subtask-list-{{ $task->id }}">
+                    @forelse($task->subTasks as $subTask)
+                        @include('partials._subtask-item', ['subTask' => $subTask])
+                    @empty
+                        <p class="text-xs text-gray-500" id="no-subtask-message-{{ $task->id }}">Belum ada rincian tugas.</p>
+                    @endforelse
+                </div>
+                <form @submit.prevent="submitSubtask($event, {{ $task->id }})" class="mt-3 flex space-x-2">
+                    @csrf
+                    <input type="text" name="title" class="flex-grow block w-full rounded-md border-gray-300 shadow-sm text-sm" placeholder="Tambah rincian baru..." required>
+                    <button type="submit" class="px-3 py-1 bg-gray-700 text-white text-xs font-bold rounded hover:bg-gray-800">Tambah</button>
+                </form>
+            </div>
             {{-- Pencatatan Waktu --}}
             <div class="border-t pt-4" x-data="{ showManualForm: false }"><h5 class="font-semibold text-sm mb-2 text-gray-700">Pencatatan Waktu</h5><div class="flex justify-between items-center text-sm"><div id="time-log-display-{{ $task->id }}">@php $totalMinutes = $task->timeLogs->sum('duration_in_minutes'); $hours = floor($totalMinutes / 60); $minutes = $totalMinutes % 60; @endphp<p>Waktu Estimasi: <span class="font-bold">{{ (float)$task->estimated_hours ?? 0 }} jam</span></p><p>Waktu Tercatat: <span class="font-bold text-blue-600">{{ $hours }} jam {{ $minutes }} menit</span></p></div><div class="flex items-center space-x-2"><template x-if="runningTaskGlobal !== {{ $task->id }}"><button @click="startTimer({{ $task->id }})" class="px-3 py-1 bg-green-500 text-white text-xs font-bold rounded hover:bg-green-600" :disabled="runningTaskGlobal !== null">START</button></template><template x-if="runningTaskGlobal === {{ $task->id }}"><button @click="stopTimer({{ $task->id }})" class="px-3 py-1 bg-red-500 text-white text-xs font-bold rounded hover:bg-red-600 animate-pulse">STOP</button></template><button @click="showManualForm = !showManualForm" class="px-3 py-1 bg-gray-200 text-gray-700 text-xs font-bold rounded hover:bg-gray-300">MANUAL</button></div></div><div x-show="showManualForm" x-transition class="mt-4 border-t pt-4"><form action="{{ route('timelogs.storeManual', $task) }}" method="POST" class="flex items-end space-x-2">@csrf<div><label for="duration_in_minutes_{{ $task->id }}" class="block text-xs text-gray-600">Menit</label><input type="number" id="duration_in_minutes_{{ $task->id }}" name="duration_in_minutes" class="text-sm rounded-md border-gray-300 shadow-sm" style="width: 80px;" required></div><div><label for="log_date_{{ $task->id }}" class="block text-xs text-gray-600">Tanggal</label><input type="date" id="log_date_{{ $task->id }}" name="log_date" value="{{ now()->format('Y-m-d') }}" class="text-sm rounded-md border-gray-300 shadow-sm" required></div><button type="submit" class="h-9 px-3 bg-blue-600 text-white text-xs font-bold rounded hover:bg-blue-700">Simpan</button></form></div></div>
             {{-- Lampiran --}}
-            <div class="border-t pt-4"><h5 class="font-semibold text-sm mb-2 text-gray-700">Lampiran</h5><ul class="list-disc list-inside space-y-1 mb-3">@forelse($task->attachments as $attachment)<li class="text-sm flex justify-between items-center"><a href="{{ asset('storage/' . $attachment->path) }}" target="_blank" class="text-blue-600 hover:underline">{{ $attachment->filename }}</a><form action="{{ route('attachments.destroy', $attachment) }}" method="POST">@csrf @method('DELETE')<button type="submit" class="text-xs text-red-500 hover:text-red-700">&times;</button></form></li>@empty<li class="text-sm text-gray-500 list-none">Belum ada lampiran.</li>@endforelse</ul><form action="{{ route('tasks.attachments.store', $task) }}" method="POST" enctype="multipart/form-data">@csrf<div class="flex items-center space-x-2"><input type="file" name="file" class="text-sm file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" required><button type="submit" class="px-3 py-1 bg-gray-700 text-white text-xs font-bold rounded hover:bg-gray-600">Unggah</button></div></form></div>
+            <div class="border-t pt-4">
+                <h5 class="font-semibold text-sm mb-2 text-gray-700">Lampiran</h5>
+                <ul class="list-disc list-inside space-y-1 mb-3" id="attachment-list-{{ $task->id }}">
+                    @forelse($task->attachments as $attachment)
+                        @include('partials._attachment-item', ['attachment' => $attachment])
+                    @empty
+                        <li class="text-sm text-gray-500 list-none" id="no-attachment-message-{{ $task->id }}">Belum ada lampiran.</li>
+                    @endforelse
+                </ul>
+                <form @submit.prevent="submitAttachment($event, {{ $task->id }})" enctype="multipart/form-data">
+                    @csrf
+                    <div class="flex items-center space-x-2">
+                        <input type="file" name="file" class="text-sm file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" required>
+                        <button type="submit" class="px-3 py-1 bg-gray-700 text-white text-xs font-bold rounded hover:bg-gray-600">Unggah</button>
+                    </div>
+                </form>
+            </div>
             {{-- Komentar --}}
-            <div class="border-t pt-4"><h5 class="font-semibold text-sm mb-2 text-gray-700">Diskusi</h5><div class="space-y-3 mb-4">@forelse($task->comments as $comment)<div class="flex items-start space-x-2 text-sm"><span class="font-bold text-gray-800">{{ optional($comment->user)->name ?? 'User Dihapus' }}:</span><p class="text-gray-700">{{ $comment->body }}</p></div>@empty<p class="text-sm text-gray-500">Belum ada komentar.</p>@endforelse</div><form action="{{ route('tasks.comments.store', $task) }}" method="POST">@csrf<div class="flex space-x-2"><input type="text" name="body" class="flex-grow w-full rounded-md border-gray-300 shadow-sm text-sm" placeholder="Tulis komentar..." required><button type="submit" class="px-3 py-1 bg-gray-700 text-white text-xs font-bold rounded hover:bg-gray-600">Kirim</button></div></form></div>
+            <div class="border-t pt-4" x-data="{ newComment: '' }">
+                <h5 class="font-semibold text-sm mb-2 text-gray-700">Diskusi</h5>
+                <div class="space-y-3 mb-4" id="comment-list-{{ $task->id }}">
+                    @forelse($task->comments as $comment)
+                        @include('partials._comment-item', ['comment' => $comment])
+                    @empty
+                        <p class="text-sm text-gray-500" id="no-comment-message-{{ $task->id }}">Belum ada komentar.</p>
+                    @endforelse
+                </div>
+                <form @submit.prevent="submitComment($event, {{ $task->id }})">
+                    @csrf
+                    <div class="flex space-x-2">
+                        <input type="text" name="body" x-model="newComment" class="flex-grow w-full rounded-md border-gray-300 shadow-sm text-sm" placeholder="Tulis komentar..." required>
+                        <button type="submit" class="px-3 py-1 bg-gray-700 text-white text-xs font-bold rounded hover:bg-gray-600">Kirim</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>

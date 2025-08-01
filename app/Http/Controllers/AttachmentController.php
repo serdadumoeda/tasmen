@@ -21,42 +21,40 @@ class AttachmentController extends Controller
         $file = $request->file('file');
         $path = $file->store('attachments', 'public');
 
-        $task->attachments()->create([
+        $attachment = $task->attachments()->create([
             'user_id' => auth()->id(),
             'filename' => $file->getClientOriginalName(),
             'path' => $path
         ]);
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'message' => 'File berhasil diunggah.',
+                'attachment_html' => view('partials._attachment-item', compact('attachment'))->render()
+            ]);
+        }
 
         return back()->with('success', 'File berhasil diunggah.');
     }
 
     public function destroy(Attachment $attachment)
     {
-       
-
         $task = $attachment->task;
 
-        // Jika karena suatu hal tugasnya tidak ada, izinkan penghapusan untuk membersihkan data.
-        if (!$task) {
-            if (Storage::disk('public')->exists($attachment->path)) {
-                Storage::disk('public')->delete($attachment->path);
-            }
-            $attachment->delete();
-            return back()->with('success', 'Lampiran berhasil dihapus.');
+        if ($task) {
+            Gate::authorize('update', $task);
         }
 
-        // MODIFIKASI: Otorisasi berdasarkan hak 'update' pada tugas terkait.
-        Gate::authorize('update', $task);
-
-        // Hapus file dari storage
         if (Storage::disk('public')->exists($attachment->path)) {
             Storage::disk('public')->delete($attachment->path);
         }
         
-        // Hapus record dari database
         $attachment->delete();
 
-        return back()->with('success', 'File berhasil dihapus.');
+        if (request()->wantsJson()) {
+            return response()->json(['message' => 'File berhasil dihapus.']);
+        }
 
+        return back()->with('success', 'File berhasil dihapus.');
     }
 }

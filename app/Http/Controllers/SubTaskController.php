@@ -13,14 +13,35 @@ class SubTaskController extends Controller
     {
         Gate::authorize('update', $task);
         $request->validate(['title' => 'required|string|max:255']);
-        $task->subTasks()->create($request->only('title'));
+        $subTask = $task->subTasks()->create($request->only('title'));
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'message' => 'Rincian tugas berhasil ditambahkan.',
+                'subtask_html' => view('partials._subtask-item', compact('subTask'))->render()
+            ]);
+        }
+
         return back()->with('success', 'Rincian tugas berhasil ditambahkan.');
     }
 
     public function update(Request $request, SubTask $subTask)
     {
         Gate::authorize('update', $subTask->task);
-        $subTask->update(['is_completed' => !$subTask->is_completed]);
+
+        // Gunakan data dari request jika ada, jika tidak toggle
+        $isCompleted = $request->has('is_completed') ? $request->is_completed : !$subTask->is_completed;
+        $subTask->update(['is_completed' => $isCompleted]);
+
+        // Hitung ulang progress tugas utama
+        $subTask->task->recalculateProgress();
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'message' => 'Status rincian tugas diperbarui.',
+                'task_progress' => $subTask->task->progress
+            ]);
+        }
         return back();
     }
 
@@ -28,6 +49,11 @@ class SubTaskController extends Controller
     {
         Gate::authorize('update', $subTask->task);
         $subTask->delete();
+
+        if (request()->wantsJson()) {
+            return response()->json(['message' => 'Rincian tugas berhasil dihapus.']);
+        }
+
         return back()->with('success', 'Rincian tugas berhasil dihapus.');
     }
 }
