@@ -284,20 +284,40 @@ const initResourcePoolPage = () => {
 
 
 // ======================================================================
-// FUNGSI UNTUK HALAMAN EXECUTIVE SUMMARY
+// FUNGSI UNTUK HALAMAN EXECUTIVE SUMMARY (DIUBAH UNTUK PENGHANCURAN CHART)
 // ======================================================================
 const initExecutiveSummaryChart = () => {
     const chartCanvas = document.getElementById('performanceTrendChart');
-    if (!chartCanvas) return;
+    if (!chartCanvas) {
+        console.warn("Canvas 'performanceTrendChart' tidak ditemukan.");
+        return;
+    }
 
-    console.log("✔️ Halaman Executive Summary diinisialisasi.");
+    // Hancurkan instance chart yang ada sebelum membuat yang baru
+    const existingChart = Chart.getChart(chartCanvas);
+    if (existingChart) {
+        console.log("Menghancurkan chart yang ada di 'performanceTrendChart'.");
+        existingChart.destroy();
+    }
 
-    // Ambil data dari window object, yang akan kita definisikan di Blade
+    console.log("✔️ Halaman Executive Summary diinisialisasi untuk chart.");
+
+    // Ambil data dari window object
     const trendData = window.performanceTrends;
 
-    if (!trendData || !trendData.labels || !trendData.progress || !trendData.absorption) {
-        console.error("Data tren kinerja tidak ditemukan atau tidak lengkap.");
-        chartCanvas.parentElement.innerHTML = '<p class="text-center text-red-500">Gagal memuat data chart.</p>';
+    if (!trendData || !trendData.labels || !Array.isArray(trendData.labels) || trendData.labels.length === 0 ||
+        !trendData.progress || !Array.isArray(trendData.progress) ||
+        !trendData.absorption || !Array.isArray(trendData.absorption)) {
+        console.error("Data tren kinerja tidak ditemukan, tidak lengkap, atau formatnya salah. Tidak dapat menggambar chart.");
+        // Berikan pesan visual yang lebih jelas jika data tidak ada
+        chartCanvas.style.display = 'none'; // Sembunyikan canvas
+        const parentDiv = chartCanvas.parentElement;
+        if (parentDiv && !parentDiv.querySelector('.chart-error-message')) {
+            const errorMessage = document.createElement('p');
+            errorMessage.className = 'text-center text-red-500 py-4 chart-error-message';
+            errorMessage.textContent = 'Gagal memuat data chart. Data tren kinerja tidak tersedia atau tidak lengkap.';
+            parentDiv.appendChild(errorMessage);
+        }
         return;
     }
 
@@ -310,14 +330,14 @@ const initExecutiveSummaryChart = () => {
             datasets: [{
                 label: 'Progres Portofolio (%)',
                 data: trendData.progress,
-                borderColor: 'rgb(79, 70, 229)',
+                borderColor: 'rgb(79, 70, 229)', // Tailwind indigo-600
                 backgroundColor: 'rgba(79, 70, 229, 0.1)',
                 fill: true,
                 tension: 0.3
             }, {
                 label: 'Penyerapan Anggaran (%)',
                 data: trendData.absorption,
-                borderColor: 'rgb(22, 163, 74)',
+                borderColor: 'rgb(22, 163, 74)', // Tailwind emerald-600
                 backgroundColor: 'rgba(22, 163, 74, 0.1)',
                 fill: true,
                 tension: 0.3
@@ -325,9 +345,53 @@ const initExecutiveSummaryChart = () => {
         },
         options: {
             responsive: true,
-            scales: { y: { beginAtZero: true, max: 100, ticks: { callback: (value) => value + '%' }}},
-            plugins: { legend: { position: 'top' }, tooltip: { mode: 'index', intersect: false }},
-            interaction: { mode: 'nearest', axis: 'x', intersect: false }
+            maintainAspectRatio: false, // Penting karena h-80 di HTML
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        callback: (value) => value + '%',
+                        font: { family: 'Figtree' }, // Memastikan font konsisten
+                        color: '#4b5563' // Warna teks ticks
+                    },
+                    grid: {
+                        color: '#e5e7eb' // Warna grid line
+                    }
+                },
+                x: {
+                    ticks: {
+                        font: { family: 'Figtree' }, // Memastikan font konsisten
+                        color: '#4b5563' // Warna teks ticks
+                    },
+                    grid: {
+                        display: false // Sembunyikan grid vertikal
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        font: { size: 14, family: 'Figtree' }, // Font untuk legend
+                        color: '#374151' // Warna teks legend
+                    }
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': ' + context.raw + '%';
+                        }
+                    }
+                }
+            },
+            interaction: {
+                mode: 'nearest',
+                axis: 'x',
+                intersect: false
+            }
         }
     });
 };
@@ -339,7 +403,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initWorkloadInsight();
     initMemberSelectionModal();
     initResourcePoolPage();
-    initExecutiveSummaryChart();
+    initExecutiveSummaryChart(); // Panggil inisialisasi chart di sini
     
     Alpine.start();
 });

@@ -10,6 +10,7 @@ use Illuminate\Validation\Rules;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class UserController extends Controller
 {
@@ -37,13 +38,25 @@ class UserController extends Controller
 
         return view('users.index', compact('users'));
     }
-
+    
     public function hierarchy()
     {
         $this->authorize('viewAny', User::class);
-        $users = User::whereHas('unit', function ($query) {
-            $query->whereNull('parent_unit_id');
-        })->with('unit.childrenRecursive.users')->get();
+        
+        $loggedInUser = Auth::user();
+
+        if ($loggedInUser->role === User::ROLE_SUPERADMIN) {
+            // Untuk Superadmin, tampilkan seluruh hirarki dengan mengambil user dari unit teratas
+            $users = User::whereHas('unit', function ($query) {
+                $query->whereNull('parent_unit_id');
+            })->with('unit.childrenRecursive.users')->get();
+        } else {
+            // Untuk pengguna lain, tampilkan hirarki yang dimulai dari unit mereka sendiri
+            $users = User::where('id', $loggedInUser->id)
+                         ->with('unit.childrenRecursive.users')
+                         ->get();
+        }
+
         return view('users.hierarchy', compact('users'));
     }
 
@@ -79,7 +92,7 @@ class UserController extends Controller
             'unit_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'role' => ['required', 'in:'.implode(',', [User::ROLE_ESELON_I, User::ROLE_ESELON_II, User::ROLE_KOORDINATOR, User::ROLE_SUB_KOORDINATOR, User::ROLE_STAF])],
+            'role' => ['required', 'in:'.implode(',', [User::ROLE_SUPERADMIN, User::ROLE_ESELON_I, User::ROLE_ESELON_II, User::ROLE_KOORDINATOR, User::ROLE_SUB_KOORDINATOR, User::ROLE_STAF])],
             'status' => ['required', 'in:active,suspended'],
             'parent_user_id' => ['nullable', 'required_if:role,'.User::ROLE_ESELON_II.','.User::ROLE_KOORDINATOR.','.User::ROLE_SUB_KOORDINATOR.','.User::ROLE_STAF, 'exists:users,id'],
         ]);
@@ -98,7 +111,7 @@ class UserController extends Controller
             }
         }
 
-        DB::transaction(function () use ($validated, $role, $parentUser) {
+        DB::transaction(function () use ($validated, $role, $parentUser, $parentUserId) {
             $parentUnitId = ($parentUser && $parentUser->unit_id) ? $parentUser->unit_id : null;
 
             $unit = Unit::firstOrCreate(
@@ -116,6 +129,7 @@ class UserController extends Controller
                 'role' => $role,
                 'unit_id' => $unit->id,
                 'status' => $validated['status'],
+                'parent_user_id' => $parentUserId,
             ]);
         });
 
@@ -140,7 +154,7 @@ class UserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'unit_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email,'.$user->id],
-            'role' => ['required', 'in:'.implode(',', [User::ROLE_ESELON_I, User::ROLE_ESELON_II, User::ROLE_KOORDINATOR, User::ROLE_SUB_KOORDINATOR, User::ROLE_STAF])],
+            'role' => ['required', 'in:'.implode(',', [User::ROLE_SUPERADMIN, User::ROLE_ESELON_I, User::ROLE_ESELON_II, User::ROLE_KOORDINATOR, User::ROLE_SUB_KOORDINATOR, User::ROLE_STAF])],
             'status' => ['required', 'in:active,suspended'],
             'password' => ['nullable', 'confirmed', Rules\Password::defaults()],
             'parent_user_id' => ['nullable', 'required_if:role,'.User::ROLE_ESELON_II.','.User::ROLE_KOORDINATOR.','.User::ROLE_SUB_KOORDINATOR.','.User::ROLE_STAF, 'exists:users,id'],
@@ -165,6 +179,8 @@ class UserController extends Controller
             $user->email = $validated['email'];
             $user->role = $role;
             $user->status = $validated['status'];
+            $user->parent_user_id = $parentUserId;
+
             if ($request->filled('password')) {
                 $user->password = Hash::make($validated['password']);
             }
@@ -193,9 +209,10 @@ class UserController extends Controller
         
         DB::transaction(function() use ($user) {
             $unit = $user->unit;
+            // Ini akan menyebabkan error karena children tidak ada di model User
+            // $user->children()->update(['parent_user_id' => $user->parent_user_id]);
             $user->delete();
             if($unit && $unit->users()->count() === 0) {
-                // Pindahkan bawahan ke unit atasan sebelum menghapus
                 $newParentId = $unit->parent_unit_id;
                 Unit::where('parent_unit_id', $unit->id)->update(['parent_unit_id' => $newParentId]);
                 $unit->delete();

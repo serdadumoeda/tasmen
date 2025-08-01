@@ -11,8 +11,9 @@ use App\Notifications\TaskAssigned;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Notification;
-use App\Notifications\TaskRequiresApproval; 
+use App\Notifications\TaskRequiresApproval;
 use App\Models\SubTask;
+use App\Models\Unit; // Tambahkan model Unit
 
 class TaskController extends Controller
 {
@@ -52,11 +53,25 @@ class TaskController extends Controller
             $project = $task->project;
             $projectMembers = $project->members()->orderBy('name')->get();
         } else {
-            // Untuk tugas ad-hoc, penerima tugas adalah pembuat dan bawahannya
+            // PERBAIKAN: Untuk tugas ad-hoc, ambil bawahan berdasarkan unit kerja pengguna
             $user = Auth::user();
-            $subordinateIds = $user->children()->pluck('id')->toArray();
-            $subordinateIds[] = $user->id;
-            $projectMembers = User::whereIn('id', $subordinateIds)->orderBy('name')->get();
+            $unitIds = collect([$user->unit_id]);
+            
+            // Dapatkan ID unit bawahan secara rekursif
+            if ($user->unit) {
+                $unitIds = $unitIds->merge($user->unit->childrenRecursive->pluck('id'));
+            }
+            
+            // Dapatkan semua pengguna dari unit-unit tersebut
+            $projectMembers = User::whereIn('unit_id', $unitIds)
+                                  ->orderBy('name')
+                                  ->get();
+            
+            // Tambahkan user yang sedang login ke daftar anggota
+            $projectMembers->prepend($user);
+            
+            // Hapus duplikat
+            $projectMembers = $projectMembers->unique('id');
         }
 
         return view('tasks.edit', compact('task', 'projectMembers'));

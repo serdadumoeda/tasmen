@@ -1,21 +1,28 @@
-@props(['item'])
+@props(['task']) {{-- MENGUBAH 'item' menjadi 'task' --}}
 
 @php
-    $isProject = $item instanceof App\Models\Project;
-    $isTask = $item instanceof App\Models\Task;
+    // Variabel $item tidak lagi ada, gunakan $task
+    $isProject = $task instanceof App\Models\Project;
+    $isTask = $task instanceof App\Models\Task;
+
+    // Perhatikan bahwa di konteks kanban-card ini, $task akan selalu berupa instance App\Models\Task.
+    // Logic untuk $isProject mungkin tidak akan pernah terpicu jika komponen ini hanya digunakan untuk tugas.
+    // Namun, kita pertahankan struktur ini sesuai dengan penggunaan sebelumnya.
 
     if ($isProject) {
-        $title = $item->name;
-        $url = route('projects.show', $item);
-        $progress = $item->progress;
-        $assignees = $item->members; // Asumsikan 'members' adalah relasi di model Project
-        $statusColorClass = $item->status_color_class;
+        $title = $task->name;
+        $url = route('projects.show', $task);
+        $progress = $task->progress;
+        $assignees = $task->members; // Asumsikan 'members' adalah relasi di model Project
+        $statusColorClass = $task->status_color_class;
     } elseif ($isTask) {
-        $title = $item->title;
-        $url = route('projects.show', $item->project_id) . '#task-' . $item->id;
-        $progress = $item->progress;
-        $assignees = $item->assignees;
-        $statusColorClass = match($item->priority) {
+        $title = $task->title;
+        // Pastikan $task->project adalah instance model Project yang dimuat (eager loading di controller)
+        // atau relasi proyek akan di-load secara lazy di sini.
+        $url = route('projects.show', $task->project) . '#task-' . $task->id; 
+        $progress = $task->progress;
+        $assignees = $task->assignees;
+        $statusColorClass = match($task->priority) {
             'high' => 'border-l-red-500',
             'medium' => 'border-l-yellow-500',
             'low' => 'border-l-green-500',
@@ -34,7 +41,7 @@
         </div>
 
         @if($isProject)
-            <p class="text-sm text-gray-600 mb-3">{{ Str::limit($item->description, 100) }}</p>
+            <p class="text-sm text-gray-600 mb-3">{{ Str::limit($task->description, 100) }}</p> {{-- MENGUBAH $item->description --}}
         @endif
 
         <div class="mb-3">
@@ -54,13 +61,13 @@
                 @endforeach
             </div>
 
-            @if($isTask && $item->subTasks->isNotEmpty())
+            @if($isTask && $task->subTasks->isNotEmpty()) {{-- MENGUBAH $item->subTasks --}}
                 <div class="text-xs font-semibold text-gray-500">
-                    Rincian ({{ $item->subTasks->where('is_completed', true)->count() }}/{{ $item->subTasks->count() }})
+                    Rincian ({{ $task->subTasks->where('is_completed', true)->count() }}/{{ $task->subTasks->count() }}) {{-- MENGUBAH $item->subTasks --}}
                 </div>
             @elseif($isProject)
                 <div class="text-xs font-semibold text-gray-500">
-                    {{ $item->tasks_count }} Tugas
+                    {{ $task->tasks_count }} Tugas {{-- MENGUBAH $item->tasks_count --}}
                 </div>
             @endif
         </div>

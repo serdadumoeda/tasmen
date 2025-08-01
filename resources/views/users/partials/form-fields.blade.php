@@ -1,51 +1,56 @@
 @if ($errors->any())
-    <div class="mb-4 rounded-md bg-red-50 p-4">
-        <div class="flex">
-            <div class="flex-shrink-0">
-                <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd" />
-                </svg>
+    <div class="mb-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg shadow-md" role="alert">
+        <div class="flex items-start">
+            <div class="flex-shrink-0 mt-0.5">
+                <i class="fas fa-exclamation-triangle h-5 w-5 text-red-500"></i>
             </div>
             <div class="ml-3">
-                <h3 class="text-sm font-medium text-red-800">Terdapat {{ $errors->count() }} error pada input Anda.</h3>
-                 <div class="mt-2 text-sm text-red-700">
-                    <ul role="list" class="list-disc space-y-1 pl-5">
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
+                <strong class="font-bold">Oops! Ada yang salah:</strong>
+                 <ul class="mt-1.5 list-disc list-inside text-sm">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
             </div>
         </div>
     </div>
 @endif
 
-<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6"> {{-- Consistent gap with other forms --}}
     {{-- Kolom Kiri --}}
     <div>
-        <div>
-            <x-input-label for="name" :value="__('Nama Lengkap Pengguna')" />
-            <x-text-input id="name" class="block mt-1 w-full" type="text" name="name" :value="old('name', $user->name ?? '')" required autofocus />
-            <x-input-error :messages="$errors->get('name')" class="mt-2" />
+        <div class="mb-6"> {{-- Consistent spacing between form groups --}}
+            <label for="name" class="block font-semibold text-sm text-gray-700 mb-1">
+                <i class="fas fa-user mr-2 text-gray-500"></i> Nama Lengkap Pengguna <span class="text-red-500">*</span>
+            </label>
+            <input id="name" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" type="text" name="name" value="{{ old('name', $user->name ?? '') }}" required autofocus />
+            @error('name') <p class="text-sm text-red-600 mt-2">{{ $message }}</p> @enderror
         </div>
 
-        <div class="mt-4">
-            <x-input-label for="unit_name" :value="__('Nama Jabatan / Unit Kerja')" />
-            <x-text-input id="unit_name" class="block mt-1 w-full" type="text" name="unit_name" :value="old('unit_name', $user->unit->name ?? '')" required />
-            <x-input-error :messages="$errors->get('unit_name')" class="mt-2" />
+        <div class="mb-6"> {{-- Consistent spacing --}}
+            <label for="unit_name" class="block font-semibold text-sm text-gray-700 mb-1">
+                <i class="fas fa-building mr-2 text-gray-500"></i> Nama Jabatan / Unit Kerja <span class="text-red-500">*</span>
+            </label>
+            <input id="unit_name" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" type="text" name="unit_name" value="{{ old('unit_name', $user->unit->name ?? '') }}" required />
+            @error('unit_name') <p class="text-sm text-red-600 mt-2">{{ $message }}</p> @enderror
         </div>
 
-        <div class="mt-4">
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email', $user->email ?? '')" required />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
+        <div class="mb-6"> {{-- Consistent spacing --}}
+            <label for="email" class="block font-semibold text-sm text-gray-700 mb-1">
+                <i class="fas fa-envelope mr-2 text-gray-500"></i> Email <span class="text-red-500">*</span>
+            </label>
+            <input id="email" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" type="email" name="email" value="{{ old('email', $user->email ?? '') }}" required />
+            @error('email') <p class="text-sm text-red-600 mt-2">{{ $message }}</p> @enderror
         </div>
         
-        <div class="mt-4">
-            <x-input-label for="role" :value="__('Level Jabatan (Role)')" />
-            <select name="role" id="role" required class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
+        <div class="mb-6"> {{-- Consistent spacing --}}
+            <label for="role" class="block font-semibold text-sm text-gray-700 mb-1">
+                <i class="fas fa-user-tag mr-2 text-gray-500"></i> Level Jabatan (Role) <span class="text-red-500">*</span>
+            </label>
+            <select name="role" id="role" required class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150">
                 @php
                     $roles = [
+                        App\Models\User::ROLE_SUPERADMIN, // Assuming Superadmin is a possible role
                         App\Models\User::ROLE_ESELON_I,
                         App\Models\User::ROLE_ESELON_II,
                         App\Models\User::ROLE_KOORDINATOR,
@@ -58,51 +63,59 @@
                     <option value="{{ $role }}" @selected(old('role', $user->role ?? '') == $role)>{{ $role }}</option>
                 @endforeach
             </select>
-            <x-input-error :messages="$errors->get('role')" class="mt-2" />
+            @error('role') <p class="text-sm text-red-600 mt-2">{{ $message }}</p> @enderror
         </div>
 
-        <div class="mt-4" id="parent-user-container" style="display: none;">
-            <x-input-label for="parent_user_id" :value="__('Atasan Langsung')" />
-            <select name="parent_user_id" id="parent_user_id" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
+        <div class="mb-6" id="parent-user-container" style="display: none;"> {{-- Consistent spacing --}}
+            <label for="parent_user_id" class="block font-semibold text-sm text-gray-700 mb-1">
+                <i class="fas fa-sitemap mr-2 text-gray-500"></i> Atasan Langsung
+            </label>
+            <select name="parent_user_id" id="parent_user_id" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150">
                 <option value="">-- Pilih Atasan Langsung --</option>
                 @if(isset($potentialParents))
                     @foreach($potentialParents as $parent)
                         @if($parent->unit) {{-- Hanya tampilkan user yang punya unit --}}
-                            <option value="{{ $parent->id }}" @selected(old('parent_user_id', $user->unit->parentUnit->user->id ?? '') == $parent->id)>
+                            <option value="{{ $parent->id }}" @selected(old('parent_user_id', $user->parent_user_id ?? '') == $parent->id)> {{-- Changed $user->unit->parentUnit->user->id ?? '' to $user->parent_user_id ?? '' --}}
                                 {{ $parent->unit->name }} ({{ $parent->name }})
                             </option>
                         @endif
                     @endforeach
                 @endif
             </select>
-            <x-input-error :messages="$errors->get('parent_user_id')" class="mt-2" />
+            @error('parent_user_id') <p class="text-sm text-red-600 mt-2">{{ $message }}</p> @enderror
         </div>
     </div>
 
     {{-- Kolom Kanan --}}
     <div>
-        <div>
-            <x-input-label for="password" :value="__('Password')" />
-            <x-text-input id="password" class="block mt-1 w-full" type="password" name="password" :required="!isset($user)" />
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
+        <div class="mb-6"> {{-- Consistent spacing --}}
+            <label for="password" class="block font-semibold text-sm text-gray-700 mb-1">
+                <i class="fas fa-lock mr-2 text-gray-500"></i> Password <span class="text-red-500">*</span>
+            </label>
+            <input id="password" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" type="password" name="password" @if(!isset($user)) required @endif />
+            @error('password') <p class="text-sm text-red-600 mt-2">{{ $message }}</p> @enderror
             @if(isset($user))
                 <p class="text-sm text-gray-500 mt-1">Kosongkan jika tidak ingin mengubah password.</p>
             @endif
         </div>
 
-        <div class="mt-4">
-            <x-input-label for="password_confirmation" :value="__('Konfirmasi Password')" />
-            <x-text-input id="password_confirmation" class="block mt-1 w-full" type="password" name="password_confirmation" />
-            <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
+        <div class="mb-6"> {{-- Consistent spacing --}}
+            <label for="password_confirmation" class="block font-semibold text-sm text-gray-700 mb-1">
+                <i class="fas fa-lock-open mr-2 text-gray-500"></i> Konfirmasi Password <span class="text-red-500">*</span>
+            </label>
+            <input id="password_confirmation" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" type="password" name="password_confirmation" />
+            @error('password_confirmation') <p class="text-sm text-red-600 mt-2">{{ $message }}</p> @enderror
         </div>
 
-        <div class="mt-4">
-            <x-input-label for="status" :value="__('Status')" />
-            <select name="status" id="status" required class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
+        <div class="mb-6"> {{-- Consistent spacing --}}
+            <label for="status" class="block font-semibold text-sm text-gray-700 mb-1">
+                <i class="fas fa-circle-dot mr-2 text-gray-500"></i> Status <span class="text-red-500">*</span>
+            </label>
+            <select name="status" id="status" required class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150">
                 <option value="active" @selected(old('status', $user->status ?? 'active') == 'active')>Aktif</option>
                 <option value="suspended" @selected(old('status', $user->status ?? '') == 'suspended')>Ditangguhkan</option>
             </select>
-            <x-input-error :messages="$errors->get('status')" class="mt-2" />
+            @error('status') <p class="text-sm text-red-600 mt-2">{{ $message }}</p> @enderror
         </div>
     </div>
 </div>
@@ -129,6 +142,7 @@ document.addEventListener('DOMContentLoaded', function () {
         } else {
             parentUserContainer.style.display = 'none';
             parentUserSelect.required = false;
+            parentUserSelect.value = ''; // Clear selection if not needed
         }
     }
 

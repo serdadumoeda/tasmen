@@ -9,23 +9,35 @@
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    
+    {{-- PERBAIKAN: Tambahkan aturan CSS untuk x-cloak di sini --}}
+    <style>
+        [x-cloak] { display: none !important; }
+    </style>
+
     {{ $styles ?? '' }}
 </head>
 <body class="font-sans antialiased">
-    <div class="min-h-screen bg-gray-100">
+    <div class="min-h-screen bg-gray-100 flex flex-col">
         @include('layouts.navigation')
 
         @if (isset($header))
-            <header class="bg-white shadow">
+            <header class="bg-white shadow-2xl">
                 <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
                     {{ $header }}
                 </div>
             </header>
         @endif
 
-        <main>
+        <main class="flex-grow bg-gray-50">
             {{ $slot }}
         </main>
+
+        @include('partials.about-us-modal') 
+
+        <footer class="w-full text-center py-4 bg-gray-100 border-t border-gray-200 text-gray-500 text-sm">
+            &copy; Konsep & Visualisasi oleh <span class="font-bold text-indigo-700">PSI 2025</span>
+        </footer>
     </div>
 
     {{-- Pustaka SweetAlert2 untuk notifikasi --}}
