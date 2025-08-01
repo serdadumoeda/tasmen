@@ -271,22 +271,29 @@ class ProjectController extends Controller
         }
 
         // --- Aktual (Actual) ---
-        $timeLogs = DB::table('time_logs')
+        // Ambil semua log yang relevan, biarkan Laravel/Carbon menangani tanggal
+        $allTimeLogs = DB::table('time_logs')
             ->join('tasks', 'time_logs.task_id', '=', 'tasks.id')
             ->where('tasks.project_id', $project->id)
             ->whereNotNull('end_time')
-            ->select(DB::raw('DATE(time_logs.end_time) as date'), DB::raw('SUM(time_logs.duration_in_minutes) as total_minutes'))
-            ->groupBy('date')
-            ->orderBy('date', 'asc')
-            ->get()
-            ->keyBy('date');
+            ->select('time_logs.end_time', 'time_logs.duration_in_minutes')
+            ->get();
+
+        // Kelompokkan dan jumlahkan di sisi PHP untuk menghindari masalah zona waktu DB
+        $dailyActualHours = $allTimeLogs->map(function ($log) {
+            // Konversi ke objek Carbon, yang akan menggunakan timezone 'UTC' dari config
+            $log->date = \Carbon\Carbon::parse($log->end_time)->format('Y-m-d');
+            return $log;
+        })->groupBy('date')->map(function ($group) {
+            return $group->sum('duration_in_minutes') / 60;
+        });
 
         $actualCumulative = [];
         $cumulative = 0;
         foreach ($period as $date) {
             $dateString = $date->format('Y-m-d');
-            if (isset($timeLogs[$dateString])) {
-                $cumulative += $timeLogs[$dateString]->total_minutes / 60;
+            if (isset($dailyActualHours[$dateString])) {
+                $cumulative += $dailyActualHours[$dateString];
             }
             $actualCumulative[] = round($cumulative, 2);
         }
@@ -297,7 +304,7 @@ class ProjectController extends Controller
             'actual' => $actualCumulative,
             'total_hours' => round($totalHours, 2),
             'has_planned_data' => $totalHours > 0,
-            'has_actual_data' => $timeLogs->sum('total_minutes') > 0,
+            'has_actual_data' => $dailyActualHours->sum() > 0,
         ];
 
         return view('projects.s-curve', compact('project', 'chartData'));
