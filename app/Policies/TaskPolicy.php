@@ -44,28 +44,32 @@ class TaskPolicy
      */
     public function update(User $user, Task $task): bool
     {
-        // Superadmin bisa update
+        // Superadmin bisa update semua.
         if ($user->isSuperAdmin()) {
             return true;
         }
 
-        // Penerima tugas bisa update
+        // Penerima tugas (assignee) bisa update.
         if ($task->assignees->contains($user)) {
             return true;
         }
 
-        // Jika tugas terkait proyek...
+        // Jika tugas ini adalah bagian dari sebuah proyek...
         if ($task->project) {
-            // Ketua tim proyek bisa update semua tugas di proyeknya
+            // Pemilik proyek bisa update semua tugas di proyeknya.
+            if ($user->id === $task->project->owner_id) {
+                return true;
+            }
+            // Ketua tim proyek bisa update semua tugas di proyeknya.
             if ($user->id === $task->project->leader_id) {
                 return true;
             }
-            // Cek kebijakan level proyek (untuk pemilik dan manajer hierarkis)
+            // Manajer dalam hierarki pemilik proyek juga bisa update.
             return $user->can('update', $task->project);
         }
 
-        // Untuk tugas ad-hoc, manajer dari penerima tugas bisa update
-        if (!$task->project_id && $user->isManager() && $user->unit) {
+        // Untuk tugas ad-hoc (tanpa proyek), manajer dari penerima tugas bisa update.
+        if (!$task->project_id && $user->isManager()) {
             foreach ($task->assignees as $assignee) {
                 if ($assignee->isSubordinateOf($user)) {
                     return true;
