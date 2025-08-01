@@ -14,17 +14,31 @@
                         <i class="fas fa-arrow-left mr-2"></i> Kembali ke Detail Proyek
                     </a>
                     
-                    <div class="bg-gray-50 p-5 rounded-lg border border-gray-200 shadow-sm mb-6 flex items-center justify-between flex-wrap gap-3"> {{-- Info total jam lebih menonjol --}}
-                        <p class="text-base text-gray-700 flex items-center">
-                            <i class="fas fa-info-circle mr-3 text-blue-500 fa-lg"></i>
-                            Grafik ini membandingkan akumulasi jam kerja yang direncanakan (biru) dengan jam kerja aktual yang tercatat (hijau).
-                        </p>
-                        <p class="text-lg font-bold text-gray-800 flex items-center flex-shrink-0">
-                            <i class="fas fa-hourglass-half mr-2 text-indigo-600"></i> Total Jam Direncanakan: <span class="text-indigo-700 ml-2">{{ $chartData['total_hours'] }} jam</span>
-                        </p>
+                    <div class="bg-gray-50 p-5 rounded-lg border border-gray-200 shadow-sm mb-6 space-y-3">
+                        <div class="flex items-center justify-between flex-wrap gap-3">
+                            <p class="text-base text-gray-700 flex items-center">
+                                <i class="fas fa-info-circle mr-3 text-blue-500 fa-lg"></i>
+                                Grafik ini membandingkan akumulasi jam kerja yang direncanakan (biru) dengan jam kerja aktual yang tercatat (hijau).
+                            </p>
+                            <p class="text-lg font-bold text-gray-800 flex items-center flex-shrink-0">
+                                <i class="fas fa-hourglass-half mr-2 text-indigo-600"></i> Total Jam Direncanakan: <span class="text-indigo-700 ml-2">{{ $chartData['total_hours'] }} jam</span>
+                            </p>
+                        </div>
+                        @if(!$chartData['has_planned_data'])
+                        <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4" role="alert">
+                            <p class="font-bold">Kurva Rencana Kosong</p>
+                            <p>Tidak ada tugas dengan "Estimasi Jam" yang ditemukan di proyek ini. Kurva rencana tidak dapat dibuat.</p>
+                        </div>
+                        @endif
+                        @if(!$chartData['has_actual_data'])
+                        <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4" role="alert">
+                            <p class="font-bold">Kurva Aktual Kosong</p>
+                            <p>Tidak ada "Time Log" (catatan waktu kerja) yang ditemukan di proyek ini. Kurva aktual tidak dapat dibuat.</p>
+                        </div>
+                        @endif
                     </div>
 
-                    <div class="mt-4 bg-white p-5 rounded-lg shadow-lg border border-gray-100"> {{-- Container chart lebih menonjol --}}
+                    <div class="mt-4 bg-white p-5 rounded-lg shadow-lg border border-gray-100">
                         <canvas id="sCurveChart"></canvas>
                     </div>
                 </div>

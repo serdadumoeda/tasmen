@@ -229,30 +229,48 @@ class ProjectController extends Controller
     public function sCurve(Project $project)
     {
         $this->authorize('view', $project);
+
         if (!$project->start_date || !$project->end_date) {
             return back()->with('error', 'Proyek ini belum memiliki tanggal mulai dan selesai untuk membuat Kurva S.');
-        }
-
-        if ($project->tasks()->count() === 0) {
-            return back()->with('error', 'Proyek ini belum memiliki tugas untuk membuat Kurva S.');
         }
 
         $startDate = \Carbon\Carbon::parse($project->start_date);
         $endDate = \Carbon\Carbon::parse($project->end_date);
         $period = \Carbon\CarbonPeriod::create($startDate, $endDate);
+
         $labels = [];
         foreach ($period as $date) {
             $labels[] = $date->format('d M');
         }
-        $totalHours = $project->tasks()->sum('estimated_hours');
-        $projectDurationDays = $startDate->diffInDays($endDate) + 1;
-        $plannedHoursPerDay = ($projectDurationDays > 0) ? $totalHours / $projectDurationDays : 0;
+
+        // --- Rencana (Planned) ---
+        $plannedDailyHours = array_fill_keys(array_map(fn($d) => $d->format('Y-m-d'), iterator_to_array($period)), 0);
+        $tasks = $project->tasks()->whereNotNull('deadline')->where('estimated_hours', '>', 0)->get();
+        $totalHours = $tasks->sum('estimated_hours');
+
+        foreach ($tasks as $task) {
+            $taskStart = $startDate; // Asumsi semua pekerjaan bisa dimulai dari awal proyek
+            $taskEnd = \Carbon\Carbon::parse($task->deadline);
+            $taskDurationDays = $taskStart->diffInDays($taskEnd) + 1;
+
+            if ($taskDurationDays > 0) {
+                $hoursPerDay = $task->estimated_hours / $taskDurationDays;
+                for ($date = $taskStart->copy(); $date->lte($taskEnd); $date->addDay()) {
+                    if ($date->lte($endDate)) { // Hanya tambahkan jika masih dalam periode proyek
+                       $plannedDailyHours[$date->format('Y-m-d')] += $hoursPerDay;
+                    }
+                }
+            }
+        }
+
         $plannedCumulative = [];
         $cumulative = 0;
-        for ($i = 0; $i < count($labels); $i++) {
-            $cumulative += $plannedHoursPerDay;
+        foreach ($plannedDailyHours as $hours) {
+            $cumulative += $hours;
             $plannedCumulative[] = round($cumulative, 2);
         }
+
+        // --- Aktual (Actual) ---
         $timeLogs = DB::table('time_logs')
             ->join('tasks', 'time_logs.task_id', '=', 'tasks.id')
             ->where('tasks.project_id', $project->id)
@@ -262,6 +280,7 @@ class ProjectController extends Controller
             ->orderBy('date', 'asc')
             ->get()
             ->keyBy('date');
+
         $actualCumulative = [];
         $cumulative = 0;
         foreach ($period as $date) {
@@ -271,12 +290,16 @@ class ProjectController extends Controller
             }
             $actualCumulative[] = round($cumulative, 2);
         }
+
         $chartData = [
             'labels' => $labels,
             'planned' => $plannedCumulative,
             'actual' => $actualCumulative,
-            'total_hours' => round($totalHours, 2)
+            'total_hours' => round($totalHours, 2),
+            'has_planned_data' => $totalHours > 0,
+            'has_actual_data' => $timeLogs->sum('total_minutes') > 0,
         ];
+
         return view('projects.s-curve', compact('project', 'chartData'));
     }
 
