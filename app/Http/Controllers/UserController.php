@@ -29,9 +29,16 @@ class UserController extends Controller
 
         $query = User::with('unit')->orderBy('name');
 
+        // Jika pengguna yang login bukan Superadmin, jangan tampilkan Superadmin di daftar
+        if (Auth::user()->role !== User::ROLE_SUPERADMIN) {
+            $query->where('role', '!=', User::ROLE_SUPERADMIN);
+        }
+
         if ($request->has('search')) {
-            $query->where('name', 'like', '%' . $request->search . '%')
+            $query->where(function($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->search . '%')
                   ->orWhere('email', 'like', '%' . $request->search . '%');
+            });
         }
 
         $users = $query->paginate(15)->withQueryString();
