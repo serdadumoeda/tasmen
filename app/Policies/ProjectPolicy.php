@@ -83,7 +83,22 @@ class ProjectPolicy
 
     public function viewTeamDashboard(User $user, Project $project): bool
     {
-        // Izinkan jika pengguna adalah pemilik proyek ATAU ketua tim proyek.
-        return $user->id === $project->owner_id || $user->id === $project->leader_id;
+        // Superadmin dapat melihat semua dashboard tim.
+        if ($user->isSuperAdmin()) {
+            return true;
+        }
+
+        // Pemilik dan ketua tim dari proyek dapat melihat dashboard tim mereka.
+        if ($user->id === $project->owner_id || $user->id === $project->leader_id) {
+            return true;
+        }
+
+        // Manajer (Eselon I, Eselon II) dapat melihat dashboard tim dari proyek
+        // yang dimiliki oleh bawahan dalam hierarki unit mereka.
+        if ($user->isTopLevelManager() && $project->owner) {
+            return $project->owner->isSubordinateOf($user);
+        }
+
+        return false;
     }
 }
