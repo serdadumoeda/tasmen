@@ -78,75 +78,49 @@
 
 
             new Chart(ctx, {
-                type: 'line',
+                type: 'bar', // Mengubah tipe chart menjadi 'bar'
                 data: {
                     labels: chartData.labels,
                     datasets: [
                         {
-                            label: 'Rencana Kumulatif (Jam)',
+                            label: 'Rencana Harian (Jam)', // Mengubah label
                             data: chartData.planned,
-                            borderColor: 'rgb(99, 102, 241)', // indigo-500
-                            backgroundColor: 'rgba(99, 102, 241, 0.1)', // Isi area di bawah garis
-                            tension: 0.3, // Membuat garis sedikit melengkung
-                            fill: true, // Mengisi area di bawah garis
-                            pointBackgroundColor: 'rgb(99, 102, 241)',
-                            pointBorderColor: '#fff',
-                            pointHoverBackgroundColor: '#fff',
-                            pointHoverBorderColor: 'rgb(99, 102, 241)',
-                            pointRadius: 4,
-                            pointHoverRadius: 6
+                            backgroundColor: 'rgba(99, 102, 241, 0.6)', // Warna solid dengan transparansi
+                            borderColor: 'rgb(99, 102, 241)',
+                            borderWidth: 1
                         },
                         {
-                            label: 'Aktual Kumulatif (Jam)',
+                            label: 'Aktual Harian (Jam)', // Mengubah label
                             data: chartData.actual,
-                            borderColor: 'rgb(34, 197, 94)', // green-500
-                            backgroundColor: 'rgba(34, 197, 94, 0.1)', // Isi area di bawah garis
-                            tension: 0.3,
-                            fill: true,
-                            pointBackgroundColor: 'rgb(34, 197, 94)',
-                            pointBorderColor: '#fff',
-                            pointHoverBackgroundColor: '#fff',
-                            pointHoverBorderColor: 'rgb(34, 197, 94)',
-                            pointRadius: 4,
-                            pointHoverRadius: 6
+                            backgroundColor: 'rgba(34, 197, 94, 0.6)', // Warna solid dengan transparansi
+                            borderColor: 'rgb(34, 197, 94)',
+                            borderWidth: 1
                         }
                     ]
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: false, // Penting untuk mengontrol tinggi dengan CSS jika diperlukan
+                    maintainAspectRatio: false,
                     plugins: {
                         legend: {
-                            position: 'bottom', // Pindahkan legend ke bawah
-                            labels: {
-                                font: {
-                                    size: 14,
-                                    family: 'Figtree' // Menggunakan font konsisten
-                                },
-                                color: '#374151' // Warna teks legend
-                            }
+                            position: 'bottom',
+                            labels: { font: { size: 14, family: 'Figtree' }, color: '#374151' }
                         },
                         title: {
                             display: true,
-                            text: 'Perbandingan Progres Rencana vs Aktual',
-                            font: {
-                                size: 18,
-                                weight: 'bold',
-                                family: 'Figtree'
-                            },
+                            text: 'Perbandingan Jam Kerja Harian (Rencana vs Aktual)', // Mengubah judul
+                            font: { size: 18, weight: 'bold', family: 'Figtree' },
                             color: '#374151'
                         },
-                        tooltip: { // Styling tooltip
+                        tooltip: {
                             mode: 'index',
                             intersect: false,
                             callbacks: {
                                 label: function(context) {
                                     let label = context.dataset.label || '';
-                                    if (label) {
-                                        label += ': ';
-                                    }
+                                    if (label) { label += ': '; }
                                     if (context.parsed.y !== null) {
-                                        label += context.parsed.y + ' Jam'; // Tambahkan 'Jam'
+                                        label += context.parsed.y + ' Jam';
                                     }
                                     return label;
                                 }
@@ -158,42 +132,22 @@
                             beginAtZero: true,
                             title: {
                                 display: true,
-                                text: 'Akumulasi Jam Kerja',
-                                font: {
-                                    size: 14,
-                                    family: 'Figtree'
-                                },
+                                text: 'Jam Kerja Harian', // Mengubah label sumbu Y
+                                font: { size: 14, family: 'Figtree' },
                                 color: '#4b5563'
                             },
-                            ticks: {
-                                font: {
-                                    family: 'Figtree'
-                                },
-                                color: '#4b5563'
-                            },
-                            grid: {
-                                color: '#e5e7eb' // Warna grid horizontal
-                            }
+                            ticks: { font: { family: 'Figtree' }, color: '#4b5563' },
+                            grid: { color: '#e5e7eb' }
                         },
                         x: {
                             title: {
                                 display: true,
                                 text: 'Tanggal',
-                                font: {
-                                    size: 14,
-                                    family: 'Figtree'
-                                },
+                                font: { size: 14, family: 'Figtree' },
                                 color: '#4b5563'
                             },
-                            ticks: {
-                                font: {
-                                    family: 'Figtree'
-                                },
-                                color: '#4b5563'
-                            },
-                            grid: {
-                                display: false // Sembunyikan grid vertikal
-                            }
+                            ticks: { font: { family: 'Figtree' }, color: '#4b5563' },
+                            grid: { display: false }
                         }
                     }
                 }

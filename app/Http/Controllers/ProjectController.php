@@ -263,15 +263,7 @@ class ProjectController extends Controller
             }
         }
 
-        $plannedCumulative = [];
-        $cumulative = 0;
-        foreach ($plannedDailyHours as $hours) {
-            $cumulative += $hours;
-            $plannedCumulative[] = round($cumulative, 2);
-        }
-
         // --- Aktual (Actual) ---
-        // Ambil semua log yang relevan, biarkan Laravel/Carbon menangani tanggal
         $allTimeLogs = DB::table('time_logs')
             ->join('tasks', 'time_logs.task_id', '=', 'tasks.id')
             ->where('tasks.project_id', $project->id)
@@ -279,32 +271,27 @@ class ProjectController extends Controller
             ->select('time_logs.end_time', 'time_logs.duration_in_minutes')
             ->get();
 
-        // Kelompokkan dan jumlahkan di sisi PHP untuk menghindari masalah zona waktu DB
-        $dailyActualHours = $allTimeLogs->map(function ($log) {
-            // Konversi ke objek Carbon, yang akan menggunakan timezone 'UTC' dari config
+        $dailyActualHoursCollection = $allTimeLogs->map(function ($log) {
             $log->date = \Carbon\Carbon::parse($log->end_time)->format('Y-m-d');
             return $log;
         })->groupBy('date')->map(function ($group) {
             return $group->sum('duration_in_minutes') / 60;
         });
 
-        $actualCumulative = [];
-        $cumulative = 0;
+        // Pastikan ada entri untuk setiap hari dalam periode proyek, meskipun nilainya 0
+        $dailyActualHours = [];
         foreach ($period as $date) {
             $dateString = $date->format('Y-m-d');
-            if (isset($dailyActualHours[$dateString])) {
-                $cumulative += $dailyActualHours[$dateString];
-            }
-            $actualCumulative[] = round($cumulative, 2);
+            $dailyActualHours[] = round($dailyActualHoursCollection[$dateString] ?? 0, 2);
         }
 
         $chartData = [
             'labels' => $labels,
-            'planned' => $plannedCumulative,
-            'actual' => $actualCumulative,
+            'planned' => array_values(array_map(fn($h) => round($h, 2), $plannedDailyHours)),
+            'actual' => $dailyActualHours,
             'total_hours' => round($totalHours, 2),
             'has_planned_data' => $totalHours > 0,
-            'has_actual_data' => $dailyActualHours->sum() > 0,
+            'has_actual_data' => $dailyActualHoursCollection->sum() > 0,
         ];
 
         return view('projects.s-curve', compact('project', 'chartData'));
