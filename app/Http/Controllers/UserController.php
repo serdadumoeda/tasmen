@@ -121,6 +121,17 @@ class UserController extends Controller
             'unit_id' => ['required', 'exists:units,id'],
         ]);
 
+        // Validasi hierarki kustom
+        $unit = Unit::find($validated['unit_id']);
+        $role = $validated['role'];
+
+        if (isset($this->VALID_PARENT_ROLES[$role])) {
+            if (!$unit->parentUnit || !in_array($unit->parentUnit->level, $this->VALID_PARENT_ROLES[$role])) {
+                $validParentLevels = implode(', ', $this->VALID_PARENT_ROLES[$role]);
+                return back()->withInput()->with('error', "Untuk role '{$role}', unit yang dipilih harus berada di bawah unit dengan level: {$validParentLevels}.");
+            }
+        }
+
         $userData = $validated;
         $userData['password'] = Hash::make($validated['password']);
 
@@ -149,6 +160,17 @@ class UserController extends Controller
             'unit_id' => ['required', 'exists:units,id'],
             'password' => ['nullable', 'confirmed', Rules\Password::defaults()],
         ]);
+
+        // Validasi hierarki kustom
+        $unit = Unit::find($validated['unit_id']);
+        $role = $validated['role'];
+
+        if (isset($this->VALID_PARENT_ROLES[$role])) {
+            if (!$unit->parentUnit || !in_array($unit->parentUnit->level, $this->VALID_PARENT_ROLES[$role])) {
+                $validParentLevels = implode(', ', $this->VALID_PARENT_ROLES[$role]);
+                return back()->withInput()->with('error', "Untuk role '{$role}', unit yang dipilih harus berada di bawah unit dengan level: {$validParentLevels}.");
+            }
+        }
 
         $userData = $validated;
         if ($request->filled('password')) {
