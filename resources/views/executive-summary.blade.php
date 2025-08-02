@@ -16,15 +16,15 @@
                         <i class="fas fa-folder-open fa-4x"></i>
                     </div>
                     <div class="text-5xl font-extrabold text-indigo-700">{{ $activeProjects }}</div>
-                    <p class="text-sm text-gray-600 mt-2 font-semibold">Proyek Aktif</p>
+                    <p class="text-sm text-gray-600 mt-2 font-semibold">Kegiatan Aktif</p>
                 </div>
-                {{-- KPI: Proyek Perlu Perhatian --}}
+                {{-- KPI: Kegiatan Perlu Perhatian --}}
                 <div class="bg-white p-6 rounded-xl shadow-xl hover:shadow-2xl text-center transform hover:-translate-y-1 transition-all duration-300 ease-in-out border-b-4 border-red-500"> {{-- Meningkatkan shadow --}}
                     <div class="text-red-600 mb-3 drop-shadow-md">
                         <i class="fas fa-exclamation-triangle fa-4x"></i>
                     </div>
                     <div class="text-5xl font-extrabold text-red-700">{{ $overdueProjectsCount }}</div>
-                    <p class="text-sm text-gray-600 mt-2 font-semibold">Proyek Perlu Perhatian</p>
+                    <p class="text-sm text-gray-600 mt-2 font-semibold">Kegiatan Perlu Perhatian</p>
                 </div>
                 {{-- KPI: Penyerapan Anggaran --}}
                 <div class="bg-white p-6 rounded-xl shadow-xl hover:shadow-2xl text-center transform hover:-translate-y-1 transition-all duration-300 ease-in-out border-b-4 border-green-500"> {{-- Meningkatkan shadow --}}
@@ -57,16 +57,16 @@
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {{-- Kolom Kiri: Daftar Proyek & Alokasi Anggaran --}}
                 <div class="lg:col-span-2 space-y-6">
-                    {{-- Daftar Portofolio Proyek --}}
+                    {{-- Daftar Portofolio Kegiatan --}}
                     <div class="bg-white p-6 rounded-xl shadow-xl hover:shadow-2xl transition-shadow duration-300"> {{-- Meningkatkan shadow --}}
                         <h3 class="font-bold text-xl text-gray-800 mb-4 flex items-center">
-                            <i class="fas fa-project-diagram mr-3 text-indigo-600"></i> Ringkasan Portofolio Program/Kegiatan
+                            <i class="fas fa-project-diagram mr-3 text-indigo-600"></i> Ringkasan Portofolio Kegiatan
                         </h3>
                         <div class="overflow-x-auto">
                             <table class="min-w-full divide-y divide-gray-200">
                                 <thead class="bg-gray-100">
                                     <tr>
-                                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider rounded-tl-lg">Nama Program/Kegiatan</th>
+                                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider rounded-tl-lg">Nama Kegiatan</th>
                                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
                                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Progres</th>
                                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider rounded-tr-lg">Anggaran</th>
@@ -95,7 +95,7 @@
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800 font-medium">Rp {{ number_format($project->budget_items_sum_total_cost ?? 0, 0, ',', '.') }}</td>
                                         </tr>
                                     @empty
-                                        <tr><td colspan="4" class="px-6 py-8 text-center text-gray-500 text-lg">Tidak ada data proyek.</td></tr>
+                                        <tr><td colspan="4" class="px-6 py-8 text-center text-gray-500 text-lg">Tidak ada data kegiatan.</td></tr>
                                     @endforelse
                                 </tbody>
                             </table>
@@ -104,7 +104,7 @@
 
                     <div class="bg-white p-6 rounded-xl shadow-xl hover:shadow-2xl transition-shadow duration-300"> {{-- Meningkatkan shadow --}}
                         <h3 class="font-bold text-xl text-gray-800 mb-4 flex items-center">
-                            <i class="fas fa-money-bill-wave mr-3 text-emerald-600"></i> Alokasi & Penyerapan Anggaran per Proyek
+                            <i class="fas fa-money-bill-wave mr-3 text-emerald-600"></i> Alokasi & Penyerapan Anggaran per Kegiatan
                         </h3>
                         <div class="space-y-5">
                             @forelse($budgetByProject as $project)
@@ -132,7 +132,7 @@
                                     </div>
                                 </div>
                             @empty
-                                <p class="text-center text-gray-500 py-8 text-lg">Tidak ada data anggaran per proyek.</p>
+                                <p class="text-center text-gray-500 py-8 text-lg">Tidak ada data anggaran per kegiatan.</p>
                             @endforelse
                         </div>
                     </div>
@@ -142,7 +142,7 @@
                 <div class="space-y-6">
                     <div class="bg-white p-6 rounded-xl shadow-xl hover:shadow-2xl transition-shadow duration-300"> {{-- Meningkatkan shadow --}}
                         <h3 class="font-bold text-xl text-gray-800 mb-4 flex items-center">
-                            <i class="fas fa-bell mr-3 text-orange-600"></i> Proyek Perlu Perhatian Strategis
+                            <i class="fas fa-bell mr-3 text-orange-600"></i> Kegiatan Perlu Perhatian Strategis
                         </h3>
                         <div class="space-y-4">
                             @forelse($criticalProjects as $project)
@@ -160,7 +160,7 @@
                                     </p>
                                 </a>
                             @empty
-                                <p class="text-center text-gray-500 py-8 text-lg">Tidak ada proyek kritis atau berisiko.</p>
+                                <p class="text-center text-gray-500 py-8 text-lg">Tidak ada kegiatan kritis atau berisiko.</p>
                             @endforelse
                         </div>
                     </div>
