@@ -32,7 +32,6 @@
             }
             .kanban-column::-webkit-scrollbar { width: 8px; }
             .kanban-column::-webkit-scrollbar-thumb { background-color: #d1d5db; border-radius: 10px; }
-            .drag-handle { cursor: grab; }
         </style>
     </x-slot>
 
@@ -78,7 +77,7 @@
                                     <i class="{{ $statusInfo['icon'] }} mr-2 {{ $statusInfo['color'] == 'bg-gray-500' ? 'text-gray-600' : ($statusInfo['color'] == 'bg-blue-600' ? 'text-blue-700' : ($statusInfo['color'] == 'bg-yellow-600' ? 'text-yellow-700' : 'text-green-700')) }}"></i> {{-- Menambahkan ikon ke header kolom --}}
                                     {{ $statusInfo['name'] }}
                                 </h3>
-                                <span class="text-sm font-bold text-white {{ $statusInfo['color'] }} rounded-full px-3 py-1 shadow-md"> {{-- Badge count: font-bold, shadow-md --}}
+                                <span class="badge-count text-sm font-bold text-white {{ $statusInfo['color'] }} rounded-full px-3 py-1 shadow-md"> {{-- Badge count: font-bold, shadow-md --}}
                                     {{ $groupedTasks[$statusKey]->count() }}
                                 </span>
                             </div>
@@ -87,7 +86,9 @@
                             {{-- Tambahkan flex flex-col di sini --}}
                             <div id="status-{{ $statusKey }}" data-status="{{ $statusKey }}" class="kanban-column p-4 space-y-4 flex flex-col flex-grow"> {{-- flex-grow agar kolom mengisi sisa ruang --}}
                                 @forelse ($groupedTasks[$statusKey] as $task)
-                                    <x-kanban-card :task="$task" id="task-{{ $task->id }}" data-task-id="{{ $task->id }}" class="task-card"/>
+                                    <div id="task-{{ $task->id }}" data-task-id="{{ $task->id }}" class="task-card cursor-grab active:cursor-grabbing bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 ease-in-out transform hover:scale-[1.01]"> {{-- Styling default untuk card, jika x-kanban-card belum diimplementasikan dengan styling ini --}}
+                                        <x-kanban-card :task="$task"/>
+                                    </div>
                                 @empty
                                     <div class="text-center text-gray-400 py-10 px-4 flex flex-col items-center justify-center min-h-[150px] border-2 border-dashed border-gray-300 rounded-lg"> {{-- Pesan kolom kosong lebih modern --}}
                                         <i class="fas fa-box-open fa-2x text-gray-300 mb-4"></i> {{-- Icon baru --}}
@@ -105,42 +106,13 @@
 
     <x-slot name="scripts">
         <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+        {{-- Axios sudah di-bundle di app.js, jadi tidak perlu CDN --}}
         <script>
-            // Definisikan fungsi Alpine.js agar bisa diakses oleh komponen task-card
-            function projectDetail() {
-                return {
-                    runningTaskGlobal: {{ optional(Auth::user()->timeLogs()->whereNull('end_time')->first())->task_id ?? 'null' }},
-                    
-                    async postData(url) {
-                        const response = await fetch(url, {
-                            method: 'POST',
-                            headers: {
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                                'Accept': 'application/json',
-                            },
-                        });
-                        if (!response.ok) {
-                            const errorData = await response.json().catch(() => ({ message: 'Terjadi kesalahan pada server.' }));
-                            throw new Error(errorData.message);
-                        }
-                        return response.json();
-                    },
-                    async startTimer(taskId) { try { await this.postData(`/tasks/${taskId}/time-log/start`); this.runningTaskGlobal = taskId; location.reload(); } catch (error) { Swal.fire('Error', 'Gagal memulai timer: ' + error.message, 'error'); }},
-                    async stopTimer(taskId) { try { await this.postData(`/tasks/${taskId}/time-log/stop`); this.runningTaskGlobal = null; location.reload(); } catch (error) { Swal.fire('Error', 'Gagal menghentikan timer: ' + error.message, 'error'); }}
-                }
-            }
-
             document.addEventListener('DOMContentLoaded', function () {
+                // Helper untuk notifikasi, bisa menggunakan Swal atau notifikasi custom
                 const showNotification = (icon, title, text = '') => {
-                    Swal.fire({
-                        icon: icon, title: title, text: text,
-                        toast: true, position: 'top-end', showConfirmButton: false,
-                        timer: 3500, timerProgressBar: true,
-                        didOpen: (toast) => {
-                            toast.addEventListener('mouseenter', Swal.stopTimer);
-                            toast.addEventListener('mouseleave', Swal.resumeTimer);
-                        }
-                    });
+                    // Implementasi notifikasi Anda di sini, contoh:
+                    alert(`${title}: ${text}`);
                 };
 
                 const columns = document.querySelectorAll('.kanban-column');
@@ -149,46 +121,51 @@
                         group: 'kanban',
                         animation: 150,
                         ghostClass: 'sortable-ghost',
-                        // Menambahkan handle untuk drag-and-drop
-                        // Ini akan mencari elemen dengan kelas .drag-handle di dalam setiap item
-                        handle: '.drag-handle', 
-                        onEnd: function (evt) {
+                        onEnd: async function (evt) {
                             const taskEl = evt.item;
-                            const fromColumn = evt.from;
+                            const fromColumnEl = evt.from;
+                            const toColumnEl = evt.to;
                             const taskId = taskEl.dataset.taskId;
-                            const newStatus = evt.to.dataset.status;
-                            
+                            const newStatus = toColumnEl.dataset.status;
+
+                            // Tampilkan efek visual bahwa sedang diproses
                             taskEl.style.opacity = '0.5';
 
-                            fetch(`{{ url('/tasks') }}/${taskId}/update-status`, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-                                body: JSON.stringify({ status: newStatus })
-                            })
-                            .then(response => {
-                                if (!response.ok) { return response.json().then(err => Promise.reject(err)); }
-                                return response.json();
-                            })
-                            .then(data => {
+                            try {
+                                const url = `{{ route('tasks.update-status', '') }}/${taskId}`;
+                                const response = await axios.patch(url, {
+                                    status: newStatus
+                                });
+
+                                // Jika berhasil, kembalikan opasitas dan tampilkan notifikasi sukses
                                 taskEl.style.opacity = '1';
-                                showNotification('success', 'Status diperbarui!');
-                                // Opsional: Perbarui teks counter di header kolom
-                                const newColumnCountSpan = evt.to.closest('.flex-col').querySelector('span');
-                                const oldColumnCountSpan = evt.from.closest('.flex-col').querySelector('span');
-                                if(newColumnCountSpan) {
-                                    newColumnCountSpan.textContent = parseInt(newColumnCountSpan.textContent) + 1;
+                                showNotification('success', 'Status Diperbarui', response.data.message);
+
+                                // Update counter di header kolom
+                                const newCountSpan = toColumnEl.parentElement.querySelector('.badge-count');
+                                const oldCountSpan = fromColumnEl.parentElement.querySelector('.badge-count');
+                                if (newCountSpan && oldCountSpan) {
+                                    newCountSpan.textContent = parseInt(newCountSpan.textContent) + 1;
+                                    oldCountSpan.textContent = parseInt(oldCountSpan.textContent) - 1;
                                 }
-                                if(oldColumnCountSpan) {
-                                    oldColumnCountSpan.textContent = parseInt(oldColumnCountSpan.textContent) - 1;
-                                }
-                            })
-                            .catch(error => {
-                                console.error('Gagal memindahkan kartu:', error);
-                                // Kembalikan kartu ke posisi semula secara visual jika ada error
-                                fromColumn.insertBefore(taskEl, evt.from.children[evt.oldDraggableIndex]);
+
+                            } catch (error) {
+                                // Jika gagal, kembalikan kartu ke posisi semula
+                                fromColumnEl.insertBefore(taskEl, evt.from.children[evt.oldDraggableIndex]);
                                 taskEl.style.opacity = '1';
-                                showNotification('error', 'Gagal Memindahkan', error.message || 'Terjadi kesalahan server.');
-                            });
+
+                                // Tampilkan pesan error yang lebih detail
+                                let errorMessage = 'Terjadi kesalahan tidak diketahui.';
+                                if (error.response && error.response.data && error.response.data.message) {
+                                    // Error dari validasi atau pesan kustom Laravel
+                                    errorMessage = error.response.data.message;
+                                } else if (error.message) {
+                                    // Error jaringan atau lainnya
+                                    errorMessage = error.message;
+                                }
+                                console.error('Axios Error:', error.response || error);
+                                showNotification('error', 'Gagal Memindahkan Kartu', errorMessage);
+                            }
                         }
                     });
                 });

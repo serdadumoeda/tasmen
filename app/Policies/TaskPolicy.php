@@ -44,39 +44,33 @@ class TaskPolicy
      */
     public function update(User $user, Task $task): bool
     {
-        // Superadmin bisa mengupdate apapun.
+        // Superadmin can update anything.
         if ($user->isSuperAdmin()) {
             return true;
         }
 
-        // PERBAIKAN UTAMA: Pastikan relasi diload sebelum digunakan.
-        // Sebaiknya ini sudah dilakukan di Controller, tapi kita lakukan di sini juga
-        // untuk memastikan keamanan.
-        $task->loadMissing('project', 'assignees');
-
-        // Pengguna yang ditugaskan pada tugas dapat mengupdate-nya.
-        if (optional($task->assignees)->contains($user)) {
+        // The person assigned to the task can update it.
+        if ($task->assignees->contains($user)) {
             return true;
         }
 
-        // Jika tugas adalah bagian dari proyek, periksa izin level proyek.
+        // If the task is part of a project, check project-level permissions.
         if ($project = $task->project) {
-            // Pemilik proyek (owner) bisa mengupdate semua tugas di proyeknya.
+            // The project owner can update all tasks in their project.
             if ($user->id === $project->owner_id) {
                 return true;
             }
-            // Pimpinan proyek (leader) bisa mengupdate semua tugas di proyeknya.
+            // The project leader can update all tasks in their project.
             if ($user->id === $project->leader_id) {
                 return true;
             }
-            // Manajer dapat mengupdate tugas di proyek yang dimiliki oleh bawahannya.
-            // Memastikan relasi owner dan isSubordinateOf ada sebelum digunakan.
-            if ($user->isTopLevelManager() && optional($project->owner)->isSubordinateOf($user)) {
+            // A manager can update tasks in a project owned by their subordinate.
+            if ($user->isTopLevelManager() && $project->owner && $project->owner->isSubordinateOf($user)) {
                 return true;
             }
         }
 
-        // Untuk tugas ad-hoc (tanpa proyek), manajer dapat mengupdate tugas yang ditugaskan kepada bawahannya.
+        // For ad-hoc tasks (no project), a manager can update tasks assigned to their subordinates.
         if (!$task->project_id && $user->isManager()) {
             foreach ($task->assignees as $assignee) {
                 if ($assignee->isSubordinateOf($user)) {
@@ -87,7 +81,6 @@ class TaskPolicy
 
         return false;
     }
-
 
     /**
      * Tentukan apakah pengguna bisa menyetujui/menolak tugas.
