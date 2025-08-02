@@ -13,8 +13,8 @@
         </label>
         <select name="level" id="level" class="mt-1 block w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" required>
             <option value="">-- Pilih Level --</option>
-            @foreach(['Eselon I', 'Eselon II', 'Koordinator', 'Sub Koordinator'] as $levelOption)
-                <option value="{{ $levelOption }}" @if(old('level', $unit->level ?? '') == $levelOption) selected @endif>{{ $levelOption }}</option>
+            @foreach(\App\Models\Unit::LEVELS as $levelData)
+                <option value="{{ $levelData['name'] }}" @selected(old('level', $unit->level ?? '') == $levelData['name'])>{{ $levelData['name'] }}</option>
             @endforeach
         </select>
         @error('level') <p class="text-sm text-red-600 mt-2">{{ $message }}</p> @enderror

@@ -16,7 +16,14 @@ class Unit extends Model
     public const LEVEL_ESELON_II = 'Eselon II';
     public const LEVEL_KOORDINATOR = 'Koordinator';
     public const LEVEL_SUB_KOORDINATOR = 'Sub Koordinator';
-    public const LEVEL_STAF = 'Staf';
+    public const LEVEL_STAF = 'Staf'; // Note: This is a user role, not a unit level in the migration
+
+    public const LEVELS = [
+        ['name' => self::LEVEL_ESELON_I],
+        ['name' => self::LEVEL_ESELON_II],
+        ['name' => self::LEVEL_KOORDINATOR],
+        ['name' => self::LEVEL_SUB_KOORDINATOR],
+    ];
 
     protected $fillable = [
         'name',

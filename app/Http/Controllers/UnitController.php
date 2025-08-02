@@ -44,7 +44,7 @@ class UnitController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:units,name',
-            'level' => ['required', Rule::in(config('app.unit_levels'))],
+            'level' => ['required', Rule::in(array_column(\App\Models\Unit::LEVELS, 'name'))],
             'parent_unit_id' => 'nullable|exists:units,id',
         ]);
 
@@ -82,7 +82,7 @@ class UnitController extends Controller
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255', Rule::unique('units')->ignore($unit->id)],
-            'level' => ['required', Rule::in(config('app.unit_levels'))],
+            'level' => ['required', Rule::in(array_column(\App\Models\Unit::LEVELS, 'name'))],
             'parent_unit_id' => 'nullable|exists:units,id',
         ]);
 
