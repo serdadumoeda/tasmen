@@ -27,7 +27,7 @@ class SpecialAssignmentSeeder extends Seeder
 
         for ($i = 0; $i < 20; $i++) {
             $assignment = SpecialAssignment::create([
-                'title' => 'SK ' . $faker->catchPhrase,
+                'title' => 'SK ' . $faker->sentence(3),
                 'description' => $faker->realText(200),
                 'assignor_id' => $managers->random()->id,
                 'start_date' => $faker->dateTimeBetween('-1 month', '+1 month'),
