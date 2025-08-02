@@ -26,6 +26,15 @@ class User extends Authenticatable
     public const ROLE_SUB_KOORDINATOR = 'Sub Koordinator';
     public const ROLE_STAF = 'Staf';
 
+    public const ROLES = [
+        ['name' => self::ROLE_SUPERADMIN],
+        ['name' => self::ROLE_ESELON_I],
+        ['name' => self::ROLE_ESELON_II],
+        ['name' => self::ROLE_KOORDINATOR],
+        ['name' => self::ROLE_SUB_KOORDINATOR],
+        ['name' => self::ROLE_STAF],
+    ];
+
     public const STATUS_ACTIVE = 'active';
     public const STATUS_SUSPENDED = 'suspended';
 

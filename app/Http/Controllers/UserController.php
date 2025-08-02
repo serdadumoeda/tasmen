@@ -101,8 +101,8 @@ class UserController extends Controller
     public function create()
     {
         $this->authorize('create', User::class);
-        $potentialParents = User::with('unit')->where('role', '!=', User::ROLE_STAF)->orderBy('name')->get();
-        return view('users.create', compact('potentialParents'));
+        $units = Unit::orderBy('name')->get();
+        return view('users.create', compact('units'));
     }
 
     public function store(Request $request)
@@ -111,61 +111,27 @@ class UserController extends Controller
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'unit_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'role' => ['required', 'in:'.implode(',', [User::ROLE_SUPERADMIN, User::ROLE_ESELON_I, User::ROLE_ESELON_II, User::ROLE_KOORDINATOR, User::ROLE_SUB_KOORDINATOR, User::ROLE_STAF])],
+            'role' => ['required', Rule::in(array_column(User::ROLES, 'name'))],
             'status' => ['required', 'in:active,suspended'],
-            'parent_user_id' => ['nullable', 'required_if:role,'.User::ROLE_ESELON_II.','.User::ROLE_KOORDINATOR.','.User::ROLE_SUB_KOORDINATOR.','.User::ROLE_STAF, 'exists:users,id'],
+            'unit_id' => ['required', 'exists:units,id'],
         ]);
 
-        $role = $validated['role'];
-        $parentUserId = $validated['parent_user_id'] ?? null;
-        $parentUser = $parentUserId ? User::find($parentUserId) : null;
+        $userData = $validated;
+        $userData['password'] = Hash::make($validated['password']);
 
-        if ($parentUser) {
-            if (!$parentUser->unit) {
-                return back()->with('error', "Atasan yang dipilih tidak memiliki unit kerja yang valid.")->withInput();
-            }
-            if (isset($this->VALID_PARENT_ROLES[$role]) && !in_array($parentUser->unit->level, $this->VALID_PARENT_ROLES[$role])) {
-                $validRoles = implode(', ', $this->VALID_PARENT_ROLES[$role]);
-                return back()->with('error', "Atasan untuk role '{$role}' harus memiliki unit dengan level: {$validRoles}.")->withInput();
-            }
-        }
+        User::create($userData);
 
-        DB::transaction(function () use ($validated, $role, $parentUser, $parentUserId) {
-            $parentUnitId = ($parentUser && $parentUser->unit_id) ? $parentUser->unit_id : null;
-
-            $unit = Unit::firstOrCreate(
-                ['name' => $validated['unit_name']],
-                [
-                    'level' => $role,
-                    'parent_unit_id' => $parentUnitId,
-                ]
-            );
-
-            User::create([
-                'name' => $validated['name'],
-                'email' => $validated['email'],
-                'password' => Hash::make($validated['password']),
-                'role' => $role,
-                'unit_id' => $unit->id,
-                'status' => $validated['status'],
-                'parent_user_id' => $parentUserId,
-            ]);
-        });
-
-        return redirect()->route('users.index')->with('success', 'User berhasil dibuat dengan unit kerja baru.');
+        return redirect()->route('users.index')->with('success', 'User berhasil dibuat.');
     }
     
     public function edit(User $user)
     {
         $this->authorize('update', $user);
-        $potentialParents = User::with('unit')->where('role', '!=', User::ROLE_STAF)
-                                 ->where('id', '!=', $user->id)
-                                 ->orderBy('name')->get();
+        $units = Unit::orderBy('name')->get();
         
-        return view('users.edit', compact('user', 'potentialParents'));
+        return view('users.edit', compact('user', 'units'));
     }
 
     public function update(Request $request, User $user)
@@ -174,53 +140,21 @@ class UserController extends Controller
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'unit_name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email,'.$user->id],
-            'role' => ['required', 'in:'.implode(',', [User::ROLE_SUPERADMIN, User::ROLE_ESELON_I, User::ROLE_ESELON_II, User::ROLE_KOORDINATOR, User::ROLE_SUB_KOORDINATOR, User::ROLE_STAF])],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
+            'role' => ['required', Rule::in(array_column(User::ROLES, 'name'))],
             'status' => ['required', 'in:active,suspended'],
+            'unit_id' => ['required', 'exists:units,id'],
             'password' => ['nullable', 'confirmed', Rules\Password::defaults()],
-            'parent_user_id' => ['nullable', 'required_if:role,'.User::ROLE_ESELON_II.','.User::ROLE_KOORDINATOR.','.User::ROLE_SUB_KOORDINATOR.','.User::ROLE_STAF, 'exists:users,id'],
         ]);
 
-        DB::transaction(function() use ($validated, $request, $user){
-            $role = $validated['role'];
-            $parentUserId = $validated['parent_user_id'] ?? null;
-            $parentUser = $parentUserId ? User::find($parentUserId) : null;
+        $userData = $validated;
+        if ($request->filled('password')) {
+            $userData['password'] = Hash::make($validated['password']);
+        } else {
+            unset($userData['password']);
+        }
 
-            if ($parentUser) {
-                if (!$parentUser->unit) {
-                    throw \Illuminate\Validation\ValidationException::withMessages(['parent_user_id' => "Atasan yang dipilih tidak memiliki unit kerja yang valid."]);
-                }
-                if (isset($this->VALID_PARENT_ROLES[$role]) && !in_array($parentUser->unit->level, $this->VALID_PARENT_ROLES[$role])) {
-                    $validRoles = implode(', ', $this->VALID_PARENT_ROLES[$role]);
-                    throw \Illuminate\Validation\ValidationException::withMessages(['parent_user_id' => "Atasan untuk role '{$role}' harus memiliki unit dengan level: {$validRoles}."]);
-                }
-            }
-
-            $user->name = $validated['name'];
-            $user->email = $validated['email'];
-            $user->role = $role;
-            $user->status = $validated['status'];
-            $user->parent_user_id = $parentUserId;
-
-            if ($request->filled('password')) {
-                $user->password = Hash::make($validated['password']);
-            }
-
-            if ($user->unit) {
-                $user->unit->name = $validated['unit_name'];
-                $user->unit->level = $role;
-
-                $newParentUnitId = ($parentUser) ? $parentUser->unit_id : null;
-
-                if ($newParentUnitId !== $user->unit_id) {
-                    $user->unit->parent_unit_id = $newParentUnitId;
-                }
-                $user->unit->save();
-            }
-
-            $user->save();
-        });
+        $user->update($userData);
 
         return redirect()->route('users.index')->with('success', 'User berhasil diperbarui.');
     }

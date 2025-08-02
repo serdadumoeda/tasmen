@@ -28,14 +28,6 @@
         </div>
 
         <div class="mb-6"> {{-- Consistent spacing --}}
-            <label for="unit_name" class="block font-semibold text-sm text-gray-700 mb-1">
-                <i class="fas fa-building mr-2 text-gray-500"></i> Nama Jabatan / Unit Kerja <span class="text-red-500">*</span>
-            </label>
-            <input id="unit_name" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" type="text" name="unit_name" value="{{ old('unit_name', $user->unit->name ?? '') }}" required />
-            @error('unit_name') <p class="text-sm text-red-600 mt-2">{{ $message }}</p> @enderror
-        </div>
-
-        <div class="mb-6"> {{-- Consistent spacing --}}
             <label for="email" class="block font-semibold text-sm text-gray-700 mb-1">
                 <i class="fas fa-envelope mr-2 text-gray-500"></i> Email <span class="text-red-500">*</span>
             </label>
@@ -66,31 +58,28 @@
             @error('role') <p class="text-sm text-red-600 mt-2">{{ $message }}</p> @enderror
         </div>
 
-        <div class="mb-6" id="parent-user-container" style="display: none;"> {{-- Consistent spacing --}}
-            <label for="parent_user_id" class="block font-semibold text-sm text-gray-700 mb-1">
-                <i class="fas fa-sitemap mr-2 text-gray-500"></i> Atasan Langsung
+        <div class="mb-6">
+            <label for="unit_id" class="block font-semibold text-sm text-gray-700 mb-1">
+                <i class="fas fa-building-user mr-2 text-gray-500"></i> Unit Kerja <span class="text-red-500">*</span>
             </label>
-            <select name="parent_user_id" id="parent_user_id" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150">
-                <option value="">-- Pilih Atasan Langsung --</option>
-                @if(isset($potentialParents))
-                    @foreach($potentialParents as $parent)
-                        @if($parent->unit) {{-- Hanya tampilkan user yang punya unit --}}
-                            <option value="{{ $parent->id }}" @selected(old('parent_user_id', $user->parent_user_id ?? '') == $parent->id)> {{-- Changed $user->unit->parentUnit->user->id ?? '' to $user->parent_user_id ?? '' --}}
-                                {{ $parent->unit->name }} ({{ $parent->name }})
-                            </option>
-                        @endif
-                    @endforeach
-                @endif
+            <select name="unit_id" id="unit_id" required class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150">
+                <option value="">-- Pilih Unit Kerja --</option>
+                @foreach($units as $unitOption)
+                    <option value="{{ $unitOption->id }}" @selected(old('unit_id', $user->unit_id ?? '') == $unitOption->id)>
+                        {{ $unitOption->name }}
+                    </option>
+                @endforeach
             </select>
-            @error('parent_user_id') <p class="text-sm text-red-600 mt-2">{{ $message }}</p> @enderror
+            @error('unit_id') <p class="text-sm text-red-600 mt-2">{{ $message }}</p> @enderror
         </div>
     </div>
 
     {{-- Kolom Kanan --}}
     <div>
-        <div class="mb-6"> {{-- Consistent spacing --}}
+        <div class="mb-6">
             <label for="password" class="block font-semibold text-sm text-gray-700 mb-1">
-                <i class="fas fa-lock mr-2 text-gray-500"></i> Password <span class="text-red-500">*</span>
+                <i class="fas fa-lock mr-2 text-gray-500"></i> Password
+                @if(!isset($user))<span class="text-red-500">*</span>@endif
             </label>
             <input id="password" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" type="password" name="password" @if(!isset($user)) required @endif />
             @error('password') <p class="text-sm text-red-600 mt-2">{{ $message }}</p> @enderror
@@ -99,15 +88,15 @@
             @endif
         </div>
 
-        <div class="mb-6"> {{-- Consistent spacing --}}
+        <div class="mb-6">
             <label for="password_confirmation" class="block font-semibold text-sm text-gray-700 mb-1">
-                <i class="fas fa-lock-open mr-2 text-gray-500"></i> Konfirmasi Password <span class="text-red-500">*</span>
+                <i class="fas fa-lock-open mr-2 text-gray-500"></i> Konfirmasi Password
             </label>
             <input id="password_confirmation" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" type="password" name="password_confirmation" />
             @error('password_confirmation') <p class="text-sm text-red-600 mt-2">{{ $message }}</p> @enderror
         </div>
 
-        <div class="mb-6"> {{-- Consistent spacing --}}
+        <div class="mb-6">
             <label for="status" class="block font-semibold text-sm text-gray-700 mb-1">
                 <i class="fas fa-circle-dot mr-2 text-gray-500"></i> Status <span class="text-red-500">*</span>
             </label>
@@ -121,35 +110,5 @@
 </div>
 
 @push('scripts')
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const roleSelect = document.getElementById('role');
-    const parentUserContainer = document.getElementById('parent-user-container');
-    const parentUserSelect = document.getElementById('parent_user_id');
-
-    function toggleParentUserDropdown() {
-        const selectedRole = roleSelect.value;
-        const rolesThatNeedParent = [
-            '{{ App\Models\User::ROLE_ESELON_II }}',
-            '{{ App\Models\User::ROLE_KOORDINATOR }}',
-            '{{ App\Models\User::ROLE_SUB_KOORDINATOR }}',
-            '{{ App\Models\User::ROLE_STAF }}'
-        ];
-
-        if (rolesThatNeedParent.includes(selectedRole)) {
-            parentUserContainer.style.display = 'block';
-            parentUserSelect.required = true;
-        } else {
-            parentUserContainer.style.display = 'none';
-            parentUserSelect.required = false;
-            parentUserSelect.value = ''; // Clear selection if not needed
-        }
-    }
-
-    roleSelect.addEventListener('change', toggleParentUserDropdown);
-
-    // Initial check on page load
-    toggleParentUserDropdown();
-});
-</script>
+{{-- No longer needed --}}
 @endpush
