@@ -132,7 +132,7 @@
                             taskEl.style.opacity = '0.5';
 
                             try {
-                                const url = `{{ route('tasks.update-status', '') }}/${taskId}`;
+                                const url = `/tasks/${taskId}/update-status`;
                                 const response = await axios.patch(url, {
                                     status: newStatus
                                 });
