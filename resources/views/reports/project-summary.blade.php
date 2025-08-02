@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-    <title>Laporan Proyek: {{ $project->name }}</title>
+    <title>Laporan Kegiatan: {{ $project->name }}</title>
     {{-- Menggunakan Font Awesome untuk ikon --}}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
@@ -144,12 +144,12 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>Laporan Status Proyek</h1>
+            <h1>Laporan Status Kegiatan</h1>
             <p>Tanggal Dibuat: {{ now()->format('d F Y, H:i') }}</p>
         </div>
 
         <div class="section">
-            <div class="section-title"><i class="fas fa-folder-open"></i> Informasi Proyek</div>
+            <div class="section-title"><i class="fas fa-folder-open"></i> Informasi Kegiatan</div>
             <h2 style="font-size: 20px; color: #1f2937; margin-bottom: 10px;">{{ $project->name }}</h2>
             <p class="project-description">{{ $project->description }}</p>
             

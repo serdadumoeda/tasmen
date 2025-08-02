@@ -193,7 +193,7 @@
                             <div class="flex items-center justify-between mt-8 pt-6 border-t border-gray-200"> {{-- Border dan padding atas --}}
                                 @if ($task->project_id)
                                     <a href="{{ route('projects.show', $task->project) }}" class="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 font-medium transition-colors duration-200">
-                                        <i class="fas fa-arrow-left mr-2"></i> Kembali ke Proyek
+                                        <i class="fas fa-arrow-left mr-2"></i> Kembali ke Kegiatan
                                     </a>
                                 @else
                                     <a href="{{ route('adhoc-tasks.index') }}" class="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 font-medium transition-colors duration-200">

@@ -53,7 +53,7 @@
                                             @endphp
                                             <ul class="space-y-1"> {{-- Spasi antar list item --}}
                                                 <li class="flex items-center"><i class="fas fa-hourglass-start mr-2 text-blue-500"></i> <strong>Total: {{ $totalHours }} Jam</strong></li>
-                                                <li class="flex items-center text-gray-600"><i class="fas fa-folder-open mr-2 text-gray-400"></i> Proyek: {{ $user->total_project_hours }} Jam</li>
+                                                <li class="flex items-center text-gray-600"><i class="fas fa-folder-open mr-2 text-gray-400"></i> Kegiatan: {{ $user->total_project_hours }} Jam</li>
                                                 <li class="flex items-center text-gray-600"><i class="fas fa-clipboard-list mr-2 text-gray-400"></i> Harian: {{ $user->total_ad_hoc_hours }} Jam</li>
                                                 <li class="flex items-center text-gray-600"><i class="fas fa-file-signature mr-2 text-gray-400"></i> SK Aktif: {{ $user->active_sk_count }}</li>
                                             </ul>

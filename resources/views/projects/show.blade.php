@@ -51,10 +51,10 @@
         <div class="flex flex-col sm:flex-row justify-between items-start gap-4">
             <div>
                 <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                    <a href="{{ route('dashboard') }}" class="text-gray-400 hover:text-gray-600 transition-colors duration-200">Proyek</a> / 
+                    <a href="{{ route('dashboard') }}" class="text-gray-400 hover:text-gray-600 transition-colors duration-200">Kegiatan</a> /
                     <span class="font-bold">{{ $project->name }}</span>
                 </h2>
-                <p class="text-sm text-gray-500 mt-1">Detail dan progres proyek.</p>
+                <p class="text-sm text-gray-500 mt-1">Detail dan progres kegiatan.</p>
             </div>
             <div class="flex items-center justify-start sm:justify-end flex-wrap gap-2">
                 <x-dropdown align="right" width="60">
@@ -91,7 +91,7 @@
                         <i class="fas fa-wallet mr-2"></i> Anggaran
                     </a>
                     <a href="{{ route('projects.edit', $project) }}" class="inline-flex items-center bg-amber-500 text-white font-bold text-sm px-4 py-2 rounded-lg shadow-md hover:bg-amber-600 transform hover:scale-105 transition ease-in-out duration-150">
-                        <i class="fas fa-edit mr-2"></i> Edit Proyek
+                        <i class="fas fa-edit mr-2"></i> Edit Kegiatan
                     </a>
                 @endcan
             </div>
@@ -102,7 +102,7 @@
         <div class="py-12 bg-gray-50"> {{-- Pastikan latar belakang halaman konsisten --}}
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-8">
                 <div>
-                    <h2 class="text-2xl font-semibold text-gray-700 mb-4">Ringkasan Proyek</h2>
+                    <h2 class="text-2xl font-semibold text-gray-700 mb-4">Ringkasan Kegiatan</h2>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"> {{-- Gap lebih besar --}}
                         <div class="bg-white p-6 rounded-xl shadow-xl text-center transform hover:-translate-y-1 transition-all duration-300 ease-in-out border-b-4 border-blue-500 hover:shadow-2xl"> {{-- Kartu KPI modern --}}
                             <div class="text-blue-600 mb-3 drop-shadow-md"><i class="fas fa-list-check fa-4x"></i></div>
@@ -142,7 +142,7 @@
                                 @forelse($project->tasks()->orderBy('deadline', 'asc')->get() as $task)
                                     <x-task-card :task="$task"/>
                                 @empty
-                                    <p class="text-gray-500 text-center py-8">Belum ada tugas di proyek ini.</p>
+                                    <p class="text-gray-500 text-center py-8">Belum ada tugas di kegiatan ini.</p>
                                 @endforelse
                             </div>
                         </div>
@@ -156,7 +156,7 @@
                                         </div>
                                     </div>
                                     <div class="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300"> {{-- Container tim proyek lebih menonjol --}}
-                                        <h3 class="text-lg font-bold mb-3 text-gray-800 flex items-center"><i class="fas fa-people-group mr-2 text-teal-600"></i> Tim Proyek</h3>
+                                        <h3 class="text-lg font-bold mb-3 text-gray-800 flex items-center"><i class="fas fa-people-group mr-2 text-teal-600"></i> Tim Kegiatan</h3>
                                         <ul class="space-y-2">
                                             <li class="flex items-center space-x-2 text-gray-700">
                                                 <i class="fas fa-user-shield text-gray-500"></i> <span class="font-bold">Ketua Tim:</span><span>{{ optional($project->leader)->name ?? 'N/A' }}</span>
@@ -202,7 +202,7 @@
                                                     </div>
                                                 </div>
                                             @empty
-                                                <p class="text-sm text-gray-500 p-4 text-center bg-gray-50 rounded-lg">Tidak ada riwayat permintaan peminjaman untuk proyek ini.</p>
+                                                <p class="text-sm text-gray-500 p-4 text-center bg-gray-50 rounded-lg">Tidak ada riwayat permintaan peminjaman untuk kegiatan ini.</p>
                                             @endforelse
                                         </div>
                                     </div>
@@ -211,7 +211,7 @@
                                 </div>
                                 <div class="space-y-6">
                                     <div class="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300"> {{-- Container detail proyek lebih menonjol --}}
-                                        <h3 class="text-lg font-bold mb-3 text-gray-800 flex items-center"><i class="fas fa-info-circle mr-2 text-blue-600"></i> Detail Proyek</h3>
+                                        <h3 class="text-lg font-bold mb-3 text-gray-800 flex items-center"><i class="fas fa-info-circle mr-2 text-blue-600"></i> Detail Kegiatan</h3>
                                         <p class="text-gray-700 text-sm leading-relaxed mb-4">{{ $project->description }}</p>
                                         <div class="text-sm grid grid-cols-2 gap-y-3 text-gray-600 border-t pt-4"> {{-- Grid untuk detail, border-top --}}
                                             <p class="font-medium flex items-center"><i class="fas fa-user-tie mr-2 text-gray-400"></i> Dibuat Oleh:</p><p class="font-semibold text-gray-800">{{ $project->owner->name ?? 'N/A' }}</p>
@@ -229,8 +229,8 @@
                                                 <div>
                                                     <span class="font-semibold text-gray-800">{{ optional($activity->user)->name ?? 'User Telah Dihapus' }}</span>
                                                     @switch($activity->description)
-                                                        @case('created_project') membuat proyek ini @break
-                                                        @case('updated_project') memperbarui proyek ini @break
+                                                        @case('created_project') membuat kegiatan ini @break
+                                                        @case('updated_project') memperbarui kegiatan ini @break
                                                         @case('created_task') membuat tugas "<span class="font-medium italic">{{ optional($activity->subject)->title ?? '...' }}</span>" @break
                                                         @case('updated_task') memperbarui tugas "<span class="font-medium italic">{{ optional($activity->subject)->title ?? '...' }}</span>" @break
                                                         @case('deleted_task') menghapus sebuah tugas @break

@@ -37,7 +37,7 @@
                                                 <span class="text-purple-700">{{ $request->requestedUser?->name ?? '[Pengguna Dihapus]' }}</span>
                                             </p>
                                             <p class="text-sm text-gray-600 mt-1 flex items-center">
-                                                <i class="fas fa-folder-open mr-2 text-gray-500"></i> Untuk proyek: <span class="font-medium text-gray-800">{{ $request->project?->name ?? '[Proyek Dihapus]' }}</span>
+                                                <i class="fas fa-folder-open mr-2 text-gray-500"></i> Untuk kegiatan: <span class="font-medium text-gray-800">{{ $request->project?->name ?? '[Kegiatan Dihapus]' }}</span>
                                             </p>
                                             <p class="text-xs text-gray-500 mt-1 flex items-center">
                                                 <i class="fas fa-clock mr-2 text-gray-400"></i> Diajukan: {{ $request->created_at->diffForHumans() }}
@@ -101,7 +101,7 @@
                                 <tr>
                                     <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Peminta</th>
                                     <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Anggota Diminta</th>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Proyek</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Kegiatan</th>
                                     <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Status & Alasan</th>
                                     <th class="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Aksi</th>
                                 </tr>
@@ -116,7 +116,7 @@
                                             <i class="fas fa-user-check mr-2 text-gray-400"></i> {{ $request->requestedUser?->name }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 flex items-center">
-                                            <i class="fas fa-folder mr-2 text-gray-400"></i> {{ $request->project?->name ?? '[Proyek Dihapus]' }}
+                                            <i class="fas fa-folder mr-2 text-gray-400"></i> {{ $request->project?->name ?? '[Kegiatan Dihapus]' }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             @if ($request->status == 'approved')
@@ -162,7 +162,7 @@
                              <thead class="bg-gray-100">
                                 <tr>
                                     <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Anggota Diminta</th>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Proyek</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Kegiatan</th>
                                     <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Approver</th>
                                     <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Status & Alasan</th>
                                     <th class="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Aksi</th>
@@ -175,7 +175,7 @@
                                             <i class="fas fa-user-tag mr-2 text-gray-400"></i> {{ $request->requestedUser?->name }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 flex items-center">
-                                            <i class="fas fa-folder mr-2 text-gray-400"></i> {{ $request->project?->name ?? '[Proyek Dihapus]' }}
+                                            <i class="fas fa-folder mr-2 text-gray-400"></i> {{ $request->project?->name ?? '[Kegiatan Dihapus]' }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 flex items-center">
                                             <i class="fas fa-user-shield mr-2 text-gray-400"></i> {{ $request->approver?->name }}

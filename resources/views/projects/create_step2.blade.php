@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Buat Proyek Baru (Langkah 2 dari 2): Bentuk Tim') }}
+            {{ __('Buat Kegiatan Baru (Langkah 2 dari 2): Bentuk Tim') }}
         </h2>
     </x-slot>
 
@@ -32,17 +32,17 @@
                         @endif
 
                         <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
-                            <i class="fas fa-project-diagram mr-2 text-indigo-600"></i> Proyek: {{ $project->name }}
+                            <i class="fas fa-project-diagram mr-2 text-indigo-600"></i> Kegiatan: {{ $project->name }}
                         </h3>
-                        <p class="text-sm text-gray-600 mb-6">Pilih Pimpinan Proyek dan Anggota Tim. Anda sekarang dapat mencari anggota dari luar hierarki Anda.</p>
+                        <p class="text-sm text-gray-600 mb-6">Pilih Pimpinan Kegiatan dan Anggota Tim. Anda sekarang dapat mencari anggota dari luar hierarki Anda.</p>
                         
                         <div class="space-y-6"> {{-- Group form elements for consistent spacing --}}
                             <div>
                                 <label for="leader_id" class="block font-semibold text-sm text-gray-700 mb-1">
-                                    <i class="fas fa-user-tie mr-2 text-gray-500"></i> Pimpinan Proyek <span class="text-red-500">*</span>
+                                    <i class="fas fa-user-tie mr-2 text-gray-500"></i> Pimpinan Kegiatan <span class="text-red-500">*</span>
                                 </label>
                                 <select name="leader_id" id="leader_id" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" required>
-                                    <option value="">-- Pilih Pimpinan Proyek --</option>
+                                    <option value="">-- Pilih Pimpinan Kegiatan --</option>
                                     @foreach ($potentialMembers as $member)
                                         <option value="{{ $member->id }}" @selected(old('leader_id', $project->leader_id ?? '') == $member->id)>
                                             {{ $member->name }} ({{ $member->role }})

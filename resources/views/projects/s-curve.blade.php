@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            <a href="{{ route('projects.show', $project) }}" class="text-gray-400 hover:text-gray-600 transition-colors duration-200">Proyek: {{ $project->name }}</a> / 
+            <a href="{{ route('projects.show', $project) }}" class="text-gray-400 hover:text-gray-600 transition-colors duration-200">Kegiatan: {{ $project->name }}</a> /
             <span class="font-bold">{{ __('Kurva S') }}</span>
         </h2>
     </x-slot>
@@ -11,7 +11,7 @@
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg"> {{-- Shadow dan rounded-lg konsisten --}}
                 <div class="p-6 text-gray-900">
                     <a href="{{ route('projects.show', $project) }}" class="inline-flex items-center text-indigo-600 hover:text-indigo-800 font-medium mb-4 transition-colors duration-200">
-                        <i class="fas fa-arrow-left mr-2"></i> Kembali ke Detail Proyek
+                        <i class="fas fa-arrow-left mr-2"></i> Kembali ke Detail Kegiatan
                     </a>
                     
                     <div class="bg-gray-50 p-5 rounded-lg border border-gray-200 shadow-sm mb-6 flex items-center justify-between flex-wrap gap-3"> {{-- Info total jam lebih menonjol --}}

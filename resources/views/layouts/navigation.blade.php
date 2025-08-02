@@ -45,15 +45,15 @@ if (count($words) >= 2) {
                                     <x-dropdown-link :href="route('adhoc-tasks.index')" :active="request()->routeIs('adhoc-tasks.*')" class="hover:bg-gray-100 transition-colors duration-150">Tugas Harian</x-dropdown-link>
                                     <x-dropdown-link :href="route('special-assignments.index')" :active="request()->routeIs('special-assignments.*')" class="hover:bg-gray-100 transition-colors duration-150">SK Penugasan</x-dropdown-link>
                                     <div class="border-t border-gray-200"></div>
-                                    <div class="block px-4 py-2 text-xs text-gray-400">Akses Cepat Proyek</div>
+                                    <div class="block px-4 py-2 text-xs text-gray-400">Akses Cepat Kegiatan</div>
                                     @forelse ($quickProjects as $project)
                                         <x-dropdown-link :href="route('projects.show', $project)" class="hover:bg-gray-100 transition-colors duration-150">{{ Str::limit($project->name, 30) }}</x-dropdown-link>
                                     @empty
-                                        <div class="px-4 py-2 text-sm text-gray-500">Belum ada proyek.</div>
+                                        <div class="px-4 py-2 text-sm text-gray-500">Belum ada kegiatan.</div>
                                     @endforelse
                                     @can('create', App\Models\Project::class)
                                     <div class="border-t border-gray-200"></div>
-                                    <x-dropdown-link :href="route('projects.create.step1')" class="font-semibold text-blue-600 hover:text-blue-800 hover:bg-gray-100 transition-colors duration-150"><i class="fa-solid fa-plus-circle mr-2"></i>Buat Proyek Baru</x-dropdown-link>
+                                    <x-dropdown-link :href="route('projects.create.step1')" class="font-semibold text-blue-600 hover:text-blue-800 hover:bg-gray-100 transition-colors duration-150"><i class="fa-solid fa-plus-circle mr-2"></i>Buat Kegiatan Baru</x-dropdown-link>
                                     @endcan
                                 </div>
                             </x-slot>

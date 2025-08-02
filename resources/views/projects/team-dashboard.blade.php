@@ -3,10 +3,10 @@
         <div class="flex flex-col sm:flex-row justify-between items-start gap-4">
             <div>
                 <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                    <a href="{{ route('projects.show', $project) }}" class="text-gray-400 hover:text-gray-600 transition-colors duration-200">Proyek: {{ $project->name }}</a> / 
+                    <a href="{{ route('projects.show', $project) }}" class="text-gray-400 hover:text-gray-600 transition-colors duration-200">Kegiatan: {{ $project->name }}</a> /
                     <span class="font-bold">{{ __('Dashboard Tim') }}</span>
                 </h2>
-                <p class="text-sm text-gray-500 mt-1">Ringkasan kinerja tim dalam proyek.</p>
+                <p class="text-sm text-gray-500 mt-1">Ringkasan kinerja tim dalam kegiatan.</p>
             </div>
         </div>
     </x-slot>

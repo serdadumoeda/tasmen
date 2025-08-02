@@ -19,7 +19,7 @@
 <div class="space-y-6"> {{-- Mengubah mb-4 menjadi space-y-6 untuk konsistensi --}}
     <div>
         <label for="name" class="block font-semibold text-sm text-gray-700 mb-1">
-            <i class="fas fa-file-signature mr-2 text-gray-500"></i> Nama Proyek <span class="text-red-500">*</span>
+            <i class="fas fa-file-signature mr-2 text-gray-500"></i> Nama Kegiatan <span class="text-red-500">*</span>
         </label>
         <input type="text" name="name" id="name" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" value="{{ old('name', $project->name ?? '') }}" required>
     </div>
@@ -48,10 +48,10 @@
 
     <div>
         <label for="leader_id" class="block font-semibold text-sm text-gray-700 mb-1">
-            <i class="fas fa-user-tie mr-2 text-gray-500"></i> Pimpinan Proyek <span class="text-red-500">*</span>
+            <i class="fas fa-user-tie mr-2 text-gray-500"></i> Pimpinan Kegiatan <span class="text-red-500">*</span>
         </label>
         <select name="leader_id" id="leader_id" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" required>
-            <option value="">-- Pilih Pimpinan Proyek --</option>
+            <option value="">-- Pilih Pimpinan Kegiatan --</option>
             @foreach ($potentialMembers as $member)
                 <option value="{{ $member->id }}" @selected(old('leader_id', $project->leader_id ?? '') == $member->id)>
                     {{ $member->name }} ({{ $member->role }})
