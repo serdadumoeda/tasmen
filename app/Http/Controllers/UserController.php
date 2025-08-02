@@ -68,19 +68,21 @@ class UserController extends Controller
         
         $loggedInUser = Auth::user();
 
-        if ($loggedInUser->role === User::ROLE_SUPERADMIN) {
-            // Untuk Superadmin, tampilkan seluruh hirarki dengan mengambil user dari unit teratas
-            $users = User::whereHas('unit', function ($query) {
-                $query->whereNull('parent_unit_id');
-            })->with('unit.childrenRecursive.users')->get();
+        if ($loggedInUser->isSuperAdmin()) {
+            // Superadmin melihat seluruh pohon unit dari level teratas.
+            $units = Unit::whereNull('parent_unit_id')
+                         ->with(['users', 'childrenRecursive.users'])
+                         ->orderBy('name')
+                         ->get();
         } else {
-            // Untuk pengguna lain, tampilkan hirarki yang dimulai dari unit mereka sendiri
-            $users = User::where('id', $loggedInUser->id)
-                         ->with('unit.childrenRecursive.users')
+            // Pengguna lain melihat sub-pohon yang dimulai dari unit mereka sendiri.
+            $units = Unit::where('id', $loggedInUser->unit_id)
+                         ->with(['users', 'childrenRecursive.users'])
+                         ->orderBy('name')
                          ->get();
         }
 
-        return view('users.hierarchy', compact('users'));
+        return view('users.hierarchy', compact('units'));
     }
 
     public function modern(Request $request)
