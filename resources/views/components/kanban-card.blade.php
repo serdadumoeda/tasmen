@@ -1,24 +1,17 @@
-@props(['task']) {{-- MENGUBAH 'item' menjadi 'task' --}}
+@props(['task'])
 
 @php
-    // Variabel $item tidak lagi ada, gunakan $task
     $isProject = $task instanceof App\Models\Project;
     $isTask = $task instanceof App\Models\Task;
-
-    // Perhatikan bahwa di konteks kanban-card ini, $task akan selalu berupa instance App\Models\Task.
-    // Logic untuk $isProject mungkin tidak akan pernah terpicu jika komponen ini hanya digunakan untuk tugas.
-    // Namun, kita pertahankan struktur ini sesuai dengan penggunaan sebelumnya.
 
     if ($isProject) {
         $title = $task->name;
         $url = route('projects.show', $task);
         $progress = $task->progress;
-        $assignees = $task->members; // Asumsikan 'members' adalah relasi di model Project
+        $assignees = $task->members;
         $statusColorClass = $task->status_color_class;
     } elseif ($isTask) {
         $title = $task->title;
-        // Pastikan $task->project adalah instance model Project yang dimuat (eager loading di controller)
-        // atau relasi proyek akan di-load secara lazy di sini.
         $url = route('projects.show', $task->project) . '#task-' . $task->id; 
         $progress = $task->progress;
         $assignees = $task->assignees;
@@ -32,16 +25,23 @@
 @endphp
 
 <div class="bg-white rounded-lg shadow-md border-l-4 {{ $statusColorClass }} overflow-hidden transition-all hover:shadow-xl">
-    <a href="{{ $url }}" class="block p-4">
+    <div class="p-4">
         <div class="flex justify-between items-start mb-3">
-            <h4 class="font-bold text-gray-800 pr-2">{{ $title }}</h4>
+            <h4 class="font-bold text-gray-800 pr-2">
+                {{-- Bagian ini menjadi handle untuk drag --}}
+                <span class="drag-handle text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-grip-lines fa-lg mr-2"></i>
+                </span>
+                {{-- Judul tugas adalah link yang terpisah --}}
+                <a href="{{ $url }}" class="hover:underline">{{ $title }}</a>
+            </h4>
             <span class="text-gray-400 hover:text-blue-600 flex-shrink-0" title="Lihat Detail Lengkap">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
             </span>
         </div>
 
         @if($isProject)
-            <p class="text-sm text-gray-600 mb-3">{{ Str::limit($task->description, 100) }}</p> {{-- MENGUBAH $item->description --}}
+            <p class="text-sm text-gray-600 mb-3">{{ Str::limit($task->description, 100) }}</p>
         @endif
 
         <div class="mb-3">
@@ -61,15 +61,15 @@
                 @endforeach
             </div>
 
-            @if($isTask && $task->subTasks->isNotEmpty()) {{-- MENGUBAH $item->subTasks --}}
+            @if($isTask && $task->subTasks->isNotEmpty())
                 <div class="text-xs font-semibold text-gray-500">
-                    Rincian ({{ $task->subTasks->where('is_completed', true)->count() }}/{{ $task->subTasks->count() }}) {{-- MENGUBAH $item->subTasks --}}
+                    Rincian ({{ $task->subTasks->where('is_completed', true)->count() }}/{{ $task->subTasks->count() }})
                 </div>
             @elseif($isProject)
                 <div class="text-xs font-semibold text-gray-500">
-                    {{ $task->tasks_count }} Tugas {{-- MENGUBAH $item->tasks_count --}}
+                    {{ $task->tasks_count }} Tugas
                 </div>
             @endif
         </div>
-    </a>
+    </div>
 </div>

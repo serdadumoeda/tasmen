@@ -32,6 +32,7 @@
             }
             .kanban-column::-webkit-scrollbar { width: 8px; }
             .kanban-column::-webkit-scrollbar-thumb { background-color: #d1d5db; border-radius: 10px; }
+            .drag-handle { cursor: grab; }
         </style>
     </x-slot>
 
@@ -86,9 +87,7 @@
                             {{-- Tambahkan flex flex-col di sini --}}
                             <div id="status-{{ $statusKey }}" data-status="{{ $statusKey }}" class="kanban-column p-4 space-y-4 flex flex-col flex-grow"> {{-- flex-grow agar kolom mengisi sisa ruang --}}
                                 @forelse ($groupedTasks[$statusKey] as $task)
-                                    <div id="task-{{ $task->id }}" data-task-id="{{ $task->id }}" class="task-card cursor-grab active:cursor-grabbing bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 ease-in-out transform hover:scale-[1.01]"> {{-- Styling default untuk card, jika x-kanban-card belum diimplementasikan dengan styling ini --}}
-                                        <x-kanban-card :task="$task"/>
-                                    </div>
+                                    <x-kanban-card :task="$task" id="task-{{ $task->id }}" data-task-id="{{ $task->id }}" class="task-card"/>
                                 @empty
                                     <div class="text-center text-gray-400 py-10 px-4 flex flex-col items-center justify-center min-h-[150px] border-2 border-dashed border-gray-300 rounded-lg"> {{-- Pesan kolom kosong lebih modern --}}
                                         <i class="fas fa-box-open fa-2x text-gray-300 mb-4"></i> {{-- Icon baru --}}
@@ -150,6 +149,9 @@
                         group: 'kanban',
                         animation: 150,
                         ghostClass: 'sortable-ghost',
+                        // Menambahkan handle untuk drag-and-drop
+                        // Ini akan mencari elemen dengan kelas .drag-handle di dalam setiap item
+                        handle: '.drag-handle', 
                         onEnd: function (evt) {
                             const taskEl = evt.item;
                             const fromColumn = evt.from;

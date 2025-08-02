@@ -171,8 +171,7 @@ class TaskController extends Controller
 
     public function updateStatus(Request $request, Task $task)
     {
-        // Eager load relasi yang dibutuhkan oleh TaskPolicy untuk menghindari N+1 query problem
-        // dan memastikan data tersedia saat otorisasi.
+        // PERBAIKAN: Pindahkan eager loading ke atas, SEBELUM otorisasi.
         $task->load('assignees', 'project.owner', 'project.leader');
 
         // Otorisasi, pastikan user yang berhak yang bisa memindahkan kartu.
