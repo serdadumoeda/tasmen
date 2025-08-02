@@ -6,15 +6,15 @@
         </h2>
     </x-slot>
 
-    <div class="py-12 bg-gray-50">
+    <div class="py-12 bg-gray-50"> {{-- Latar belakang konsisten --}}
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
+            <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg"> {{-- Shadow dan rounded-lg konsisten --}}
                 <div class="p-6 text-gray-900">
                     <a href="{{ route('projects.show', $project) }}" class="inline-flex items-center text-indigo-600 hover:text-indigo-800 font-medium mb-4 transition-colors duration-200">
                         <i class="fas fa-arrow-left mr-2"></i> Kembali ke Detail Proyek
                     </a>
                     
-                    <div class="bg-gray-50 p-5 rounded-lg border border-gray-200 shadow-sm mb-6 flex items-center justify-between flex-wrap gap-3">
+                    <div class="bg-gray-50 p-5 rounded-lg border border-gray-200 shadow-sm mb-6 flex items-center justify-between flex-wrap gap-3"> {{-- Info total jam lebih menonjol --}}
                         <p class="text-base text-gray-700 flex items-center">
                             <i class="fas fa-info-circle mr-3 text-blue-500 fa-lg"></i>
                             Grafik ini membandingkan akumulasi jam kerja yang direncanakan (biru) dengan jam kerja aktual yang tercatat (hijau).
@@ -24,7 +24,7 @@
                         </p>
                     </div>
 
-                    <div class="mt-4 bg-white p-5 rounded-lg shadow-lg border border-gray-100" style="min-height: 400px;"> {{-- Tambahkan min-height untuk memastikan chart punya ruang --}}
+                    <div class="mt-4 bg-white p-5 rounded-lg shadow-lg border border-gray-100"> {{-- Container chart lebih menonjol --}}
                         <canvas id="sCurveChart"></canvas>
                     </div>
                 </div>
@@ -39,12 +39,13 @@
             const ctx = document.getElementById('sCurveChart');
             const chartData = @json($chartData);
 
-            // Hancurkan instance chart yang ada sebelum membuat yang baru
+            // Hancurkan instance chart yang ada sebelum membuat yang baru (penting untuk Livewire/Alpine.js atau navigasi SPA)
             const existingChart = Chart.getChart(ctx);
             if (existingChart) {
                 existingChart.destroy();
             }
 
+            // Pesan jika tidak ada data
             if (!chartData || !chartData.labels || chartData.labels.length === 0) {
                 ctx.style.display = 'none';
                 const parentDiv = ctx.parentElement;
@@ -61,9 +62,6 @@
                 if (noDataMessage) noDataMessage.remove();
             }
 
-            let allData = [...(chartData.planned || []), ...(chartData.actual || [])].filter(val => typeof val === 'number' && val !== null);
-            let maxData = allData.length > 0 ? Math.max(...allData) : 10;
-            let suggestedMax = Math.ceil(maxData * 1.25 / 10) * 10; // Nilai maksimum dibulatkan ke kelipatan 10 terdekat
 
             new Chart(ctx, {
                 type: 'line',
@@ -73,10 +71,10 @@
                         {
                             label: 'Rencana Kumulatif (Jam)',
                             data: chartData.planned,
-                            borderColor: 'rgb(99, 102, 241)',
-                            backgroundColor: 'rgba(99, 102, 241, 0.1)',
-                            tension: 0.3,
-                            fill: true,
+                            borderColor: 'rgb(99, 102, 241)', // indigo-500
+                            backgroundColor: 'rgba(99, 102, 241, 0.1)', // Isi area di bawah garis
+                            tension: 0.3, // Membuat garis sedikit melengkung
+                            fill: true, // Mengisi area di bawah garis
                             pointBackgroundColor: 'rgb(99, 102, 241)',
                             pointBorderColor: '#fff',
                             pointHoverBackgroundColor: '#fff',
@@ -87,8 +85,8 @@
                         {
                             label: 'Aktual Kumulatif (Jam)',
                             data: chartData.actual,
-                            borderColor: 'rgb(34, 197, 94)',
-                            backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                            borderColor: 'rgb(34, 197, 94)', // green-500
+                            backgroundColor: 'rgba(34, 197, 94, 0.1)', // Isi area di bawah garis
                             tension: 0.3,
                             fill: true,
                             pointBackgroundColor: 'rgb(34, 197, 94)',
@@ -102,16 +100,16 @@
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: false,
+                    maintainAspectRatio: false, // Penting untuk mengontrol tinggi dengan CSS jika diperlukan
                     plugins: {
                         legend: {
-                            position: 'bottom',
+                            position: 'bottom', // Pindahkan legend ke bawah
                             labels: {
                                 font: {
                                     size: 14,
-                                    family: 'Figtree'
+                                    family: 'Figtree' // Menggunakan font konsisten
                                 },
-                                color: '#374151'
+                                color: '#374151' // Warna teks legend
                             }
                         },
                         title: {
@@ -124,7 +122,7 @@
                             },
                             color: '#374151'
                         },
-                        tooltip: {
+                        tooltip: { // Styling tooltip
                             mode: 'index',
                             intersect: false,
                             callbacks: {
@@ -134,7 +132,7 @@
                                         label += ': ';
                                     }
                                     if (context.parsed.y !== null) {
-                                        label += context.parsed.y + ' Jam';
+                                        label += context.parsed.y + ' Jam'; // Tambahkan 'Jam'
                                     }
                                     return label;
                                 }
@@ -160,9 +158,10 @@
                                 color: '#4b5563'
                             },
                             grid: {
-                                color: '#e5e7eb'
+                                color: '#e5e7eb' // Warna grid horizontal
                             },
-                            suggestedMax: suggestedMax
+                            // Tambahkan suggestedMax untuk skala yang lebih baik
+                            suggestedMax: Math.max(...chartData.planned, ...chartData.actual) * 1.2
                         },
                         x: {
                             title: {
@@ -181,7 +180,7 @@
                                 color: '#4b5563'
                             },
                             grid: {
-                                display: false
+                                display: false // Sembunyikan grid vertikal
                             }
                         }
                     }
