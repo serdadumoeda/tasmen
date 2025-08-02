@@ -51,7 +51,7 @@
             <h5 class="font-semibold text-gray-600 mt-4 mb-2 ml-1">Sub-Unit:</h5>
             <div class="space-y-4">
                 @foreach ($unit->childrenRecursive as $child)
-                    @include('users.partials.unit-hierarchy-row', ['unit' => $child, 'level' => 0]) {{-- level di-reset ke 0 karena margin sudah di-handle oleh parent --}}
+                    @include('users.partials.unit-hierarchy-row', ['unit' => $child, 'level' => $level + 1])
                 @endforeach
             </div>
         @endif
