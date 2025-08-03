@@ -16,30 +16,51 @@ class AdHocTaskController extends Controller
     /**
      * Menampilkan daftar tugas ad-hoc.
      */
-    public function index()
+    public function index(Request $request)
     {
         $user = Auth::user();
+        $subordinates = collect();
         
         $query = Task::whereNull('project_id')->with('assignees')->latest();
 
-        // Jika Pimpinan, tampilkan semua tugas ad-hoc yang melibatkan dirinya atau bawahannya.
+        // Tentukan lingkup dasar query berdasarkan peran
         if ($user->canManageUsers()) {
             $subordinateIds = $user->getAllSubordinateIds();
-            $subordinateIds[] = $user->id; // Termasuk diri sendiri
+            $subordinateIds->push($user->id); // Termasuk diri sendiri
+            $subordinates = User::whereIn('id', $subordinateIds)->orderBy('name')->get();
 
             $query->whereHas('assignees', function ($q) use ($subordinateIds) {
                 $q->whereIn('user_id', $subordinateIds);
             });
         } else {
-            // Jika Staf, hanya tampilkan tugas yang ditugaskan kepadanya.
             $query->whereHas('assignees', function ($q) use ($user) {
                 $q->where('user_id', $user->id);
             });
         }
 
-        $assignedTasks = $query->get();
+        // Terapkan filter pencarian jika ada
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%");
+            });
+        }
 
-        return view('adhoc-tasks.index', compact('assignedTasks'));
+        // Terapkan filter personel jika ada (hanya untuk manajer)
+        if ($user->canManageUsers() && $request->filled('personnel_id')) {
+            $personnelId = $request->personnel_id;
+            // Pastikan manajer tidak memfilter ID di luar hirarkinya
+            if ($subordinates->pluck('id')->contains($personnelId)) {
+                $query->whereHas('assignees', function ($q) use ($personnelId) {
+                    $q->where('user_id', $personnelId);
+                });
+            }
+        }
+
+        $assignedTasks = $query->paginate(10)->withQueryString();
+
+        return view('adhoc-tasks.index', compact('assignedTasks', 'subordinates'));
     }
 
     /**

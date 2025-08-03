@@ -20,6 +20,31 @@
 
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg"> {{-- Mengubah shadow-sm menjadi shadow-xl --}}
                 <div class="p-6 text-gray-900">
+
+                    <!-- Filter and Search Form -->
+                    <form action="{{ route('adhoc-tasks.index') }}" method="GET" class="mb-6">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="md:col-span-2">
+                                <label for="search" class="sr-only">Cari</label>
+                                <input type="text" name="search" id="search" placeholder="Cari berdasarkan judul atau deskripsi..." value="{{ request('search') }}" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition">
+                            </div>
+                            @if(Auth::user()->canManageUsers())
+                            <div>
+                                <label for="personnel_id" class="sr-only">Filter Personel</label>
+                                <select name="personnel_id" id="personnel_id" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition">
+                                    <option value="">Semua Personel</option>
+                                    @foreach($subordinates as $subordinate)
+                                        <option value="{{ $subordinate->id }}" @selected(request('personnel_id') == $subordinate->id)>{{ $subordinate->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            @endif
+                            <div>
+                                <button type="submit" class="w-full inline-flex justify-center items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:outline-none">Cari / Filter</button>
+                            </div>
+                        </div>
+                    </form>
+
                     <div class="space-y-6"> {{-- Meningkatkan spasi antar kartu --}}
                         @forelse ($assignedTasks as $task)
                             <div class="block p-6 border border-gray-200 rounded-xl bg-white shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 ease-in-out"> {{-- Kartu tugas lebih besar, rounded-xl, shadow, dan efek hover --}}
@@ -55,12 +80,14 @@
                             </div>
                         @empty
                             <div class="bg-gray-50 p-6 rounded-xl shadow-md text-center py-10"> {{-- Menyesuaikan tampilan jika tidak ada tugas --}}
-                                <p class="text-gray-500 text-lg">Anda tidak memiliki tugas harian yang aktif.</p>
-                                <a href="{{ route('adhoc-tasks.create') }}" class="mt-4 inline-flex items-center px-4 py-2 bg-blue-500 border border-transparent rounded-md font-semibold text-sm text-white uppercase tracking-widest hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition ease-in-out duration-150 shadow-md">
-                                    <i class="fas fa-plus-circle mr-2"></i> Buat Tugas Pertama Anda
-                                </a>
+                                <p class="text-gray-500 text-lg">Tidak ada tugas harian yang cocok dengan kriteria Anda.</p>
+                                <a href="{{ route('adhoc-tasks.index') }}" class="mt-4 text-sm text-indigo-600 hover:underline">Hapus Filter</a>
                             </div>
                         @endforelse
+                    </div>
+
+                    <div class="mt-8">
+                        {{ $assignedTasks->links() }}
                     </div>
                 </div>
             </div>
