@@ -20,36 +20,24 @@ class SpecialAssignmentController extends Controller
         $currentUser = auth()->user();
         $query = SpecialAssignment::query()->with(['creator', 'members']);
 
-        // Logika visibilitas berdasarkan peran pengguna
-        if ($currentUser->canManageUsers()) {
-            // Jika Pimpinan (Eselon I, II, Koordinator)
+        // PERBAIKAN: Sederhanakan logika visibilitas hierarkis
+        if ($currentUser->isSuperAdmin()) {
+            // Superadmin melihat semua, tidak perlu filter.
+        } elseif ($currentUser->canManageUsers()) {
+            // Manajer (Eselon, Koordinator) melihat SK dalam hierarkinya.
             $subordinateIds = $currentUser->getAllSubordinateIds();
-            $subordinateIds[] = $currentUser->id; // Hirarki lengkap, termasuk diri sendiri
+            $subordinateIds->push($currentUser->id); // Termasuk diri sendiri
 
-            // Dapatkan daftar ID bawahan yang perannya bukan pimpinan (non-manager)
-            $creatorsToWatch = User::whereIn('id', $subordinateIds)
-                                 ->whereIn('role', ['Ketua Tim', 'Sub Koordinator', 'Staff'])
-                                 ->pluck('id');
-
-            $query->where(function ($q) use ($subordinateIds, $creatorsToWatch) {
-                // Aturan 1: Tampilkan jika salah satu anggota SK ada di dalam hirarki saya
-                $q->whereHas('members', function ($subQ) use ($subordinateIds) {
-                    $subQ->whereIn('user_id', $subordinateIds);
-                })
-                // Aturan 2: ATAU tampilkan jika pembuat SK adalah staf/bawahan non-manajer di dalam hirarki saya
-                ->orWhereIn('creator_id', $creatorsToWatch);
+            $query->where(function ($q) use ($subordinateIds) {
+                // Tampilkan jika pembuatnya ada di hierarki,
+                $q->whereIn('creator_id', $subordinateIds)
+                  // ATAU jika salah satu anggotanya ada di hierarki.
+                  ->orWhereHas('members', function ($subQ) use ($subordinateIds) {
+                      $subQ->whereIn('user_id', $subordinateIds);
+                  });
             });
-            
-            // Logika filter berdasarkan personel (jika ada) tetap berlaku
-            if ($request->filled('personnel_id') && in_array($request->personnel_id, $subordinateIds)) {
-                 $userId = $request->personnel_id;
-                 $query->whereHas('members', function ($q) use ($userId) {
-                    $q->where('user_id', $userId);
-                });
-            }
-
         } else {
-            // Logika untuk Staf tidak berubah: hanya bisa melihat SK-nya sendiri
+            // Staf biasa hanya melihat SK di mana mereka menjadi anggota.
             $query->whereHas('members', function ($q) use ($currentUser) {
                 $q->where('user_id', $currentUser->id);
             });
