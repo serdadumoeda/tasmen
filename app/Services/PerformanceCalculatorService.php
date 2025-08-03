@@ -56,8 +56,54 @@ class PerformanceCalculatorService
      */
     public function calculateForSingleUserAndParents(User $user): void
     {
+        // Ambil semua user untuk referensi, tapi perhitungan hanya untuk yang terdampak.
         $this->users = User::with('unit.parentUnit')->get()->keyBy('id');
-        $this->calculateForAllUsers(); // Cara paling aman adalah hitung ulang semua untuk menjaga konsistensi.
+        $this->calculatedIki = $this->users->mapWithKeys(fn ($u) => [$u->id => $u->individual_performance_index])->all();
+        $this->calculatedNkf = $this->users->mapWithKeys(fn ($u) => [$u->id => $u->final_performance_value])->all();
+
+        // Hitung ulang hanya untuk user yang bersangkutan
+        $this->recalculateUser($user);
+
+        // Telusuri ke atas dan hitung ulang semua atasannya
+        $currentUser = $user;
+        while ($currentUser->unit && $currentUser->unit->parentUnit) {
+            $parentUnit = $currentUser->unit->parentUnit;
+            // Asumsi sederhana: atasan adalah user dengan role manajerial di unit induk.
+            // Logika ini bisa lebih kompleks tergantung aturan bisnis.
+            $manager = $this->users->first(function ($u) use ($parentUnit) {
+                return $u->unit_id === $parentUnit->id && $u->isManager();
+            });
+
+            if ($manager) {
+                $this->recalculateUser($manager);
+                $currentUser = $manager;
+            } else {
+                break; // Hentikan jika tidak ada manajer di unit atas
+            }
+        }
+    }
+
+    /**
+     * Helper untuk menghitung dan menyimpan data satu user.
+     */
+    private function recalculateUser(User $user): void
+    {
+        // Langkah 1: Hitung IKI baru
+        $this->calculatedIki[$user->id] = $this->calculateIndividualPerformanceIndex($user);
+
+        // Langkah 2: Hitung NKF baru
+        $this->calculatedNkf[$user->id] = $this->calculateFinalPerformanceValue($user);
+
+        // Langkah 3: Simpan semua data baru ke model User
+        $userToUpdate = $this->users->get($user->id);
+        if ($userToUpdate) {
+            $userToUpdate->individual_performance_index = $this->calculatedIki[$user->id];
+            $userToUpdate->final_performance_value = $this->calculatedNkf[$user->id];
+            $userToUpdate->work_result_rating = $this->getWorkResultRating($userToUpdate->final_performance_value);
+            $userToUpdate->performance_predicate = $this->getPerformancePredicate($userToUpdate->work_result_rating, $userToUpdate->work_behavior_rating);
+            $userToUpdate->performance_data_updated_at = now();
+            $userToUpdate->save();
+        }
     }
 
     private function calculateIndividualPerformanceIndex(User $user): float
