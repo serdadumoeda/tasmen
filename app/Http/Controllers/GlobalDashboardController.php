@@ -53,8 +53,15 @@ class GlobalDashboardController extends Controller
                                   ->latest()
                                   ->get();
 
+        // Menyiapkan data untuk chart
+        $statusCounts = $allProjects->groupBy('status')->map->count();
+        $chartData = [
+            'labels' => $statusCounts->keys(),
+            'data' => $statusCounts->values(),
+        ];
+
         $recentActivities = Activity::with('user', 'subject')->latest()->take(15)->get();
 
-        return view('global-dashboard', compact('stats', 'allProjects', 'recentActivities'));
+        return view('global-dashboard', compact('stats', 'allProjects', 'recentActivities', 'chartData'));
     }
 }
