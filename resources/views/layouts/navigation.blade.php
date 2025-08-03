@@ -22,7 +22,7 @@ if (count($words) >= 2) {
                 </div>
 
                 <div class="hidden space-x-4 sm:-my-px sm:ms-10 sm:flex">
-                    <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" class="text-white hover:text-yellow-300 transition duration-150 ease-in-out">
+                    <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard', 'executive.summary')" class="text-white hover:text-yellow-300 transition duration-150 ease-in-out">
                         Beranda
                     </x-nav-link>
 
@@ -57,7 +57,7 @@ if (count($words) >= 2) {
                             <x-dropdown align="left" width="60">
                                 <x-slot name="trigger">
                                     <button class="inline-flex items-center h-full px-3 py-2 border-b-2 text-sm font-medium leading-5 transition duration-150 ease-in-out
-                                        {{ request()->routeIs(['executive.summary', 'workload.analysis', 'weekly-workload.index'])
+                                        {{ request()->routeIs(['workload.analysis', 'weekly-workload.index'])
                                             ? 'border-yellow-300 text-white bg-green-700/50'
                                             : 'border-transparent text-white hover:text-yellow-300 hover:border-yellow-300/75 focus:outline-none focus:text-white focus:border-yellow-300/75' }}">
                                         <div><i class="fas fa-chart-pie mr-2"></i>Laporan & Analisis</div>
