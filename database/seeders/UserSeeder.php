@@ -22,6 +22,12 @@ class UserSeeder extends Seeder
         Schema::enableForeignKeyConstraints();
 
         // Ambil unit yang sudah ada
+        $units = Unit::whereNotNull('parent_id')->get(); // Ambil unit level bawah untuk staf
+        if ($units->isEmpty()) {
+            $this->command->info('Unit tidak ditemukan. Jalankan UnitSeeder dulu.');
+            return;
+        }
+
         $unitKementerian = Unit::where('name', 'Kementerian Digital')->first();
         $unitKeuangan = Unit::where('name', 'Divisi Keuangan')->first();
         $unitSdm = Unit::where('name', 'Divisi SDM')->first();
@@ -113,30 +119,15 @@ class UserSeeder extends Seeder
             'status' => User::STATUS_ACTIVE,
         ]);
 
-        // 6. Staf
-        User::create([
-            'name' => 'Staf Belanja 1',
-            'email' => 'staf.belanja1@example.com',
-            'password' => Hash::make('password'),
+        // 6. Staf (Generated using Factory)
+        // Kita sudah membuat sekitar 9 user, jadi kita buat 31 lagi untuk mencapai 40.
+        User::factory(31)->create([
             'role' => User::ROLE_STAF,
-            'unit_id' => $unitBelanja->id,
-            'status' => User::STATUS_ACTIVE,
-        ]);
-        User::create([
-            'name' => 'Staf Pendapatan 1',
-            'email' => 'staf.pendapatan1@example.com',
             'password' => Hash::make('password'),
-            'role' => User::ROLE_STAF,
-            'unit_id' => $unitPendapatan->id,
-            'status' => User::STATUS_ACTIVE,
-        ]);
-        User::create([
-            'name' => 'Staf Rekrutmen 1',
-            'email' => 'staf.rekrutmen1@example.com',
-            'password' => Hash::make('password'),
-            'role' => User::ROLE_STAF,
-            'unit_id' => $unitRekrutmen->id,
-            'status' => User::STATUS_ACTIVE,
-        ]);
+        ])->each(function ($user) use ($units) {
+            // Assign a random unit to each new staff member
+            $user->unit_id = $units->random()->id;
+            $user->save();
+        });
     }
 }
