@@ -40,8 +40,10 @@ if (count($words) >= 2) {
                             </x-slot>
                             <x-slot name="content">
                                 <div class="rounded-xl shadow-2xl py-1 bg-white ring-1 ring-black ring-opacity-10">
-                                    <x-dropdown-link :href="route('projects.index')" :active="request()->routeIs('projects.index') || request()->routeIs('projects.show')">Daftar Kegiatan</x-dropdown-link>
-                                    <div class="border-t border-gray-200"></div>
+                                    @if (Auth::user()->isTopLevelManager())
+                                        <x-dropdown-link :href="route('projects.index')" :active="request()->routeIs('projects.index') || request()->routeIs('projects.show')">Daftar Kegiatan</x-dropdown-link>
+                                        <div class="border-t border-gray-200"></div>
+                                    @endif
                                     <x-dropdown-link :href="route('adhoc-tasks.index')" :active="request()->routeIs('adhoc-tasks.*')">Tugas Harian</x-dropdown-link>
                                     <x-dropdown-link :href="route('special-assignments.index')" :active="request()->routeIs('special-assignments.*')">SK Penugasan</x-dropdown-link>
                                 </div>
