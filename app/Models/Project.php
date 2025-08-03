@@ -19,6 +19,9 @@ class Project extends Model
      * Dihitung berdasarkan jumlah tugas yang selesai dibagi total tugas.
      *
      * @return int
+     *
+     * @warning Potensi N+1 Query! Pastikan relasi 'tasks' di-eager load (->with('tasks'))
+     *          sebelum mengakses atribut ini pada koleksi proyek.
      */
     public function getProgressAttribute(): int
     {

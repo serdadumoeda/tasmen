@@ -61,4 +61,26 @@ class UserPolicy
         }
         return $model->isSubordinateOf($user);
     }
+
+    /**
+     * Tentukan apakah seorang manajer bisa menilai perilaku kerja seorang user.
+     */
+    public function rateBehavior(User $manager, User $subordinate): bool
+    {
+        // Aturan 1: Eselon I bisa menilai Eselon II yang unitnya berada langsung di bawahnya.
+        if ($manager->role === User::ROLE_ESELON_I && $subordinate->role === User::ROLE_ESELON_II) {
+            // Memastikan unit subordinate tidak null dan memiliki parent_unit_id
+            if ($subordinate->unit && $subordinate->unit->parent_unit_id === $manager->unit_id) {
+                return true;
+            }
+        }
+
+        // Aturan 2: Eselon II bisa menilai SEMUA di bawah hierarki unitnya.
+        if ($manager->role === User::ROLE_ESELON_II) {
+            return $subordinate->isSubordinateOf($manager);
+        }
+
+        // Default: tolak jika tidak ada aturan yang cocok.
+        return false;
+    }
 }

@@ -31,7 +31,13 @@ class TaskController extends Controller
             'assignees.*' => 'exists:users,id', // Validasi setiap item dalam array
         ]);
 
-        $task = $project->tasks()->create($request->except('assignees'));
+        // PERBAIKAN: Hindari Mass Assignment Vulnerability dengan menggunakan data yang sudah divalidasi.
+        $task = $project->tasks()->create([
+            'title' => $validated['title'],
+            'deadline' => $validated['deadline'],
+            'estimated_hours' => $validated['estimated_hours'] ?? null,
+            // Properti lain yang aman bisa ditambahkan di sini.
+        ]);
         
         // Simpan relasi many-to-many
         $task->assignees()->sync($validated['assignees']);
@@ -45,16 +51,18 @@ class TaskController extends Controller
 
     public function edit(Task $task)
     {
-        $task->load('assignees', 'attachments');
+        // PERBAIKAN: Eager load relasi untuk menghindari N+1
+        $task->load('assignees', 'attachments', 'project.members');
         $this->authorize('update', $task);
         
-        // MODIFIKASI: Jika tidak ada project, jangan ambil projectMembers
         if ($task->project_id) {
-            $project = $task->project;
-            $projectMembers = $project->members()->orderBy('name')->get();
+            $projectMembers = $task->project->members()->orderBy('name')->get();
         } else {
             // PERBAIKAN: Untuk tugas ad-hoc, ambil bawahan berdasarkan unit kerja pengguna
             $user = Auth::user();
+            // Eager load relasi unit dan turunannya untuk user yang sedang login
+            $user->load('unit.childrenRecursive');
+
             $unitIds = collect([$user->unit_id]);
             
             // Dapatkan ID unit bawahan secara rekursif
@@ -207,6 +215,9 @@ class TaskController extends Controller
 
     public function toggleSubTask(SubTask $subTask)
     {
+        // PERBAIKAN: Eager load relasi untuk menghindari N+1 saat otorisasi dan re-kalkulasi
+        $subTask->load('task.subTasks');
+
         // Otorisasi: Pastikan pengguna yang login boleh mengubah tugas ini
         $this->authorize('update', $subTask->task);
 
@@ -217,8 +228,9 @@ class TaskController extends Controller
         $subTask->task->recalculateProgress();
 
         // Siapkan data untuk dikirim kembali sebagai JSON
-        $completed_subtasks = $subTask->task->subTasks()->where('is_completed', true)->count();
-        $total_subtasks = $subTask->task->subTasks()->count();
+        // Gunakan relasi yang sudah di-load untuk efisiensi
+        $completed_subtasks = $subTask->task->subTasks->where('is_completed', true)->count();
+        $total_subtasks = $subTask->task->subTasks->count();
 
         return response()->json([
             'message' => 'Status sub-tugas berhasil diperbarui.',

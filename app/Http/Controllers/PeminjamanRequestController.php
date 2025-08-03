@@ -99,12 +99,28 @@ class PeminjamanRequestController extends Controller
     
     private function findCoordinator(User $user): ?User
     {
-        $currentUser = $user;
-        while ($currentUser->parent) {
-            $currentUser = $currentUser->parent;
-            if ($currentUser->role === 'Koordinator') return $currentUser;
-            if (in_array($currentUser->role, ['Eselon II', 'Eselon I'])) return null;
+        // PERBAIKAN: Menggunakan hierarki Unit, bukan hierarki User->parent yang sudah tidak ada.
+        // Eager load relasi untuk menghindari N+1 query.
+        $user->load('unit.parentUnit.parentUnit'); // Load beberapa level ke atas.
+
+        $currentUnit = $user->unit;
+
+        while ($currentUnit) {
+            // Cari approver (Koordinator atau Eselon II) di unit saat ini.
+            $approver = User::where('unit_id', $currentUnit->id)
+                ->whereIn('role', [User::ROLE_KOORDINATOR, User::ROLE_ESELON_II])
+                ->orderByRaw("FIELD(role, '".User::ROLE_KOORDINATOR."', '".User::ROLE_ESELON_II."')") // Prioritaskan Koordinator
+                ->first();
+
+            if ($approver) {
+                return $approver;
+            }
+
+            // Jika tidak ditemukan, pindah ke unit induk.
+            $currentUnit = $currentUnit->parentUnit;
         }
+
+        // Jika sampai ke puncak hierarki dan tidak ditemukan, kembalikan null.
         return null;
     }
 

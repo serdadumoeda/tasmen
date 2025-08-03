@@ -147,8 +147,10 @@ class ProjectController extends Controller
     public function edit(Project $project)
     {
         $this->authorize('update', $project);
+
+        // PERBAIKAN: Eager load relasi untuk menghindari N+1 query
+        $project->load('owner', 'members', 'tasks');
         
-        // --- AWAL PERBAIKAN ---
         $currentMembers = $project->members;
         $referenceUser = $project->owner ?? auth()->user();
 
@@ -159,15 +161,13 @@ class ProjectController extends Controller
         $subordinates = User::whereIn('id', $subordinateIds)->get();
         $potentialMembers = $currentMembers->merge($subordinates)->unique('id')->sortBy('name');
 
-        // 2. Ambil semua permintaan peminjaman untuk proyek ini.
+        // Ambil semua permintaan peminjaman untuk proyek ini.
         // `keyBy` digunakan agar kita bisa mencari status dengan mudah berdasarkan ID user di view.
         $loanRequests = PeminjamanRequest::where('project_id', $project->id)
             ->latest() // Ambil yang terbaru jika ada permintaan ganda
             ->get()
             ->keyBy('requested_user_id');
         
-        // --- AKHIR PERBAIKAN ---
-
         $taskStatuses = $project->tasks->countBy('status');
         $stats = [
             'total' => $project->tasks->count(),
@@ -176,7 +176,7 @@ class ProjectController extends Controller
             'completed' => $taskStatuses->get('completed', 0),
         ];
         
-        // 3. Kirim data baru ($loanRequests dan $subordinateIds) ke view
+        // Kirim data baru ($loanRequests dan $subordinateIds) ke view
         return view('projects.edit', compact('project', 'potentialMembers', 'stats', 'loanRequests', 'subordinateIds'));
     }
     

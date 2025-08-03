@@ -56,11 +56,17 @@ class Task extends Model
     // Method baru untuk kalkulasi progress
     public function recalculateProgress()
     {
-        $totalSubTasks = $this->subTasks()->count();
+        // PERBAIKAN: Cek apakah relasi subTasks sudah di-load untuk menghindari N+1 query.
+        $subTasks = $this->relationLoaded('subTasks') ? $this->subTasks : $this->subTasks();
+
+        $totalSubTasks = $subTasks->count();
         
         if ($totalSubTasks > 0) {
             // Jika ada sub-tugas, hitung progress berdasarkan jumlah yang selesai.
-            $completedSubTasks = $this->subTasks()->where('is_completed', true)->count();
+            $completedSubTasks = $this->relationLoaded('subTasks')
+                ? $subTasks->where('is_completed', true)->count()
+                : $subTasks->where('is_completed', true)->count(); // Query builder
+
             $this->progress = round(($completedSubTasks / $totalSubTasks) * 100);
         } else {
             // Jika tidak ada sub-tugas, progress ditentukan oleh status manual.
