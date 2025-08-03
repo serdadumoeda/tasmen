@@ -105,7 +105,8 @@ class UserController extends Controller
     {
         $this->authorize('create', User::class);
         $units = Unit::orderBy('name')->get();
-        return view('users.create', compact('units'));
+        $supervisors = User::orderBy('name')->get();
+        return view('users.create', compact('units', 'supervisors'));
     }
 
     public function store(Request $request)
@@ -117,6 +118,8 @@ class UserController extends Controller
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'role' => ['required', Rule::in(array_column(User::ROLES, 'name'))],
+            'jabatan' => ['required', 'string', 'max:255'],
+            'atasan_id' => ['nullable', 'exists:users,id'],
             'status' => ['required', 'in:active,suspended'],
             'unit_id' => ['required', 'exists:units,id'],
         ]);
@@ -144,8 +147,9 @@ class UserController extends Controller
     {
         $this->authorize('update', $user);
         $units = Unit::orderBy('name')->get();
+        $supervisors = User::where('id', '!=', $user->id)->orderBy('name')->get(); // User cannot be their own supervisor
         
-        return view('users.edit', compact('user', 'units'));
+        return view('users.edit', compact('user', 'units', 'supervisors'));
     }
 
     public function update(Request $request, User $user)
@@ -156,6 +160,8 @@ class UserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
             'role' => ['required', Rule::in(array_column(User::ROLES, 'name'))],
+            'jabatan' => ['required', 'string', 'max:255'],
+            'atasan_id' => ['nullable', 'exists:users,id', 'not_in:'.$user->id],
             'status' => ['required', 'in:active,suspended'],
             'unit_id' => ['required', 'exists:units,id'],
             'password' => ['nullable', 'confirmed', Rules\Password::defaults()],

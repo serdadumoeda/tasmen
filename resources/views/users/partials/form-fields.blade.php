@@ -35,6 +35,14 @@
             @error('email') <p class="text-sm text-red-600 mt-2">{{ $message }}</p> @enderror
         </div>
         
+        <div class="mb-6">
+            <label for="jabatan" class="block font-semibold text-sm text-gray-700 mb-1">
+                <i class="fas fa-id-badge mr-2 text-gray-500"></i> Nama Jabatan Spesifik <span class="text-red-500">*</span>
+            </label>
+            <input id="jabatan" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" type="text" name="jabatan" value="{{ old('jabatan', $user->jabatan ?? '') }}" required />
+            @error('jabatan') <p class="text-sm text-red-600 mt-2">{{ $message }}</p> @enderror
+        </div>
+
         <div class="mb-6"> {{-- Consistent spacing --}}
             <label for="role" class="block font-semibold text-sm text-gray-700 mb-1">
                 <i class="fas fa-user-tag mr-2 text-gray-500"></i> Level Jabatan (Role) <span class="text-red-500">*</span>
@@ -71,6 +79,21 @@
                 @endforeach
             </select>
             @error('unit_id') <p class="text-sm text-red-600 mt-2">{{ $message }}</p> @enderror
+        </div>
+
+        <div class="mb-6">
+            <label for="atasan_id" class="block font-semibold text-sm text-gray-700 mb-1">
+                <i class="fas fa-user-tie mr-2 text-gray-500"></i> Atasan Langsung
+            </label>
+            <select name="atasan_id" id="atasan_id" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150">
+                <option value="">-- Tidak ada / Atur Manual --</option>
+                @foreach($supervisors as $supervisor)
+                    <option value="{{ $supervisor->id }}" @selected(old('atasan_id', $user->atasan_id ?? '') == $supervisor->id)>
+                        {{ $supervisor->name }} ({{ $supervisor->jabatan ?? $supervisor->role }})
+                    </option>
+                @endforeach
+            </select>
+            @error('atasan_id') <p class="text-sm text-red-600 mt-2">{{ $message }}</p> @enderror
         </div>
     </div>
 
