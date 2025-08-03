@@ -14,9 +14,6 @@ class GlobalDashboardController extends Controller
     public function index()
     {
         $currentUser = auth()->user();
-        if (!$currentUser->isTopLevelManager()) {
-            abort(403, 'Hanya Super Admin, Eselon I, atau Eselon II yang dapat mengakses halaman ini.');
-        }
 
         $projectQuery = Project::query();
         $userQuery = User::query();
