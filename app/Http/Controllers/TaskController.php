@@ -51,38 +51,31 @@ class TaskController extends Controller
 
     public function edit(Task $task)
     {
-        // PERBAIKAN: Eager load relasi untuk menghindari N+1
+        // Eager load relasi untuk efisiensi
         $task->load('assignees', 'attachments', 'project.members');
         $this->authorize('update', $task);
         
-        if ($task->project_id) {
-            $projectMembers = $task->project->members()->orderBy('name')->get();
-        } else {
-            // PERBAIKAN: Untuk tugas ad-hoc, ambil bawahan berdasarkan unit kerja pengguna
-            $user = Auth::user();
-            // Eager load relasi unit dan turunannya untuk user yang sedang login
-            $user->load('unit.childrenRecursive');
+        $user = Auth::user();
+        $assignableUsers = collect();
 
-            $unitIds = collect([$user->unit_id]);
-            
-            // Dapatkan ID unit bawahan secara rekursif
-            if ($user->unit) {
-                $unitIds = $unitIds->merge($user->unit->childrenRecursive->pluck('id'));
+        if ($task->project_id) {
+            // Untuk tugas proyek, ambil anggota tim proyek
+            $assignableUsers = $task->project->members()->orderBy('name')->get();
+        } else {
+            // Untuk tugas ad-hoc, gunakan logika dari AdHocTaskController
+            if ($user->canManageUsers()) {
+                // Manajer bisa menugaskan ke diri sendiri dan semua bawahan
+                $subordinateIds = $user->getAllSubordinateIds();
+                $subordinateIds->push($user->id);
+                $assignableUsers = User::whereIn('id', $subordinateIds)->orderBy('name')->get();
+            } else {
+                // Staf hanya bisa menugaskan ke diri sendiri
+                $assignableUsers->push($user);
             }
-            
-            // Dapatkan semua pengguna dari unit-unit tersebut
-            $projectMembers = User::whereIn('unit_id', $unitIds)
-                                  ->orderBy('name')
-                                  ->get();
-            
-            // Tambahkan user yang sedang login ke daftar anggota
-            $projectMembers->prepend($user);
-            
-            // Hapus duplikat
-            $projectMembers = $projectMembers->unique('id');
         }
 
-        return view('tasks.edit', compact('task', 'projectMembers'));
+        // Gunakan view 'tasks.edit' yang lebih superior untuk kedua jenis tugas
+        return view('tasks.edit', ['task' => $task, 'projectMembers' => $assignableUsers]);
     }
 
     /**
@@ -139,7 +132,12 @@ class TaskController extends Controller
             ]);
         }
 
-        return redirect()->back()->with('success', 'Tugas berhasil diperbarui.');
+        // Logika redirect cerdas: kembali ke halaman proyek atau daftar tugas harian
+        $redirectRoute = $task->project_id
+            ? route('projects.show', $task->project_id)
+            : route('adhoc-tasks.index');
+
+        return redirect($redirectRoute)->with('success', 'Tugas berhasil diperbarui.');
     }
 
     public function destroy(Task $task)

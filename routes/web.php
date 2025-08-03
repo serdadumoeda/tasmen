@@ -99,24 +99,25 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/projects/{project}/report', [ProjectController::class, 'downloadReport'])
     ->name('projects.report');
-    Route::get('/projects/{project}/edit', [ProjectController::class, 'edit'])->name('projects.edit');
-    Route::put('/projects/{project}', [ProjectController::class, 'update'])->name('projects.update');
-    Route::delete('/projects/{project}', [ProjectController::class, 'destroy'])->name('projects.destroy');
     Route::get('/projects/{project}/s-curve', [ProjectController::class, 'sCurve'])->name('projects.s-curve');
 
     Route::resource('projects.budget-items', BudgetItemController::class)
         ->except(['show'])
         ->parameters(['budget-items' => 'budgetItem']);
+
     Route::resource('special-assignments', SpecialAssignmentController::class)->except(['show']);
-    Route::controller(AdHocTaskController::class)->prefix('adhoc-tasks')->name('adhoc-tasks.')->group(function() {
-        Route::get('/', 'index')->name('index');
-        Route::get('/create', 'create')->name('create');
-        Route::post('/', 'store')->name('store');
-        // PERBAIKAN: Menambahkan rute untuk edit, update, dan delete ad-hoc task
+
+    // Rute untuk Ad-Hoc Tasks (Tugas Harian)
+    Route::prefix('adhoc-tasks')->name('adhoc-tasks.')->group(function() {
+        Route::get('/', [AdHocTaskController::class, 'index'])->name('index');
+        Route::get('/create', [AdHocTaskController::class, 'create'])->name('create');
+        Route::post('/', [AdHocTaskController::class, 'store'])->name('store');
+        // Edit, Update, dan Destroy ditangani oleh TaskController yang sudah terkonsolidasi
         Route::get('/{task}/edit', [TaskController::class, 'edit'])->name('edit');
         Route::put('/{task}', [TaskController::class, 'update'])->name('update');
         Route::delete('/{task}', [TaskController::class, 'destroy'])->name('destroy');
     });
+
     Route::post('/tasks/{task}/approve', [\App\Http\Controllers\TaskController::class, 'approve'])->name('tasks.approve')->middleware('auth');
     Route::get('/projects/{project}/kanban', [\App\Http\Controllers\ProjectController::class, 'showKanban'])->name('projects.kanban')->middleware('auth');
     Route::patch('/tasks/{task}/update-status', [\App\Http\Controllers\TaskController::class, 'updateStatus'])->name('tasks.update-status')->middleware('auth');
@@ -142,7 +143,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/api/users/{user}/workload', [App\Http\Controllers\UserController::class, 'getWorkloadSummary'])
     ->name('api.users.workload');
     Route::get('/weekly-workload', [App\Http\Controllers\WeeklyWorkloadController::class, 'index'])->name('weekly-workload.index');
-    Route::resource('projects.budget-items', BudgetItemController::class);
 
     // Route untuk realisasi, di-nest di dalam budget-items
     Route::post('budget-items/{budgetItem}/realizations', [BudgetRealizationController::class, 'store'])
