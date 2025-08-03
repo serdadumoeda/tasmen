@@ -42,7 +42,7 @@
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-100"> {{-- Divider lebih halus --}}
                                 @forelse ($subordinates as $user)
-                                    <tr class="hover:bg-gray-50 transition-colors duration-150"> {{-- Hover effect pada baris --}}
+                                    <tr id="user-row-{{ $user->id }}" class="hover:bg-gray-50 transition-colors duration-150"> {{-- ID unik untuk baris --}}
                                         <td class="px-4 py-4 whitespace-nowrap">
                                             <div class="text-sm font-medium text-gray-900 flex items-center"><i class="fas fa-user mr-2 text-gray-500"></i> {{ $user->name }}</div>
                                             <div class="text-xs text-gray-500 ml-5">{{ $user->role }}</div>
@@ -60,51 +60,42 @@
                                         </td>
                                         <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
                                             <ul class="space-y-1">
-                                                <li class="flex items-center"><i class="fas fa-star mr-2 text-yellow-500"></i> Rating Hasil: <strong>{{ $user->work_result_rating }}</strong></li>
+                                                <li class="flex items-center"><i class="fas fa-star mr-2 text-yellow-500"></i> Rating Hasil: <strong id="work-result-{{ $user->id }}">{{ $user->work_result_rating }}</strong></li>
                                                 @if($user->isManager())
-                                                    <li class="flex items-center"><i class="fas fa-sitemap mr-2 text-purple-500"></i> Nilai Gabungan: <strong>{{ number_format($user->getFinalPerformanceValueAttribute(), 2) }}</strong></li>
-                                                    <li class="flex items-center text-gray-600"><i class="fas fa-user-check mr-2 text-gray-400"></i> Individu (IHK): {{ number_format($user->individual_performance_index, 2) }}</li>
-                                                    <li class="flex items-center text-gray-600"><i class="fas fa-users mr-2 text-gray-400"></i> Tim (SKM): {{ number_format($user->managerial_performance_score, 2) }}</li>
+                                                    <li class="flex items-center"><i class="fas fa-sitemap mr-2 text-purple-500"></i> Nilai Gabungan: <strong id="nkf-{{ $user->id }}">{{ number_format($user->final_performance_value, 2) }}</strong></li>
+                                                    <li class="flex items-center text-gray-600"><i class="fas fa-user-check mr-2 text-gray-400"></i> Individu (IHK): <span id="iki-{{ $user->id }}">{{ number_format($user->individual_performance_index, 2) }}</span></li>
                                                 @else
-                                                    <li class="flex items-center"><i class="fas fa-chart-line mr-2 text-green-500"></i> Indeks (IHK): <strong>{{ number_format($user->individual_performance_index, 2) }}</strong></li>
+                                                    <li class="flex items-center"><i class="fas fa-chart-line mr-2 text-green-500"></i> Indeks (IHK): <strong id="iki-{{ $user->id }}">{{ number_format($user->individual_performance_index, 2) }}</strong></li>
                                                 @endif
                                             </ul>
                                         </td>
                                         <td class="px-4 py-4 whitespace-nowrap text-center">
-                                            @php
-                                                $predicate = $user->performance_predicate;
-                                                $colorClass = 'bg-blue-200 text-blue-900'; // Default untuk Baik
-                                                if ($predicate === 'Sangat Baik') $colorClass = 'bg-green-200 text-green-900';
-                                                if ($predicate === 'Butuh Perbaikan') $colorClass = 'bg-yellow-200 text-yellow-900';
-                                                if ($predicate === 'Sangat Kurang') $colorClass = 'bg-red-200 text-red-900';
-                                            @endphp
-                                            <span class="px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full {{ $colorClass }} shadow-sm">
-                                                {{ $predicate }}
+                                            <span id="predicate-wrapper-{{ $user->id }}">
+                                                @php
+                                                    $predicate = $user->performance_predicate;
+                                                    $colorClass = 'bg-blue-200 text-blue-900'; // Default untuk Baik
+                                                    if ($predicate === 'Sangat Baik') $colorClass = 'bg-green-200 text-green-900';
+                                                    if ($predicate === 'Butuh Perbaikan') $colorClass = 'bg-yellow-200 text-yellow-900';
+                                                    if ($predicate === 'Sangat Kurang') $colorClass = 'bg-red-200 text-red-900';
+                                                @endphp
+                                                <span id="predicate-{{ $user->id }}" class="px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full {{ $colorClass }} shadow-sm">
+                                                    {{ $predicate }}
+                                                </span>
                                             </span>
                                         </td>
                                         <td class="px-4 py-4 whitespace-nowrap">
-                                            @php
-                                                $loggedInUser = Auth::user();
-                                                $canRate = false;
-                                                // Cek apakah user yang login adalah atasan langsung atau Eselon I yang menilai Eselon II
-                                                if ($loggedInUser->role === 'Eselon I' && $user->role === 'Eselon II' && $user->parent_id === $loggedInUser->id) {
-                                                    $canRate = true;
-                                                } elseif ($loggedInUser->role === 'Eselon II' && $loggedInUser->getAllSubordinateIds()->contains($user->id)) {
-                                                    $canRate = true;
-                                                }
-                                            @endphp
-
-                                            @if ($canRate)
-                                                <form action="{{ route('workload.updateBehavior', $user) }}" method="POST">
+                                            {{-- PERBAIKAN: Gunakan @can directive untuk otorisasi yang bersih --}}
+                                            @can('rateBehavior', $user)
+                                                <form id="form-rate-{{ $user->id }}" class="form-rating" action="{{ route('workload.updateBehavior', $user) }}" method="POST">
                                                     @csrf
                                                     @method('PATCH')
-                                                    <div class="flex flex-col space-y-2"> {{-- Gunakan flex-col untuk vertikal --}}
+                                                    <div class="flex flex-col space-y-2">
                                                         <select name="work_behavior_rating" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition duration-150 text-sm">
                                                             <option value="Diatas Ekspektasi" @if($user->work_behavior_rating == 'Diatas Ekspektasi') selected @endif>Diatas Ekspektasi</option>
                                                             <option value="Sesuai Ekspektasi" @if(is_null($user->work_behavior_rating) || $user->work_behavior_rating == 'Sesuai Ekspektasi') selected @endif>Sesuai Ekspektasi</option>
                                                             <option value="Dibawah Ekspektasi" @if($user->work_behavior_rating == 'Dibawah Ekspektasi') selected @endif>Dibawah Ekspektasi</option>
                                                         </select>
-                                                        <button type="submit" class="inline-flex justify-center items-center py-2 px-4 border border-transparent shadow-md text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition ease-in-out duration-150 transform hover:scale-105">
+                                                        <button type="submit" class="btn-submit-rating inline-flex justify-center items-center py-2 px-4 border border-transparent shadow-md text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition ease-in-out duration-150 transform hover:scale-105">
                                                             <i class="fas fa-save mr-2"></i> Simpan
                                                         </button>
                                                     </div>
@@ -112,9 +103,9 @@
                                             @else
                                                 <div class="text-sm text-gray-600 italic p-2 bg-gray-50 rounded-lg shadow-inner">
                                                     <p class="flex items-center"><i class="fas fa-star-half-stroke mr-2 text-gray-500"></i> Nilai: <strong>{{ $user->work_behavior_rating ?? 'Sesuai Ekspektasi' }}</strong></p>
-                                                    <p class="text-xs mt-1 text-gray-500">(Dinilai oleh Eselon I/II)</p>
+                                                    <p class="text-xs mt-1 text-gray-500">(Dinilai oleh atasan)</p>
                                                 </div>
-                                            @endif
+                                            @endcan
                                         </td>
                                     </tr>
                                 @empty
@@ -134,4 +125,169 @@
             </div>
         </div>
     </div>
+
+@push('scripts')
+<style>
+    .btn-submit-rating.loading {
+        position: relative;
+        color: transparent;
+        cursor: wait;
+    }
+    .btn-submit-rating.loading::after {
+        content: '';
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        margin-left: -12px;
+        margin-top: -12px;
+        width: 24px;
+        height: 24px;
+        border: 2px solid #fff;
+        border-top-color: transparent;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+</style>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const forms = document.querySelectorAll('.form-rating');
+
+    forms.forEach(form => {
+        form.addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            const button = form.querySelector('.btn-submit-rating');
+            const originalButtonHtml = button.innerHTML;
+            button.innerHTML = ''; // Clear content for spinner
+            button.classList.add('loading');
+            button.disabled = true;
+
+            const formData = new FormData(form);
+            const action = form.getAttribute('action');
+            const method = form.querySelector('input[name=\"_method\"]').value || 'POST';
+            const csrfToken = form.querySelector('input[name=\"_token\"]').value;
+
+            fetch(action, {
+                method: method,
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    updateRow(data.user);
+                    showNotification('success', `Penilaian untuk ${data.user.name} berhasil disimpan.`);
+                } else {
+                    showNotification('error', 'Gagal menyimpan penilaian.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('error', 'Terjadi kesalahan. Silakan coba lagi.');
+            })
+            .finally(() => {
+                button.innerHTML = originalButtonHtml;
+                button.classList.remove('loading');
+                button.disabled = false;
+            });
+        });
+    });
+
+    function updateRow(userData) {
+        const userId = userData.id;
+
+        // Update Predicate
+        const predicateSpan = document.getElementById(`predicate-${userId}`);
+        const predicateWrapper = document.getElementById(`predicate-wrapper-${userId}`);
+        if (predicateSpan && predicateWrapper) {
+            predicateSpan.textContent = userData.performance_predicate;
+
+            // Update color class
+            let colorClass = 'bg-blue-200 text-blue-900';
+            if (userData.performance_predicate === 'Sangat Baik') colorClass = 'bg-green-200 text-green-900';
+            if (userData.performance_predicate === 'Butuh Perbaikan') colorClass = 'bg-yellow-200 text-yellow-900';
+            if (userData.performance_predicate === 'Sangat Kurang') colorClass = 'bg-red-200 text-red-900';
+            predicateSpan.className = `px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full ${colorClass} shadow-sm`;
+        }
+
+        // Update Work Result Rating
+        const workResultSpan = document.getElementById(`work-result-${userId}`);
+        if (workResultSpan) {
+            workResultSpan.textContent = userData.work_result_rating;
+        }
+
+        // Update NKF (Nilai Kinerja Final)
+        const nkfSpan = document.getElementById(`nkf-${userId}`);
+        if (nkfSpan) {
+            nkfSpan.textContent = parseFloat(userData.final_performance_value).toFixed(2);
+        }
+
+        // Update IKI (Indeks Kinerja Individu)
+        const ikiSpan = document.getElementById(`iki-${userId}`);
+        if (ikiSpan) {
+            ikiSpan.textContent = parseFloat(userData.individual_performance_index).toFixed(2);
+        }
+    }
+
+    function showNotification(type, message) {
+        const notificationArea = document.querySelector('.max-w-full.mx-auto');
+        if (!notificationArea) return;
+
+        let bgColor = 'bg-green-100';
+        let borderColor = 'border-green-400';
+        let textColor = 'text-green-700';
+        let icon = 'fa-check-circle';
+
+        if (type === 'error') {
+            bgColor = 'bg-red-100';
+            borderColor = 'border-red-400';
+            textColor = 'text-red-700';
+            icon = 'fa-times-circle';
+        }
+
+        const notificationHtml = `
+            <div class="mb-6 ${bgColor} border ${borderColor} ${textColor} px-4 py-3 rounded-lg relative shadow-md" role="alert" style="display: none;">
+                <div class="flex items-center">
+                    <i class="fas ${icon} mr-3"></i>
+                    <span class="block sm:inline">${message}</span>
+                </div>
+            </div>
+        `;
+
+        // Hapus notifikasi lama jika ada
+        const oldNotification = document.querySelector('.custom-notification');
+        if(oldNotification) oldNotification.remove();
+
+        const newDiv = document.createElement('div');
+        newDiv.className = 'custom-notification';
+        newDiv.innerHTML = notificationHtml;
+
+        notificationArea.insertBefore(newDiv, notificationArea.firstChild);
+        const newNotification = newDiv.querySelector('[role="alert"]');
+
+        // Simple fade in
+        newNotification.style.display = 'block';
+
+        // Fade out after 3 seconds
+        setTimeout(() => {
+            newNotification.style.transition = 'opacity 0.5s ease';
+            newNotification.style.opacity = '0';
+            setTimeout(() => newNotification.parentElement.remove(), 500);
+        }, 3000);
+    }
+});
+</script>
+@endpush
 </x-app-layout>

@@ -43,9 +43,15 @@ class WorkloadAnalysisController extends Controller
 
         $user->update($validated);
 
-        // PERBAIKAN: Panggil service untuk menghitung ulang skor kinerja user ini dan atasannya.
-        // Ini memastikan perubahan pada bawahan langsung terefleksi pada skor manajerial atasan.
+        // Panggil service untuk menghitung ulang skor kinerja user ini dan atasannya.
         $calculator->calculateForSingleUserAndParents($user);
+
+        // PERBAIKAN: Kembalikan respons JSON untuk permintaan AJAX.
+        if ($request->ajax() || $request->wantsJson()) {
+            // Muat ulang data user untuk mendapatkan nilai-nilai yang sudah dihitung ulang.
+            $user->refresh();
+            return response()->json(['success' => true, 'user' => $user]);
+        }
 
         return back()->with('success', "Penilaian perilaku kerja untuk {$user->name} berhasil diperbarui.");
     }
