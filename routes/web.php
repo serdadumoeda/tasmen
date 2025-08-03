@@ -32,9 +32,18 @@ Route::get('/', function () {
 
 Route::get('/get-users-by-unit/{eselon2_id}', [UserController::class, 'getUsersByUnit'])->name('users.by-unit');
 
+use App\Http\Controllers\HomeController;
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
+
 Route::middleware(['auth', 'verified'])->group(function () {
 
-    Route::get('/dashboard', [ProjectController::class, 'index'])->name('dashboard');
+    // Rute default setelah login adalah Beranda baru.
+    Route::get('/dashboard', [HomeController::class, 'index'])->name('dashboard');
+    // Rute untuk daftar kegiatan (proyek)
+    Route::get('/projects', [ProjectController::class, 'index'])->name('projects.index');
+
 
     // Langkah 1: Menampilkan form inisiasi proyek
     Route::get('/projects/create-step-1', [ProjectController::class, 'createStep1'])->name('projects.create.step1');
