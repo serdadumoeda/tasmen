@@ -46,7 +46,6 @@ if (count($words) >= 2) {
                                 <x-slot name="content">
                                     <div class="rounded-xl shadow-2xl py-1 bg-white ring-1 ring-black ring-opacity-10">
                                         <x-dropdown-link :href="route('executive.summary')" :active="request()->routeIs('executive.summary')">Executive Summary</x-dropdown-link>
-                                        <x-dropdown-link :href="route('global.dashboard')" :active="request()->routeIs('global.dashboard')">Global Dashboard</x-dropdown-link>
                                         <div class="border-t border-gray-200"></div>
                                         <x-dropdown-link :href="route('workload.analysis')" :active="request()->routeIs('workload.analysis')">Analisis Beban Kerja</x-dropdown-link>
                                         <x-dropdown-link :href="route('weekly-workload.index')" :active="request()->routeIs('weekly-workload.index')">Beban Kerja Mingguan</x-dropdown-link>
@@ -61,7 +60,7 @@ if (count($words) >= 2) {
                         <x-dropdown align="left" width="60">
                             <x-slot name="trigger">
                                 <button class="inline-flex items-center h-full px-3 py-2 border-b-2 text-sm font-medium leading-5 transition duration-150 ease-in-out
-                                    {{ request()->routeIs(['projects.*', 'adhoc-tasks.*', 'special-assignments.*'])
+                                    {{ request()->routeIs(['dashboard.view', 'projects.*', 'adhoc-tasks.*', 'special-assignments.*'])
                                         ? 'border-yellow-300 text-white bg-green-700/50'
                                         : 'border-transparent text-white hover:text-yellow-300 hover:border-yellow-300/75 focus:outline-none focus:text-white focus:border-yellow-300/75' }}">
                                     <div><i class="fas fa-briefcase mr-2"></i>Menu Kerja</div>
@@ -70,20 +69,10 @@ if (count($words) >= 2) {
                             </x-slot>
                             <x-slot name="content">
                                 <div class="rounded-xl shadow-2xl py-1 bg-white ring-1 ring-black ring-opacity-10">
-                                    <div class="block px-4 py-2 text-xs text-gray-400">Utama</div>
+                                    <x-dropdown-link :href="route('dashboard.view')" :active="request()->routeIs('dashboard.view') || request()->routeIs('projects.*')">Daftar Kegiatan</x-dropdown-link>
+                                    <div class="border-t border-gray-200"></div>
                                     <x-dropdown-link :href="route('adhoc-tasks.index')" :active="request()->routeIs('adhoc-tasks.*')">Tugas Harian</x-dropdown-link>
                                     <x-dropdown-link :href="route('special-assignments.index')" :active="request()->routeIs('special-assignments.*')">SK Penugasan</x-dropdown-link>
-                                    <div class="border-t border-gray-200"></div>
-                                    <div class="block px-4 py-2 text-xs text-gray-400">Akses Cepat Kegiatan</div>
-                                    @forelse ($quickProjects as $project)
-                                        <x-dropdown-link :href="route('projects.show', $project)">{{ Str::limit($project->name, 30) }}</x-dropdown-link>
-                                    @empty
-                                        <div class="px-4 py-2 text-sm text-gray-500">Belum ada kegiatan.</div>
-                                    @endforelse
-                                    @can('create', App\Models\Project::class)
-                                    <div class="border-t border-gray-200"></div>
-                                    <x-dropdown-link :href="route('projects.create.step1')" class="font-semibold text-indigo-600 hover:text-indigo-800"><i class="fas fa-plus-circle mr-2"></i>Buat Kegiatan Baru</x-dropdown-link>
-                                    @endcan
                                 </div>
                             </x-slot>
                         </x-dropdown>
