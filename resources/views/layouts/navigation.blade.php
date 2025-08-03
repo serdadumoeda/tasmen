@@ -21,73 +21,100 @@ if (count($words) >= 2) {
                     </a>
                 </div>
 
-                <div class="hidden space-x-4 sm:-my-px sm:ms-10 sm:flex">
+                <div class="hidden space-x-2 sm:-my-px sm:ms-10 sm:flex">
+
+                    {{-- Menu Beranda --}}
+                    <x-nav-link :href="route('dashboard')"
+                                :active="request()->routeIs('dashboard', 'dashboard.view')"
+                                class="text-white hover:text-yellow-300 transition duration-150 ease-in-out">
+                        Beranda
+                    </x-nav-link>
+
+                    {{-- Dropdown Laporan & Analisis (Hanya untuk Top Level Manager) --}}
                     @if (Auth::user()->isTopLevelManager())
-                        <x-nav-link :href="route('executive.summary')" :active="request()->routeIs('executive.summary')" class="border-transparent text-white hover:text-white hover:border-yellow-300 transition duration-300 transform hover:scale-105 {{ request()->routeIs('executive.summary') ? 'border-yellow-300 text-white font-semibold' : '' }}">
-                            Executive Summary
-                        </x-nav-link>
-                    @else
-                        <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" class="border-transparent text-white hover:text-white hover:border-yellow-300 transition duration-300 transform hover:scale-105 {{ request()->routeIs('dashboard') ? 'border-yellow-300 text-white font-semibold' : '' }}">
-                            Dashboard
-                        </x-nav-link>
+                        <div class="hidden sm:flex sm:items-center">
+                            <x-dropdown align="left" width="60">
+                                <x-slot name="trigger">
+                                    <button class="inline-flex items-center h-full px-3 py-2 border-b-2 text-sm font-medium leading-5 transition duration-150 ease-in-out
+                                        {{ request()->routeIs(['executive.summary', 'global.dashboard', 'workload.analysis', 'weekly-workload.index'])
+                                            ? 'border-yellow-300 text-white bg-green-700/50'
+                                            : 'border-transparent text-white hover:text-yellow-300 hover:border-yellow-300/75 focus:outline-none focus:text-white focus:border-yellow-300/75' }}">
+                                        <div><i class="fas fa-chart-pie mr-2"></i>Laporan & Analisis</div>
+                                        <div class="ms-1"><svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg></div>
+                                    </button>
+                                </x-slot>
+                                <x-slot name="content">
+                                    <div class="rounded-xl shadow-2xl py-1 bg-white ring-1 ring-black ring-opacity-10">
+                                        <x-dropdown-link :href="route('executive.summary')" :active="request()->routeIs('executive.summary')">Executive Summary</x-dropdown-link>
+                                        <x-dropdown-link :href="route('global.dashboard')" :active="request()->routeIs('global.dashboard')">Global Dashboard</x-dropdown-link>
+                                        <div class="border-t border-gray-200"></div>
+                                        <x-dropdown-link :href="route('workload.analysis')" :active="request()->routeIs('workload.analysis')">Analisis Beban Kerja</x-dropdown-link>
+                                        <x-dropdown-link :href="route('weekly-workload.index')" :active="request()->routeIs('weekly-workload.index')">Beban Kerja Mingguan</x-dropdown-link>
+                                    </div>
+                                </x-slot>
+                            </x-dropdown>
+                        </div>
                     @endif
 
+                    {{-- Dropdown Menu Kerja --}}
                     <div class="hidden sm:flex sm:items-center">
                         <x-dropdown align="left" width="60">
                             <x-slot name="trigger">
-                                <button class="inline-flex items-center h-full px-1 pt-1 border-b-2 text-sm font-medium leading-5 transition duration-150 ease-in-out {{ request()->routeIs(['adhoc-tasks.*', 'projects.*', 'special-assignments.*']) ? 'border-yellow-300 text-white' : 'border-transparent text-white hover:text-white hover:border-yellow-300/75 focus:outline-none focus:text-white focus:border-yellow-300/75' }} transform hover:scale-105">
-                                    <div>Menu Kerja</div>
+                                <button class="inline-flex items-center h-full px-3 py-2 border-b-2 text-sm font-medium leading-5 transition duration-150 ease-in-out
+                                    {{ request()->routeIs(['projects.*', 'adhoc-tasks.*', 'special-assignments.*'])
+                                        ? 'border-yellow-300 text-white bg-green-700/50'
+                                        : 'border-transparent text-white hover:text-yellow-300 hover:border-yellow-300/75 focus:outline-none focus:text-white focus:border-yellow-300/75' }}">
+                                    <div><i class="fas fa-briefcase mr-2"></i>Menu Kerja</div>
                                     <div class="ms-1"><svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg></div>
                                 </button>
                             </x-slot>
                             <x-slot name="content">
-                                <div class="rounded-xl shadow-2xl py-1 bg-white ring-1 ring-black ring-opacity-10 transform translate-y-2">
-                                    <x-dropdown-link :href="route('adhoc-tasks.index')" :active="request()->routeIs('adhoc-tasks.*')" class="hover:bg-gray-100 transition-colors duration-150">Tugas Harian</x-dropdown-link>
-                                    <x-dropdown-link :href="route('special-assignments.index')" :active="request()->routeIs('special-assignments.*')" class="hover:bg-gray-100 transition-colors duration-150">SK Penugasan</x-dropdown-link>
+                                <div class="rounded-xl shadow-2xl py-1 bg-white ring-1 ring-black ring-opacity-10">
+                                    <div class="block px-4 py-2 text-xs text-gray-400">Utama</div>
+                                    <x-dropdown-link :href="route('adhoc-tasks.index')" :active="request()->routeIs('adhoc-tasks.*')">Tugas Harian</x-dropdown-link>
+                                    <x-dropdown-link :href="route('special-assignments.index')" :active="request()->routeIs('special-assignments.*')">SK Penugasan</x-dropdown-link>
                                     <div class="border-t border-gray-200"></div>
                                     <div class="block px-4 py-2 text-xs text-gray-400">Akses Cepat Kegiatan</div>
                                     @forelse ($quickProjects as $project)
-                                        <x-dropdown-link :href="route('projects.show', $project)" class="hover:bg-gray-100 transition-colors duration-150">{{ Str::limit($project->name, 30) }}</x-dropdown-link>
+                                        <x-dropdown-link :href="route('projects.show', $project)">{{ Str::limit($project->name, 30) }}</x-dropdown-link>
                                     @empty
                                         <div class="px-4 py-2 text-sm text-gray-500">Belum ada kegiatan.</div>
                                     @endforelse
                                     @can('create', App\Models\Project::class)
                                     <div class="border-t border-gray-200"></div>
-                                    <x-dropdown-link :href="route('projects.create.step1')" class="font-semibold text-blue-600 hover:text-blue-800 hover:bg-gray-100 transition-colors duration-150"><i class="fa-solid fa-plus-circle mr-2"></i>Buat Kegiatan Baru</x-dropdown-link>
+                                    <x-dropdown-link :href="route('projects.create.step1')" class="font-semibold text-indigo-600 hover:text-indigo-800"><i class="fas fa-plus-circle mr-2"></i>Buat Kegiatan Baru</x-dropdown-link>
                                     @endcan
                                 </div>
                             </x-slot>
                         </x-dropdown>
                     </div>
 
+                    {{-- Dropdown Manajemen Tim (Hanya untuk Manajer) --}}
                     @if(Auth::user()->canManageUsers())
-                    <div class="hidden sm:flex sm:items-center">
-                        <x-dropdown align="left" width="60">
-                            <x-slot name="trigger">
-                                <button class="inline-flex items-center h-full px-1 pt-1 border-b-2 text-sm font-medium leading-5 transition duration-150 ease-in-out {{ request()->routeIs(['users.*', 'workload.*', 'resource-pool.*', 'peminjaman-requests.*']) ? 'border-yellow-300 text-white' : 'border-transparent text-white hover:text-white hover:border-yellow-300/75 focus:outline-none focus:text-white focus:border-yellow-300/75' }} transform hover:scale-105">
-                                    <div>Manajemen Tim</div>
-                                    <div class="ms-1"><svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg></div>
-                                </button>
-                            </x-slot>
-                            <x-slot name="content">
-                                <div class="rounded-xl shadow-2xl py-1 bg-white ring-1 ring-black ring-opacity-10 transform translate-y-2">
-                                    @if(Auth::user()->role == 'Superadmin')
-                                        <x-dropdown-link :href="route('admin.units.index')" :active="request()->routeIs('admin.units.*')" class="hover:bg-gray-100 transition-colors duration-150">Manajemen Unit</x-dropdown-link>
-                                    @endif
-                                    @can('viewAny', App\Models\User::class)
-                                        <x-dropdown-link :href="route('users.index')" :active="request()->routeIs('users.*')" class="hover:bg-gray-100 transition-colors duration-150">Manajemen Pengguna</x-dropdown-link>
-                                    @endcan
-                                    @if(Auth::user()->isTopLevelManager())
-                                        <x-dropdown-link :href="route('workload.analysis')" :active="request()->routeIs('workload.analysis')" class="hover:bg-gray-100 transition-colors duration-150">Analisis Beban Kerja</x-dropdown-link>
-                                    @endif
-                                    <x-dropdown-link :href="route('weekly-workload.index')" :active="request()->routeIs('weekly-workload.index')" class="hover:bg-gray-100 transition-colors duration-150">Beban Kerja Mingguan</x-dropdown-link>
-                                    <div class="border-t border-gray-200"></div>
-                                    <x-dropdown-link :href="route('peminjaman-requests.my-requests')" :active="request()->routeIs('peminjaman-requests.*')" class="hover:bg-gray-100 transition-colors duration-150">Peminjaman Anggota</x-dropdown-link>
-                                    <x-dropdown-link :href="route('resource-pool.index')" :active="request()->routeIs('resource-pool.index')" class="hover:bg-gray-100 transition-colors duration-150">Resource Pool</x-dropdown-link>
-                                </div>
-                            </x-slot>
-                        </x-dropdown>
-                    </div>
+                        <div class="hidden sm:flex sm:items-center">
+                            <x-dropdown align="left" width="60">
+                                <x-slot name="trigger">
+                                    <button class="inline-flex items-center h-full px-3 py-2 border-b-2 text-sm font-medium leading-5 transition duration-150 ease-in-out
+                                        {{ request()->routeIs(['users.*', 'admin.units.*', 'resource-pool.*', 'peminjaman-requests.*'])
+                                            ? 'border-yellow-300 text-white bg-green-700/50'
+                                            : 'border-transparent text-white hover:text-yellow-300 hover:border-yellow-300/75 focus:outline-none focus:text-white focus:border-yellow-300/75' }}">
+                                        <div><i class="fas fa-users-cog mr-2"></i>Manajemen Tim</div>
+                                        <div class="ms-1"><svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg></div>
+                                    </button>
+                                </x-slot>
+                                <x-slot name="content">
+                                    <div class="rounded-xl shadow-2xl py-1 bg-white ring-1 ring-black ring-opacity-10">
+                                        @if(Auth::user()->isSuperAdmin())
+                                            <x-dropdown-link :href="route('admin.units.index')" :active="request()->routeIs('admin.units.*')">Manajemen Unit</x-dropdown-link>
+                                        @endif
+                                        <x-dropdown-link :href="route('users.index')" :active="request()->routeIs('users.*')">Manajemen Pengguna</x-dropdown-link>
+                                        <div class="border-t border-gray-200"></div>
+                                        <x-dropdown-link :href="route('peminjaman-requests.my-requests')" :active="request()->routeIs('peminjaman-requests.*')">Peminjaman Anggota</x-dropdown-link>
+                                        <x-dropdown-link :href="route('resource-pool.index')" :active="request()->routeIs('resource-pool.index')">Resource Pool</x-dropdown-link>
+                                    </div>
+                                </x-slot>
+                            </x-dropdown>
+                        </div>
                     @endif
                 </div>
             </div>
