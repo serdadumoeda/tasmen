@@ -32,9 +32,9 @@ class WorkloadAnalysisController extends Controller
      * Update penilaian perilaku kerja oleh atasan.
      * Logika otorisasi diubah sesuai aturan baru.
      */
-    public function updateBehavior(Request $request, User $user)
+    public function updateBehavior(Request $request, User $user, \App\Services\PerformanceCalculatorService $calculator)
     {
-        // PERBAIKAN: Otorisasi dipindahkan ke UserPolicy untuk konsistensi dan perbaikan bug.
+        // Otorisasi dipindahkan ke UserPolicy untuk konsistensi dan perbaikan bug.
         $this->authorize('rateBehavior', $user);
 
         $validated = $request->validate([
@@ -42,6 +42,9 @@ class WorkloadAnalysisController extends Controller
         ]);
 
         $user->update($validated);
+
+        // PERBAIKAN: Panggil service untuk menghitung ulang skor kinerja user ini secara instan.
+        $calculator->calculateForUser($user);
 
         return back()->with('success', "Penilaian perilaku kerja untuk {$user->name} berhasil diperbarui.");
     }
