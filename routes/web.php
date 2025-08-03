@@ -21,6 +21,8 @@ use App\Http\Controllers\UnitController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WeeklyWorkloadController;
 use App\Http\Controllers\WorkloadAnalysisController;
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 // Publicly accessible routes
@@ -37,7 +39,19 @@ Route::get('/api/users/{user}/workload', [UserController::class, 'getWorkloadSum
 
 Route::middleware(['auth', 'verified'])->group(function () {
 
-    Route::get('/dashboard', [ProjectController::class, 'index'])->name('dashboard');
+    // Rute dashboard utama yang akan mengarahkan pengguna berdasarkan peran
+    Route::get('/dashboard', function () {
+        $user = Auth::user();
+        if ($user->role === User::ROLE_ESELON_I || $user->role === User::ROLE_ESELON_II) {
+            return redirect()->route('executive.summary');
+        }
+        // Untuk Superadmin, Koordinator, Sub Koordinator, dan Staf
+        return redirect()->route('dashboard.view');
+    })->name('dashboard');
+
+    // Rute view dashboard yang sebenarnya (untuk peran selain Eselon I/II)
+    Route::get('/dashboard-view', [ProjectController::class, 'index'])->name('dashboard.view');
+
     Route::get('/global-dashboard', [GlobalDashboardController::class, 'index'])->name('global.dashboard');
     Route::get('/executive-summary', [ExecutiveSummaryController::class, 'index'])->name('executive.summary');
 
