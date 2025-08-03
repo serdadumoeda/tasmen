@@ -6,6 +6,7 @@ use Illuminate\Database\Seeder;
 use App\Models\Task;
 use App\Models\User;
 use Faker\Factory as Faker;
+use Illuminate\Support\Facades\Auth;
 
 class AdHocTaskSeeder extends Seeder
 {
@@ -25,6 +26,10 @@ class AdHocTaskSeeder extends Seeder
         }
 
         for ($i = 0; $i < 25; $i++) { // Membuat 25 record
+            // Temporarily authenticate as a random user to be the task creator
+            $creator = $users->random();
+            Auth::login($creator);
+
             $task = Task::create([
                 'title' => $faker->sentence(4),
                 'description' => $faker->realText(150),
@@ -39,6 +44,8 @@ class AdHocTaskSeeder extends Seeder
             $task->assignees()->attach(
                 $users->random(rand(1, min(2, $users->count())))->pluck('id')->toArray()
             );
+
+            Auth::logout();
         }
     }
 }
