@@ -52,19 +52,79 @@
                 </div>
             </div>
 
-            <!-- Grid Konten Utama (Chart dan Aktivitas) -->
+            <!-- Grid Konten Utama (Daftar Kegiatan dan Aktivitas) -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-                <!-- Kolom Kiri: Chart Status Proyek -->
-                <div class="lg:col-span-2 bg-white overflow-hidden shadow-xl rounded-xl p-6">
-                    <h3 class="text-lg font-semibold mb-4 text-gray-900 flex items-center">
-                        <i class="fas fa-chart-pie mr-3 text-indigo-500"></i>
-                        Distribusi Status Proyek
-                    </h3>
-                    <div class="h-80">
-                        <canvas id="projectStatusChart"></canvas>
+                <!-- Kolom Kiri: Daftar Kegiatan -->
+                <div class="lg:col-span-2 space-y-6">
+                    <!-- Form Filter dan Pencarian -->
+                    <div class="bg-white p-4 rounded-xl shadow-lg">
+                        <form action="{{ route('global.dashboard') }}" method="GET" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                            <div class="md:col-span-2">
+                                <label for="search" class="sr-only">Cari Kegiatan</label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <i class="fas fa-search text-gray-400"></i>
+                                    </div>
+                                    <input type="text" name="search" id="search" class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Cari nama kegiatan..." value="{{ $search ?? '' }}">
+                                </div>
+                            </div>
+                            <div>
+                                <label for="status" class="sr-only">Status</label>
+                                <select id="status" name="status" class="block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                                    <option value="">Semua Status</option>
+                                    <option value="pending" @selected(($status ?? '') === 'pending')>Menunggu</option>
+                                    <option value="in_progress" @selected(($status ?? '') === 'in_progress')>Dikerjakan</option>
+                                    <option value="completed" @selected(($status ?? '') === 'completed')>Selesai</option>
+                                    <option value="overdue" @selected(($status ?? '') === 'overdue')>Terlambat</option>
+                                </select>
+                            </div>
+                            <div class="md:col-span-3 flex justify-end space-x-2">
+                                <button type="submit" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700">Filter</button>
+                                <a href="{{ route('global.dashboard') }}" class="inline-flex items-center px-4 py-2 bg-gray-200 border border-transparent rounded-md font-semibold text-xs text-gray-800 uppercase tracking-widest hover:bg-gray-300">Reset</a>
+                            </div>
+                        </form>
                     </div>
+
+                    <!-- Daftar Proyek -->
+                    @forelse ($allProjects as $project)
+                        @php
+                            // Kalkulasi ini bisa dipindahkan ke model jika sering digunakan
+                            $totalTasks = $project->tasks->count();
+                            $completedTasks = $project->tasks->where('status', 'completed')->count();
+                            $completionPercentage = ($totalTasks > 0) ? round(($completedTasks / $totalTasks) * 100) : 0;
+                            // Menggunakan status dinamis dari model Project
+                            $statusInfo = $project->status;
+                            $statusClass = $project->getStatusColorClassAttribute();
+                        @endphp
+                        <a href="{{ route('projects.show', $project) }}" class="block bg-white p-6 rounded-xl shadow-lg hover:shadow-2xl transition-shadow duration-300">
+                            <div class="flex justify-between items-start mb-2">
+                                <h4 class="font-bold text-lg text-gray-800">{{ $project->name }}</h4>
+                                <span class="text-xs font-semibold {{ $statusClass }} px-3 py-1 rounded-full">{{ \Illuminate\Support\Str::title(str_replace('_', ' ', $statusInfo)) }}</span>
+                            </div>
+                            <p class="text-sm text-gray-500 mb-1">
+                                <i class="fas fa-user-tie mr-2 text-gray-400"></i>Ketua: <span class="font-medium text-gray-700">{{ $project->leader->name }}</span>
+                            </p>
+                             <p class="text-sm text-gray-500 mb-3">
+                                <i class="fas fa-crown mr-2 text-gray-400"></i>Pemilik: <span class="font-medium text-gray-700">{{ $project->owner->name }}</span>
+                            </p>
+                            <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                <div class="bg-indigo-600 h-2.5 rounded-full" style="width: {{ $completionPercentage }}%"></div>
+                            </div>
+                            <div class="flex justify-between text-xs text-gray-500 mt-1">
+                                <span>Progress: {{ $completionPercentage }}%</span>
+                                <span>{{ $completedTasks }} / {{ $totalTasks }} Tugas Selesai</span>
+                            </div>
+                        </a>
+                    @empty
+                        <div class="bg-white p-10 rounded-xl shadow-lg text-center">
+                            <i class="fas fa-search-minus fa-3x text-gray-300 mb-4"></i>
+                            <p class="text-gray-500 font-semibold">Tidak ada kegiatan yang cocok dengan kriteria Anda.</p>
+                            <p class="text-sm text-gray-400 mt-2">Coba ubah filter atau kata kunci pencarian Anda.</p>
+                        </div>
+                    @endforelse
                 </div>
+
                 <!-- Kolom Kanan: Aktivitas Terbaru -->
                 <div class="bg-white overflow-hidden shadow-xl rounded-xl p-6">
                      <h3 class="text-lg font-semibold mb-4 text-gray-900 flex items-center">
@@ -109,59 +169,4 @@
             </div>
         </div>
     </div>
-
-    @push('scripts')
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const ctx = document.getElementById('projectStatusChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: @json($chartData['labels']),
-                    datasets: [{
-                        label: 'Status Proyek',
-                        data: @json($chartData['data']),
-                        backgroundColor: [
-                            'rgba(34, 197, 94, 0.7)',  // green-500
-                            'rgba(239, 68, 68, 0.7)',  // red-500
-                            'rgba(59, 130, 246, 0.7)', // blue-500
-                            'rgba(168, 85, 247, 0.7)'  // purple-500
-                        ],
-                        borderColor: [
-                            'rgba(34, 197, 94, 1)',
-                            'rgba(239, 68, 68, 1)',
-                            'rgba(59, 130, 246, 1)',
-                            'rgba(168, 85, 247, 1)'
-                        ],
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    let label = context.label || '';
-                                    if (label) {
-                                        label += ': ';
-                                    }
-                                    if (context.parsed !== null) {
-                                        label += context.parsed;
-                                    }
-                                    return label + ' Proyek';
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        });
-    </script>
-    @endpush
 </x-app-layout>

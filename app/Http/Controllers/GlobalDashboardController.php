@@ -47,13 +47,30 @@ class GlobalDashboardController extends Controller
                                     ->count(),
         ];
 
+        // --- AWAL LOGIKA FILTER & PENCARIAN ---
+        $search = request('search');
+        $status = request('status');
+
+        if ($search) {
+            $projectQuery->where('name', 'like', '%' . $search . '%');
+        }
+
         // Mengambil data untuk list proyek, seperti yang dibutuhkan view
         $allProjects = $projectQuery->with(['leader', 'tasks'])
                                   ->withSum('budgetItems', 'total_cost')
                                   ->latest()
                                   ->get();
 
-        // Menyiapkan data untuk chart
+        // Filter berdasarkan status dinamis setelah mengambil data
+        if ($status) {
+            $allProjects = $allProjects->filter(function ($project) use ($status) {
+                return $project->status === $status;
+            });
+        }
+        // --- AKHIR LOGIKA FILTER & PENCARIAN ---
+
+
+        // Menyiapkan data untuk chart (kini tidak lagi digunakan, tapi kita biarkan untuk potensi masa depan)
         $statusCounts = $allProjects->groupBy('status')->map->count();
         $chartData = [
             'labels' => $statusCounts->keys(),
@@ -62,6 +79,6 @@ class GlobalDashboardController extends Controller
 
         $recentActivities = Activity::with('user', 'subject')->latest()->take(15)->get();
 
-        return view('global-dashboard', compact('stats', 'allProjects', 'recentActivities', 'chartData'));
+        return view('global-dashboard', compact('stats', 'allProjects', 'recentActivities', 'chartData', 'search', 'status'));
     }
 }
