@@ -19,23 +19,19 @@ class ProjectController extends Controller
     
     public function index()
     {
+        // PERBAIKAN: Sederhanakan query dan andalkan Global Scope (HierarchicalScope)
+        // untuk memfilter proyek secara otomatis berdasarkan peran pengguna.
         $user = Auth::user();
 
-        if ($user->isSuperAdmin()) {
-            $ownedProjects = Project::withoutGlobalScope(HierarchicalScope::class)->with('owner', 'leader')->latest()->get();
-            $memberProjects = collect(); // Superadmin sees all projects under owned.
-        } else {
-            $ownedProjects = Project::where('owner_id', $user->id)
-                ->with('owner', 'leader')
-                ->latest()
-                ->get();
+        // HierarchicalScope akan secara otomatis:
+        // 1. Tidak menerapkan filter untuk Superadmin (menampilkan semua).
+        // 2. Menerapkan filter hierarki untuk Manajer (Eselon, Koordinator).
+        // 3. Menerapkan filter keterlibatan langsung untuk Staf.
+        $allProjects = Project::with('owner', 'leader')->latest()->get();
 
-            $memberProjects = $user->projects()
-                ->where('owner_id', '!=', $user->id)
-                ->with('owner', 'leader')
-                ->latest()
-                ->get();
-        }
+        // Pisahkan proyek berdasarkan kepemilikan untuk ditampilkan di view.
+        $ownedProjects = $allProjects->where('owner_id', $user->id);
+        $memberProjects = $allProjects->where('owner_id', '!=', $user->id);
 
         return view('dashboard', compact('ownedProjects', 'memberProjects'));
     }

@@ -22,14 +22,22 @@ class GlobalDashboardController extends Controller
         $taskQuery = Task::query();
         $userQuery = User::query();
 
-        // if ($currentUser->role === 'Eselon II') {
-        //     $subordinateIds = $currentUser->getAllSubordinateIds();
-        //     $subordinateIds[] = $currentUser->id;
+        // PERBAIKAN: Aktifkan dan perbaiki logika filter hierarkis untuk manajer.
+        // Superadmin akan melewati blok ini dan melihat semua data.
+        if (in_array($currentUser->role, [User::ROLE_ESELON_I, User::ROLE_ESELON_II])) {
+            $subordinateIds = $currentUser->getAllSubordinateIds();
+            $subordinateIds->push($currentUser->id); // Sertakan diri sendiri
             
-        //     $projectQuery->whereIn('owner_id', $subordinateIds);
-        //     $taskQuery->whereIn('project_id', $projectQuery->pluck('id'));
-        //     $userQuery->whereIn('id', $subordinateIds);
-        // }
+            // Filter proyek berdasarkan siapa yang memilikinya dalam hierarki
+            $projectQuery->whereIn('owner_id', $subordinateIds);
+
+            // Dapatkan ID proyek yang relevan SETELAH difilter
+            $relevantProjectIds = $projectQuery->pluck('id');
+
+            // Filter tugas dan pengguna berdasarkan hierarki
+            $taskQuery->whereIn('project_id', $relevantProjectIds);
+            $userQuery->whereIn('id', $subordinateIds);
+        }
  
         $stats = [
             'total_projects' => $projectQuery->count(),
