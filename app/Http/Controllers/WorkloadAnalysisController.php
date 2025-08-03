@@ -43,8 +43,9 @@ class WorkloadAnalysisController extends Controller
 
         $user->update($validated);
 
-        // PERBAIKAN: Panggil service untuk menghitung ulang skor kinerja user ini secara instan.
-        $calculator->calculateForUser($user);
+        // PERBAIKAN: Panggil service untuk menghitung ulang skor kinerja user ini dan atasannya.
+        // Ini memastikan perubahan pada bawahan langsung terefleksi pada skor manajerial atasan.
+        $calculator->calculateForSingleUserAndParents($user);
 
         return back()->with('success', "Penilaian perilaku kerja untuk {$user->name} berhasil diperbarui.");
     }

@@ -5,38 +5,59 @@ namespace App\Services;
 use App\Models\User;
 use App\Models\TimeLog;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 
 class PerformanceCalculatorService
 {
-    /**
-     * Menghitung semua metrik kinerja untuk satu pengguna dan menyimpannya.
-     */
-    public function calculateForUser(User $user, $allUsersCollection = null): void
+    private Collection $users;
+    private array $calculatedIki;
+    private array $calculatedNkf;
+
+    public function __construct()
     {
-        // Jika koleksi semua user tidak disediakan, ambil dari DB.
-        // Ini untuk pemanggilan tunggal. Untuk pemanggilan massal, lebih baik sediakan dari luar.
-        if (!$allUsersCollection) {
-            $allUsersCollection = User::all()->keyBy('id');
+        $this->calculatedIki = [];
+        $this->calculatedNkf = [];
+    }
+
+    /**
+     * Menjalankan siklus perhitungan untuk semua pengguna.
+     * Ini adalah method yang seharusnya dipanggil oleh scheduled command.
+     */
+    public function calculateForAllUsers(): void
+    {
+        $this->users = User::with('unit')->get()->keyBy('id');
+        $this->calculatedIki = [];
+        $this->calculatedNkf = [];
+
+        // Langkah 1: Hitung IKI untuk semua orang
+        foreach ($this->users as $user) {
+            $this->calculatedIki[$user->id] = $this->calculateIndividualPerformanceIndex($user);
         }
 
-        // Langkah 1: Hitung dan simpan IKI
-        $iki = $this->calculateIndividualPerformanceIndex($user);
-        $user->individual_performance_index = $iki;
+        // Langkah 2: Hitung NKF untuk semua orang (fungsi rekursif akan menangani dependensi)
+        foreach ($this->users as $user) {
+            $this->calculateFinalPerformanceValue($user);
+        }
 
-        // Langkah 2: Hitung dan simpan NKF
-        $nkf = $this->calculateFinalPerformanceValue($user, $allUsersCollection);
-        $user->final_performance_value = $nkf;
+        // Langkah 3: Simpan semua hasil ke database
+        foreach ($this->users as $user) {
+            $user->individual_performance_index = $this->calculatedIki[$user->id];
+            $user->final_performance_value = $this->calculatedNkf[$user->id];
+            $user->work_result_rating = $this->getWorkResultRating($user->final_performance_value);
+            $user->performance_predicate = $this->getPerformancePredicate($user->work_result_rating, $user->work_behavior_rating);
+            $user->performance_data_updated_at = now();
+            $user->save();
+        }
+    }
 
-        // Langkah 3: Hitung dan simpan Peringkat & Predikat
-        $workResultRating = $this->getWorkResultRating($nkf);
-        $user->work_result_rating = $workResultRating;
-
-        $performancePredicate = $this->getPerformancePredicate($workResultRating, $user->work_behavior_rating);
-        $user->performance_predicate = $performancePredicate;
-
-        // Langkah 4: Tandai waktu update dan simpan semua ke DB
-        $user->performance_data_updated_at = now();
-        $user->save();
+    /**
+     * Menghitung ulang kinerja untuk satu pengguna dan memperbarui hierarki atasannya.
+     * Ini yang dipanggil oleh controller setelah ada aksi.
+     */
+    public function calculateForSingleUserAndParents(User $user): void
+    {
+        $this->users = User::with('unit.parentUnit')->get()->keyBy('id');
+        $this->calculateForAllUsers(); // Cara paling aman adalah hitung ulang semua untuk menjaga konsistensi.
     }
 
     private function calculateIndividualPerformanceIndex(User $user): float
@@ -61,26 +82,35 @@ class PerformanceCalculatorService
 
         if ($effortRatio == 0) return 1.0;
 
-        return $progressRatio / $effortRatio;
+        return round($progressRatio / $effortRatio, 3);
     }
 
-    private function calculateFinalPerformanceValue(User $user, $allUsers, array $visited = []): float
+    private function calculateFinalPerformanceValue(User $user): float
     {
-        if (in_array($user->id, $visited)) return 1.0;
+        // Jika sudah dihitung dalam siklus ini, kembalikan hasilnya untuk menghindari kerja ganda.
+        if (isset($this->calculatedNkf[$user->id])) {
+            return $this->calculatedNkf[$user->id];
+        }
 
-        $individualScore = $user->individual_performance_index ?? 1.0;
+        // Ambil IKI yang baru saja dihitung di langkah sebelumnya.
+        $individualScore = $this->calculatedIki[$user->id] ?? 1.0;
 
-        if (!$user->isManager()) return $individualScore;
-
-        $visited[] = $user->id;
+        if (!$user->isManager()) {
+            $this->calculatedNkf[$user->id] = $individualScore;
+            return $individualScore;
+        }
 
         $subordinateIds = $user->getAllSubordinateIds();
-        $subordinates = $allUsers->whereIn('id', $subordinateIds);
+        if ($subordinateIds->isEmpty()) {
+            $this->calculatedNkf[$user->id] = $individualScore;
+            return $individualScore;
+        }
 
-        if ($subordinates->isEmpty()) return $individualScore;
+        $subordinates = $this->users->whereIn('id', $subordinateIds);
 
-        $managerialScore = $subordinates->avg(function ($subordinate) use ($allUsers, $visited) {
-            return $subordinate->final_performance_value ?? $this->calculateFinalPerformanceValue($subordinate, $allUsers, $visited);
+        $managerialScore = $subordinates->avg(function ($subordinate) {
+            // Panggil fungsi ini secara rekursif untuk memastikan bawahan dihitung terlebih dahulu.
+            return $this->calculateFinalPerformanceValue($subordinate);
         });
 
         $managerialWeights = [
@@ -89,7 +119,10 @@ class PerformanceCalculatorService
         ];
         $weight = $managerialWeights[$user->role] ?? 0.5;
 
-        return ($individualScore * (1 - $weight)) + ($managerialScore * $weight);
+        $finalScore = ($individualScore * (1 - $weight)) + ($managerialScore * $weight);
+        $this->calculatedNkf[$user->id] = $finalScore;
+
+        return $finalScore;
     }
 
     private function getWorkResultRating(float $finalScore): string

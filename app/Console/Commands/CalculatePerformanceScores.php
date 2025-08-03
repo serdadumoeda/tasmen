@@ -49,11 +49,8 @@ class CalculatePerformanceScores extends Command
         $this->info('Starting performance score calculation...');
         Log::info('Scheduled task: Starting performance score calculation.');
 
-        $users = User::all()->keyBy('id');
-
-        foreach ($users as $user) {
-            $this->calculator->calculateForUser($user, $users);
-        }
+        // Panggil service untuk menjalankan seluruh siklus perhitungan.
+        $this->calculator->calculateForAllUsers();
 
         Log::info('Scheduled task: Finished performance score calculation.');
         $this->info('Performance score calculation completed successfully.');
