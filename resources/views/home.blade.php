@@ -59,20 +59,20 @@
                             @foreach($overdueTasks->take(3) as $task)
                                 <div class="p-4 rounded-lg bg-red-50 border border-red-200 flex justify-between items-center">
                                     <div>
-                                        <a href="{{ $task->project ? route('projects.show', $task->project_id) : route('adhoc-tasks.index') }}" class="font-semibold text-red-800 hover:underline">{{ $task->title }}</a>
+                                        <a href="{{ $task->project ? route('projects.show', $task->project) : route('adhoc-tasks.index') }}" class="font-semibold text-red-800 hover:underline">{{ $task->title }}</a>
                                         <p class="text-xs text-red-600">Terlambat {{ now()->diffInDays($task->deadline) }} hari</p>
                                     </div>
-                                    <a href="{{ $task->project ? route('projects.show', $task->project_id) : route('adhoc-tasks.edit', $task) }}" class="text-xs font-bold text-white bg-red-500 px-3 py-1 rounded-full hover:bg-red-600 transition-colors">Lihat</a>
+                                    <a href="{{ $task->project ? route('projects.show', $task->project) : route('adhoc-tasks.edit', $task) }}" class="text-xs font-bold text-white bg-red-500 px-3 py-1 rounded-full hover:bg-red-600 transition-colors">Lihat</a>
                                 </div>
                             @endforeach
 
                             @foreach($dueSoonTasks->take(3) as $task)
                                 <div class="p-4 rounded-lg bg-yellow-50 border border-yellow-200 flex justify-between items-center">
                                     <div>
-                                        <a href="{{ $task->project ? route('projects.show', $task->project_id) : route('adhoc-tasks.index') }}" class="font-semibold text-yellow-800 hover:underline">{{ $task->title }}</a>
+                                        <a href="{{ $task->project ? route('projects.show', $task->project) : route('adhoc-tasks.index') }}" class="font-semibold text-yellow-800 hover:underline">{{ $task->title }}</a>
                                         <p class="text-xs text-yellow-600">Sisa waktu {{ now()->diffInDays($task->deadline) + 1 }} hari</p>
                                     </div>
-                                    <a href="{{ $task->project ? route('projects.show', $task->project_id) : route('adhoc-tasks.edit', $task) }}" class="text-xs font-bold text-white bg-yellow-500 px-3 py-1 rounded-full hover:bg-yellow-600 transition-colors">Lihat</a>
+                                    <a href="{{ $task->project ? route('projects.show', $task->project) : route('adhoc-tasks.edit', $task) }}" class="text-xs font-bold text-white bg-yellow-500 px-3 py-1 rounded-full hover:bg-yellow-600 transition-colors">Lihat</a>
                                 </div>
                             @endforeach
                         </div>

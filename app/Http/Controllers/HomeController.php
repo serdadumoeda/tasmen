@@ -20,7 +20,7 @@ class HomeController extends Controller
         // 1. Statistik Cepat & Tugas Mendesak
         $myTasks = Task::whereHas('assignees', fn($q) => $q->where('user_id', $user->id))
                        ->where('status', '!=', 'completed')
-                       ->with('project:id,name') // Eager load nama proyek
+                       ->with('project') // PERBAIKAN: Eager load relasi project secara penuh
                        ->get();
 
         $tasksInProgress = $myTasks->count();
