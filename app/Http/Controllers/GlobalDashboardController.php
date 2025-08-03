@@ -39,8 +39,12 @@ class GlobalDashboardController extends Controller
         $stats = [
             'total_projects' => (clone $projectQuery)->count(),
             'total_users' => (clone $userQuery)->count(),
+            'active_users' => (clone $userQuery)->where('status', 'active')->count(),
             'total_tasks' => (clone $taskQuery)->count(),
             'completed_tasks' => (clone $taskQuery)->where('status', 'completed')->count(),
+            'pending_requests' => PeminjamanRequest::where('status', 'pending')
+                                    ->whereIn('approver_id', (clone $userQuery)->pluck('id'))
+                                    ->count(),
         ];
 
         // Mengambil data untuk list proyek, seperti yang dibutuhkan view
