@@ -37,7 +37,7 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6"> {{-- Mengubah gap-4 menjadi gap-6 --}}
         <div>
             <label for="deadline" class="block font-semibold text-sm text-gray-700 mb-1">Deadline <span class="text-red-500">*</span></label> {{-- Menambahkan font-semibold dan mb-1 --}}
-            <input type="date" name="deadline" id="deadline" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" value="{{ old('deadline', isset($task->deadline) ? $task->deadline->format('Y-m-d') : '') }}" required> {{-- Mengubah rounded-md menjadi rounded-lg, menambahkan fokus, dan transisi --}}
+            <input type="date" name="deadline" id="deadline" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" value="{{ old('deadline', optional($task->deadline)->format('Y-m-d')) }}" required> {{-- Mengubah rounded-md menjadi rounded-lg, menambahkan fokus, dan transisi --}}
         </div>
         <div>
             <label for="estimated_hours" class="block font-semibold text-sm text-gray-700 mb-1">Estimasi Jam <span class="text-red-500">*</span></label> {{-- Menambahkan font-semibold dan mb-1 --}}
