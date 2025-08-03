@@ -6,6 +6,7 @@ use App\Http\Controllers\TaskController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\AttachmentController;
 use App\Http\Controllers\GlobalDashboardController;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WorkloadAnalysisController;
 use App\Http\Controllers\TimeLogController;
@@ -38,7 +39,7 @@ use Illuminate\Support\Facades\Auth;
 Route::middleware(['auth', 'verified'])->group(function () {
 
     // Rute default setelah login adalah Beranda baru.
-    Route::get('/dashboard', [GlobalDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard', [HomeController::class, 'index'])->name('dashboard');
     // Rute untuk daftar kegiatan (proyek)
     Route::get('/projects', [ProjectController::class, 'index'])->name('projects.index');
 
