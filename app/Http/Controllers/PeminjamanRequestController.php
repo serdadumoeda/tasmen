@@ -62,25 +62,23 @@ class PeminjamanRequestController extends Controller
      */
     public function destroy(PeminjamanRequest $peminjamanRequest)
     {
-        // Hanya peminta atau approver yang boleh menghapus riwayat
-        if (Auth::id() !== $peminjamanRequest->requester_id && Auth::id() !== $peminjamanRequest->approver_id) {
-            abort(403, 'Anda tidak berwenang melakukan tindakan ini.');
-        }
+        $this->authorize('delete', $peminjamanRequest);
 
         $peminjamanRequest->delete();
 
         return redirect()->back()->with('success', 'Riwayat telah berhasil dihapus.');
     }
-
-    // ... (Sisa method store, approve, reject tidak berubah)
     
     public function store(Request $request)
     {
+        $this->authorize('create', PeminjamanRequest::class);
+
         $validator = Validator::make($request->all(), [
             'project_id' => 'required|exists:projects,id',
             'requested_user_id' => 'required|exists:users,id',
             'message' => 'nullable|string|max:1000',
         ]);
+
         if ($validator->fails()) {
             return response()->json(['success' => false, 'message' => 'Data tidak valid.', 'errors' => $validator->errors()], 422);
         }
@@ -92,8 +90,14 @@ class PeminjamanRequestController extends Controller
             return response()->json(['success' => false, 'message' => 'Koordinator untuk anggota ini tidak dapat ditemukan.'], 422);
         }
 
-        $peminjamanRequest = PeminjamanRequest::create($request->all() + ['requester_id' => Auth::id(), 'approver_id' => $approver->id, 'due_date' => now()->addWeekday()]);
+        $peminjamanRequest = PeminjamanRequest::create($request->all() + [
+            'requester_id' => Auth::id(),
+            'approver_id' => $approver->id,
+            'due_date' => now()->addWeekday()
+        ]);
+
         Notification::send($approver, new PeminjamanRequested($peminjamanRequest));
+
         return response()->json(['success' => true, 'message' => 'Permintaan peminjaman anggota telah berhasil dikirim.']);
     }
     
@@ -126,12 +130,17 @@ class PeminjamanRequestController extends Controller
 
     public function approve(PeminjamanRequest $peminjamanRequest)
     {
-        if ($peminjamanRequest->approver_id !== Auth::id()) abort(403);
+        $this->authorize('approve', $peminjamanRequest);
+
         try {
             $project = Project::withoutGlobalScope(HierarchicalScope::class)->findOrFail($peminjamanRequest->project_id);
             $project->members()->syncWithoutDetaching([$peminjamanRequest->requested_user_id]);
             $peminjamanRequest->update(['status' => 'approved']);
-            if ($peminjamanRequest->requester) Notification::send($peminjamanRequest->requester, new PeminjamanApproved($peminjamanRequest));
+
+            if ($peminjamanRequest->requester) {
+                Notification::send($peminjamanRequest->requester, new PeminjamanApproved($peminjamanRequest));
+            }
+
             return redirect()->route('peminjaman-requests.my-requests')->with('success', 'Permintaan telah disetujui.');
         } catch (ModelNotFoundException $e) {
             return redirect()->route('peminjaman-requests.my-requests')->with('error', 'Gagal menyetujui: Proyek terkait tidak ditemukan.');
@@ -140,10 +149,16 @@ class PeminjamanRequestController extends Controller
 
     public function reject(Request $request, PeminjamanRequest $peminjamanRequest)
     {
-        if ($peminjamanRequest->approver_id !== Auth::id()) abort(403);
+        $this->authorize('reject', $peminjamanRequest);
+
         $request->validate(['rejection_reason' => 'required|string|max:1000']);
+
         $peminjamanRequest->update($request->only('rejection_reason') + ['status' => 'rejected']);
-        if ($peminjamanRequest->requester) Notification::send($peminjamanRequest->requester, new PeminjamanRejected($peminjamanRequest));
+
+        if ($peminjamanRequest->requester) {
+            Notification::send($peminjamanRequest->requester, new PeminjamanRejected($peminjamanRequest));
+        }
+
         return redirect()->route('peminjaman-requests.my-requests')->with('success', 'Permintaan telah ditolak.');
     }
 }
