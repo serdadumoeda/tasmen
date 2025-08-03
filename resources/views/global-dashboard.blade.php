@@ -1,8 +1,15 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            <i class="fas fa-briefcase mr-2"></i> {{ __('Daftar Kegiatan') }}
-        </h2>
+        <div class="flex justify-between items-center">
+            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+                <i class="fas fa-briefcase mr-2"></i> {{ __('Daftar Kegiatan') }}
+            </h2>
+            @can('create', App\Models\Project::class)
+                <a href="{{ route('projects.create.step1') }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150 shadow-md hover:shadow-lg">
+                    <i class="fas fa-plus-circle mr-2"></i> Tambah Kegiatan
+                </a>
+            @endcan
+        </div>
     </x-slot>
 
     <div class="py-12 bg-gray-100">
@@ -10,14 +17,14 @@
             
             <!-- Grid Metrik Utama -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <!-- Total Proyek -->
+                <!-- Total Kegiatan -->
                 <div class="bg-white p-6 rounded-xl shadow-xl flex items-center space-x-4">
                     <div class="bg-blue-500 p-4 rounded-full">
                         <i class="fas fa-folder-open fa-2x text-white"></i>
                     </div>
                     <div>
                         <p class="text-3xl font-bold text-gray-800">{{ $stats['total_projects'] }}</p>
-                        <p class="text-gray-500 font-medium">Total Proyek</p>
+                        <p class="text-gray-500 font-medium">Total Kegiatan</p>
                     </div>
                 </div>
                 <!-- Pengguna Aktif -->
