@@ -32,14 +32,13 @@ Route::get('/', function () {
 
 Route::get('/get-users-by-unit/{eselon2_id}', [UserController::class, 'getUsersByUnit'])->name('users.by-unit');
 
-use App\Http\Controllers\HomeController;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 
 Route::middleware(['auth', 'verified'])->group(function () {
 
     // Rute default setelah login adalah Beranda baru.
-    Route::get('/dashboard', [HomeController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard', [GlobalDashboardController::class, 'index'])->name('dashboard');
     // Rute untuk daftar kegiatan (proyek)
     Route::get('/projects', [ProjectController::class, 'index'])->name('projects.index');
 
