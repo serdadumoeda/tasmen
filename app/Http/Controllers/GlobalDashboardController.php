@@ -37,11 +37,19 @@ class GlobalDashboardController extends Controller
         // Hitung status proyek menggunakan accessor di model
         $projectStatusCounts = $relevantProjects->countBy('status');
 
+        // Dapatkan ID proyek yang relevan untuk memfilter tugas
+        $relevantProjectIds = $relevantProjects->pluck('id');
+        $totalTasks = Task::whereIn('project_id', $relevantProjectIds)->orWhereNull('project_id')->count();
+        $completedTasks = Task::whereIn('project_id', $relevantProjectIds)->orWhereNull('project_id')->where('status', 'completed')->count();
+
+
         $stats = [
             'total_projects' => $relevantProjects->count(),
             'active_users' => (clone $userQuery)->where('status', 'active')->count(),
             'total_users' => $userQuery->count(),
             'pending_requests' => PeminjamanRequest::where('status', 'pending')->count(),
+            'total_tasks' => $totalTasks,
+            'completed_tasks' => $completedTasks,
         ];
 
         // Ambil 5 aktivitas terbaru
