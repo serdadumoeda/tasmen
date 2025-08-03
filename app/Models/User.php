@@ -43,6 +43,8 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'jabatan',
+        'atasan_id',
         'unit_id',
         'status',
         'work_behavior_rating',
@@ -70,6 +72,16 @@ class User extends Authenticatable
     // ... sisa kode model Anda tidak perlu diubah ...
 
     // --- RELASI ---
+
+    public function atasan(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'atasan_id');
+    }
+
+    public function bawahan(): HasMany
+    {
+        return $this->hasMany(User::class, 'atasan_id');
+    }
 
     public function unit(): BelongsTo
     {

@@ -38,7 +38,7 @@
                     <i class="fas fa-user mr-3 text-gray-400"></i>
                     <div>
                         <span class="font-medium">{{ $user->name }}</span>
-                        <span class="text-sm text-gray-600"> - ({{ $user->role }})</span>
+                        <span class="text-sm text-indigo-600 font-semibold"> - ({{ $user->jabatan ?? $user->role }})</span>
                     </div>
                 </li>
             @empty
