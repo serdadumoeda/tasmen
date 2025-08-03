@@ -22,7 +22,7 @@ if (count($words) >= 2) {
                 </div>
 
                 <div class="hidden space-x-4 sm:-my-px sm:ms-10 sm:flex">
-                    <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" class="text-white hover:text-yellow-300 transition duration-150 ease-in-out">
+                    <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard', 'global.dashboard')" class="text-white hover:text-yellow-300 transition duration-150 ease-in-out">
                         Beranda
                     </x-nav-link>
 
