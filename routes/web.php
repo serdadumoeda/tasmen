@@ -40,11 +40,14 @@ Route::get('/api/users/{user}/workload', [UserController::class, 'getWorkloadSum
 
 Route::middleware(['auth', 'verified'])->group(function () {
 
-    // Rute '/dashboard' sekarang menjadi Beranda utama, dengan logika di HomeController.
+    // Rute default setelah login sekarang adalah Beranda baru yang komprehensif.
     Route::get('/dashboard', [HomeController::class, 'index'])->name('dashboard');
 
-    // Rute untuk daftar kegiatan (proyek)
+    // Rute untuk daftar kegiatan (proyek) diganti namanya agar lebih jelas
     Route::get('/projects', [ProjectController::class, 'index'])->name('projects.index');
+
+    // Rute 'home' tidak lagi diperlukan karena /dashboard adalah beranda utama
+    // Route::get('/home', [HomeController::class, 'index'])->name('home');
 
     Route::get('/global-dashboard', [GlobalDashboardController::class, 'index'])->name('global.dashboard');
     Route::get('/executive-summary', [ExecutiveSummaryController::class, 'index'])->name('executive.summary');

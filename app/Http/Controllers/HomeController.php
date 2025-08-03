@@ -15,11 +15,6 @@ class HomeController extends Controller
     {
         $user = Auth::user();
 
-        // Logika pengalihan untuk pimpinan tingkat tinggi
-        if ($user->role === User::ROLE_ESELON_I || $user->role === User::ROLE_ESELON_II) {
-            return redirect()->route('executive.summary');
-        }
-
         // --- Pengambilan Data untuk Widget ---
 
         // 1. Statistik Cepat & Tugas Mendesak

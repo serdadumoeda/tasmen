@@ -28,7 +28,14 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        // PERBAIKAN: Logika pengalihan berdasarkan peran setelah login
+        $user = $request->user();
+        if ($user->role === \App\Models\User::ROLE_ESELON_I || $user->role === \App\Models\User::ROLE_ESELON_II) {
+            return redirect()->intended(route('executive.summary', absolute: false));
+        }
+
+        // Untuk semua peran lain, arahkan ke beranda baru
+        return redirect()->intended(route('home', absolute: false));
     }
 
     /**
