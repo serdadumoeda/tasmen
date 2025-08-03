@@ -64,8 +64,6 @@ if (count($words) >= 2) {
                                 </x-slot>
                                 <x-slot name="content">
                                     <div class="rounded-xl shadow-2xl py-1 bg-white ring-1 ring-black ring-opacity-10">
-                                        <x-dropdown-link :href="route('executive.summary')" :active="request()->routeIs('executive.summary')">Executive Summary</x-dropdown-link>
-                                        <div class="border-t border-gray-200"></div>
                                         <x-dropdown-link :href="route('workload.analysis')" :active="request()->routeIs('workload.analysis')">Analisis Beban Kerja</x-dropdown-link>
                                         <x-dropdown-link :href="route('weekly-workload.index')" :active="request()->routeIs('weekly-workload.index')">Beban Kerja Mingguan</x-dropdown-link>
                                     </div>
