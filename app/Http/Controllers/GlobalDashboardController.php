@@ -3,11 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Activity;
+use App\Models\PeminjamanRequest;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\User;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth; // Import Auth facade
+use Illuminate\Support\Facades\DB;
 
 class GlobalDashboardController extends Controller
 {
@@ -18,43 +18,40 @@ class GlobalDashboardController extends Controller
             abort(403, 'Hanya Super Admin, Eselon I, atau Eselon II yang dapat mengakses halaman ini.');
         }
 
-        $projectQuery = Project::query();
-        $taskQuery = Task::query();
-        $userQuery = User::query();
+        // Terapkan scope hierarki jika pengguna bukan superadmin
+        $projectQuery = $currentUser->isSuperAdmin() ? Project::query() : Project::hierarchical();
+        $userQuery = $currentUser->isSuperAdmin() ? User::query() : User::hierarchical();
 
-        // PERBAIKAN: Aktifkan dan perbaiki logika filter hierarkis untuk manajer.
-        // Superadmin akan melewati blok ini dan melihat semua data.
-        if (in_array($currentUser->role, [User::ROLE_ESELON_I, User::ROLE_ESELON_II])) {
-            $subordinateIds = $currentUser->getAllSubordinateIds();
-            $subordinateIds->push($currentUser->id); // Sertakan diri sendiri
-            
-            // Filter proyek berdasarkan siapa yang memilikinya dalam hierarki
-            $projectQuery->whereIn('owner_id', $subordinateIds);
+        // Dapatkan semua proyek yang relevan untuk perhitungan status
+        $relevantProjects = $projectQuery->with('tasks')->get();
 
-            // Dapatkan ID proyek yang relevan SETELAH difilter
-            $relevantProjectIds = $projectQuery->pluck('id');
+        // Hitung status proyek menggunakan accessor di model
+        $projectStatusCounts = $relevantProjects->countBy('status');
 
-            // Filter tugas dan pengguna berdasarkan hierarki
-            $taskQuery->whereIn('project_id', $relevantProjectIds);
-            $userQuery->whereIn('id', $subordinateIds);
-        }
- 
         $stats = [
-            'total_projects' => $projectQuery->count(),
+            'total_projects' => $relevantProjects->count(),
+            'active_users' => (clone $userQuery)->where('status', 'active')->count(),
             'total_users' => $userQuery->count(),
-            'total_tasks' => $taskQuery->count(),
-            'completed_tasks' => (clone $taskQuery)->where('status', 'completed')->count(),
+            'pending_requests' => PeminjamanRequest::where('status', 'pending')->count(),
         ];
 
-        // PERBAIKAN: Tambahkan withSum untuk mengambil total anggaran secara efisien
-        $allProjects = $projectQuery->with(['leader'])
-                                  ->withCount('tasks')
-                                  ->withSum('budgetItems', 'total_cost')
-                                  ->latest()
-                                  ->get();
+        // Ambil 5 aktivitas terbaru
+        $recentActivities = Activity::with('user', 'subject')
+            ->latest()
+            ->take(5)
+            ->get();
 
-        $recentActivities = Activity::with('user', 'subject')->latest()->take(15)->get();
+        // Siapkan data untuk chart status proyek
+        $chartData = [
+            'labels' => ['Selesai', 'Beresiko', 'Berjalan', 'Baru'],
+            'data' => [
+                $projectStatusCounts->get('completed', 0),
+                $projectStatusCounts->get('overdue', 0),
+                $projectStatusCounts->get('in_progress', 0),
+                $projectStatusCounts->get('pending', 0),
+            ],
+        ];
 
-        return view('global-dashboard', compact('stats', 'allProjects', 'recentActivities'));
+        return view('global-dashboard', compact('stats', 'recentActivities', 'chartData'));
     }
 }
