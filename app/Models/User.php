@@ -177,40 +177,40 @@ class User extends Authenticatable
      * Mengambil Indeks Kinerja Individu (IKI) dari database.
      * Nilai ini dihitung oleh command 'app:calculate-performance-scores'.
      */
-    public function getIndividualPerformanceIndexAttribute($value)
+    public function getIndividualPerformanceIndexAttribute(): float
     {
         // Berikan nilai default jika belum pernah dihitung.
-        return $value ?? 1.0;
+        return $this->attributes['individual_performance_index'] ?? 1.0;
     }
 
     /**
      * Mengambil Nilai Kinerja Final (NKF) dari database.
      * Nilai ini dihitung oleh command 'app:calculate-performance-scores'.
      */
-    public function getFinalPerformanceValueAttribute($value)
+    public function getFinalPerformanceValueAttribute(): float
     {
         // Berikan nilai default jika belum pernah dihitung.
-        return $value ?? 1.0;
+        return $this->attributes['final_performance_value'] ?? 1.0;
     }
 
     /**
      * Mengambil Peringkat Hasil Kerja dari database.
      * Nilai ini dihitung oleh command 'app:calculate-performance-scores'.
      */
-    public function getWorkResultRatingAttribute($value): string
+    public function getWorkResultRatingAttribute(): string
     {
         // Berikan nilai default jika belum pernah dihitung.
-        return $value ?? 'Sesuai Ekspektasi';
+        return $this->attributes['work_result_rating'] ?? 'Sesuai Ekspektasi';
     }
     
     /**
      * Mengambil Predikat Kinerja (SKP) dari database.
      * Nilai ini dihitung oleh command 'app:calculate-performance-scores'.
      */
-    public function getPerformancePredicateAttribute($value): string
+    public function getPerformancePredicateAttribute(): string
     {
         // Berikan nilai default jika belum pernah dihitung.
-        return $value ?? 'Baik';
+        return $this->attributes['performance_predicate'] ?? 'Baik';
     }
 
     // --- ACCESSOR BEBAN KERJA ---
