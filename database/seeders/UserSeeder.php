@@ -22,7 +22,7 @@ class UserSeeder extends Seeder
         Schema::enableForeignKeyConstraints();
 
         // Ambil unit yang sudah ada
-        $units = Unit::whereNotNull('parent_id')->get(); // Ambil unit level bawah untuk staf
+        $units = Unit::whereNotNull('parent_unit_id')->get(); // Ambil unit level bawah untuk staf
         if ($units->isEmpty()) {
             $this->command->info('Unit tidak ditemukan. Jalankan UnitSeeder dulu.');
             return;
