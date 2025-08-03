@@ -48,6 +48,12 @@ class User extends Authenticatable
         'work_behavior_rating',
         'is_in_resource_pool',
         'pool_availability_notes',
+        // Kolom baru untuk menyimpan hasil kalkulasi
+        'individual_performance_index',
+        'final_performance_value',
+        'work_result_rating',
+        'performance_predicate',
+        'performance_data_updated_at',
     ];
 
     protected $hidden = [
@@ -58,6 +64,7 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
+        'performance_data_updated_at' => 'datetime',
     ];
 
     // ... sisa kode model Anda tidak perlu diubah ...
@@ -164,91 +171,46 @@ class User extends Authenticatable
         return $isStructuralManager || $isFunctionalManager;
     }
     
-    // --- FORMULA PERHITUNGAN KINERJA ---
+    // --- FORMULA PERHITUNGAN KINERJA (VERSI PRE-CALCULATED) ---
 
-    public function getIndividualPerformanceIndexAttribute()
+    /**
+     * Mengambil Indeks Kinerja Individu (IKI) dari database.
+     * Nilai ini dihitung oleh command 'app:calculate-performance-scores'.
+     */
+    public function getIndividualPerformanceIndexAttribute($value)
     {
-        return Cache::remember('ihk_final_v_structure_' . $this->id, now()->addMinutes(10), function () {
-            $allTasks = $this->tasks()->where('status', '!=', 'cancelled')->get();
-            
-            if ($allTasks->isEmpty()) {
-                return 1.0;
-            }
-
-            $totalEstimatedHours = $allTasks->sum('estimated_hours');
-            $timeLogs = TimeLog::whereIn('task_id', $allTasks->pluck('id'))
-                                     ->where('user_id', $this->id)
-                                     ->whereNotNull('start_time')->whereNotNull('end_time')
-                                     ->get();
-            $totalSeconds = $timeLogs->reduce(function ($carry, $log) {
-                return $carry + Carbon::parse($log->end_time)->diffInSeconds(Carbon::parse($log->start_time));
-            }, 0);
-            $totalActualHours = $totalSeconds / 3600;
-            $averageProgress = $allTasks->avg('progress') ?? 0;
-            
-            if ($totalEstimatedHours == 0) return ($averageProgress / 100) > 0 ? 1.15 : 1.0;
-            if ($totalActualHours == 0) return $averageProgress > 0 ? 1.0 : 0.9;
-
-            $progressRatio = $averageProgress / 100;
-            $effortRatio = $totalActualHours / $totalEstimatedHours;
-
-            if ($effortRatio == 0) return 1.0;
-
-            return $progressRatio / $effortRatio;
-        });
+        // Berikan nilai default jika belum pernah dihitung.
+        return $value ?? 1.0;
     }
 
-    public function getFinalPerformanceValueAttribute($visited = [])
+    /**
+     * Mengambil Nilai Kinerja Final (NKF) dari database.
+     * Nilai ini dihitung oleh command 'app:calculate-performance-scores'.
+     */
+    public function getFinalPerformanceValueAttribute($value)
     {
-        if (in_array($this->id, $visited)) {
-            return 1.0; // Return a neutral value to break the cycle
-        }
-
-        $individualScore = $this->getIndividualPerformanceIndexAttribute();
-
-        if (!$this->isManager()) {
-            return $individualScore;
-        }
-
-        $visited[] = $this->id;
-
-        $subordinates = $this->getAllSubordinates(false);
-        if ($subordinates->isEmpty()) {
-            return $individualScore;
-        }
-
-        $managerialScore = $subordinates->avg(function ($subordinate) use ($visited) {
-            return $subordinate->getFinalPerformanceValueAttribute($visited);
-        });
-
-        $managerialWeights = [
-            self::ROLE_ESELON_I => 0.9,
-            self::ROLE_ESELON_II => 0.8,
-            self::ROLE_KOORDINATOR => 0.7,
-            self::ROLE_SUB_KOORDINATOR => 0.6,
-        ];
-        $weight = $managerialWeights[$this->role] ?? 0.5;
-
-        return ($individualScore * (1 - $weight)) + ($managerialScore * $weight);
+        // Berikan nilai default jika belum pernah dihitung.
+        return $value ?? 1.0;
     }
 
-    public function getWorkResultRatingAttribute(): string
+    /**
+     * Mengambil Peringkat Hasil Kerja dari database.
+     * Nilai ini dihitung oleh command 'app:calculate-performance-scores'.
+     */
+    public function getWorkResultRatingAttribute($value): string
     {
-        $finalScore = $this->getFinalPerformanceValueAttribute();
-        if ($finalScore >= 1.15) return 'Diatas Ekspektasi';
-        if ($finalScore >= 0.90) return 'Sesuai Ekspektasi';
-        return 'Dibawah Ekspektasi';
+        // Berikan nilai default jika belum pernah dihitung.
+        return $value ?? 'Sesuai Ekspektasi';
     }
     
-    public function getPerformancePredicateAttribute(): string
+    /**
+     * Mengambil Predikat Kinerja (SKP) dari database.
+     * Nilai ini dihitung oleh command 'app:calculate-performance-scores'.
+     */
+    public function getPerformancePredicateAttribute($value): string
     {
-        $hasilKerja = $this->work_result_rating;
-        $perilakuKerja = $this->work_behavior_rating ?? 'Sesuai Ekspektasi';
-
-        if ($hasilKerja === 'Diatas Ekspektasi' && $perilakuKerja === 'Diatas Ekspektasi') return 'Sangat Baik';
-        if ($hasilKerja === 'Dibawah Ekspektasi' && $perilakuKerja === 'Dibawah Ekspektasi') return 'Sangat Kurang';
-        if ($hasilKerja === 'Dibawah Ekspektasi' || $perilakuKerja === 'Dibawah Ekspektasi') return 'Butuh Perbaikan';
-        return 'Baik';
+        // Berikan nilai default jika belum pernah dihitung.
+        return $value ?? 'Baik';
     }
 
     // --- ACCESSOR BEBAN KERJA ---
