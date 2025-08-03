@@ -62,17 +62,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Project Routes
     Route::get('/projects/create-step-1', [ProjectController::class, 'createStep1'])->name('projects.create.step1');
     Route::post('/projects/store-step-1', [ProjectController::class, 'storeStep1'])->name('projects.store.step1');
+    Route::get('/projects/{project}/create-step-2', [ProjectController::class, 'createStep2'])->name('projects.create.step2');
+    Route::post('/projects/{project}/store-step-2', [ProjectController::class, 'storeStep2'])->name('projects.store.step2');
+    Route::get('/projects/{project}/team', [ProjectController::class, 'teamDashboard'])->name('projects.team.dashboard');
+    Route::get('/projects/{project}/report', [ProjectController::class, 'downloadReport'])->name('projects.report');
+    Route::get('/projects/{project}/s-curve', [ProjectController::class, 'sCurve'])->name('projects.s-curve');
+    Route::get('/projects/{project}/kanban', [ProjectController::class, 'showKanban'])->name('projects.kanban');
+    Route::get('/projects/{project}/calendar', [ProjectController::class, 'showCalendar'])->name('projects.calendar');
+    Route::get('/projects/{project}/tasks-json', [ProjectController::class, 'tasksJson'])->name('projects.tasks-json');
+
+    // Resource controller harus didefinisikan setelah rute custom agar tidak tumpang tindih.
+    // Rute 'index' sudah didefinisikan di atas, jadi kita kecualikan di sini.
     Route::resource('projects', ProjectController::class)->except(['index', 'create']);
-    Route::prefix('projects/{project}')->name('projects.')->controller(ProjectController::class)->group(function() {
-        Route::get('/create-step-2', 'createStep2')->name('create.step2');
-        Route::post('/store-step-2', 'storeStep2')->name('store.step2');
-        Route::get('/team', 'teamDashboard')->name('team.dashboard');
-        Route::get('/report', 'downloadReport')->name('report');
-        Route::get('/s-curve', 'sCurve')->name('s-curve');
-        Route::get('/kanban', 'showKanban')->name('kanban');
-        Route::get('/calendar', 'showCalendar')->name('calendar');
-        Route::get('/tasks-json', 'tasksJson')->name('tasks-json');
-    });
 
     // Task & SubTask Routes
     Route::resource('tasks', TaskController::class)->except(['index', 'create', 'new', 'show']);
