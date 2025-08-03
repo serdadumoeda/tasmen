@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            <i class="fas fa-tachometer-alt mr-2"></i> {{ __('Pusat Kontrol Sistem') }}
+            <i class="fas fa-briefcase mr-2"></i> {{ __('Daftar Kegiatan') }}
         </h2>
     </x-slot>
 
