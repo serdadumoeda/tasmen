@@ -165,19 +165,23 @@ document.addEventListener('DOMContentLoaded', function () {
             button.classList.add('loading');
             button.disabled = true;
 
-            const formData = new FormData(form);
             const action = form.getAttribute('action');
             const method = form.querySelector('input[name=\"_method\"]').value || 'POST';
             const csrfToken = form.querySelector('input[name=\"_token\"]').value;
+            const ratingSelect = form.querySelector('select[name=\"work_behavior_rating\"]');
+            const bodyData = {
+                work_behavior_rating: ratingSelect.value
+            };
 
             fetch(action, {
                 method: method,
                 headers: {
                     'X-CSRF-TOKEN': csrfToken,
                     'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/json' // Kirim sebagai JSON
                 },
-                body: formData
+                body: JSON.stringify(bodyData) // Ubah objek menjadi string JSON
             })
             .then(response => {
                 if (!response.ok) {
