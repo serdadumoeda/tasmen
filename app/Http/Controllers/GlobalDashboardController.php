@@ -31,29 +31,44 @@ class GlobalDashboardController extends Controller
             $userQuery->whereIn('id', $subordinateIds);
         }
 
-        $taskQuery = Task::query();
+        // Dapatkan semua proyek yang relevan untuk perhitungan status
+        $relevantProjects = $projectQuery->with('tasks')->get();
 
-        // Jika bukan superadmin, filter tugas juga berdasarkan proyek yang relevan
-        if (!$currentUser->isSuperAdmin()) {
-            $relevantProjectIds = (clone $projectQuery)->pluck('id');
-            $taskQuery->whereIn('project_id', $relevantProjectIds);
-        }
+        // Hitung status proyek menggunakan accessor di model
+        $projectStatusCounts = $relevantProjects->countBy('status');
+
+        // Dapatkan ID proyek yang relevan untuk memfilter tugas
+        $relevantProjectIds = $relevantProjects->pluck('id');
+        $totalTasks = Task::whereIn('project_id', $relevantProjectIds)->orWhereNull('project_id')->count();
+        $completedTasks = Task::whereIn('project_id', $relevantProjectIds)->orWhereNull('project_id')->where('status', 'completed')->count();
+
 
         $stats = [
-            'total_projects' => (clone $projectQuery)->count(),
-            'total_users' => (clone $userQuery)->count(),
-            'total_tasks' => (clone $taskQuery)->count(),
-            'completed_tasks' => (clone $taskQuery)->where('status', 'completed')->count(),
+            'total_projects' => $relevantProjects->count(),
+            'active_users' => (clone $userQuery)->where('status', 'active')->count(),
+            'total_users' => $userQuery->count(),
+            'pending_requests' => PeminjamanRequest::where('status', 'pending')->count(),
+            'total_tasks' => $totalTasks,
+            'completed_tasks' => $completedTasks,
         ];
 
-        // Mengambil data untuk list proyek, seperti yang dibutuhkan view lama
-        $allProjects = $projectQuery->with(['leader', 'tasks'])
-                                  ->withSum('budgetItems', 'total_cost')
-                                  ->latest()
-                                  ->get();
+        // Ambil 5 aktivitas terbaru untuk tampilan yang lebih ringkas
+        $recentActivities = Activity::with('user', 'subject')
+            ->latest()
+            ->take(5)
+            ->get();
 
-        $recentActivities = Activity::with('user', 'subject')->latest()->take(15)->get();
+        // Siapkan data untuk chart status proyek
+        $chartData = [
+            'labels' => ['Selesai', 'Beresiko', 'Berjalan', 'Baru'],
+            'data' => [
+                $projectStatusCounts->get('completed', 0),
+                $projectStatusCounts->get('overdue', 0),
+                $projectStatusCounts->get('in_progress', 0),
+                $projectStatusCounts->get('pending', 0),
+            ],
+        ];
 
-        return view('global-dashboard', compact('stats', 'allProjects', 'recentActivities'));
+        return view('global-dashboard', compact('stats', 'recentActivities', 'chartData'));
     }
 }
