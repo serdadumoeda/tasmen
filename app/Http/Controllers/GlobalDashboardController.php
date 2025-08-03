@@ -18,9 +18,18 @@ class GlobalDashboardController extends Controller
             abort(403, 'Hanya Super Admin, Eselon I, atau Eselon II yang dapat mengakses halaman ini.');
         }
 
-        // Terapkan scope hierarki jika pengguna bukan superadmin
-        $projectQuery = $currentUser->isSuperAdmin() ? Project::query() : Project::hierarchical();
-        $userQuery = $currentUser->isSuperAdmin() ? User::query() : User::hierarchical();
+        $projectQuery = Project::query();
+        $userQuery = User::query();
+
+        // Terapkan filter hierarkis untuk manajer, Superadmin melihat semua.
+        if (!$currentUser->isSuperAdmin()) {
+            $subordinateIds = $currentUser->getAllSubordinateIds();
+            $subordinateIds->push($currentUser->id); // Sertakan diri sendiri
+
+            // Filter proyek berdasarkan siapa yang memilikinya dalam hierarki
+            $projectQuery->whereIn('owner_id', $subordinateIds);
+            $userQuery->whereIn('id', $subordinateIds);
+        }
 
         // Dapatkan semua proyek yang relevan untuk perhitungan status
         $relevantProjects = $projectQuery->with('tasks')->get();
