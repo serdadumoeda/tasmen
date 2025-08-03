@@ -35,7 +35,6 @@ Route::get('/get-users-by-unit/{eselon2_id}', [UserController::class, 'getUsersB
 use App\Http\Controllers\HomeController;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'verified'])->group(function () {
 
