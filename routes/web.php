@@ -167,6 +167,10 @@ Route::middleware(['auth', 'superadmin'])->prefix('admin')->name('admin.')->grou
     Route::resource('units', UnitController::class);
     Route::post('units/{unit}/jabatans', [UnitController::class, 'storeJabatan'])->name('units.jabatans.store');
     Route::delete('jabatans/{jabatan}', [UnitController::class, 'destroyJabatan'])->name('jabatans.destroy');
+
+    // Impersonation Routes
+    Route::get('/users/{user}/impersonate', [UserController::class, 'impersonate'])->name('users.impersonate');
+    Route::get('/users/impersonate/leave', [UserController::class, 'leaveImpersonate'])->name('users.impersonate.leave');
 });
 
 Route::get('/api/units/{unit}/vacant-jabatans', [UnitController::class, 'getVacantJabatans'])->name('api.units.vacant-jabatans')->middleware('auth');

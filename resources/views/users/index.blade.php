@@ -78,7 +78,12 @@
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
-                                    <a href="{{ route('users.edit', $user) }}" class="text-indigo-600 hover:text-indigo-900 inline-flex items-center p-2 rounded-full hover:bg-indigo-50 transition-colors duration-200" title="{{ __('Edit Pengguna') }}">
+                                    @if(Auth::user()->isSuperAdmin() && Auth::id() !== $user->id && !$user->isSuperAdmin())
+                                        <a href="{{ route('admin.users.impersonate', $user) }}" class="text-cyan-600 hover:text-cyan-900 inline-flex items-center p-2 rounded-full hover:bg-cyan-50 transition-colors duration-200" title="{{ __('Tiru Pengguna Ini') }}">
+                                            <i class="fas fa-user-secret"></i>
+                                        </a>
+                                    @endif
+                                    <a href="{{ route('users.edit', $user) }}" class="text-indigo-600 hover:text-indigo-900 inline-flex items-center p-2 rounded-full hover:bg-indigo-50 transition-colors duration-200 ml-2" title="{{ __('Edit Pengguna') }}">
                                         <i class="fas fa-edit"></i>
                                     </a>
                                     <form action="{{ route('users.destroy', $user) }}" method="POST" class="inline-block ml-2" onsubmit="return confirm('{{ __('Apakah Anda yakin ingin menghapus pengguna ini? Tindakan ini tidak dapat dibatalkan.') }}');">

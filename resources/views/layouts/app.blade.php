@@ -21,6 +21,13 @@
     <div class="min-h-screen bg-gray-100 flex flex-col">
         @include('layouts.navigation')
 
+        @if (session()->has('impersonator_id'))
+            <div class="w-full bg-yellow-400 text-center py-2 text-sm font-semibold text-yellow-800 border-b-2 border-yellow-500">
+                Anda sedang meniru pengguna lain.
+                <a href="{{ route('admin.users.impersonate.leave') }}" class="font-bold underline hover:text-yellow-900">Kembali ke akun Anda</a>.
+            </div>
+        @endif
+
         @if (isset($header))
             <header class="bg-white shadow-2xl">
                 <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">

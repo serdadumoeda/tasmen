@@ -291,4 +291,47 @@ class UserController extends Controller
 
         return response()->json($users);
     }
+
+    /**
+     * Impersonate the given user.
+     *
+     * @param  \App\Models\User  $user
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function impersonate(User $user)
+    {
+        // Cannot impersonate other superadmins
+        if ($user->isSuperAdmin()) {
+            return redirect()->route('users.index')->with('error', 'Tidak dapat meniru sesama Superadmin.');
+        }
+
+        // Store original user's id in session
+        session(['impersonator_id' => Auth::id()]);
+
+        // Login as the new user
+        Auth::login($user);
+
+        return redirect()->route('dashboard')->with('success', 'Anda sekarang meniru ' . $user->name);
+    }
+
+    /**
+     * Revert impersonation.
+     *
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function leaveImpersonate()
+    {
+        if (!session()->has('impersonator_id')) {
+            return redirect('/')->with('error', 'Tidak ada sesi peniruan untuk ditinggalkan.');
+        }
+
+        // Login back as the original user
+        $originalUserId = session('impersonator_id');
+        Auth::login(User::find($originalUserId));
+
+        // Forget the impersonator_id from session
+        session()->forget('impersonator_id');
+
+        return redirect()->route('users.index')->with('success', 'Sesi peniruan telah berakhir.');
+    }
 }
