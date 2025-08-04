@@ -119,26 +119,27 @@ class UserController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'unit_id' => ['required', 'exists:units,id'],
             'jabatan_id' => ['required', Rule::exists('jabatans', 'id')->where('unit_id', $request->unit_id)->whereNull('user_id')],
-            'atasan_id' => ['required', 'exists:users,id'],
+            'atasan_id' => ['nullable', 'exists:users,id'],
             'status' => ['required', 'in:active,suspended'],
         ]);
 
-        $jabatan = \App\Models\Jabatan::find($validated['jabatan_id']);
+        $jabatan = Jabatan::find($validated['jabatan_id']);
         $unit = $jabatan->unit;
 
-        $user = User::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
-            'status' => $validated['status'],
-            'atasan_id' => $validated['atasan_id'],
-            'unit_id' => $unit->id,
-            'role' => $unit->level, // Role is derived from the Unit's level
-        ]);
+        DB::transaction(function () use ($validated, $jabatan, $unit) {
+            $user = User::create([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'password' => Hash::make($validated['password']),
+                'status' => $validated['status'],
+                'atasan_id' => $validated['atasan_id'],
+                'unit_id' => $unit->id,
+                'role' => $unit->level,
+            ]);
 
-        // Assign user to the Jabatan
-        $jabatan->user_id = $user->id;
-        $jabatan->save();
+            $jabatan->user_id = $user->id;
+            $jabatan->save();
+        });
 
         return redirect()->route('users.index')->with('success', 'User berhasil dibuat dan ditempatkan pada jabatan.');
     }
@@ -161,42 +162,33 @@ class UserController extends Controller
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
             'unit_id' => ['required', 'exists:units,id'],
             'jabatan_id' => ['required', 'exists:jabatans,id'],
-            'atasan_id' => ['required', 'exists:users,id', 'not_in:'.$user->id],
+            'atasan_id' => ['nullable', 'exists:users,id', 'not_in:'.$user->id],
             'status' => ['required', 'in:active,suspended'],
             'password' => ['nullable', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        $newJabatan = \App\Models\Jabatan::find($validated['jabatan_id']);
+        $newJabatan = Jabatan::find($validated['jabatan_id']);
 
-        // Check if the new Jabatan is already filled by someone else
         if ($newJabatan->user_id && $newJabatan->user_id !== $user->id) {
             return back()->withInput()->with('error', 'Jabatan yang dipilih sudah diisi oleh pengguna lain.');
         }
 
         DB::transaction(function () use ($user, $validated, $newJabatan, $request) {
-            // Vacate the old position if it exists
-            if ($user->jabatan) {
+            if ($user->jabatan && $user->jabatan->id !== $newJabatan->id) {
                 $user->jabatan->user_id = null;
                 $user->jabatan->save();
             }
 
-            // Update user details
-            $userData = [
+            $user->update([
                 'name' => $validated['name'],
                 'email' => $validated['email'],
                 'status' => $validated['status'],
                 'atasan_id' => $validated['atasan_id'],
                 'unit_id' => $newJabatan->unit_id,
                 'role' => $newJabatan->unit->level,
-            ];
+                'password' => $request->filled('password') ? Hash::make($validated['password']) : $user->password,
+            ]);
 
-            if ($request->filled('password')) {
-                $userData['password'] = Hash::make($validated['password']);
-            }
-
-            $user->update($userData);
-
-            // Assign user to the new Jabatan
             $newJabatan->user_id = $user->id;
             $newJabatan->save();
         });

@@ -1,113 +1,74 @@
 @if ($errors->any())
     <div class="mb-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg shadow-md" role="alert">
-        <div class="flex items-start">
-            <div class="flex-shrink-0 mt-0.5">
-                <i class="fas fa-exclamation-triangle h-5 w-5 text-red-500"></i>
-            </div>
-            <div class="ml-3">
-                <strong class="font-bold">Oops! Ada yang salah:</strong>
-                 <ul class="mt-1.5 list-disc list-inside text-sm">
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        </div>
+        <strong class="font-bold">Oops! Ada yang salah:</strong>
+        <ul class="mt-1.5 list-disc list-inside text-sm">
+            @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
     </div>
 @endif
 
-<div class="grid grid-cols-1 md:grid-cols-2 gap-6"> {{-- Consistent gap with other forms --}}
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
     {{-- Kolom Kiri --}}
     <div>
-        <div class="mb-6"> {{-- Consistent spacing between form groups --}}
-            <label for="name" class="block font-semibold text-sm text-gray-700 mb-1">
-                <i class="fas fa-user mr-2 text-gray-500"></i> Nama Lengkap Pengguna <span class="text-red-500">*</span>
-            </label>
-            <input id="name" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" type="text" name="name" value="{{ old('name', $user->name ?? '') }}" required autofocus />
-            @error('name') <p class="text-sm text-red-600 mt-2">{{ $message }}</p> @enderror
+        <div class="mb-6">
+            <label for="name" class="block font-semibold text-sm text-gray-700 mb-1">Nama Lengkap</label>
+            <input id="name" class="block mt-1 w-full rounded-lg shadow-sm" type="text" name="name" value="{{ old('name', $user->name ?? '') }}" required autofocus />
         </div>
 
-        <div class="mb-6"> {{-- Consistent spacing --}}
-            <label for="email" class="block font-semibold text-sm text-gray-700 mb-1">
-                <i class="fas fa-envelope mr-2 text-gray-500"></i> Email <span class="text-red-500">*</span>
-            </label>
-            <input id="email" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" type="email" name="email" value="{{ old('email', $user->email ?? '') }}" required />
-            @error('email') <p class="text-sm text-red-600 mt-2">{{ $message }}</p> @enderror
-        </div>
-        
         <div class="mb-6">
-            <label for="unit_id" class="block font-semibold text-sm text-gray-700 mb-1">
-                <i class="fas fa-building-user mr-2 text-gray-500"></i> 1. Pilih Unit Kerja <span class="text-red-500">*</span>
-            </label>
-            <select name="unit_id" id="unit_id" required class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150">
-                <option value="">-- Pilih Unit Kerja Dahulu --</option>
+            <label for="email" class="block font-semibold text-sm text-gray-700 mb-1">Email</label>
+            <input id="email" class="block mt-1 w-full rounded-lg shadow-sm" type="email" name="email" value="{{ old('email', $user->email ?? '') }}" required />
+        </div>
+
+        <div class="mb-6">
+            <label for="unit_id" class="block font-semibold text-sm text-gray-700 mb-1">1. Pilih Unit Kerja</label>
+            <select name="unit_id" id="unit_id" required class="block mt-1 w-full rounded-lg shadow-sm">
+                <option value="">-- Pilih Unit --</option>
                 @foreach($units as $unitOption)
-                    <option value="{{ $unitOption->id }}" @selected(old('unit_id', $user->unit_id ?? '') == $unitOption->id)>
-                        {{ $unitOption->name }}
-                    </option>
+                    <option value="{{ $unitOption->id }}" @selected(old('unit_id', $user->unit_id ?? '') == $unitOption->id)>{{ $unitOption->name }}</option>
                 @endforeach
             </select>
-            @error('unit_id') <p class="text-sm text-red-600 mt-2">{{ $message }}</p> @enderror
         </div>
 
         <div class="mb-6">
-            <label for="jabatan_id" class="block font-semibold text-sm text-gray-700 mb-1">
-                <i class="fas fa-id-badge mr-2 text-gray-500"></i> 2. Pilih Jabatan Tersedia <span class="text-red-500">*</span>
-            </label>
-            <select name="jabatan_id" id="jabatan_id" required class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" disabled>
-                <option value="">-- Pilih Unit Terlebih Dahulu --</option>
-                {{-- Options will be populated by JavaScript --}}
+            <label for="jabatan_id" class="block font-semibold text-sm text-gray-700 mb-1">2. Pilih Jabatan Tersedia</label>
+            <select name="jabatan_id" id="jabatan_id" required class="block mt-1 w-full rounded-lg shadow-sm" disabled>
+                <option value="">-- Pilih Unit Dahulu --</option>
             </select>
-            @error('jabatan_id') <p class="text-sm text-red-600 mt-2">{{ $message }}</p> @enderror
-        </div>
-
-        <div class="mb-6">
-             <label for="atasan_id" class="block font-semibold text-sm text-gray-700 mb-1">
-                <i class="fas fa-user-tie mr-2 text-gray-500"></i> 3. Pilih Atasan Langsung <span class="text-red-500">*</span>
-            </label>
-            <select name="atasan_id" id="atasan_id" required class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150">
-                <option value="">-- Pilih Atasan --</option>
-                 @foreach($supervisors as $supervisor)
-                    <option value="{{ $supervisor->id }}" @selected(old('atasan_id', $user->atasan_id ?? '') == $supervisor->id)>
-                        {{ $supervisor->name }}
-                    </option>
-                @endforeach
-            </select>
-            @error('atasan_id') <p class="text-sm text-red-600 mt-2">{{ $message }}</p> @enderror
         </div>
     </div>
 
     {{-- Kolom Kanan --}}
     <div>
         <div class="mb-6">
-            <label for="password" class="block font-semibold text-sm text-gray-700 mb-1">
-                <i class="fas fa-lock mr-2 text-gray-500"></i> Password
-                @if(!isset($user))<span class="text-red-500">*</span>@endif
-            </label>
-            <input id="password" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" type="password" name="password" @if(!isset($user)) required @endif />
-            @error('password') <p class="text-sm text-red-600 mt-2">{{ $message }}</p> @enderror
-            @if(isset($user))
-                <p class="text-sm text-gray-500 mt-1">Kosongkan jika tidak ingin mengubah password.</p>
-            @endif
+            <label for="atasan_id" class="block font-semibold text-sm text-gray-700 mb-1">Pilih Atasan Langsung</label>
+            <select name="atasan_id" id="atasan_id" class="block mt-1 w-full rounded-lg shadow-sm">
+                 <option value="">-- Tidak ada --</option>
+                 @foreach($supervisors as $supervisor)
+                    <option value="{{ $supervisor->id }}" @selected(old('atasan_id', $user->atasan_id ?? '') == $supervisor->id)>{{ $supervisor->name }}</option>
+                @endforeach
+            </select>
         </div>
 
         <div class="mb-6">
-            <label for="password_confirmation" class="block font-semibold text-sm text-gray-700 mb-1">
-                <i class="fas fa-lock-open mr-2 text-gray-500"></i> Konfirmasi Password
-            </label>
-            <input id="password_confirmation" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" type="password" name="password_confirmation" />
-            @error('password_confirmation') <p class="text-sm text-red-600 mt-2">{{ $message }}</p> @enderror
+            <label for="password" class="block font-semibold text-sm text-gray-700 mb-1">Password @if(!isset($user))<span class="text-red-500">*</span>@endif</label>
+            <input id="password" class="block mt-1 w-full rounded-lg shadow-sm" type="password" name="password" @if(!isset($user)) required @endif />
+            @if(isset($user))<p class="text-xs text-gray-500 mt-1">Kosongkan jika tidak ingin mengubah.</p>@endif
         </div>
 
         <div class="mb-6">
-            <label for="status" class="block font-semibold text-sm text-gray-700 mb-1">
-                <i class="fas fa-circle-dot mr-2 text-gray-500"></i> Status <span class="text-red-500">*</span>
-            </label>
-            <select name="status" id="status" required class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150">
+            <label for="password_confirmation" class="block font-semibold text-sm text-gray-700 mb-1">Konfirmasi Password</label>
+            <input id="password_confirmation" class="block mt-1 w-full rounded-lg shadow-sm" type="password" name="password_confirmation" />
+        </div>
+
+        <div class="mb-6">
+            <label for="status" class="block font-semibold text-sm text-gray-700 mb-1">Status</label>
+            <select name="status" id="status" required class="block mt-1 w-full rounded-lg shadow-sm">
                 <option value="active" @selected(old('status', $user->status ?? 'active') == 'active')>Aktif</option>
                 <option value="suspended" @selected(old('status', $user->status ?? '') == 'suspended')>Ditangguhkan</option>
             </select>
-            @error('status') <p class="text-sm text-red-600 mt-2">{{ $message }}</p> @enderror
         </div>
     </div>
 </div>
@@ -117,53 +78,48 @@
     document.addEventListener('DOMContentLoaded', function () {
         const unitSelect = document.getElementById('unit_id');
         const jabatanSelect = document.getElementById('jabatan_id');
-        const oldJabatanId = '{{ old('jabatan_id', $user->jabatan->id ?? '') }}';
+        const oldJabatanId = '{{ old('jabatan_id', optional($user->jabatan)->id ?? '') }}';
 
-        function fetchJabatans(unitId, selectedJabatanId = null) {
+        async function fetchAndPopulateJabatans(unitId, selectedId = null) {
             if (!unitId) {
-                jabatanSelect.innerHTML = '<option value="">-- Pilih Unit Terlebih Dahulu --</option>';
+                jabatanSelect.innerHTML = '<option value="">-- Pilih Unit Dahulu --</option>';
                 jabatanSelect.disabled = true;
                 return;
             }
 
-            // Also include the currently assigned jabatan in the edit form, even if it's filled
-            let currentJabatanId = '{{ $user->jabatan->id ?? '' }}';
+            try {
+                const response = await fetch(`/api/units/${unitId}/vacant-jabatans`);
+                if (!response.ok) throw new Error('Network response was not ok');
+                const data = await response.json();
 
-            fetch(`/api/units/${unitId}/vacant-jabatans?current_jabatan_id=${currentJabatanId}`)
-                .then(response => response.json())
-                .then(data => {
-                    jabatanSelect.innerHTML = '<option value="">-- Pilih Jabatan --</option>';
-                    if (data.length === 0) {
-                        jabatanSelect.innerHTML = '<option value="">-- Tidak ada jabatan kosong di unit ini --</option>';
-                        jabatanSelect.disabled = true;
-                        return;
-                    }
+                jabatanSelect.innerHTML = '<option value="">-- Pilih Jabatan --</option>';
 
-                    data.forEach(jabatan => {
-                        const option = document.createElement('option');
-                        option.value = jabatan.id;
-                        option.textContent = jabatan.name;
-                        if (selectedJabatanId && jabatan.id == selectedJabatanId) {
-                            option.selected = true;
-                        }
-                        jabatanSelect.appendChild(option);
-                    });
-                    jabatanSelect.disabled = false;
-                })
-                .catch(error => {
-                    console.error('Error fetching jabatans:', error);
-                    jabatanSelect.innerHTML = '<option value="">-- Gagal memuat jabatan --</option>';
+                if (data.length === 0) {
+                    jabatanSelect.innerHTML = '<option value="">-- Tidak ada jabatan kosong --</option>';
                     jabatanSelect.disabled = true;
+                    return;
+                }
+
+                data.forEach(jabatan => {
+                    const option = new Option(jabatan.name, jabatan.id);
+                    if (selectedId && jabatan.id == selectedId) {
+                        option.selected = true;
+                    }
+                    jabatanSelect.add(option);
                 });
+                jabatanSelect.disabled = false;
+
+            } catch (error) {
+                console.error('Error fetching jabatans:', error);
+                jabatanSelect.innerHTML = '<option value="">-- Gagal memuat jabatan --</option>';
+                jabatanSelect.disabled = true;
+            }
         }
 
-        unitSelect.addEventListener('change', function () {
-            fetchJabatans(this.value);
-        });
+        unitSelect.addEventListener('change', () => fetchAndPopulateJabatans(unitSelect.value));
 
-        // Initial load if a unit is already selected (for edit form or validation failure)
         if (unitSelect.value) {
-            fetchJabatans(unitSelect.value, oldJabatanId);
+            fetchAndPopulateJabatans(unitSelect.value, oldJabatanId);
         }
     });
 </script>

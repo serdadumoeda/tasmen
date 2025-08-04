@@ -46,11 +46,20 @@ class UnitController extends Controller
             'name' => 'required|string|max:255|unique:units,name',
             'level' => ['required', Rule::in(array_column(\App\Models\Unit::LEVELS, 'name'))],
             'parent_unit_id' => 'nullable|exists:units,id',
+            'main_jabatan_name' => 'required|string|max:255',
         ]);
 
-        Unit::create($validated);
+        $unit = Unit::create([
+            'name' => $validated['name'],
+            'level' => $validated['level'],
+            'parent_unit_id' => $validated['parent_unit_id'],
+        ]);
 
-        return redirect()->route('admin.units.index')->with('success', 'Unit berhasil dibuat.');
+        $unit->jabatans()->create([
+            'name' => $validated['main_jabatan_name'],
+        ]);
+
+        return redirect()->route('admin.units.index')->with('success', 'Unit dan Jabatan Pimpinan berhasil dibuat.');
     }
 
     /**
