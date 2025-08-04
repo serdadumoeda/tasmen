@@ -73,14 +73,14 @@
     </script>
     
     {{-- Script untuk menampilkan notifikasi dari session flash --}}
-    @if (session('success') || session('error') || session('info') || session('warning'))
+    @if (session('success') || session('error') || session('info'))
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const Toast = Swal.mixin({
                 toast: true,
                 position: 'top-end',
                 showConfirmButton: false,
-                timer: 4500, // Waktu lebih lama untuk pesan dengan peringatan
+                timer: 3500,
                 timerProgressBar: true,
                 didOpen: (toast) => {
                     toast.addEventListener('mouseenter', Swal.stopTimer)
@@ -94,9 +94,6 @@
             @if ($message = session('error'))
                 Toast.fire({ icon: 'error', title: '{{ $message }}' });
             @endif
-            @if ($message = session('warning'))
-                Toast.fire({ icon: 'warning', title: '{{ $message }}' });
-            @endif
             @if ($message = session('info'))
                 Toast.fire({ icon: 'info', title: '{{ $message }}' });
             @endif
@@ -106,24 +103,5 @@
     
     {{-- Slot untuk script tambahan per halaman --}}
     @stack('scripts')
-
-    {{-- jQuery (dependency for Select2) --}}
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    {{-- Select2 JS --}}
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-
-    <script>
-        // Inisialisasi global untuk semua elemen dengan kelas .select2-searchable
-        $(document).ready(function() {
-            $('.select2-searchable').select2({
-                width: '100%',
-                // Menghapus theme agar bisa di-style manual
-            }).on('select2:open', () => {
-                // Terapkan styling Tailwind ke dropdown yang terbuka
-                document.querySelector('.select2-container--open .select2-dropdown').classList.add('bg-white', 'shadow-lg', 'rounded-lg', 'border', 'border-gray-200');
-                document.querySelector('.select2-container--open .select2-search__field').classList.add('block', 'w-full', 'border-gray-300', 'focus:border-indigo-500', 'focus:ring-indigo-500', 'rounded-md', 'shadow-sm', 'text-sm');
-            });
-        });
-    </script>
 </body>
 </html>

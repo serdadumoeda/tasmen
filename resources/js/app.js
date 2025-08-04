@@ -1,5 +1,6 @@
 import './bootstrap';
 import Alpine from 'alpinejs';
+import TomSelect from 'tom-select';
 
 window.Alpine = Alpine;
 
@@ -400,6 +401,17 @@ const initExecutiveSummaryChart = () => {
 // JALANKAN SEMUA FUNGSI INISIALISASI SETELAH HALAMAN DIMUAT
 // ======================================================================
 document.addEventListener('DOMContentLoaded', () => {
+    // Inisialisasi TomSelect untuk semua elemen yang relevan
+    document.querySelectorAll('.tom-select-searchable').forEach((el) => {
+        new TomSelect(el, {
+            create: false,
+            sortField: {
+                field: "text",
+                direction: "asc"
+            }
+        });
+    });
+
     initWorkloadInsight();
     initMemberSelectionModal();
     initResourcePoolPage();
