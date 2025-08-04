@@ -97,6 +97,16 @@ class UnitController extends Controller
             'parent_unit_id' => 'nullable|exists:units,id',
         ]);
 
+        // Validasi anti-loop hirarki
+        $newParentId = $request->input('parent_unit_id');
+        if ($newParentId) {
+            $subordinateIds = $unit->getAllSubordinateUnitIds();
+            // Sebuah unit tidak bisa menjadi parent bagi dirinya sendiri atau turunannya.
+            if (in_array($newParentId, $subordinateIds)) {
+                return back()->withInput()->withErrors(['parent_unit_id' => 'Tidak dapat menetapkan unit ini sebagai anak dari salah satu turunannya sendiri.']);
+            }
+        }
+
         // Simpan level lama untuk perbandingan
         $oldLevel = $unit->level;
 
