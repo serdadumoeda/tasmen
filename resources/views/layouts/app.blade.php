@@ -8,8 +8,6 @@
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    {{-- Select2 CSS --}}
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     
     {{-- PERBAIKAN: Tambahkan aturan CSS untuk x-cloak di sini --}}
@@ -118,8 +116,12 @@
         // Inisialisasi global untuk semua elemen dengan kelas .select2-searchable
         $(document).ready(function() {
             $('.select2-searchable').select2({
-                theme: "classic",
-                width: '100%'
+                width: '100%',
+                // Menghapus theme agar bisa di-style manual
+            }).on('select2:open', () => {
+                // Terapkan styling Tailwind ke dropdown yang terbuka
+                document.querySelector('.select2-container--open .select2-dropdown').classList.add('bg-white', 'shadow-lg', 'rounded-lg', 'border', 'border-gray-200');
+                document.querySelector('.select2-container--open .select2-search__field').classList.add('block', 'w-full', 'border-gray-300', 'focus:border-indigo-500', 'focus:ring-indigo-500', 'rounded-md', 'shadow-sm', 'text-sm');
             });
         });
     </script>
