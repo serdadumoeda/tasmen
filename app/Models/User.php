@@ -43,7 +43,6 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
-        'jabatan',
         'atasan_id',
         'unit_id',
         'status',
@@ -81,6 +80,11 @@ class User extends Authenticatable
     public function bawahan(): HasMany
     {
         return $this->hasMany(User::class, 'atasan_id');
+    }
+
+    public function jabatan(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(Jabatan::class);
     }
 
     public function unit(): BelongsTo

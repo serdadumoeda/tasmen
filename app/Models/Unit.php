@@ -29,7 +29,6 @@ class Unit extends Model
         'name',
         'level',
         'parent_unit_id',
-        'jabatan',
     ];
 
     public function parentUnit(): BelongsTo
@@ -45,6 +44,11 @@ class Unit extends Model
     public function childrenRecursive()
     {
         return $this->children()->with('childrenRecursive');
+    }
+
+    public function jabatans(): HasMany
+    {
+        return $this->hasMany(Jabatan::class);
     }
 
     public function users()

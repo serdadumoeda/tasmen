@@ -70,6 +70,7 @@ class UnitController extends Controller
     {
         $this->authorize('update', $unit);
         $units = Unit::where('id', '!=', $unit->id)->orderBy('name')->get(); // Mencegah unit menjadi parent bagi dirinya sendiri
+        $unit->load('jabatans.user'); // Eager load jabatans and the assigned user
         return view('admin.units.edit', compact('unit', 'units'));
     }
 
@@ -105,5 +106,44 @@ class UnitController extends Controller
         $unit->delete();
 
         return redirect()->route('admin.units.index')->with('success', 'Unit berhasil dihapus.');
+    }
+
+    // --- JABATAN MANAGEMENT ---
+
+    public function storeJabatan(Request $request, Unit $unit)
+    {
+        $this->authorize('update', $unit);
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+        ]);
+
+        $unit->jabatans()->create($validated);
+
+        return back()->with('success', 'Jabatan berhasil ditambahkan.');
+    }
+
+    public function destroyJabatan(\App\Models\Jabatan $jabatan)
+    {
+        $unit = $jabatan->unit;
+        $this->authorize('update', $unit);
+
+        if ($jabatan->user_id) {
+            return back()->with('error', 'Tidak dapat menghapus jabatan yang masih diisi oleh pengguna.');
+        }
+
+        $jabatan->delete();
+
+        return back()->with('success', 'Jabatan berhasil dihapus.');
+    }
+
+    // --- API METHODS ---
+
+    public function getVacantJabatans(Unit $unit)
+    {
+        // This is for the chained dropdown in user creation form
+        $vacantJabatans = $unit->jabatans()->whereNull('user_id')->get(['id', 'name']);
+
+        return response()->json($vacantJabatans);
     }
 }

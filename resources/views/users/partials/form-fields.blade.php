@@ -36,42 +36,11 @@
         </div>
         
         <div class="mb-6">
-            <label for="jabatan" class="block font-semibold text-sm text-gray-700 mb-1">
-                <i class="fas fa-id-badge mr-2 text-gray-500"></i> Nama Jabatan Spesifik <span class="text-red-500">*</span>
-            </label>
-            <input id="jabatan" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" type="text" name="jabatan" value="{{ old('jabatan', $user->jabatan ?? '') }}" required />
-            @error('jabatan') <p class="text-sm text-red-600 mt-2">{{ $message }}</p> @enderror
-        </div>
-
-        <div class="mb-6"> {{-- Consistent spacing --}}
-            <label for="role" class="block font-semibold text-sm text-gray-700 mb-1">
-                <i class="fas fa-user-tag mr-2 text-gray-500"></i> Level Jabatan (Role) <span class="text-red-500">*</span>
-            </label>
-            <select name="role" id="role" required class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150">
-                @php
-                    $roles = [
-                        App\Models\User::ROLE_SUPERADMIN, // Assuming Superadmin is a possible role
-                        App\Models\User::ROLE_ESELON_I,
-                        App\Models\User::ROLE_ESELON_II,
-                        App\Models\User::ROLE_KOORDINATOR,
-                        App\Models\User::ROLE_SUB_KOORDINATOR,
-                        App\Models\User::ROLE_STAF
-                    ];
-                @endphp
-                <option value="">-- Pilih Role --</option>
-                @foreach($roles as $role)
-                    <option value="{{ $role }}" @selected(old('role', $user->role ?? '') == $role)>{{ $role }}</option>
-                @endforeach
-            </select>
-            @error('role') <p class="text-sm text-red-600 mt-2">{{ $message }}</p> @enderror
-        </div>
-
-        <div class="mb-6">
             <label for="unit_id" class="block font-semibold text-sm text-gray-700 mb-1">
-                <i class="fas fa-building-user mr-2 text-gray-500"></i> Unit Kerja <span class="text-red-500">*</span>
+                <i class="fas fa-building-user mr-2 text-gray-500"></i> 1. Pilih Unit Kerja <span class="text-red-500">*</span>
             </label>
             <select name="unit_id" id="unit_id" required class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150">
-                <option value="">-- Pilih Unit Kerja --</option>
+                <option value="">-- Pilih Unit Kerja Dahulu --</option>
                 @foreach($units as $unitOption)
                     <option value="{{ $unitOption->id }}" @selected(old('unit_id', $user->unit_id ?? '') == $unitOption->id)>
                         {{ $unitOption->name }}
@@ -82,14 +51,25 @@
         </div>
 
         <div class="mb-6">
-            <label for="atasan_id" class="block font-semibold text-sm text-gray-700 mb-1">
-                <i class="fas fa-user-tie mr-2 text-gray-500"></i> Atasan Langsung
+            <label for="jabatan_id" class="block font-semibold text-sm text-gray-700 mb-1">
+                <i class="fas fa-id-badge mr-2 text-gray-500"></i> 2. Pilih Jabatan Tersedia <span class="text-red-500">*</span>
             </label>
-            <select name="atasan_id" id="atasan_id" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150">
-                <option value="">-- Tidak ada / Atur Manual --</option>
-                @foreach($supervisors as $supervisor)
+            <select name="jabatan_id" id="jabatan_id" required class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" disabled>
+                <option value="">-- Pilih Unit Terlebih Dahulu --</option>
+                {{-- Options will be populated by JavaScript --}}
+            </select>
+            @error('jabatan_id') <p class="text-sm text-red-600 mt-2">{{ $message }}</p> @enderror
+        </div>
+
+        <div class="mb-6">
+             <label for="atasan_id" class="block font-semibold text-sm text-gray-700 mb-1">
+                <i class="fas fa-user-tie mr-2 text-gray-500"></i> 3. Pilih Atasan Langsung <span class="text-red-500">*</span>
+            </label>
+            <select name="atasan_id" id="atasan_id" required class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150">
+                <option value="">-- Pilih Atasan --</option>
+                 @foreach($supervisors as $supervisor)
                     <option value="{{ $supervisor->id }}" @selected(old('atasan_id', $user->atasan_id ?? '') == $supervisor->id)>
-                        {{ $supervisor->name }} ({{ $supervisor->jabatan ?? $supervisor->role }})
+                        {{ $supervisor->name }}
                     </option>
                 @endforeach
             </select>
@@ -133,5 +113,58 @@
 </div>
 
 @push('scripts')
-{{-- No longer needed --}}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const unitSelect = document.getElementById('unit_id');
+        const jabatanSelect = document.getElementById('jabatan_id');
+        const oldJabatanId = '{{ old('jabatan_id', $user->jabatan->id ?? '') }}';
+
+        function fetchJabatans(unitId, selectedJabatanId = null) {
+            if (!unitId) {
+                jabatanSelect.innerHTML = '<option value="">-- Pilih Unit Terlebih Dahulu --</option>';
+                jabatanSelect.disabled = true;
+                return;
+            }
+
+            // Also include the currently assigned jabatan in the edit form, even if it's filled
+            let currentJabatanId = '{{ $user->jabatan->id ?? '' }}';
+
+            fetch(`/api/units/${unitId}/vacant-jabatans?current_jabatan_id=${currentJabatanId}`)
+                .then(response => response.json())
+                .then(data => {
+                    jabatanSelect.innerHTML = '<option value="">-- Pilih Jabatan --</option>';
+                    if (data.length === 0) {
+                        jabatanSelect.innerHTML = '<option value="">-- Tidak ada jabatan kosong di unit ini --</option>';
+                        jabatanSelect.disabled = true;
+                        return;
+                    }
+
+                    data.forEach(jabatan => {
+                        const option = document.createElement('option');
+                        option.value = jabatan.id;
+                        option.textContent = jabatan.name;
+                        if (selectedJabatanId && jabatan.id == selectedJabatanId) {
+                            option.selected = true;
+                        }
+                        jabatanSelect.appendChild(option);
+                    });
+                    jabatanSelect.disabled = false;
+                })
+                .catch(error => {
+                    console.error('Error fetching jabatans:', error);
+                    jabatanSelect.innerHTML = '<option value="">-- Gagal memuat jabatan --</option>';
+                    jabatanSelect.disabled = true;
+                });
+        }
+
+        unitSelect.addEventListener('change', function () {
+            fetchJabatans(this.value);
+        });
+
+        // Initial load if a unit is already selected (for edit form or validation failure)
+        if (unitSelect.value) {
+            fetchJabatans(unitSelect.value, oldJabatanId);
+        }
+    });
+</script>
 @endpush

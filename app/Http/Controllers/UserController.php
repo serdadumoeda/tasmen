@@ -117,30 +117,30 @@ class UserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'role' => ['required', Rule::in(array_column(User::ROLES, 'name'))],
-            'jabatan' => ['required', 'string', 'max:255'],
-            'atasan_id' => ['nullable', 'exists:users,id'],
-            'status' => ['required', 'in:active,suspended'],
             'unit_id' => ['required', 'exists:units,id'],
+            'jabatan_id' => ['required', Rule::exists('jabatans', 'id')->where('unit_id', $request->unit_id)->whereNull('user_id')],
+            'atasan_id' => ['required', 'exists:users,id'],
+            'status' => ['required', 'in:active,suspended'],
         ]);
 
-        // Validasi hierarki kustom
-        $unit = Unit::find($validated['unit_id']);
-        $role = $validated['role'];
+        $jabatan = \App\Models\Jabatan::find($validated['jabatan_id']);
+        $unit = $jabatan->unit;
 
-        if (isset($this->VALID_PARENT_ROLES[$role])) {
-            if (!$unit->parentUnit || !in_array($unit->parentUnit->level, $this->VALID_PARENT_ROLES[$role])) {
-                $validParentLevels = implode(', ', $this->VALID_PARENT_ROLES[$role]);
-                return back()->withInput()->with('error', "Untuk role '{$role}', unit yang dipilih harus berada di bawah unit dengan level: {$validParentLevels}.");
-            }
-        }
+        $user = User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => Hash::make($validated['password']),
+            'status' => $validated['status'],
+            'atasan_id' => $validated['atasan_id'],
+            'unit_id' => $unit->id,
+            'role' => $unit->level, // Role is derived from the Unit's level
+        ]);
 
-        $userData = $validated;
-        $userData['password'] = Hash::make($validated['password']);
+        // Assign user to the Jabatan
+        $jabatan->user_id = $user->id;
+        $jabatan->save();
 
-        User::create($userData);
-
-        return redirect()->route('users.index')->with('success', 'User berhasil dibuat.');
+        return redirect()->route('users.index')->with('success', 'User berhasil dibuat dan ditempatkan pada jabatan.');
     }
     
     public function edit(User $user)
@@ -159,33 +159,47 @@ class UserController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
-            'role' => ['required', Rule::in(array_column(User::ROLES, 'name'))],
-            'jabatan' => ['required', 'string', 'max:255'],
-            'atasan_id' => ['nullable', 'exists:users,id', 'not_in:'.$user->id],
-            'status' => ['required', 'in:active,suspended'],
             'unit_id' => ['required', 'exists:units,id'],
+            'jabatan_id' => ['required', 'exists:jabatans,id'],
+            'atasan_id' => ['required', 'exists:users,id', 'not_in:'.$user->id],
+            'status' => ['required', 'in:active,suspended'],
             'password' => ['nullable', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        // Validasi hierarki kustom
-        $unit = Unit::find($validated['unit_id']);
-        $role = $validated['role'];
+        $newJabatan = \App\Models\Jabatan::find($validated['jabatan_id']);
 
-        if (isset($this->VALID_PARENT_ROLES[$role])) {
-            if (!$unit->parentUnit || !in_array($unit->parentUnit->level, $this->VALID_PARENT_ROLES[$role])) {
-                $validParentLevels = implode(', ', $this->VALID_PARENT_ROLES[$role]);
-                return back()->withInput()->with('error', "Untuk role '{$role}', unit yang dipilih harus berada di bawah unit dengan level: {$validParentLevels}.");
+        // Check if the new Jabatan is already filled by someone else
+        if ($newJabatan->user_id && $newJabatan->user_id !== $user->id) {
+            return back()->withInput()->with('error', 'Jabatan yang dipilih sudah diisi oleh pengguna lain.');
+        }
+
+        DB::transaction(function () use ($user, $validated, $newJabatan, $request) {
+            // Vacate the old position if it exists
+            if ($user->jabatan) {
+                $user->jabatan->user_id = null;
+                $user->jabatan->save();
             }
-        }
 
-        $userData = $validated;
-        if ($request->filled('password')) {
-            $userData['password'] = Hash::make($validated['password']);
-        } else {
-            unset($userData['password']);
-        }
+            // Update user details
+            $userData = [
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'status' => $validated['status'],
+                'atasan_id' => $validated['atasan_id'],
+                'unit_id' => $newJabatan->unit_id,
+                'role' => $newJabatan->unit->level,
+            ];
 
-        $user->update($userData);
+            if ($request->filled('password')) {
+                $userData['password'] = Hash::make($validated['password']);
+            }
+
+            $user->update($userData);
+
+            // Assign user to the new Jabatan
+            $newJabatan->user_id = $user->id;
+            $newJabatan->save();
+        });
 
         return redirect()->route('users.index')->with('success', 'User berhasil diperbarui.');
     }
