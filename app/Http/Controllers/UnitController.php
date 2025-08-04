@@ -96,7 +96,15 @@ class UnitController extends Controller
             'parent_unit_id' => 'nullable|exists:units,id',
         ]);
 
+        // Simpan level lama untuk perbandingan
+        $oldLevel = $unit->level;
+
         $unit->update($validated);
+
+        // Jika level unit berubah, update role semua user di dalamnya
+        if ($oldLevel !== $validated['level']) {
+            $unit->users()->update(['role' => $validated['level']]);
+        }
 
         return redirect()->route('admin.units.index')->with('success', 'Unit berhasil diperbarui.');
     }

@@ -199,20 +199,26 @@ class UserController extends Controller
     public function destroy(User $user)
     {
         $this->authorize('delete', $user);
-        
-        DB::transaction(function() use ($user) {
-            $unit = $user->unit;
-            // Ini akan menyebabkan error karena children tidak ada di model User
-            // $user->children()->update(['parent_user_id' => $user->parent_user_id]);
-            $user->delete();
-            if($unit && $unit->users()->count() === 0) {
-                $newParentId = $unit->parent_unit_id;
-                Unit::where('parent_unit_id', $unit->id)->update(['parent_unit_id' => $newParentId]);
-                $unit->delete();
+
+        DB::transaction(function () use ($user) {
+            // Cek apakah user punya jabatan, jika iya, kosongkan.
+            if ($user->jabatan) {
+                $user->jabatan->user_id = null;
+                $user->jabatan->save();
             }
+
+            // Hapus relasi atasan-bawahan
+            User::where('atasan_id', $user->id)->update(['atasan_id' => $user->atasan_id]);
+
+            // Hapus user
+            $user->delete();
+
+            // Logika untuk menghapus unit jika kosong tidak lagi relevan di sini
+            // karena jabatan dan user sudah tidak terikat secara langsung dengan unit
+            // saat penghapusan user.
         });
 
-        return redirect()->route('users.index')->with('success', 'User berhasil dihapus.');
+        return redirect()->route('users.index')->with('success', 'User berhasil dihapus dan jabatan telah dikosongkan.');
     }
 
     public function getWorkloadSummary(User $user)
