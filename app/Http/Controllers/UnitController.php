@@ -6,6 +6,7 @@ use App\Models\Unit;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Facades\DB;
 
 class UnitController extends Controller
 {
@@ -116,13 +117,94 @@ class UnitController extends Controller
     {
         $this->authorize('delete', $unit);
 
-        if ($unit->users()->count() > 0 || $unit->childUnits()->count() > 0) {
-            return back()->with('error', 'Tidak dapat menghapus unit yang masih memiliki pengguna atau sub-unit.');
+        try {
+            DB::transaction(function () use ($unit) {
+                $this->deleteUnitRecursively($unit);
+            });
+
+            return redirect()->route('admin.units.index')->with('success', 'Unit dan semua kontennya (termasuk sub-unit, jabatan, dan pengguna) berhasil dihapus.');
+
+        } catch (\Exception $e) {
+            // Tangani jika ada error selama transaksi
+            return back()->with('error', 'Terjadi kesalahan saat menghapus unit: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Menghapus unit dan semua kontennya secara rekursif.
+     * Bekerja dari bawah ke atas (bottom-up).
+     *
+     * @param Unit $unit
+     */
+    private function deleteUnitRecursively(Unit $unit)
+    {
+        // 1. Hapus semua anak (sub-unit) terlebih dahulu
+        foreach ($unit->childUnits as $child) {
+            $this->deleteUnitRecursively($child);
         }
 
-        $unit->delete();
+        // 2. Hapus semua konten di dalam unit ini
+        $this->deleteUnitContents($unit);
+    }
 
-        return redirect()->route('admin.units.index')->with('success', 'Unit berhasil dihapus.');
+    /**
+     * Menghapus semua konten yang terkait langsung dengan sebuah unit.
+     * (Pengguna, Jabatan, dll.)
+     *
+     * @param Unit $unit
+     */
+    private function deleteUnitContents(Unit $unit)
+    {
+        // Ambil semua user dalam unit ini. Kita gunakan chunk untuk efisiensi memori jika user sangat banyak.
+        $unit->users()->chunk(100, function ($users) {
+            foreach ($users as $user) {
+                // Hapus semua relasi dan data milik user
+                $this->deleteUserAndItsRelations($user);
+            }
+        });
+
+        // Hapus semua jabatan di dalam unit ini
+        $unit->jabatans()->delete();
+
+        // Terakhir, hapus unit itu sendiri
+        $unit->delete();
+    }
+
+    /**
+     * Menghapus seorang user beserta semua data dan relasi yang terkait dengannya.
+     *
+     * @param \App\Models\User $user
+     */
+    private function deleteUserAndItsRelations(\App\Models\User $user)
+    {
+        // a. Putuskan relasi Many-to-Many
+        $user->projects()->detach();
+        $user->tasks()->detach();
+        $user->specialAssignments()->detach();
+
+        // b. Hapus data HasMany yang terkait langsung
+        $user->timeLogs()->delete();
+        // Asumsi ada model Comment, Attachment, Notification, PeminjamanRequest
+        // Jika tidak ada, baris ini bisa di-comment atau dihapus.
+        // $user->comments()->delete();
+        // $user->attachments()->delete();
+        // $user->notifications()->delete();
+        // $user->peminjamanRequests()->delete();
+
+        // c. Hapus objek yang dimiliki/dipimpin oleh user
+        // PENTING: Keputusan bisnis adalah menghapus, bukan me-reassign.
+        \App\Models\Project::where('leader_id', $user->id)->orWhere('owner_id', $user->id)->delete();
+        // Lakukan hal yang sama untuk Task jika ada kolom creator_id
+        // \App\Models\Task::where('creator_id', $user->id)->delete();
+
+        // d. Update atasan untuk bawahan
+        \App\Models\User::where('atasan_id', $user->id)->update(['atasan_id' => $user->atasan_id]);
+
+        // e. Jabatan sudah akan terhapus saat unit dihapus,
+        // jadi kita tidak perlu mengosongkannya di sini.
+
+        // f. Hapus user
+        $user->delete();
     }
 
     // --- JABATAN MANAGEMENT ---
