@@ -91,6 +91,7 @@ if (count($words) >= 2) {
                                     <div class="rounded-xl shadow-2xl py-1 bg-white ring-1 ring-black ring-opacity-10">
                                         @if(Auth::user()->isSuperAdmin())
                                             <x-dropdown-link :href="route('admin.units.index')" :active="request()->routeIs('admin.units.*')">Manajemen Unit</x-dropdown-link>
+                                            <x-dropdown-link :href="route('admin.activities.index')" :active="request()->routeIs('admin.activities.index')">Log Aktivitas</x-dropdown-link>
                                         @endif
                                         <x-dropdown-link :href="route('users.index')" :active="request()->routeIs('users.*')">Manajemen Pengguna</x-dropdown-link>
                                         <div class="border-t border-gray-200"></div>
