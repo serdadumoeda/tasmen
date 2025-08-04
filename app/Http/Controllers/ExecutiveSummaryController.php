@@ -6,6 +6,7 @@ use App\Models\Project;
 use App\Models\User;
 use App\Models\Task;
 use App\Models\BudgetRealization;
+use App\Services\InsightService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -13,7 +14,7 @@ use Carbon\Carbon;
 
 class ExecutiveSummaryController extends Controller
 {
-    public function index()
+    public function index(InsightService $insightService)
     {
         $user = auth()->user();
 
@@ -21,6 +22,8 @@ class ExecutiveSummaryController extends Controller
             abort(403, 'Anda tidak memiliki hak akses untuk halaman ini.');
         }
 
+        // Generate insights
+        $insights = $insightService->generate();
  
         $projects = Project::with(['tasks', 'budgetItems', 'leader'])
                            ->withSum('budgetItems as budget_items_sum_total_cost', 'total_cost')
@@ -74,7 +77,8 @@ class ExecutiveSummaryController extends Controller
             'topPerformers',
             'mostUtilized',
             'budgetByProject',
-            'performanceTrends'
+            'performanceTrends',
+            'insights'
         ));
     }
 
