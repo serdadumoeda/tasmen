@@ -12,6 +12,7 @@ class Unit extends Model
 {
     use HasFactory;
 
+    public const LEVEL_MENTERI = 'Menteri';
     public const LEVEL_ESELON_I = 'Eselon I';
     public const LEVEL_ESELON_II = 'Eselon II';
     public const LEVEL_KOORDINATOR = 'Koordinator';
@@ -19,6 +20,7 @@ class Unit extends Model
     public const LEVEL_STAF = 'Staf'; // Note: This is a user role, not a unit level in the migration
 
     public const LEVELS = [
+        ['name' => self::LEVEL_MENTERI],
         ['name' => self::LEVEL_ESELON_I],
         ['name' => self::LEVEL_ESELON_II],
         ['name' => self::LEVEL_KOORDINATOR],
@@ -70,11 +72,12 @@ class Unit extends Model
     public function getLevelNumber(): int
     {
         return match ($this->level) {
+            self::LEVEL_MENTERI => 0,
             self::LEVEL_ESELON_I => 1,
             self::LEVEL_ESELON_II => 2,
             self::LEVEL_KOORDINATOR => 3,
             self::LEVEL_SUB_KOORDINATOR => 4,
-            default => 0,
+            default => 99,
         };
     }
 

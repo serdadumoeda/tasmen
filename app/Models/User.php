@@ -19,6 +19,7 @@ class User extends Authenticatable
     // Trait HasApiTokens sekarang akan ditemukan
     use HasApiTokens, HasFactory, Notifiable;
 
+    public const ROLE_MENTERI = 'Menteri';
     public const ROLE_SUPERADMIN = 'Superadmin';
     public const ROLE_ESELON_I = 'Eselon I';
     public const ROLE_ESELON_II = 'Eselon II';
@@ -27,6 +28,7 @@ class User extends Authenticatable
     public const ROLE_STAF = 'Staf';
 
     public const ROLES = [
+        ['name' => self::ROLE_MENTERI],
         ['name' => self::ROLE_SUPERADMIN],
         ['name' => self::ROLE_ESELON_I],
         ['name' => self::ROLE_ESELON_II],
@@ -157,17 +159,17 @@ class User extends Authenticatable
 
     public function canCreateProjects(): bool
     {
-        return in_array($this->role, [self::ROLE_SUPERADMIN, self::ROLE_ESELON_I, self::ROLE_ESELON_II, self::ROLE_KOORDINATOR]);
+        return in_array($this->role, [self::ROLE_MENTERI, self::ROLE_SUPERADMIN, self::ROLE_ESELON_I, self::ROLE_ESELON_II, self::ROLE_KOORDINATOR]);
     }
 
     public function isTopLevelManager(): bool
     {
-        return in_array($this->role, [self::ROLE_SUPERADMIN, self::ROLE_ESELON_I, self::ROLE_ESELON_II]);
+        return in_array($this->role, [self::ROLE_MENTERI, self::ROLE_SUPERADMIN, self::ROLE_ESELON_I, self::ROLE_ESELON_II]);
     }
 
     public function canManageUsers(): bool
     {
-        return in_array($this->role, [self::ROLE_SUPERADMIN, self::ROLE_ESELON_I, self::ROLE_ESELON_II, self::ROLE_KOORDINATOR]);
+        return in_array($this->role, [self::ROLE_MENTERI, self::ROLE_SUPERADMIN, self::ROLE_ESELON_I, self::ROLE_ESELON_II, self::ROLE_KOORDINATOR]);
     }
 
     public function isSuperAdmin(): bool
@@ -182,7 +184,7 @@ class User extends Authenticatable
 
     public function isManager(): bool
     {
-        $isStructuralManager = in_array($this->role, [self::ROLE_ESELON_I, self::ROLE_ESELON_II, self::ROLE_KOORDINATOR, self::ROLE_SUB_KOORDINATOR]);
+        $isStructuralManager = in_array($this->role, [self::ROLE_MENTERI, self::ROLE_ESELON_I, self::ROLE_ESELON_II, self::ROLE_KOORDINATOR, self::ROLE_SUB_KOORDINATOR]);
         $isFunctionalManager = $this->ledProjects()->exists();
         return $isStructuralManager || $isFunctionalManager;
     }

@@ -20,7 +20,13 @@ class UserSeeder extends Seeder
         Schema::enableForeignKeyConstraints();
 
         // --- UNIT AND JABATAN CREATION ---
-        $eselon1 = Unit::create(['name' => 'Kementerian Digital', 'level' => Unit::LEVEL_ESELON_I]);
+
+        // New Top Level: Menteri
+        $menteri_unit = Unit::create(['name' => 'Kementerian', 'level' => Unit::LEVEL_MENTERI]);
+        $menteri_unit->jabatans()->create(['name' => 'Menteri']);
+
+        // Eselon I, now a child of Menteri
+        $eselon1 = Unit::create(['name' => 'Badan Perencanaan dan Pengembangan', 'level' => Unit::LEVEL_ESELON_I, 'parent_unit_id' => $menteri_unit->id]);
         $eselon1->jabatans()->create(['name' => 'Kepala Badan Perencanaan dan Pengembangan']);
 
         $eselon2_keuangan = Unit::create(['name' => 'Divisi Keuangan', 'level' => Unit::LEVEL_ESELON_II, 'parent_unit_id' => $eselon1->id]);
@@ -61,7 +67,8 @@ class UserSeeder extends Seeder
             return $user;
         };
 
-        $eselon1_user = $createUserForJabatan('Kepala Badan Perencanaan dan Pengembangan', 'Anwar Sanusi', 'menteri.digital@example.com', User::ROLE_ESELON_I, null);
+        $menteri_user = $createUserForJabatan('Menteri', 'Budi Arie Setiadi', 'menteri@example.com', User::ROLE_MENTERI, null);
+        $eselon1_user = $createUserForJabatan('Kepala Badan Perencanaan dan Pengembangan', 'Anwar Sanusi', 'eselon1@example.com', User::ROLE_ESELON_I, $menteri_user);
         $eselon2_keuangan_user = $createUserForJabatan('Kepala Pusat Data dan Teknologi Informasi', 'Mokhammad Farid Makruf', 'ka.keuangan@example.com', User::ROLE_ESELON_II, $eselon1_user);
         $eselon2_sdm_user = $createUserForJabatan('Kepala Pusat Sumber Daya Manusia', 'Kepala Divisi SDM', 'ka.sdm@example.com', User::ROLE_ESELON_II, $eselon1_user);
         $koor_anggaran_user = $createUserForJabatan('Koordinator Perencanaan Anggaran', 'Ananto Wijoyo', 'koor.anggaran@example.com', User::ROLE_KOORDINATOR, $eselon2_keuangan_user);
