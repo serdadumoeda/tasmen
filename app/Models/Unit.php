@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\Traits\RecordsActivity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -10,7 +11,7 @@ use Illuminate\Support\Facades\Cache;
 
 class Unit extends Model
 {
-    use HasFactory;
+    use HasFactory, RecordsActivity;
 
     public const LEVEL_MENTERI = 'Menteri';
     public const LEVEL_ESELON_I = 'Eselon I';

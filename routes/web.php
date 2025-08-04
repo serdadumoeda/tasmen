@@ -172,6 +172,9 @@ Route::middleware(['auth', 'superadmin'])->prefix('admin')->name('admin.')->grou
 
     // Impersonation Routes
     Route::get('/users/{user}/impersonate', [UserController::class, 'impersonate'])->name('users.impersonate');
+
+    // Activity Log Route
+    Route::get('/activities', [\App\Http\Controllers\ActivityController::class, 'index'])->name('activities.index');
 });
 
 Route::get('/api/units/{unit}/vacant-jabatans', [UnitController::class, 'getVacantJabatans'])->name('api.units.vacant-jabatans')->middleware('auth');

@@ -12,12 +12,13 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Carbon;
 // Pastikan baris ini ada dan benar setelah menginstal Sanctum
+use App\Models\Traits\RecordsActivity;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
     // Trait HasApiTokens sekarang akan ditemukan
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable, RecordsActivity;
 
     public const ROLE_MENTERI = 'Menteri';
     public const ROLE_SUPERADMIN = 'Superadmin';
