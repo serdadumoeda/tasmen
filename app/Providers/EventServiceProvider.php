@@ -3,8 +3,10 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use App\Models\SubTask;        
-use App\Observers\SubTaskObserver; 
+use App\Models\SubTask;
+use App\Observers\SubTaskObserver;
+use App\Models\Unit;
+use App\Observers\UnitObserver;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -22,5 +24,6 @@ class EventServiceProvider extends ServiceProvider
     public function boot(): void
     {
         SubTask::observe(SubTaskObserver::class);
+        Unit::observe(UnitObserver::class);
     }
 }

@@ -63,30 +63,8 @@ class Unit extends Model
 
     public function getAllSubordinateUnitIds(): array
     {
-        return Cache::remember('subordinate_unit_ids_for_unit_'.$this->id, 3600, function () {
-            $ids = [];
-            $queue = [$this];
-            $visited = [];
-
-            while (!empty($queue)) {
-                $current = array_shift($queue);
-
-                if (in_array($current->id, $visited)) {
-                    continue; // Lewati jika sudah dikunjungi untuk mencegah infinite loop
-                }
-
-                $ids[] = $current->id;
-                $visited[] = $current->id;
-
-                // Eager load child units to avoid N+1 problem
-                $current->load('childUnits');
-
-                foreach ($current->childUnits as $child) {
-                    $queue[] = $child;
-                }
-            }
-            return $ids;
-        });
+        // Use the new, performant Closure Table relationship
+        return $this->descendants()->pluck('id')->toArray();
     }
 
     public function getLevelNumber(): int
@@ -98,5 +76,77 @@ class Unit extends Model
             self::LEVEL_SUB_KOORDINATOR => 4,
             default => 0,
         };
+    }
+
+    // --- HIERARCHY MANAGEMENT (CLOSURE TABLE) ---
+
+    /**
+     * Rebuild the entire unit_paths table.
+     * Should be called after manual database changes or for initial setup.
+     */
+    public static function rebuildPaths()
+    {
+        \Illuminate\Support\Facades\DB::transaction(function () {
+            \Illuminate\Support\Facades\DB::table('unit_paths')->truncate();
+            $units = self::all();
+            foreach ($units as $unit) {
+                self::insertPaths($unit);
+            }
+        });
+    }
+
+    /**
+     * Insert the hierarchy paths for a single unit.
+     * @param Unit $unit
+     */
+    private static function insertPaths(Unit $unit)
+    {
+        // Insert path to self
+        \Illuminate\Support\Facades\DB::table('unit_paths')->insert([
+            'ancestor_id' => $unit->id,
+            'descendant_id' => $unit->id,
+            'depth' => 0,
+        ]);
+
+        // Insert paths from ancestors
+        $depth = 1;
+        $parent = $unit->parentUnit;
+        while ($parent) {
+            \Illuminate\Support\Facades\DB::table('unit_paths')->insert([
+                'ancestor_id' => $parent->id,
+                'descendant_id' => $unit->id,
+                'depth' => $depth,
+            ]);
+            $parent = $parent->parentUnit;
+            $depth++;
+        }
+    }
+
+    /**
+     * Detach a unit from its parent and re-attach its children to its grandparent.
+     */
+    public function disconnect()
+    {
+        // Delete paths from this unit's ancestors to its descendants
+        \Illuminate\Support\Facades\DB::table('unit_paths')
+            ->whereIn('descendant_id', $this->descendants()->pluck('id'))
+            ->whereIn('ancestor_id', $this->ancestors()->where('id', '!=', $this->id)->pluck('id'))
+            ->delete();
+
+        // Re-link children to the grandparent
+        foreach ($this->childUnits as $child) {
+            $child->parent_unit_id = $this->parent_unit_id;
+            $child->save(); // This will trigger path rebuilding if the model is observed
+        }
+    }
+
+    public function ancestors()
+    {
+        return $this->belongsToMany(self::class, 'unit_paths', 'descendant_id', 'ancestor_id');
+    }
+
+    public function descendants()
+    {
+        return $this->belongsToMany(self::class, 'unit_paths', 'ancestor_id', 'descendant_id');
     }
 }
