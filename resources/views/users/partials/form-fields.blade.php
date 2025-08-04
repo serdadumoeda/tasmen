@@ -78,7 +78,11 @@
     document.addEventListener('DOMContentLoaded', function () {
         const unitSelect = document.getElementById('unit_id');
         const jabatanSelect = document.getElementById('jabatan_id');
-        const oldJabatanId = '{{ old('jabatan_id', optional($user->jabatan)->id ?? '') }}';
+        @isset($user)
+            const oldJabatanId = '{{ old('jabatan_id', optional($user->jabatan)->id ?? '') }}';
+        @else
+            const oldJabatanId = '{{ old('jabatan_id', '') }}';
+        @endisset
 
         async function fetchAndPopulateJabatans(unitId, selectedId = null) {
             if (!unitId) {
