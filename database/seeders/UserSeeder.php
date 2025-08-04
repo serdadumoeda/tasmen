@@ -70,11 +70,24 @@ class UserSeeder extends Seeder
         $subkoor_pendapatan_user = $createUserForJabatan('Analis Anggaran Pendapatan', 'Sub Koordinator Pendapatan', 'subkoor.pendapatan@example.com', User::ROLE_SUB_KOORDINATOR, $koor_anggaran_user);
         $subkoor_talenta_user = $createUserForJabatan('Analis Pengembangan Talenta', 'Sub Koordinator Pengembangan Talenta', 'subkoor.talenta@example.com', User::ROLE_SUB_KOORDINATOR, $koor_rekrutmen_user);
 
-        $vacantStaffPositions = Jabatan::where('name', 'Staf Pelaksana')->whereNull('user_id')->get();
-        $all_managers = collect([$subkoor_belanja_user, $subkoor_pendapatan_user, $subkoor_talenta_user]);
+        $vacantStaffPositions = Jabatan::where('name', 'Staf Pelaksana')->whereNull('user_id')->with('unit.parentUnit.jabatans.user')->get();
 
         foreach ($vacantStaffPositions as $jabatan) {
-            $user = User::factory()->create(['role' => User::ROLE_STAF, 'password' => Hash::make('password'), 'unit_id' => $jabatan->unit_id, 'atasan_id' => $all_managers->random()->id]);
+            // Find the supervisor by looking at the user assigned to the parent unit's jabatan.
+            $supervisor = $jabatan->unit->parentUnit->jabatans->first()->user ?? null;
+
+            if (!$supervisor) {
+                $this->command->warn("Could not find supervisor for a staff in unit: " . $jabatan->unit->name);
+                continue;
+            }
+
+            $user = User::factory()->create([
+                'role' => User::ROLE_STAF,
+                'password' => Hash::make('password'),
+                'unit_id' => $jabatan->unit_id,
+                'atasan_id' => $supervisor->id
+            ]);
+
             $jabatan->update(['user_id' => $user->id]);
         }
     }
