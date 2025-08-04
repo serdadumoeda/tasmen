@@ -173,13 +173,17 @@ class UserController extends Controller
             return back()->withInput()->with('error', 'Jabatan yang dipilih sudah diisi oleh pengguna lain.');
         }
 
-        DB::transaction(function () use ($user, $validated, $newJabatan, $request) {
+        $oldUnitId = $user->unit_id;
+        $pindahUnit = $oldUnitId !== $newJabatan->unit_id;
+
+        DB::transaction(function () use ($user, $validated, $newJabatan, $request, $pindahUnit) {
+            // Kosongkan jabatan lama jika ada dan berbeda
             if ($user->jabatan && $user->jabatan->id !== $newJabatan->id) {
                 $user->jabatan->user_id = null;
                 $user->jabatan->save();
             }
 
-            $user->update([
+            $updateData = [
                 'name' => $validated['name'],
                 'email' => $validated['email'],
                 'status' => $validated['status'],
@@ -187,13 +191,26 @@ class UserController extends Controller
                 'unit_id' => $newJabatan->unit_id,
                 'role' => $newJabatan->unit->level,
                 'password' => $request->filled('password') ? Hash::make($validated['password']) : $user->password,
-            ]);
+            ];
 
+            // Jika user pindah unit, reset atasannya untuk mencegah relasi yang tidak valid.
+            if ($pindahUnit) {
+                $updateData['atasan_id'] = null;
+            }
+
+            $user->update($updateData);
+
+            // Tugaskan user ke jabatan baru
             $newJabatan->user_id = $user->id;
             $newJabatan->save();
         });
 
-        return redirect()->route('users.index')->with('success', 'User berhasil diperbarui.');
+        $successMessage = 'User berhasil diperbarui.';
+        if ($pindahUnit) {
+            $successMessage .= ' Karena user pindah unit, atasan telah direset. Harap tetapkan atasan baru yang sesuai.';
+        }
+
+        return redirect()->route('users.index')->with('success', $successMessage);
     }
 
     public function destroy(User $user)
