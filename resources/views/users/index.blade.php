@@ -60,7 +60,7 @@
                                         </div>
                                         <div class="ml-4">
                                             <div class="text-sm font-bold text-gray-900">{{ $user->name }}</div>
-                                            <div class="text-xs text-indigo-600 font-semibold">{{ $user->jabatan ?? 'Jabatan belum diatur' }}</div>
+                                            <div class="text-xs text-indigo-600 font-semibold">{{ $user->jabatan->name ?? 'Jabatan belum diatur' }}</div>
                                             <div class="text-xs text-gray-500">{{ $user->email }}</div>
                                         </div>
                                     </div>
@@ -70,7 +70,7 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="text-sm text-gray-800">{{ $user->atasan->name ?? '-' }}</div>
-                                    <div class="text-xs text-gray-500">{{ $user->atasan->jabatan ?? '' }}</div>
+                                    <div class="text-xs text-gray-500">{{ $user->atasan->jabatan->name ?? '' }}</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="text-sm text-gray-900 flex items-center">

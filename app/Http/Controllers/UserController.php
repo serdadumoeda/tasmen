@@ -29,7 +29,7 @@ class UserController extends Controller
         $this->authorize('viewAny', User::class);
 
         $loggedInUser = Auth::user();
-        $query = User::with('unit')->orderBy('name');
+        $query = User::with(['unit', 'jabatan', 'atasan.jabatan'])->orderBy('name');
 
         // Jika pengguna yang login bukan Superadmin, batasi daftar pengguna
         if (!$loggedInUser->isSuperAdmin()) {
