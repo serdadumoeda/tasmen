@@ -8,6 +8,8 @@
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    {{-- Select2 CSS --}}
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     
     {{-- PERBAIKAN: Tambahkan aturan CSS untuk x-cloak di sini --}}
@@ -106,5 +108,20 @@
     
     {{-- Slot untuk script tambahan per halaman --}}
     @stack('scripts')
+
+    {{-- jQuery (dependency for Select2) --}}
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    {{-- Select2 JS --}}
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script>
+        // Inisialisasi global untuk semua elemen dengan kelas .select2-searchable
+        $(document).ready(function() {
+            $('.select2-searchable').select2({
+                theme: "classic",
+                width: '100%'
+            });
+        });
+    </script>
 </body>
 </html>

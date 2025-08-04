@@ -24,7 +24,7 @@
 
         <div class="mb-6">
             <label for="unit_id" class="block font-semibold text-sm text-gray-700 mb-1">1. Pilih Unit Kerja</label>
-            <select name="unit_id" id="unit_id" required class="block mt-1 w-full rounded-lg shadow-sm">
+            <select name="unit_id" id="unit_id" required class="select2-searchable block mt-1 w-full rounded-lg shadow-sm">
                 <option value="">-- Pilih Unit --</option>
                 @foreach($units as $unitOption)
                     <option value="{{ $unitOption->id }}" @selected(old('unit_id', $user->unit_id ?? '') == $unitOption->id)>{{ $unitOption->name }}</option>
@@ -34,7 +34,7 @@
 
         <div class="mb-6">
             <label for="jabatan_id" class="block font-semibold text-sm text-gray-700 mb-1">2. Pilih Jabatan Tersedia</label>
-            <select name="jabatan_id" id="jabatan_id" required class="block mt-1 w-full rounded-lg shadow-sm" disabled>
+            <select name="jabatan_id" id="jabatan_id" required class="select2-searchable block mt-1 w-full rounded-lg shadow-sm" disabled>
                 <option value="">-- Pilih Unit Dahulu --</option>
             </select>
         </div>
@@ -44,7 +44,7 @@
     <div>
         <div class="mb-6">
             <label for="atasan_id" class="block font-semibold text-sm text-gray-700 mb-1">Pilih Atasan Langsung</label>
-            <select name="atasan_id" id="atasan_id" class="block mt-1 w-full rounded-lg shadow-sm">
+            <select name="atasan_id" id="atasan_id" class="select2-searchable block mt-1 w-full rounded-lg shadow-sm">
                  <option value="">-- Tidak ada --</option>
                  @foreach($supervisors as $supervisor)
                     <option value="{{ $supervisor->id }}" @selected(old('atasan_id', $user->atasan_id ?? '') == $supervisor->id)>{{ $supervisor->name }}</option>
@@ -85,9 +85,11 @@
         @endisset
 
         async function fetchAndPopulateJabatans(unitId, selectedId = null) {
+            // Reset and disable jabatan select
+            $(jabatanSelect).html('<option value="">-- Memuat... --</option>').prop('disabled', true);
+
             if (!unitId) {
-                jabatanSelect.innerHTML = '<option value="">-- Pilih Unit Dahulu --</option>';
-                jabatanSelect.disabled = true;
+                $(jabatanSelect).html('<option value="">-- Pilih Unit Dahulu --</option>').trigger('change');
                 return;
             }
 
@@ -96,27 +98,31 @@
                 if (!response.ok) throw new Error('Network response was not ok');
                 const data = await response.json();
 
-                jabatanSelect.innerHTML = '<option value="">-- Pilih Jabatan --</option>';
+                $(jabatanSelect).empty(); // Kosongkan dulu
 
                 if (data.length === 0) {
-                    jabatanSelect.innerHTML = '<option value="">-- Tidak ada jabatan kosong --</option>';
-                    jabatanSelect.disabled = true;
+                    $(jabatanSelect).html('<option value="">-- Tidak ada jabatan kosong --</option>').prop('disabled', true).trigger('change');
                     return;
                 }
 
+                // Tambahkan placeholder
+                $(jabatanSelect).html('<option value="">-- Pilih Jabatan --</option>');
+
                 data.forEach(jabatan => {
-                    const option = new Option(jabatan.name, jabatan.id);
-                    if (selectedId && jabatan.id == selectedId) {
-                        option.selected = true;
-                    }
-                    jabatanSelect.add(option);
+                    const option = new Option(jabatan.name, jabatan.id, false, false);
+                    $(jabatanSelect).append(option);
                 });
-                jabatanSelect.disabled = false;
+
+                // Set a selected value if provided
+                if (selectedId) {
+                    $(jabatanSelect).val(selectedId);
+                }
+
+                $(jabatanSelect).prop('disabled', false).trigger('change');
 
             } catch (error) {
                 console.error('Error fetching jabatans:', error);
-                jabatanSelect.innerHTML = '<option value="">-- Gagal memuat jabatan --</option>';
-                jabatanSelect.disabled = true;
+                $(jabatanSelect).html('<option value="">-- Gagal memuat --</option>').prop('disabled', true).trigger('change');
             }
         }
 
