@@ -1,6 +1,20 @@
 import './bootstrap';
 import Alpine from 'alpinejs';
-import TomSelect from 'tom-select';
+
+// Import jQuery and make it globally available
+import $ from 'jquery';
+window.$ = window.jQuery = $;
+
+// Import Select2
+import 'select2';
+
+// Initialize Select2 on document ready
+$(document).ready(function() {
+    $('.select2-searchable').select2({
+        width: '100%',
+        // We can add a theme here if we find a good Tailwind-compatible one later
+    });
+});
 
 window.Alpine = Alpine;
 
@@ -401,17 +415,6 @@ const initExecutiveSummaryChart = () => {
 // JALANKAN SEMUA FUNGSI INISIALISASI SETELAH HALAMAN DIMUAT
 // ======================================================================
 document.addEventListener('DOMContentLoaded', () => {
-    // Inisialisasi TomSelect untuk semua elemen yang relevan
-    document.querySelectorAll('.tom-select-searchable').forEach((el) => {
-        new TomSelect(el, {
-            create: false,
-            sortField: {
-                field: "text",
-                direction: "asc"
-            }
-        });
-    });
-
     initWorkloadInsight();
     initMemberSelectionModal();
     initResourcePoolPage();

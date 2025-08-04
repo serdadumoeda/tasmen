@@ -24,7 +24,7 @@
 
         <div class="mb-6">
             <label for="unit_id" class="block font-semibold text-sm text-gray-700 mb-1">1. Pilih Unit Kerja</label>
-            <select name="unit_id" id="unit_id" required class="tom-select-searchable">
+            <select name="unit_id" id="unit_id" required class="select2-searchable block mt-1 w-full rounded-lg shadow-sm">
                 <option value="">-- Pilih Unit --</option>
                 @foreach($units as $unitOption)
                     <option value="{{ $unitOption->id }}" @selected(old('unit_id', $user->unit_id ?? '') == $unitOption->id)>{{ $unitOption->name }}</option>
@@ -34,7 +34,7 @@
 
         <div class="mb-6">
             <label for="jabatan_id" class="block font-semibold text-sm text-gray-700 mb-1">2. Pilih Jabatan Tersedia</label>
-            <select name="jabatan_id" id="jabatan_id" required class="tom-select-searchable" disabled>
+            <select name="jabatan_id" id="jabatan_id" required class="select2-searchable block mt-1 w-full rounded-lg shadow-sm" disabled>
                 <option value="">-- Pilih Unit Dahulu --</option>
             </select>
         </div>
@@ -44,7 +44,7 @@
     <div>
         <div class="mb-6">
             <label for="atasan_id" class="block font-semibold text-sm text-gray-700 mb-1">Pilih Atasan Langsung</label>
-            <select name="atasan_id" id="atasan_id" class="tom-select-searchable">
+            <select name="atasan_id" id="atasan_id" class="select2-searchable block mt-1 w-full rounded-lg shadow-sm">
                  <option value="">-- Tidak ada --</option>
                  @foreach($supervisors as $supervisor)
                     <option value="{{ $supervisor->id }}" @selected(old('atasan_id', $user->atasan_id ?? '') == $supervisor->id)>{{ $supervisor->name }}</option>
@@ -75,20 +75,9 @@
 
 @push('scripts')
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        // Inisialisasi TomSelect secara eksplisit di sini
-        const unitSelectEl = document.getElementById('unit_id');
-        const jabatanSelectEl = document.getElementById('jabatan_id');
-        const atasanSelectEl = document.getElementById('atasan_id');
-
-        const tomSelectSettings = {
-            create: false,
-            sortField: { field: "text", direction: "asc" }
-        };
-
-        const unitTomSelect = new TomSelect(unitSelectEl, tomSelectSettings);
-        const atasanTomSelect = new TomSelect(atasanSelectEl, tomSelectSettings);
-        let jabatanTomSelect = new TomSelect(jabatanSelectEl, tomSelectSettings);
+    $(document).ready(function() {
+        const unitSelect = $('#unit_id');
+        const jabatanSelect = $('#jabatan_id');
 
         @isset($user)
             const oldJabatanId = '{{ old('jabatan_id', optional($user->jabatan)->id ?? '') }}';
@@ -96,57 +85,47 @@
             const oldJabatanId = '{{ old('jabatan_id', '') }}';
         @endisset
 
-        async function fetchAndPopulateJabatans(unitId, selectedId = null) {
-            jabatanTomSelect.disable();
-            jabatanTomSelect.clear();
-            jabatanTomSelect.clearOptions();
-            jabatanTomSelect.addOption({ value: '', text: '-- Memuat... --' });
-            jabatanTomSelect.setValue('');
+        function fetchAndPopulateJabatans(unitId, selectedId = null) {
+            jabatanSelect.prop('disabled', true).html('<option value="">-- Memuat... --</option>');
 
             if (!unitId) {
-                jabatanTomSelect.clearOptions();
-                jabatanTomSelect.addOption({ value: '', text: '-- Pilih Unit Dahulu --' });
-                jabatanTomSelect.setValue('');
+                jabatanSelect.html('<option value="">-- Pilih Unit Dahulu --</option>').trigger('change');
                 return;
             }
 
-            try {
-                const response = await fetch(`/api/units/${unitId}/vacant-jabatans`);
-                if (!response.ok) throw new Error('Network response was not ok');
-                const data = await response.json();
+            $.ajax({
+                url: `/api/units/${unitId}/vacant-jabatans`,
+                type: 'GET',
+                success: function(data) {
+                    jabatanSelect.empty().append('<option value="">-- Pilih Jabatan --</option>');
 
-                jabatanTomSelect.clearOptions(); // Hapus opsi '-- Memuat...'
+                    if (data.length === 0) {
+                        jabatanSelect.html('<option value="">-- Tidak ada jabatan kosong --</option>');
+                    } else {
+                        $.each(data, function(key, jabatan) {
+                            jabatanSelect.append(new Option(jabatan.name, jabatan.id, false, false));
+                        });
+                    }
 
-                if (data.length === 0) {
-                    jabatanTomSelect.addOption({ value: '', text: '-- Tidak ada jabatan kosong --' });
-                } else {
-                    jabatanTomSelect.addOption({ value: '', text: '-- Pilih Jabatan --' });
-                    data.forEach(jabatan => {
-                        jabatanTomSelect.addOption({ value: jabatan.id, text: jabatan.name });
-                    });
+                    if (selectedId) {
+                        jabatanSelect.val(selectedId);
+                    }
+
+                    jabatanSelect.prop('disabled', false).trigger('change');
+                },
+                error: function() {
+                    jabatanSelect.html('<option value="">-- Gagal Memuat --</option>').trigger('change');
                 }
-
-                if (selectedId) {
-                    jabatanTomSelect.setValue(selectedId);
-                } else {
-                    jabatanTomSelect.setValue('');
-                }
-
-                jabatanTomSelect.enable();
-
-            } catch (error) {
-                console.error('Error fetching jabatans:', error);
-                jabatanTomSelect.clearOptions();
-                jabatanTomSelect.addOption({ value: '', text: '-- Gagal memuat jabatan --' });
-                jabatanTomSelect.setValue('');
-            }
+            });
         }
 
-        unitTomSelect.on('change', (value) => fetchAndPopulateJabatans(value));
+        unitSelect.on('change', function() {
+            fetchAndPopulateJabatans($(this).val());
+        });
 
         // Initial load if a unit is already selected
-        if (unitTomSelect.getValue()) {
-            fetchAndPopulateJabatans(unitTomSelect.getValue(), oldJabatanId);
+        if (unitSelect.val()) {
+            fetchAndPopulateJabatans(unitSelect.val(), oldJabatanId);
         }
     });
 </script>

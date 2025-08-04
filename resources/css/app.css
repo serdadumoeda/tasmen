@@ -2,7 +2,7 @@
 /* @import "tom-select/dist/css/tom-select.bootstrap5.css"; */
 
 /* Gunakan baris ini sebagai gantinya */
-@import "tom-select/dist/css/tom-select.default.css";
+@import 'select2/dist/css/select2.min.css';
 
 @tailwind base;
 @tailwind components;
