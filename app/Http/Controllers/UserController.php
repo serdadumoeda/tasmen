@@ -205,12 +205,22 @@ class UserController extends Controller
             $newJabatan->save();
         });
 
-        $successMessage = 'User berhasil diperbarui.';
+        $newRole = $newJabatan->unit->level;
+        $roleChanged = $user->role !== $newRole;
+
+        $redirect = redirect()->route('users.index');
+
         if ($pindahUnit) {
-            $successMessage .= ' Karena user pindah unit, atasan telah direset. Harap tetapkan atasan baru yang sesuai.';
+            $redirect->with('success', 'User berhasil diperbarui. Atasan telah direset karena pindah unit, harap tetapkan atasan baru.');
+        } else {
+            $redirect->with('success', 'User berhasil diperbarui.');
         }
 
-        return redirect()->route('users.index')->with('success', $successMessage);
+        if ($roleChanged && !$pindahUnit) { // Tampilkan pesan role change hanya jika tidak ada pesan pindah unit
+             $redirect->with('warning', "Role pengguna telah diperbarui dari '{$user->role}' menjadi '{$newRole}'.");
+        }
+
+        return $redirect;
     }
 
     public function destroy(User $user)

@@ -73,14 +73,14 @@
     </script>
     
     {{-- Script untuk menampilkan notifikasi dari session flash --}}
-    @if (session('success') || session('error') || session('info'))
+    @if (session('success') || session('error') || session('info') || session('warning'))
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const Toast = Swal.mixin({
                 toast: true,
                 position: 'top-end',
                 showConfirmButton: false,
-                timer: 3500,
+                timer: 4500, // Waktu lebih lama untuk pesan dengan peringatan
                 timerProgressBar: true,
                 didOpen: (toast) => {
                     toast.addEventListener('mouseenter', Swal.stopTimer)
@@ -93,6 +93,9 @@
             @endif
             @if ($message = session('error'))
                 Toast.fire({ icon: 'error', title: '{{ $message }}' });
+            @endif
+            @if ($message = session('warning'))
+                Toast.fire({ icon: 'warning', title: '{{ $message }}' });
             @endif
             @if ($message = session('info'))
                 Toast.fire({ icon: 'info', title: '{{ $message }}' });
