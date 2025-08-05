@@ -130,6 +130,11 @@
                             <p class="text-sm text-gray-400 mt-2">Coba ubah filter atau kata kunci pencarian Anda.</p>
                         </div>
                     @endforelse
+
+                    <!-- Navigasi Paginasi -->
+                    <div class="mt-8">
+                        {{ $allProjects->links() }}
+                    </div>
                 </div>
 
                 <!-- Kolom Kanan: Aktivitas Terbaru -->

@@ -10,15 +10,30 @@ use Carbon\Carbon;
 class InsightService
 {
     /**
-     * Generate all insights.
+     * Generate all insights for a specific manager's hierarchy.
      */
-    public function generate(): Collection
+    public function generate(User $manager): Collection
     {
         $insights = collect();
 
-        // Eager load semua relasi yang dibutuhkan untuk efisiensi
-        $projects = Project::with(['tasks.assignees', 'budgetItems.realizations', 'leader.unit'])->get();
+        // Dapatkan semua ID bawahan dari manajer yang login
+        $subordinateIds = $manager->getAllSubordinateIds();
+        // Tambahkan ID manajer itu sendiri untuk mencakup proyek yang ia pimpin
+        $relevantUserIds = $subordinateIds->push($manager->id);
+
+        // Filter proyek yang relevan: dipimpin oleh manajer/bawahan, ATAU memiliki tugas yang di-assign ke mereka
+        $projects = Project::with(['tasks.assignees', 'budgetItems.realizations', 'leader.unit'])
+            ->whereIn('leader_id', $relevantUserIds)
+            ->orWhereHas('tasks', function ($query) use ($relevantUserIds) {
+                $query->whereHas('assignees', function ($subQuery) use ($relevantUserIds) {
+                    $subQuery->whereIn('users.id', $relevantUserIds);
+                });
+            })
+            ->get();
+
+        // Filter pengguna yang relevan (hanya bawahan)
         $users = User::with(['tasks', 'specialAssignments', 'unit'])
+                     ->whereIn('id', $subordinateIds) // Hanya analisis untuk bawahan
                      ->where('status', 'active')
                      ->get();
 

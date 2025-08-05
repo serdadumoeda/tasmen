@@ -155,4 +155,48 @@ class PerformanceCalculatorService
         if ($hasilKerja === 'Dibawah Ekspektasi' || $perilakuKerja === 'Dibawah Ekspektasi') return 'Butuh Perbaikan';
         return 'Baik';
     }
+
+    /**
+     * Menghitung ulang skor untuk satu pengguna dan atasannya secara rekursif.
+     * Metode ini dipanggil setelah ada perubahan yang memengaruhi skor, seperti update perilaku kerja.
+     */
+    public function calculateForSingleUserAndParents(User $user): void
+    {
+        // Dapatkan semua user untuk di-cache, ini kurang efisien tapi konsisten dengan implementasi yang ada
+        $allUsers = User::with('tasks', 'unit', 'atasan')->get()->keyBy('id');
+
+        // Inisialisasi cache IKI dan NKF dari data yang ada di DB
+        $this->calculatedIki = $allUsers->map(fn($u) => $u->individual_performance_index ?? 0.0)->all();
+        $this->calculatedNkf = $allUsers->map(fn($u) => $u->final_performance_value ?? 0.0)->all();
+
+        // Loop dari user saat ini ke atas hirarki
+        $currentUser = $user;
+        while ($currentUser) {
+            // IKI hanya dihitung ulang untuk user awal yang perilakunya berubah.
+            // IKI atasan tidak terpengaruh oleh perubahan perilaku bawahan.
+            if ($currentUser->id === $user->id) {
+                $this->calculatedIki[$currentUser->id] = $this->calculateIndividualPerformanceIndex($currentUser);
+            }
+
+            // Hitung ulang NKF karena ini bergantung pada skor bawahan atau IKI diri sendiri.
+            $this->calculatedNkf[$currentUser->id] = $this->calculateFinalPerformanceValue($currentUser, $allUsers);
+
+            // Pindah ke atasan untuk iterasi berikutnya
+            $currentUser = $allUsers->get($currentUser->atasan_id);
+        }
+
+        // Simpan semua hasil yang diperbarui ke database.
+        // Kita hanya perlu menyimpan user yang di-update dan para atasannya.
+        $currentUserToSave = $user;
+        while ($currentUserToSave) {
+            $currentUserToSave->individual_performance_index = $this->calculatedIki[$currentUserToSave->id] ?? 0.0;
+            $currentUserToSave->final_performance_value = $this->calculatedNkf[$currentUserToSave->id] ?? 0.0;
+            $currentUserToSave->work_result_rating = $this->getWorkResultRating($currentUserToSave->final_performance_value);
+            $currentUserToSave->performance_predicate = $this->getPerformancePredicate($currentUserToSave->work_result_rating, $currentUserToSave->work_behavior_rating);
+            $currentUserToSave->performance_data_updated_at = now();
+            $currentUserToSave->save();
+
+            $currentUserToSave = $allUsers->get($currentUserToSave->atasan_id);
+        }
+    }
 }

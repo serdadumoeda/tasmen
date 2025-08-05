@@ -51,22 +51,20 @@ class GlobalDashboardController extends Controller
         $search = request('search');
         $status = request('status');
 
+        // Eager load relasi dan kalkulasi
+        $projectQuery->with(['leader', 'tasks'])->withSum('budgetItems', 'total_cost');
+
         if ($search) {
             $projectQuery->where('name', 'like', '%' . $search . '%');
         }
 
-        // Mengambil data untuk list proyek, seperti yang dibutuhkan view
-        $allProjects = $projectQuery->with(['leader', 'tasks'])
-                                  ->withSum('budgetItems', 'total_cost')
-                                  ->latest()
-                                  ->get();
-
-        // Filter berdasarkan status dinamis setelah mengambil data
+        // PERBAIKAN: Terapkan filter status di query database untuk efisiensi
         if ($status) {
-            $allProjects = $allProjects->filter(function ($project) use ($status) {
-                return $project->status === $status;
-            });
+            $projectQuery->where('status', $status);
         }
+
+        // Ambil data dengan paginasi, dan pastikan filter tetap ada di link paginasi
+        $allProjects = $projectQuery->latest()->paginate(15)->withQueryString();
         // --- AKHIR LOGIKA FILTER & PENCARIAN ---
 
 

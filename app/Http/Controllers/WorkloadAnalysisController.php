@@ -11,21 +11,33 @@ class WorkloadAnalysisController extends Controller
 {
     use AuthorizesRequests;
 
-    public function index()
+    public function index(Request $request)
     {
         $manager = Auth::user();
+        $search = $request->input('search');
 
         if (!$manager->isTopLevelManager()) {
             abort(403, 'Anda tidak memiliki hak akses untuk halaman ini.');
         }
 
+        // Dapatkan query dasar untuk bawahan
         if ($manager->role === 'Superadmin') {
-            $subordinates = User::where('id', '!=', $manager->id)->get();
+            $subordinatesQuery = User::where('id', '!=', $manager->id);
         } else {
-            $subordinates = $manager->getAllSubordinates();
+            // Replikasi logika dari getAllSubordinates untuk mendapatkan query builder
+            $subordinateUnitIds = $manager->unit ? $manager->unit->getAllSubordinateUnitIds() : [];
+            $subordinatesQuery = User::whereIn('unit_id', $subordinateUnitIds)->where('id', '!=', $manager->id);
         }
+
+        // Terapkan filter pencarian jika ada
+        if ($search) {
+            $subordinatesQuery->where('name', 'like', '%' . $search . '%');
+        }
+
+        // Ambil hasil dengan paginasi dan pertahankan query string
+        $subordinates = $subordinatesQuery->paginate(20)->withQueryString();
         
-        return view('workload-analysis.index', compact('manager', 'subordinates'));
+        return view('workload-analysis.index', compact('manager', 'subordinates', 'search'));
     }
 
     /**
