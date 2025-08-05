@@ -17,11 +17,11 @@ class InsightService
         $insights = collect();
 
         // Eager load semua relasi yang dibutuhkan untuk efisiensi
-        $projects = Project::with(['tasks.assignees', 'budgetItems.realizations', 'leader'])->get();
-        $users = User::with(['tasks', 'specialAssignments'])
+        // KESALAHAN ADA DI SINI: Query User tidak memuat relasi yang dibutuhkan.
+        // PERBAIKAN: Muat semua relasi yang dibutuhkan oleh semua metode di bawah ini.
+        $projects = Project::with(['tasks.assignees', 'budgetItems.realizations', 'leader.unit'])->get();
+        $users = User::with(['tasks', 'specialAssignments', 'unit'])
                      ->where('status', 'active')
-                     // Eager load data kinerja yang sudah dihitung
-                     ->select('id', 'name', 'work_result_rating')
                      ->get();
 
         // Memanggil semua metode analisis dengan data yang sudah di-cache
@@ -93,11 +93,11 @@ class InsightService
     private function findOverloadedUsers(Collection $users): Collection
     {
         return $users->filter(function ($user) {
-            $weeklyHours = $user->tasks()->where('status', '!=', 'completed')->sum('estimated_hours') / 4;
-            // Peringatan HANYA jika beban kerja tinggi DAN kinerja buruk
-            return $weeklyHours > 45 && in_array($user->work_result_rating, ['Dibawah Ekspektasi', 'Butuh Perbaikan']);
+            // Perhitungan weeklyHours sekarang seharusnya bekerja dengan benar
+            $weeklyHours = $user->tasks->where('status', '!=', 'completed')->sum('estimated_hours') / 4;
+            return $weeklyHours > 45 && in_array($user->work_result_rating, ['Dibawah Ekspektasi', 'Butuh Perbaikan', 'Sangat Kurang']);
         })->map(function ($user) {
-            $weeklyHours = $user->tasks()->where('status', '!=', 'completed')->sum('estimated_hours') / 4;
+            $weeklyHours = $user->tasks->where('status', '!=', 'completed')->sum('estimated_hours') / 4;
             return [
                 'severity' => 'Peringatan',
                 'severity_score' => 3,
@@ -115,7 +115,6 @@ class InsightService
     private function findUnderutilizedUsers(Collection $users): Collection
     {
         return $users->filter(function ($user) {
-            // Sesuai logika baru, mereka yang tak punya tugas akan punya rating 'Tidak Dapat Dinilai'
             return $user->work_result_rating === 'Tidak Dapat Dinilai';
         })->map(function ($user) {
             return [
