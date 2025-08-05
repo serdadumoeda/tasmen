@@ -10,33 +10,37 @@ class WeeklyWorkloadController extends Controller
     // Standar jam kerja per minggu
     const STANDARD_WEEKLY_HOURS = 37.5;
 
-    public function index()
+    public function index(Request $request)
     {
         $manager = Auth::user();
-        // Ambil semua bawahan dari manajer yang sedang login
-        $teamMembers = $manager->getAllSubordinates();
+        $search = $request->input('search');
 
-        $workloadData = $teamMembers->map(function ($member) {
-            // Hitung total jam dari tugas yang belum selesai
-            $totalAssignedHours = $member->tasks()
-                ->where('status', '!=', 'Selesai')
-                ->sum('estimated_hours');
+        // Dapatkan query dasar untuk bawahan, tergantung pada peran manajer
+        if ($manager->role === User::ROLE_SUPERADMIN || $manager->role === User::ROLE_MENTERI) {
+            $subordinatesQuery = User::where('id', '!=', $manager->id);
+        } else {
+            $subordinateUnitIds = $manager->unit ? $manager->unit->getAllSubordinateUnitIds() : [];
+            $subordinatesQuery = User::whereIn('unit_id', $subordinateUnitIds)->where('id', '!=', $manager->id);
+        }
 
-            // Hitung persentase beban kerja
-            $workloadPercentage = (self::STANDARD_WEEKLY_HOURS > 0)
-                ? ($totalAssignedHours / self::STANDARD_WEEKLY_HOURS) * 100
-                : 0;
+        // Terapkan filter pencarian nama jika ada
+        if ($search) {
+            $subordinatesQuery->where('name', 'like', '%' . $search . '%');
+        }
 
-            return [
-                'user' => $member,
-                'assigned_hours' => $totalAssignedHours,
-                'workload_percentage' => round($workloadPercentage)
-            ];
-        });
+        // Eager load jumlah jam tugas untuk menghindari N+1 query problem
+        // Hasilnya akan tersedia sebagai atribut 'total_assigned_hours' pada setiap model User.
+        $subordinatesQuery->withSum(['tasks as total_assigned_hours' => function ($query) {
+            $query->where('status', '!=', 'Selesai');
+        }], 'estimated_hours');
+
+        // Ambil data dengan paginasi
+        $teamMembers = $subordinatesQuery->paginate(20)->withQueryString();
 
         return view('weekly_workload.index', [
-            'workloadData' => $workloadData,
-            'standardHours' => self::STANDARD_WEEKLY_HOURS
+            'teamMembers' => $teamMembers, // Kirim paginator ke view
+            'standardHours' => self::STANDARD_WEEKLY_HOURS,
+            'search' => $search
         ]);
     }
 }

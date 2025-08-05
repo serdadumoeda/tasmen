@@ -284,7 +284,11 @@ class UserController extends Controller
             return response()->json([]);
         }
 
-        $users = User::where('name', 'ilike', "%{$query}%")
+        // PERBAIKAN: Cari berdasarkan nama atau email
+        $users = User::where(function ($q) use ($query) {
+                        $q->where('name', 'ilike', "%{$query}%")
+                          ->orWhere('email', 'ilike', "%{$query}%");
+                    })
                     ->where('id', '!=', auth()->id())
                     ->limit(10)
                     ->get(['id', 'name', 'role']);
