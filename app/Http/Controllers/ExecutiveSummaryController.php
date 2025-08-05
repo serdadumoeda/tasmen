@@ -25,33 +25,40 @@ class ExecutiveSummaryController extends Controller
         // Generate insights
         $insights = $insightService->generate();
  
-        $projects = Project::with(['tasks', 'budgetItems', 'leader'])
-                           ->withSum('budgetItems as budget_items_sum_total_cost', 'total_cost')
-                           ->get();
+        // Ambil semua proyek untuk kalkulasi
+        $allProjects = Project::with(['tasks', 'budgetItems', 'leader'])
+                              ->withSum('budgetItems as budget_items_sum_total_cost', 'total_cost')
+                              ->get();
+
+        // Ambil proyek yang dipaginasi untuk tabel
+        $projectsForTable = Project::with(['leader', 'tasks'])
+                                   ->withSum('budgetItems', 'total_cost')
+                                   ->latest()
+                                   ->paginate(10);
 
 
 
         // --- Data & KPI Utama (Logika lainnya tidak berubah) ---
-        $activeProjects = $projects->whereNotIn('status', ['completed', 'cancelled'])->count();
-        $totalBudget = $projects->sum('budget_items_sum_total_cost'); // Sekarang ini akan berisi nilai yang benar
+        $activeProjects = $allProjects->whereNotIn('status', ['completed', 'cancelled'])->count();
+        $totalBudget = $allProjects->sum('budget_items_sum_total_cost'); // Sekarang ini akan berisi nilai yang benar
         
-        $allBudgetItemIds = $projects->flatMap->budgetItems->pluck('id');
+        $allBudgetItemIds = $allProjects->flatMap->budgetItems->pluck('id');
         $totalRealization = BudgetRealization::whereIn('budget_item_id', $allBudgetItemIds)->sum('amount');
         
         $budgetAbsorptionRate = $totalBudget > 0 ? round(($totalRealization / $totalBudget) * 100) : 0;
-        $overallProgress = $projects->count() > 0 ? round($projects->avg('progress')) : 0;
+        $overallProgress = $allProjects->count() > 0 ? round($allProjects->avg('progress')) : 0;
 
-        $criticalProjects = $this->getCriticalProjects($projects);
+        $criticalProjects = $this->getCriticalProjects($allProjects);
         $overdueProjectsCount = $criticalProjects->count();
 
         $allSubordinates = $this->getAllSubordinatesIteratively($user);
         $topPerformers = $allSubordinates->sortByDesc(fn($sub) => $sub->getFinalPerformanceValueAttribute())->take(5);
         $mostUtilized = $this->getMostUtilizedSubordinates($allSubordinates);
         
-        $performanceTrends = $this->getPerformanceTrends($projects);
+        $performanceTrends = $this->getPerformanceTrends($allProjects);
 
         // --- Analisis Anggaran per Proyek (Logika ini sekarang akan bekerja dengan benar) ---
-        $budgetByProject = $projects->map(function ($project) {
+        $budgetByProject = $allProjects->map(function ($project) {
             $totalBudget = $project->budget_items_sum_total_cost ?? 0; // Nilai ini sekarang sudah benar
             $budgetItemsIds = $project->budgetItems->pluck('id');
             $totalRealization = BudgetRealization::whereIn('budget_item_id', $budgetItemsIds)->sum('amount');
@@ -67,7 +74,7 @@ class ExecutiveSummaryController extends Controller
         })->sortByDesc('budget_items_sum_total_cost')->take(5);
 
         return view('executive-summary', compact(
-            'projects',
+            'projectsForTable',
             'activeProjects',
             'overdueProjectsCount',
             'totalBudget',

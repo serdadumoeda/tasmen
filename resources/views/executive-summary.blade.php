@@ -9,7 +9,20 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
 
             {{-- Panel Insight --}}
-            <x-insight-panel :insights="$insights" />
+            <div x-data="{ open: true }">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-bold text-gray-800 flex items-center">
+                        <i class="fas fa-lightbulb-on mr-3 text-yellow-500"></i>
+                        Rekomendasi & Peringatan
+                    </h3>
+                    <button @click="open = !open" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas" :class="open ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                    </button>
+                </div>
+                <div x-show="open" x-transition>
+                    <x-insight-panel :insights="$insights" />
+                </div>
+            </div>
 
             {{-- Bagian KPI Utama --}}
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -61,11 +74,16 @@
                 {{-- Kolom Kiri: Daftar Proyek & Alokasi Anggaran --}}
                 <div class="lg:col-span-2 space-y-6">
                     {{-- Daftar Portofolio Kegiatan --}}
-                    <div class="bg-white p-6 rounded-xl shadow-xl hover:shadow-2xl transition-shadow duration-300"> {{-- Meningkatkan shadow --}}
-                        <h3 class="font-bold text-xl text-gray-800 mb-4 flex items-center">
-                            <i class="fas fa-project-diagram mr-3 text-indigo-600"></i> Ringkasan Portofolio Kegiatan
-                        </h3>
-                        <div class="overflow-x-auto">
+                    <div class="bg-white p-6 rounded-xl shadow-xl hover:shadow-2xl transition-shadow duration-300" x-data="{ open: true }">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-xl text-gray-800 flex items-center">
+                                <i class="fas fa-project-diagram mr-3 text-indigo-600"></i> Ringkasan Portofolio Kegiatan
+                            </h3>
+                            <button @click="open = !open" class="text-gray-500 hover:text-gray-700">
+                                <i class="fas" :class="open ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                            </button>
+                        </div>
+                        <div class="overflow-x-auto" x-show="open" x-transition>
                             <table class="min-w-full divide-y divide-gray-200">
                                 <thead class="bg-gray-100">
                                     <tr>
@@ -76,7 +94,7 @@
                                     </tr>
                                 </thead>
                                 <tbody class="bg-white divide-y divide-gray-100">
-                                    @forelse ($projects as $project)
+                                    @forelse ($projectsForTable as $project)
                                         <tr class="hover:bg-blue-50 transition-colors duration-150 group">
                                             <td class="px-6 py-4 whitespace-nowrap">
                                                 <div class="text-sm font-medium text-gray-900">
@@ -102,14 +120,22 @@
                                     @endforelse
                                 </tbody>
                             </table>
+                            <div class="mt-4">
+                                {{ $projectsForTable->links() }}
+                            </div>
                         </div>
                     </div>
 
-                    <div class="bg-white p-6 rounded-xl shadow-xl hover:shadow-2xl transition-shadow duration-300"> {{-- Meningkatkan shadow --}}
-                        <h3 class="font-bold text-xl text-gray-800 mb-4 flex items-center">
-                            <i class="fas fa-money-bill-wave mr-3 text-emerald-600"></i> Alokasi & Penyerapan Anggaran per Kegiatan
-                        </h3>
-                        <div class="space-y-5">
+                    <div class="bg-white p-6 rounded-xl shadow-xl hover:shadow-2xl transition-shadow duration-300" x-data="{ open: true }">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-xl text-gray-800 flex items-center">
+                                <i class="fas fa-money-bill-wave mr-3 text-emerald-600"></i> Alokasi & Penyerapan Anggaran per Kegiatan
+                            </h3>
+                            <button @click="open = !open" class="text-gray-500 hover:text-gray-700">
+                                <i class="fas" :class="open ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                            </button>
+                        </div>
+                        <div class="space-y-5" x-show="open" x-transition>
                             @forelse($budgetByProject as $project)
                                 <div class="bg-gray-50 p-4 rounded-lg hover:bg-gray-100 transition-colors duration-150 border border-gray-100 hover:border-blue-200 shadow-sm">
                                     <div class="flex justify-between items-center mb-2">
