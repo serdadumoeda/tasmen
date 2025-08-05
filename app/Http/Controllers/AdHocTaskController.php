@@ -47,10 +47,10 @@ class AdHocTaskController extends Controller
 
         // Terapkan filter pencarian jika ada
         if ($request->filled('search')) {
-            $search = $request->search;
+            $search = strtolower($request->input('search'));
             $query->where(function ($q) use ($search) {
-                $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
+                $q->whereRaw('LOWER(title) LIKE ?', ["%{$search}%"])
+                  ->orWhereRaw('LOWER(description) LIKE ?', ["%{$search}%"]);
             });
         }
 

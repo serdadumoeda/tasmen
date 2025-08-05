@@ -40,7 +40,7 @@ class WeeklyWorkloadController extends Controller
     
         // 4. Terapkan filter pencarian nama jika ada
         if ($search) {
-            $subordinatesQuery->where('name', 'like', '%' . $search . '%');
+            $subordinatesQuery->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($search) . '%']);
         }
         
         // 5. Eager load tugas untuk setiap anggota tim
