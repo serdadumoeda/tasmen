@@ -30,7 +30,7 @@ class AuthenticatedSessionController extends Controller
 
         $user = $request->user();
 
-        if ($user->isSuperAdmin()) {
+        if ($user->isTopLevelManager()) {
             return redirect()->route('executive.summary');
         }
 
