@@ -5,14 +5,19 @@ import Alpine from 'alpinejs';
 import $ from 'jquery';
 window.$ = window.jQuery = $;
 
-// Import Select2
-import 'select2';
+// Import Tom-select and its CSS
+import TomSelect from 'tom-select';
 
-// Initialize Select2 on document ready
-$(document).ready(function() {
-    $('.select2-searchable').select2({
-        width: '100%',
-        // We can add a theme here if we find a good Tailwind-compatible one later
+// Initialize TomSelect on document ready
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.select2-searchable').forEach((el)=>{
+        new TomSelect(el, {
+            create: false,
+            sortField: {
+                field: "text",
+                direction: "asc"
+            }
+        });
     });
 });
 
