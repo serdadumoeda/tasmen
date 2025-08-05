@@ -19,20 +19,27 @@ class AdHocTaskController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
-        $subordinates = collect();
-        
         $query = Task::whereNull('project_id')->with('assignees')->latest();
+        $subordinates = collect();
 
-        // Tentukan lingkup dasar query berdasarkan peran
-        if ($user->canManageUsers()) {
+        // PERBAIKAN: Logika otorisasi sesuai permintaan baru
+        // Superadmin dan Menteri bisa melihat semua tugas harian
+        if ($user->role === User::ROLE_SUPERADMIN || $user->role === User::ROLE_MENTERI) {
+            // Tidak perlu filter query, ambil semua bawahan untuk dropdown filter
+            $subordinates = User::where('id', '!=', $user->id)->orderBy('name')->get();
+        }
+        // Manajer lain (Eselon I, II, Koordinator) melihat tugas dalam hierarkinya
+        elseif ($user->canManageUsers()) {
             $subordinateIds = $user->getAllSubordinateIds();
-            $subordinateIds->push($user->id); // Termasuk diri sendiri
+            $subordinateIds->push($user->id); // Termasuk tugas diri sendiri
             $subordinates = User::whereIn('id', $subordinateIds)->orderBy('name')->get();
 
             $query->whereHas('assignees', function ($q) use ($subordinateIds) {
                 $q->whereIn('user_id', $subordinateIds);
             });
-        } else {
+        }
+        // Staf hanya melihat tugasnya sendiri
+        else {
             $query->whereHas('assignees', function ($q) use ($user) {
                 $q->where('user_id', $user->id);
             });
