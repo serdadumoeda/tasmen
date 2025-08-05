@@ -1,0 +1,19 @@
+/* Hapus atau ganti baris ini */
+/* @import "tom-select/dist/css/tom-select.bootstrap5.css"; */
+
+/* Gunakan baris ini sebagai gantinya */
+@import 'select2/dist/css/select2.min.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+/* Style untuk Toggle Switch di Resource Pool */
+input:checked ~ .dot {
+    transform: translateX(100%);
+    background-color: #48bb78; /* Atur warna hijau saat aktif */
+}
+input:checked ~ .block {
+    background-color: #a7f3d0; /* Atur warna latar belakang saat aktif */
+}

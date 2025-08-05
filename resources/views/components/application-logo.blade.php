@@ -1,0 +1,1 @@
+<img {{ $attributes }} src="{{ asset('images/logo-kemnaker.png') }}" alt="Logo Kemnaker">
