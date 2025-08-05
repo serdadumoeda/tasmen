@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             ProjectSeeder::class,
             TaskSeeder::class,
+            TimeLogSeeder::class, // Tambahkan TimeLogSeeder di sini
             SpecialAssignmentSeeder::class,
             AdHocTaskSeeder::class,
         ]);
