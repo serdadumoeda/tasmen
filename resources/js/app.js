@@ -308,8 +308,9 @@ const initResourcePoolPage = () => {
 // ======================================================================
 const initExecutiveSummaryChart = () => {
     const chartCanvas = document.getElementById('performanceTrendChart');
+    // Guard clause ini sekarang menjadi redundant karena pemanggilan sudah dijaga,
+    // tapi kita biarkan sebagai pengaman tambahan jika fungsi ini dipanggil dari tempat lain.
     if (!chartCanvas) {
-        console.warn("Canvas 'performanceTrendChart' tidak ditemukan.");
         return;
     }
 
@@ -423,7 +424,12 @@ document.addEventListener('DOMContentLoaded', () => {
     initWorkloadInsight();
     initMemberSelectionModal();
     initResourcePoolPage();
-    initExecutiveSummaryChart(); // Panggil inisialisasi chart di sini
-    
+
+    // PERBAIKAN: Hanya inisialisasi chart jika elemen canvas-nya ada di halaman.
+    // Ini untuk mencegah error "Canvas not found" di halaman lain.
+    if (document.getElementById('performanceTrendChart')) {
+        initExecutiveSummaryChart();
+    }
+
     Alpine.start();
 });
