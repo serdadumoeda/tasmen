@@ -85,8 +85,28 @@ class UserSeeder extends Seeder
 
         $vacantStaffPositions = Jabatan::where('name', 'Staf Pelaksana')->whereNull('user_id')->with('unit.parentUnit.jabatans.user')->get();
 
-        foreach ($vacantStaffPositions as $jabatan) {
-            // Find the supervisor by looking at the user assigned to the parent unit's jabatan.
+        // --- Create a specific user for testing ---
+        $testUserCreated = false;
+        if ($vacantStaffPositions->isNotEmpty()) {
+            $firstJabatan = $vacantStaffPositions->first();
+            $supervisor = $firstJabatan->unit->parentUnit->jabatans->first()->user ?? null;
+            if ($supervisor) {
+                $testUser = User::factory()->create([
+                    'name' => 'Staf Uji Coba',
+                    'email' => 'staf.test@example.com', // Predictable email
+                    'role' => User::ROLE_STAF,
+                    'password' => Hash::make('password'),
+                    'unit_id' => $firstJabatan->unit_id,
+                    'atasan_id' => $supervisor->id
+                ]);
+                $firstJabatan->update(['user_id' => $testUser->id]);
+                $testUserCreated = true;
+            }
+        }
+
+        // --- Create remaining random users ---
+        $remainingPositions = $testUserCreated ? $vacantStaffPositions->skip(1) : $vacantStaffPositions;
+        foreach ($remainingPositions as $jabatan) {
             $supervisor = $jabatan->unit->parentUnit->jabatans->first()->user ?? null;
 
             if (!$supervisor) {

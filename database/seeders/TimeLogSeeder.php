@@ -38,15 +38,22 @@ class TimeLogSeeder extends Seeder
                 continue;
             }
 
-            // Simulasi actual hours yang realistis, sekitar 80% - 120% dari estimasi
-            $estimated = $task->estimated_hours;
-            $variance = (rand(-20, 20) / 100); // Variansi antara -20% dan +20%
-            $actualHours = $estimated * (1 + $variance);
-            $actualHours = max(1, round($actualHours, 1)); // Pastikan minimal 1 jam
-
-            // Buat satu time log untuk setiap assignee pada tugas ini
             foreach ($task->assignees as $assignee) {
-                // Waktu mulai acak dalam seminggu terakhir
+                $estimated = $task->estimated_hours;
+                $actualHours = 0;
+
+                // --- Logic to sabotage the test user ---
+                if ($assignee->email === 'staf.test@example.com') {
+                    // Make this user inefficient
+                    $actualHours = $estimated * 1.5; // 150% of estimated time
+                } else {
+                    // Other users remain realistic
+                    $variance = (rand(-20, 20) / 100); // Variansi antara -20% dan +20%
+                    $actualHours = $estimated * (1 + $variance);
+                }
+
+                $actualHours = max(1, round($actualHours, 1));
+
                 $startTime = Carbon::now()->subDays(rand(1, 7))->subHours(rand(1, 8));
                 $endTime = $startTime->copy()->addHours($actualHours);
 
