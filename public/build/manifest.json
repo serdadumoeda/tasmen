@@ -1,11 +1,16 @@
 {
+  "node_modules/tom-select/dist/css/tom-select.bootstrap5.min.css": {
+    "file": "assets/tom-select.bootstrap5-CCl8E_5p.css",
+    "src": "node_modules/tom-select/dist/css/tom-select.bootstrap5.min.css",
+    "isEntry": true
+  },
   "resources/css/app.css": {
-    "file": "assets/app-CPzh5QYZ.css",
+    "file": "assets/app-BLRN2K0v.css",
     "src": "resources/css/app.css",
     "isEntry": true
   },
   "resources/js/app.js": {
-    "file": "assets/app-BlHxAvjx.js",
+    "file": "assets/app-C7rQ_Qfx.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true

@@ -26,9 +26,19 @@
                             <td class="py-2 px-1">Abdul Harist Habibullah</td>
                         </tr>
                         <tr class="hover:bg-gray-50 transition-colors duration-100">
+                            <td class="py-2 px-1 font-semibold text-gray-600">Concept & Developer</td>
+                            <td class="py-2 px-1">:</td>
+                            <td class="py-2 px-1">Arif Budi Setiawan</td>
+                        </tr>
+                        <tr class="hover:bg-gray-50 transition-colors duration-100">
+                            <td class="py-2 px-1 font-semibold text-gray-600">Middle Man</td>
+                            <td class="py-2 px-1">:</td>
+                            <td class="py-2 px-1">Galih Agan Pambayun</td>
+                        </tr>
+                        <tr class="hover:bg-gray-50 transition-colors duration-100">
                             <td class="py-2 px-1 font-semibold text-gray-600">Quality Assurance</td>
                             <td class="py-2 px-1">:</td>
-                            <td class="py-2 px-1">Rosalina Sianipar</td>
+                            <td class="py-2 px-1">Rosalia Sianipar</td>
                         </tr>
                         <tr class="hover:bg-gray-50 transition-colors duration-100">
                             <td class="py-2 px-1 font-semibold text-gray-600">Developer</td>
@@ -40,11 +50,7 @@
                             <td class="py-2 px-1">:</td>
                             <td class="py-2 px-1">Srintika Yuni Kharisma</td>
                         </tr>
-                        <tr class="hover:bg-gray-50 transition-colors duration-100">
-                            <td class="py-2 px-1 font-semibold text-gray-600">Perancang & Developer</td>
-                            <td class="py-2 px-1">:</td>
-                            <td class="py-2 px-1">Arif Budi Setiawan</td>
-                        </tr>
+
                     </tbody>
                 </table>
             </div>
