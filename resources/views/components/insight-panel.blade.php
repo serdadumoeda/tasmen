@@ -1,7 +1,7 @@
 @props(['insights', 'previewInsights'])
 
 @if($insights && $insights->isNotEmpty())
-<div class="bg-white p-6 rounded-lg shadow-lg mb-6" x-data="{ showAll: false, visibleInsights: @json($insights->pluck('message')) }">
+<div class="bg-white p-6 rounded-lg shadow-lg mb-6" x-data="{ showAll: false, visibleInsights: @json($insights->keys()->all()) }">
     <div class="flex justify-between items-center mb-4">
         <h3 class="text-lg font-bold text-gray-800 flex items-center">
             <i class="fas fa-lightbulb-on mr-3 text-yellow-500"></i>
@@ -11,8 +11,8 @@
 
     <div class="space-y-3">
         {{-- Initial Preview Insights --}}
-        @foreach($previewInsights as $insight)
-            <template x-if="visibleInsights.includes('{{ addslashes($insight['message']) }}')">
+        @foreach($previewInsights as $index => $insight)
+            <template x-if="visibleInsights.includes({{ $index }})">
                 <div class="p-4 rounded-lg flex items-start bg-{{ $insight['color'] }}-50 border-l-4 border-{{ $insight['color'] }}-400 relative">
                     <div class="flex-shrink-0 pt-1">
                         <i class="fas {{ $insight['icon'] }} text-{{ $insight['color'] }}-600 fa-lg"></i>
@@ -26,7 +26,7 @@
                             @endif
                         </p>
                     </div>
-                    <button @click="visibleInsights = visibleInsights.filter(i => i !== '{{ addslashes($insight['message']) }}')" class="absolute top-2 right-2 text-{{ $insight['color'] }}-400 hover:text-{{ $insight['color'] }}-600">
+                    <button @click="visibleInsights = visibleInsights.filter(i => i !== {{ $index }})" class="absolute top-2 right-2 text-{{ $insight['color'] }}-400 hover:text-{{ $insight['color'] }}-600">
                         <i class="fas fa-times-circle"></i>
                     </button>
                 </div>
@@ -35,8 +35,12 @@
 
         {{-- Collapsible Section for Remaining Insights --}}
         <div x-show="showAll" x-transition class="space-y-3">
-            @foreach($insights->slice($previewInsights->count()) as $insight)
-                <template x-if="visibleInsights.includes('{{ addslashes($insight['message']) }}')">
+            @foreach($insights->slice($previewInsights->count()) as $index => $insight)
+                @php
+                    // Adjust index to be the original index from the full collection
+                    $originalIndex = $previewInsights->count() + $index;
+                @endphp
+                <template x-if="visibleInsights.includes({{ $originalIndex }})">
                     <div class="p-4 rounded-lg flex items-start bg-{{ $insight['color'] }}-50 border-l-4 border-{{ $insight['color'] }}-400 relative">
                         <div class="flex-shrink-0 pt-1">
                             <i class="fas {{ $insight['icon'] }} text-{{ $insight['color'] }}-600 fa-lg"></i>
@@ -50,7 +54,7 @@
                                 @endif
                             </p>
                         </div>
-                        <button @click="visibleInsights = visibleInsights.filter(i => i !== '{{ addslashes($insight['message']) }}')" class="absolute top-2 right-2 text-{{ $insight['color'] }}-400 hover:text-{{ $insight['color'] }}-600">
+                        <button @click="visibleInsights = visibleInsights.filter(i => i !== {{ $originalIndex }})" class="absolute top-2 right-2 text-{{ $insight['color'] }}-400 hover:text-{{ $insight['color'] }}-600">
                             <i class="fas fa-times-circle"></i>
                         </button>
                     </div>
