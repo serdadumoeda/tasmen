@@ -6,6 +6,7 @@ use App\Models\Unit;
 use App\Models\User;
 use App\Models\Jabatan;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Hash;
 
@@ -18,6 +19,13 @@ class UserSeeder extends Seeder
         Jabatan::truncate();
         Unit::truncate();
         Schema::enableForeignKeyConstraints();
+
+        // --- PREPARE SUPERADMIN FOR ACTIVITY LOGGING ---
+        $superAdmin = User::create([
+            'name' => 'Super Admin', 'email' => 'superadmin@example.com', 'password' => Hash::make('password'), 'role' => User::ROLE_SUPERADMIN, 'status' => User::STATUS_ACTIVE
+        ]);
+        Auth::login($superAdmin);
+
 
         // --- UNIT AND JABATAN CREATION ---
 
@@ -56,8 +64,6 @@ class UserSeeder extends Seeder
         }
 
         // --- USER CREATION ---
-
-        User::create(['name' => 'Super Admin', 'email' => 'superadmin@example.com', 'password' => Hash::make('password'), 'role' => User::ROLE_SUPERADMIN, 'status' => User::STATUS_ACTIVE]);
 
         $createUserForJabatan = function(string $jabatanName, string $userName, string $email, string $role, ?User $atasan) {
             $jabatan = Jabatan::where('name', $jabatanName)->whereNull('user_id')->first();
