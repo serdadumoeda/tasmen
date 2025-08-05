@@ -106,29 +106,59 @@ class PerformanceCalculatorService
         }
     }
 
+    private function getPriorityWeight(string $priority): int
+    {
+        return match (strtolower($priority)) {
+            'critical' => 4,
+            'high' => 3,
+            'low' => 1,
+            default => 2, // Normal
+        };
+    }
+
     private function calculateIndividualPerformanceIndex(User $user): float
     {
         $allTasks = $user->tasks()->where('status', '!=', 'cancelled')->get();
-        if ($allTasks->isEmpty()) return 1.0;
 
+        // Step 3: Handle "No Tasks" scenario
+        if ($allTasks->isEmpty()) {
+            return 0.0; // Return 0.0 for "Tidak Dapat Dinilai"
+        }
+
+        // Step 2a: Calculate Weighted Average Progress (Base Score)
+        $totalWeight = 0;
+        $weightedProgressSum = 0;
+
+        foreach ($allTasks as $task) {
+            $weight = $this->getPriorityWeight($task->priority);
+            $totalWeight += $weight;
+            $weightedProgressSum += ($task->progress / 100) * $weight;
+        }
+
+        $baseScore = ($totalWeight > 0) ? ($weightedProgressSum / $totalWeight) : 0;
+
+        // Step 2b & 2c: Calculate and Cap the Efficiency Factor
         $totalEstimatedHours = $allTasks->sum('estimated_hours');
         $timeLogs = TimeLog::whereIn('task_id', $allTasks->pluck('id'))
-                                 ->where('user_id', $user->id)
-                                 ->whereNotNull('start_time')->whereNotNull('end_time')
-                                 ->get();
+            ->where('user_id', $user->id)
+            ->whereNotNull('start_time')->whereNotNull('end_time')
+            ->get();
         $totalSeconds = $timeLogs->reduce(fn ($carry, $log) => $carry + Carbon::parse($log->end_time)->diffInSeconds(Carbon::parse($log->start_time)), 0);
         $totalActualHours = $totalSeconds / 3600;
-        $averageProgress = $allTasks->avg('progress') ?? 0;
 
-        if ($totalEstimatedHours == 0) return ($averageProgress / 100) > 0 ? 1.15 : 1.0;
-        if ($totalActualHours == 0) return $averageProgress > 0 ? 1.0 : 0.9;
+        if ($totalEstimatedHours == 0 || $totalActualHours == 0) {
+            $efficiencyFactor = 1.0; // Neutral factor if time is not tracked
+        } else {
+            $efficiencyFactor = $totalEstimatedHours / $totalActualHours;
+        }
 
-        $progressRatio = $averageProgress / 100;
-        $effortRatio = $totalActualHours / $totalEstimatedHours;
+        // Cap the efficiency factor to prevent extreme scores
+        $cappedEfficiencyFactor = max(0.9, min($efficiencyFactor, 1.25));
 
-        if ($effortRatio == 0) return 1.0;
+        // Step 2d: Calculate Final IKI
+        $finalIki = $baseScore * $cappedEfficiencyFactor;
 
-        return round($progressRatio / $effortRatio, 3);
+        return round($finalIki, 3);
     }
 
     private function calculateFinalPerformanceValue(User $user): float
@@ -139,7 +169,7 @@ class PerformanceCalculatorService
         }
 
         // Ambil IKI yang baru saja dihitung di langkah sebelumnya.
-        $individualScore = $this->calculatedIki[$user->id] ?? 1.0;
+        $individualScore = $this->calculatedIki[$user->id] ?? 0.0;
 
         if (!$user->isManager()) {
             $this->calculatedNkf[$user->id] = $individualScore;
@@ -173,6 +203,7 @@ class PerformanceCalculatorService
 
     private function getWorkResultRating(float $finalScore): string
     {
+        if ($finalScore == 0) return 'Tidak Dapat Dinilai';
         if ($finalScore >= 1.15) return 'Diatas Ekspektasi';
         if ($finalScore >= 0.90) return 'Sesuai Ekspektasi';
         return 'Dibawah Ekspektasi';
