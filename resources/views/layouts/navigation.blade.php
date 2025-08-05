@@ -31,7 +31,7 @@ if (count($words) >= 2) {
                         <x-dropdown align="left" width="60">
                             <x-slot name="trigger">
                                 <button class="inline-flex items-center h-full px-3 py-2 border-b-2 text-sm font-medium leading-5 transition duration-150 ease-in-out
-                                    {{ request()->routeIs(['global.dashboard', 'adhoc-tasks.*', 'special-assignments.*', 'projects.show', 'projects.create.*'])
+                                    {{ (request()->routeIs(['global.dashboard', 'adhoc-tasks.*', 'special-assignments.*', 'projects.show', 'projects.create.*'])) && !request()->routeIs('executive.summary')
                                         ? 'border-yellow-300 text-white bg-green-700/50'
                                         : 'border-transparent text-white hover:text-yellow-300 hover:border-yellow-300/75 focus:outline-none focus:text-white focus:border-yellow-300/75' }}">
                                     <div><i class="fas fa-briefcase mr-2"></i>Menu Kerja</div>
