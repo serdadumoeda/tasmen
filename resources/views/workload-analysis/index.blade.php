@@ -19,6 +19,18 @@
                         </div>
                     @endif
 
+                    <!-- Form Pencarian -->
+                    <div class="mb-6">
+                        <form action="{{ route('workload.analysis') }}" method="GET">
+                            <div class="relative">
+                                <input type="text" name="search" placeholder="Cari nama pegawai..." value="{{ $search ?? '' }}" class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-search text-gray-400"></i>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200 border border-gray-200 rounded-lg"> {{-- Border pada tabel, rounded-lg --}}
                             <thead class="bg-gray-100"> {{-- Header tabel lebih menonjol --}}
@@ -112,13 +124,18 @@
                                     <tr>
                                         <td colspan="5" class="px-6 py-8 whitespace-nowrap text-center text-lg text-gray-500 bg-gray-50 rounded-lg shadow-md">
                                             <i class="fas fa-users-slash fa-3x text-gray-400 mb-4"></i>
-                                            <p>Anda tidak memiliki bawahan untuk ditampilkan.</p>
-                                            <p class="text-sm text-gray-400 mt-2">Pastikan struktur hierarki telah diatur dengan benar.</p>
+                                            <p>Tidak ada bawahan yang cocok dengan pencarian Anda.</p>
+                                            <p class="text-sm text-gray-400 mt-2">Coba gunakan kata kunci lain atau reset pencarian.</p>
                                         </td>
                                     </tr>
                                 @endforelse
                             </tbody>
                         </table>
+                    </div>
+
+                    <!-- Paginasi -->
+                    <div class="mt-8">
+                        {{ $subordinates->links() }}
                     </div>
 
                 </div>

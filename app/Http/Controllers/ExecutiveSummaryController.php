@@ -22,20 +22,34 @@ class ExecutiveSummaryController extends Controller
             abort(403, 'Anda tidak memiliki hak akses untuk halaman ini.');
         }
 
-        // Generate insights
-        $insights = $insightService->generate();
-        $previewInsights = $insights->take(2);
- 
-        // Ambil semua proyek untuk kalkulasi
-        $allProjects = Project::with(['tasks', 'budgetItems', 'leader'])
-                              ->withSum('budgetItems as budget_items_sum_total_cost', 'total_cost')
-                              ->get();
+        // --- PERBAIKAN: Filter semua data berdasarkan hierarki manajer ---
+        $subordinateIds = $user->getAllSubordinateIds();
+        $relevantUserIds = $subordinateIds->push($user->id);
 
-        // Ambil proyek yang dipaginasi untuk tabel
-        $projectsForTable = Project::with(['leader', 'tasks'])
-                                   ->withSum('budgetItems', 'total_cost')
-                                   ->latest()
-                                   ->paginate(10);
+        // Generate insights based on the logged-in user's hierarchy
+        $insights = $insightService->generate($user);
+        $previewInsights = $insights->take(2);
+
+        // Basis query untuk proyek yang relevan dengan hierarki
+        $relevantProjectsQuery = Project::whereIn('leader_id', $relevantUserIds)
+            ->orWhereHas('tasks', function ($query) use ($relevantUserIds) {
+                $query->whereHas('assignees', function ($subQuery) use ($relevantUserIds) {
+                    $subQuery->whereIn('users.id', $relevantUserIds);
+                });
+            });
+
+        // Ambil semua proyek relevan untuk kalkulasi KPI
+        $allProjects = (clone $relevantProjectsQuery)
+            ->with(['tasks', 'budgetItems', 'leader'])
+            ->withSum('budgetItems as budget_items_sum_total_cost', 'total_cost')
+            ->get();
+
+        // Ambil proyek relevan yang dipaginasi untuk tabel
+        $projectsForTable = (clone $relevantProjectsQuery)
+            ->with(['leader', 'tasks'])
+            ->withSum('budgetItems', 'total_cost')
+            ->latest()
+            ->paginate(10);
 
 
 
