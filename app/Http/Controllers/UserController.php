@@ -51,9 +51,10 @@ class UserController extends Controller
         }
 
         if ($request->has('search')) {
-            $query->where(function($q) use ($request) {
-                $q->where('name', 'like', '%' . $request->search . '%')
-                  ->orWhere('email', 'like', '%' . $request->search . '%');
+            $search = strtolower($request->input('search'));
+            $query->where(function($q) use ($search) {
+                $q->whereRaw('LOWER(name) LIKE ?', ['%' . $search . '%'])
+                  ->orWhereRaw('LOWER(email) LIKE ?', ['%' . $search . '%']);
             });
         }
 
@@ -92,8 +93,11 @@ class UserController extends Controller
         $query = User::with('unit')->orderBy('name');
 
         if ($request->has('search')) {
-            $query->where('name', 'like', '%' . $request->search . '%')
-                  ->orWhere('email', 'like', '%' . $request->search . '%');
+            $search = strtolower($request->input('search'));
+            $query->where(function ($q) use ($search) {
+                $q->whereRaw('LOWER(name) LIKE ?', ["%{$search}%"])
+                  ->orWhereRaw('LOWER(email) LIKE ?', ["%{$search}%"]);
+            });
         }
 
         $users = $query->paginate(15)->withQueryString();
@@ -285,9 +289,10 @@ class UserController extends Controller
         }
 
         // PERBAIKAN: Cari berdasarkan nama atau email
-        $users = User::where(function ($q) use ($query) {
-                        $q->where('name', 'ilike', "%{$query}%")
-                          ->orWhere('email', 'ilike', "%{$query}%");
+        $search = strtolower($query);
+        $users = User::where(function ($q) use ($search) {
+                        $q->whereRaw('LOWER(name) LIKE ?', ["%{$search}%"])
+                          ->orWhereRaw('LOWER(email) LIKE ?', ["%{$search}%"]);
                     })
                     ->where('id', '!=', auth()->id())
                     ->limit(10)

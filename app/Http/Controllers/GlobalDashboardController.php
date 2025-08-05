@@ -55,7 +55,7 @@ class GlobalDashboardController extends Controller
         $projectQuery->with(['leader', 'tasks'])->withSum('budgetItems', 'total_cost');
 
         if ($search) {
-            $projectQuery->where('name', 'like', '%' . $search . '%');
+            $projectQuery->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($search) . '%']);
         }
 
         // PERBAIKAN: Terapkan filter status di query database untuk efisiensi

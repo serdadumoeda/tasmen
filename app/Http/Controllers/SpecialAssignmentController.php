@@ -45,10 +45,10 @@ class SpecialAssignmentController extends Controller
 
         // Terapkan filter pencarian
         if ($request->filled('search')) {
-            $search = $request->search;
+            $search = strtolower($request->input('search'));
             $query->where(function ($q) use ($search) {
-                $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('sk_number', 'like', "%{$search}%");
+                $q->whereRaw('LOWER(title) LIKE ?', ["%{$search}%"])
+                  ->orWhereRaw('LOWER(sk_number) LIKE ?', ["%{$search}%"]);
             });
         }
 

@@ -31,7 +31,7 @@ class WorkloadAnalysisController extends Controller
 
         // Terapkan filter pencarian jika ada
         if ($search) {
-            $subordinatesQuery->where('name', 'like', '%' . $search . '%');
+            $subordinatesQuery->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($search) . '%']);
         }
 
         // Ambil hasil dengan paginasi dan pertahankan query string
