@@ -25,9 +25,12 @@ class DatabaseSeeder extends Seeder
         ]);
 
         // Panggil PerformanceCalculatorService untuk memastikan data kinerja terisi
-        $this->command->info('Calculating performance scores for all users...');
-        $calculator = new \App\Services\PerformanceCalculatorService();
-        $calculator->calculateForAllUsers();
-        $this->command->info('Performance scores calculated.');
+        if (!app()->environment('testing')) {
+            $this->command->info('');
+            $this->command->info('--- Calculating Performance Scores ---');
+            $calculator = new \App\Services\PerformanceCalculatorService();
+            $calculator->calculateForAllUsers();
+            $this->command->info('Performance scores calculated successfully.');
+        }
     }
 }
