@@ -17,8 +17,6 @@ class InsightService
         $insights = collect();
 
         // Eager load semua relasi yang dibutuhkan untuk efisiensi
-        // KESALAHAN ADA DI SINI: Query User tidak memuat relasi yang dibutuhkan.
-        // PERBAIKAN: Muat semua relasi yang dibutuhkan oleh semua metode di bawah ini.
         $projects = Project::with(['tasks.assignees', 'budgetItems.realizations', 'leader.unit'])->get();
         $users = User::with(['tasks', 'specialAssignments', 'unit'])
                      ->where('status', 'active')

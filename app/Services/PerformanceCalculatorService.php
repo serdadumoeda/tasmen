@@ -6,7 +6,7 @@ use App\Models\User;
 use App\Models\TimeLog;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB; // Import DB Facade
+use Illuminate\Support\Facades\DB;
 
 class PerformanceCalculatorService
 {
@@ -119,7 +119,6 @@ class PerformanceCalculatorService
 
         $totalEstimatedHours = $allTasks->sum('estimated_hours');
 
-        // Mengambil semua log waktu sekaligus untuk efisiensi
         $timeLogs = TimeLog::whereIn('task_id', $allTasks->pluck('id'))
             ->where('user_id', $user->id)
             ->whereNotNull('start_time')->whereNotNull('end_time')
