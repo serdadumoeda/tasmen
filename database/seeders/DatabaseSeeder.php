@@ -19,9 +19,15 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             ProjectSeeder::class,
             TaskSeeder::class,
-            TimeLogSeeder::class, // Tambahkan TimeLogSeeder di sini
+            TimeLogSeeder::class,
             SpecialAssignmentSeeder::class,
             AdHocTaskSeeder::class,
         ]);
+
+        // Panggil PerformanceCalculatorService untuk memastikan data kinerja terisi
+        $this->command->info('Calculating performance scores for all users...');
+        $calculator = new \App\Services\PerformanceCalculatorService();
+        $calculator->calculateForAllUsers();
+        $this->command->info('Performance scores calculated.');
     }
 }
