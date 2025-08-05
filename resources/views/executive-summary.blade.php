@@ -9,20 +9,7 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
 
             {{-- Panel Insight --}}
-            <div x-data="{ open: true }">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-bold text-gray-800 flex items-center">
-                        <i class="fas fa-lightbulb-on mr-3 text-yellow-500"></i>
-                        Rekomendasi & Peringatan
-                    </h3>
-                    <button @click="open = !open" class="text-gray-500 hover:text-gray-700">
-                        <i class="fas" :class="open ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
-                    </button>
-                </div>
-                <div x-show="open" x-transition>
-                    <x-insight-panel :insights="$insights" />
-                </div>
-            </div>
+            <x-insight-panel :insights="$insights" :preview-insights="$previewInsights" />
 
             {{-- Bagian KPI Utama --}}
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">

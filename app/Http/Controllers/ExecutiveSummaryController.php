@@ -24,6 +24,7 @@ class ExecutiveSummaryController extends Controller
 
         // Generate insights
         $insights = $insightService->generate();
+        $previewInsights = $insights->take(2);
  
         // Ambil semua proyek untuk kalkulasi
         $allProjects = Project::with(['tasks', 'budgetItems', 'leader'])
@@ -85,7 +86,8 @@ class ExecutiveSummaryController extends Controller
             'mostUtilized',
             'budgetByProject',
             'performanceTrends',
-            'insights'
+            'insights',
+            'previewInsights'
         ));
     }
 
