@@ -16,8 +16,13 @@ class WeeklyWorkloadController extends Controller
         $manager = Auth::user();
         $search = $request->input('search');
 
-        // Dapatkan query dasar untuk bawahan, tergantung pada peran manajer
-        if ($manager->role === User::ROLE_SUPERADMIN || $manager->role === User::ROLE_MENTERI) {
+        // Otorisasi: Hanya manajer tingkat atas yang bisa mengakses
+        if (!$manager->isTopLevelManager()) {
+            abort(403, 'Anda tidak memiliki hak akses untuk halaman ini.');
+        }
+
+        // Dapatkan query dasar untuk bawahan, konsisten dengan WorkloadAnalysisController
+        if ($manager->role === User::ROLE_SUPERADMIN) {
             $subordinatesQuery = User::where('id', '!=', $manager->id);
         } else {
             $subordinateUnitIds = $manager->unit ? $manager->unit->getAllSubordinateUnitIds() : [];
@@ -39,9 +44,9 @@ class WeeklyWorkloadController extends Controller
         $teamMembers = $subordinatesQuery->paginate(20)->withQueryString();
 
         return view('weekly_workload.index', [
-            'teamMembers' => $teamMembers, // Kirim paginator ke view
+            'teamMembers' => $teamMembers,
             'standardHours' => self::STANDARD_WEEKLY_HOURS,
-            'search' => $search
+            'search' => $search,
         ]);
     }
 }
