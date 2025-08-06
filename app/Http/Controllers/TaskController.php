@@ -96,7 +96,7 @@ class TaskController extends Controller
             'assignees' => 'nullable|array',
             'assignees.*' => 'exists:users,id',
             // PERBAIKAN: Menambahkan validasi untuk unggahan file
-            'file_upload' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx,xls,xlsx|max:5120',
+            'file_upload' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx,xls,xlsx|max:2048',
         ]);
 
         $task->fill($validated);
@@ -121,22 +121,30 @@ class TaskController extends Controller
         }
         
        
-        if ($request->hasFile('file_upload')) {
-            $file = $request->file('file_upload');
-            $path = $file->store('attachments', 'public');
-            $task->attachments()->create([
-                'user_id' => auth()->id(),
-                'filename' => $file->getClientOriginalName(),
-                'path' => $path
-            ]);
-        }
-
-        // Logika redirect cerdas: kembali ke halaman proyek atau daftar tugas harian
         $redirectRoute = $task->project_id
             ? route('projects.show', $task->project_id)
             : route('adhoc-tasks.index');
 
-        return redirect($redirectRoute)->with('success', 'Tugas berhasil diperbarui.');
+        $redirect = redirect($redirectRoute);
+
+        if ($request->hasFile('file_upload')) {
+            try {
+                $file = $request->file('file_upload');
+                $path = $file->store('public/attachments');
+                $task->attachments()->create([
+                    'user_id' => auth()->id(),
+                    'filename' => $file->getClientOriginalName(),
+                    'path' => \Illuminate\Support\Facades\Storage::url($path)
+                ]);
+                $redirect->with('success', 'Tugas berhasil diperbarui dan file berhasil diunggah.');
+            } catch (\Exception $e) {
+                $redirect->with('error', 'Tugas berhasil diperbarui, tetapi file gagal diunggah.');
+            }
+        } else {
+            $redirect->with('success', 'Tugas berhasil diperbarui.');
+        }
+
+        return $redirect;
     }
 
     public function destroy(Task $task)
@@ -207,6 +215,29 @@ class TaskController extends Controller
         // Kirim respons sukses.
         return response()->json([
             'message' => 'Status tugas berhasil diperbarui ke: ' . $newStatus
+        ]);
+    }
+
+    public function storeAttachment(Request $request, Task $task)
+    {
+        $this->authorize('update', $task);
+
+        $validated = $request->validate([
+            'file' => 'required|file|mimes:pdf,jpg,jpeg,png,doc,docx,xls,xlsx|max:2048',
+        ]);
+
+        $file = $request->file('file');
+        $path = $file->store('public/attachments');
+
+        $attachment = $task->attachments()->create([
+            'user_id' => auth()->id(),
+            'filename' => $file->getClientOriginalName(),
+            'path' => \Illuminate\Support\Facades\Storage::url($path)
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'attachment_html' => view('partials._attachment-item', compact('attachment'))->render(),
         ]);
     }
 
