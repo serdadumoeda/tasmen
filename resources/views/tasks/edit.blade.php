@@ -155,6 +155,18 @@
                             </div>
                             
                             <div class="mb-6"> {{-- Spasi lebih besar --}}
+                                <label for="status" class="block text-sm font-semibold text-gray-700 mb-1">
+                                    <i class="fas fa-flag-checkered mr-2 text-gray-500"></i> Status <span class="text-red-500">*</span>
+                                </label>
+                                <select name="status" id="status" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" required>
+                                    <option value="pending" @selected(old('status', $task->status) == 'pending')>Menunggu</option>
+                                    <option value="in_progress" @selected(old('status', $task->status) == 'in_progress')>Dikerjakan</option>
+                                    <option value="completed" @selected(old('status', $task->status) == 'completed')>Selesai</option>
+                                    <option value="pending_review" @selected(old('status', $task->status) == 'pending_review')>Menunggu Review</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-6"> {{-- Spasi lebih besar --}}
                                 <label for="priority" class="block text-sm font-semibold text-gray-700 mb-1">
                                     <i class="fas fa-flag mr-2 text-gray-500"></i> Prioritas <span class="text-red-500">*</span>
                                 </label>
