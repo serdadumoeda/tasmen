@@ -226,7 +226,7 @@
                         <ul class="mt-4 space-y-3"> {{-- Spasi lebih besar --}}
                             @forelse ($task->attachments as $attachment)
                                 <li class="flex justify-between items-center text-sm p-3 bg-gray-50 rounded-lg shadow-sm group hover:bg-gray-100 transition-colors duration-150"> {{-- Styling list item lampiran --}}
-                                    <a href="{{ asset('storage/' . $attachment->path) }}" target="_blank" class="text-indigo-600 hover:underline truncate flex items-center font-medium">
+                                    <a href="{{ route('attachments.view', $attachment) }}" target="_blank" class="text-indigo-600 hover:underline truncate flex items-center font-medium">
                                         <i class="fas fa-file-alt mr-2 text-gray-500"></i> {{ $attachment->filename }}
                                     </a>
                                     
