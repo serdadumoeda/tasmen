@@ -12,22 +12,22 @@ class TaskPolicy
      */
     public function view(User $user, Task $task): bool
     {
-        // Superadmin bisa melihat semua
-        if ($user->role === User::ROLE_SUPERADMIN) {
+        // Superadmin can view all tasks.
+        if ($user->isSuperAdmin()) {
             return true;
         }
 
-        // Anggota tim bisa melihat
+        // Users can view tasks they are assigned to.
         if ($task->assignees->contains($user)) {
             return true;
         }
-        
-        // Jika tugas terkait proyek, gunakan ProjectPolicy
+
+        // If the task belongs to a project, the user can view the task if they can view the project.
         if ($task->project) {
             return $user->can('view', $task->project);
         }
 
-        // Untuk tugas ad-hoc, manajer dari penerima tugas bisa melihat
+        // For ad-hoc tasks, managers can view tasks assigned to their subordinates.
         if (!$task->project_id && $user->canManageUsers()) {
             foreach ($task->assignees as $assignee) {
                 if ($assignee->isSubordinateOf($user)) {

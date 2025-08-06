@@ -39,6 +39,7 @@ class AttachmentController extends Controller
 
     public function view(Attachment $attachment)
     {
+        $attachment->load('task.assignees', 'task.project');
         $task = $attachment->task;
 
         if ($task) {
