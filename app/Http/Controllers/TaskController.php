@@ -91,6 +91,7 @@ class TaskController extends Controller
             'description' => 'nullable|string',
             'deadline' => 'nullable|date',
             'progress' => 'required|integer|min:0|max:100',
+            'status' => 'required|string|in:pending,in_progress,completed,pending_review',
             'priority' => 'required|in:low,medium,high',
             'assignees' => 'nullable|array',
             'assignees.*' => 'exists:users,id',
@@ -103,15 +104,13 @@ class TaskController extends Controller
         // --- LOGIKA ALUR PERSETUJUAN (jika tugas proyek) ---
         if($task->project_id){
             $user = auth()->user();
-            if ((int)$validated['progress'] === 100) {
+            // Jika progress 100% dan status sebelumnya BUKAN 'completed', jalankan alur persetujuan.
+            if ((int)$validated['progress'] === 100 && $task->getOriginal('status') !== 'completed') {
                 if ($user->id !== $task->project->leader_id && $user->id !== $task->project->owner_id) {
                     $task->status = 'pending_review';
                 } else {
                     $task->status = 'completed';
                 }
-            } elseif ($task->progress == 100 && (int)$validated['progress'] < 100) {
-                // Jika progres diubah dari 100 ke < 100
-                $task->status = 'in_progress';
             }
         }
         
