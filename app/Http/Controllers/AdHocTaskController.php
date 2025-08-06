@@ -136,7 +136,7 @@ class AdHocTaskController extends Controller
                 ]);
                 $redirect->with('success', 'Tugas harian berhasil dibuat dan file berhasil diunggah.');
             } catch (\Exception $e) {
-                $redirect->with('error', 'Tugas harian berhasil dibuat, tetapi file gagal diunggah.');
+                $redirect->with('error', 'Tugas harian berhasil dibuat, tetapi file gagal diunggah: ' . $e->getMessage());
             }
         } else {
             $redirect->with('success', 'Tugas harian berhasil dibuat.');
