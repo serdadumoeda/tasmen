@@ -219,26 +219,37 @@ if (count($words) >= 2) {
                 <div class="overflow-x-auto">
                     <table class="min-w-full text-sm text-gray-700">
                         <tbody>
-                            <tr class="hover:bg-gray-50 transition-colors duration-100">
-                                <td class="py-2 px-1 font-semibold text-gray-600">Team Leader</td>
-                                <td class="py-2 px-1">:</td>
-                                <td class="py-2 px-1">Abdul Harist Habibullah</td>
-                            </tr>
-                            <tr class="hover:bg-gray-50 transition-colors duration-100">
-                                <td class="py-2 px-1 font-semibold text-gray-600">Quality Assurance</td>
-                                <td class="py-2 px-1">:</td>
-                                <td class="py-2 px-1">Rosalina Sianipar</td>
-                            </tr>
-                            <tr class="hover:bg-gray-50 transition-colors duration-100">
-                                <td class="py-2 px-1 font-semibold text-gray-600">Developer</td>
-                                <td class="py-2 px-1">:</td>
-                                <td class="py-2 px-1">Tegar Hidayat</td>
-                            </tr>
-                            <tr class="hover:bg-gray-50 transition-colors duration-100">
-                                <td class="py-2 px-1 font-semibold text-gray-600">UI Designer</td>
-                                <td class="py-2 px-1">:</td>
-                                <td class="py-2 px-1">Srintika Yuni Kharisma</td>
-                            </tr>
+                     <tr class="hover:bg-gray-50 transition-colors duration-100">
+                            <td class="py-2 px-1 font-semibold text-gray-600">Project Manager</td>
+                            <td class="py-2 px-1">:</td>
+                            <td class="py-2 px-1">Abdul Harist Habibullah</td>
+                        </tr>
+                        <tr class="hover:bg-gray-50 transition-colors duration-100">
+                            <td class="py-2 px-1 font-semibold text-gray-600">Web Designer & Developer</td>
+                            <td class="py-2 px-1">:</td>
+                            <td class="py-2 px-1">Arif Budi Setiawan</td>
+                        </tr>
+                        <tr class="hover:bg-gray-50 transition-colors duration-100">
+                            <td class="py-2 px-1 font-semibold text-gray-600">Middle Man</td>
+                            <td class="py-2 px-1">:</td>
+                            <td class="py-2 px-1">Galih Agan Pambayun</td>
+                        </tr>
+                        <tr class="hover:bg-gray-50 transition-colors duration-100">
+                            <td class="py-2 px-1 font-semibold text-gray-600">Quality Assurance</td>
+                            <td class="py-2 px-1">:</td>
+                            <td class="py-2 px-1">Rosalia Sianipar</td>
+                        </tr>
+                        <tr class="hover:bg-gray-50 transition-colors duration-100">
+                            <td class="py-2 px-1 font-semibold text-gray-600">Web Developer</td>
+                            <td class="py-2 px-1">:</td>
+                            <td class="py-2 px-1">Tegar Hidayat</td>
+                        </tr>
+                        <tr class="hover:bg-gray-50 transition-colors duration-100">
+                            <td class="py-2 px-1 font-semibold text-gray-600">UI Designer</td>
+                            <td class="py-2 px-1">:</td>
+                            <td class="py-2 px-1">Srintika Yuni Kharisma</td>
+                        </tr>
+
                         </tbody>
                     </table>
                 </div>
