@@ -27,7 +27,7 @@
                         <i class="fas fa-exclamation-triangle fa-4x"></i>
                     </div>
                     <div class="text-5xl font-extrabold text-red-700">{{ $overdueProjectsCount }}</div>
-                    <p class="text-sm text-gray-600 mt-2 font-semibold">Kegiatan Perlu Perhatian</p>
+                    <p class="text-sm text-gray-600 mt-2 font-semibold">Kegiatan Prioritas / Penting</p>
                 </div>
                 {{-- KPI: Penyerapan Anggaran --}}
                 <div class="bg-white p-6 rounded-xl shadow-xl hover:shadow-2xl text-center transform hover:-translate-y-1 transition-all duration-300 ease-in-out border-b-4 border-green-500"> {{-- Meningkatkan shadow --}}
@@ -158,7 +158,7 @@
                 <div class="space-y-6">
                     <div class="bg-white p-6 rounded-xl shadow-xl hover:shadow-2xl transition-shadow duration-300"> {{-- Meningkatkan shadow --}}
                         <h3 class="font-bold text-xl text-gray-800 mb-4 flex items-center">
-                            <i class="fas fa-exclamation-triangle mr-3 text-red-600"></i> Kegiatan Perlu Perhatian Strategis
+                            <i class="fas fa-exclamation-triangle mr-3 text-red-600"></i> Kegiatan Prioritas / Penting
                         </h3>
                         <div class="space-y-4">
                             @forelse($criticalProjects as $project)
