@@ -100,6 +100,7 @@ class TaskController extends Controller
         ]);
 
         $task->fill($validated);
+        $task->status = $validated['status'];
         
         // --- LOGIKA ALUR PERSETUJUAN (jika tugas proyek) ---
         if($task->project_id){
