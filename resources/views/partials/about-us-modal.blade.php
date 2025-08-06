@@ -10,7 +10,7 @@
         </div>
 
         <div class="text-gray-700 text-base leading-relaxed mb-4">
-            Aplikasi ini adalah sebuah platform manajemen proyek dan tugas yang dirancang untuk membantu tim mengelola alur kerja, melacak progres, dan meningkatkan kolaborasi secara efisien.
+            Aplikasi ini adalah sebuah platform manajemen kegiatan dan tugas yang dirancang untuk membantu tim mengelola alur kerja, melacak progres, dan meningkatkan kolaborasi secara efisien.
         </div>
         
         <div class="mt-4 pt-4 border-t border-gray-200">
