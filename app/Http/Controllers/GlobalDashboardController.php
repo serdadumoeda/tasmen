@@ -75,7 +75,16 @@ class GlobalDashboardController extends Controller
             'data' => $statusCounts->values(),
         ];
 
-        $recentActivities = Activity::with('user', 'subject')->latest()->take(15)->get();
+        $activityQuery = Activity::with('user', 'subject')->latest();
+
+        if (!$currentUser->isSuperAdmin()) {
+            // Manajer melihat aktivitas dari hierarkinya, staf hanya melihat aktivitasnya sendiri.
+            $visibleUserIds = $currentUser->getAllSubordinateIds();
+            $visibleUserIds->push($currentUser->id);
+            $activityQuery->whereIn('user_id', $visibleUserIds);
+        }
+
+        $recentActivities = $activityQuery->take(15)->get();
 
         return view('global-dashboard', compact('stats', 'allProjects', 'recentActivities', 'chartData', 'search', 'status'));
     }
