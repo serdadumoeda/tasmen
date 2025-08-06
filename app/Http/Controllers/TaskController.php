@@ -131,11 +131,11 @@ class TaskController extends Controller
         if ($request->hasFile('file_upload')) {
             try {
                 $file = $request->file('file_upload');
-                $path = $file->store('public/attachments');
+                $path = $file->store('attachments', 'public');
                 $task->attachments()->create([
                     'user_id' => auth()->id(),
                     'filename' => $file->getClientOriginalName(),
-                    'path' => \Illuminate\Support\Facades\Storage::url($path)
+                    'path' => $path
                 ]);
                 $redirect->with('success', 'Tugas berhasil diperbarui dan file berhasil diunggah.');
             } catch (\Exception $e) {
@@ -228,12 +228,12 @@ class TaskController extends Controller
         ]);
 
         $file = $request->file('file');
-        $path = $file->store('public/attachments');
+        $path = $file->store('attachments', 'public');
 
         $attachment = $task->attachments()->create([
             'user_id' => auth()->id(),
             'filename' => $file->getClientOriginalName(),
-            'path' => \Illuminate\Support\Facades\Storage::url($path)
+            'path' => $path
         ]);
 
         return response()->json([
