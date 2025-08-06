@@ -115,7 +115,7 @@ class InsightService
                 'severity' => 'Peringatan',
                 'severity_score' => 3,
                 'message' => "Beban kerja {$user->name} sangat tinggi (~" . round($weeklyHours) . " jam/minggu) dan kinerjanya dinilai '{$user->work_result_rating}'. Segera redistribusi tugas.",
-                'link' => route('workload.analysis'),
+                'link' => route('workload.analysis', ['highlight_user_id' => $user->id]),
                 'icon' => 'fa-bolt',
                 'color' => 'orange',
             ];

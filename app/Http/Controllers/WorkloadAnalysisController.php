@@ -15,6 +15,7 @@ class WorkloadAnalysisController extends Controller
     {
         $manager = Auth::user();
         $search = $request->input('search');
+        $highlightUserId = $request->input('highlight_user_id');
 
         if (!$manager->isTopLevelManager()) {
             abort(403, 'Anda tidak memiliki hak akses untuk halaman ini.');
@@ -37,7 +38,7 @@ class WorkloadAnalysisController extends Controller
         // Ambil hasil dengan paginasi dan pertahankan query string
         $subordinates = $subordinatesQuery->paginate(20)->withQueryString();
         
-        return view('workload-analysis.index', compact('manager', 'subordinates', 'search'));
+        return view('workload-analysis.index', compact('manager', 'subordinates', 'search', 'highlightUserId'));
     }
 
     /**
