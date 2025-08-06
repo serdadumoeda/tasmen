@@ -21,12 +21,12 @@
                 <table class="min-w-full text-sm text-gray-700">
                     <tbody>
                         <tr class="hover:bg-gray-50 transition-colors duration-100">
-                            <td class="py-2 px-1 font-semibold text-gray-600">Team Leader</td>
+                            <td class="py-2 px-1 font-semibold text-gray-600">Project Manager</td>
                             <td class="py-2 px-1">:</td>
                             <td class="py-2 px-1">Abdul Harist Habibullah</td>
                         </tr>
                         <tr class="hover:bg-gray-50 transition-colors duration-100">
-                            <td class="py-2 px-1 font-semibold text-gray-600">Concept & Developer</td>
+                            <td class="py-2 px-1 font-semibold text-gray-600">Web Designer & Developer</td>
                             <td class="py-2 px-1">:</td>
                             <td class="py-2 px-1">Arif Budi Setiawan</td>
                         </tr>
@@ -41,7 +41,7 @@
                             <td class="py-2 px-1">Rosalia Sianipar</td>
                         </tr>
                         <tr class="hover:bg-gray-50 transition-colors duration-100">
-                            <td class="py-2 px-1 font-semibold text-gray-600">Developer</td>
+                            <td class="py-2 px-1 font-semibold text-gray-600">Web Developer</td>
                             <td class="py-2 px-1">:</td>
                             <td class="py-2 px-1">Tegar Hidayat</td>
                         </tr>
