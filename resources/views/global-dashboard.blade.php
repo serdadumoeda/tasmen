@@ -27,6 +27,7 @@
                         <p class="text-gray-500 font-medium">Total Kegiatan</p>
                     </div>
                 </div>
+                @if (!auth()->user()->isStaff())
                 <!-- Pengguna Aktif -->
                 <div class="bg-white p-6 rounded-xl shadow-xl flex items-center space-x-4">
                     <div class="bg-green-500 p-4 rounded-full">
@@ -37,6 +38,7 @@
                         <p class="text-gray-500 font-medium">Pengguna Aktif</p>
                     </div>
                 </div>
+                @endif
                 <!-- Total Tugas -->
                 <div class="bg-white p-6 rounded-xl shadow-xl flex items-center space-x-4">
                     <div class="bg-orange-500 p-4 rounded-full">
@@ -47,6 +49,7 @@
                         <p class="text-gray-500 font-medium">Tugas Selesai</p>
                     </div>
                 </div>
+                @if (!auth()->user()->isStaff())
                 <!-- Permintaan Tertunda -->
                 <div class="bg-white p-6 rounded-xl shadow-xl flex items-center space-x-4">
                     <div class="bg-yellow-500 p-4 rounded-full">
@@ -57,6 +60,7 @@
                         <p class="text-gray-500 font-medium">Permintaan Tertunda</p>
                     </div>
                 </div>
+                @endif
             </div>
 
             <!-- Grid Konten Utama (Daftar Kegiatan dan Aktivitas) -->

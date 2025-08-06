@@ -38,14 +38,17 @@ class GlobalDashboardController extends Controller
 
         $stats = [
             'total_projects' => (clone $projectQuery)->count(),
-            'total_users' => (clone $userQuery)->count(),
-            'active_users' => (clone $userQuery)->where('status', 'active')->count(),
             'total_tasks' => (clone $taskQuery)->count(),
             'completed_tasks' => (clone $taskQuery)->where('status', 'completed')->count(),
-            'pending_requests' => PeminjamanRequest::where('status', 'pending')
-                                    ->whereIn('approver_id', (clone $userQuery)->pluck('id'))
-                                    ->count(),
         ];
+
+        if (!$currentUser->isStaff()) {
+            $stats['total_users'] = (clone $userQuery)->count();
+            $stats['active_users'] = (clone $userQuery)->where('status', 'active')->count();
+            $stats['pending_requests'] = PeminjamanRequest::where('status', 'pending')
+                                        ->whereIn('approver_id', (clone $userQuery)->pluck('id'))
+                                        ->count();
+        }
 
         // --- AWAL LOGIKA FILTER & PENCARIAN ---
         $search = request('search');
