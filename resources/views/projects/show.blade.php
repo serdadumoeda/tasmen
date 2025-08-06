@@ -521,7 +521,7 @@
                             });
                             if (!response.ok) throw new Error('Gagal memperbarui sub-tugas.');
                             const data = await response.json();
-                            this.updateTaskProgress(taskId, data.task_progress);
+                            this.updateTaskProgress(taskId, data.task_progress, data.task_status);
                         } catch (error) {
                              alert(error.message);
                         }
@@ -543,13 +543,34 @@
                         }
                     },
 
-                    updateTaskProgress(taskId, progress) {
+                    updateTaskProgress(taskId, progress, status) {
                         const taskCard = document.getElementById(`task-${taskId}`);
                         if (taskCard) {
                             const progressBar = taskCard.querySelector('.progress-bar');
                             const progressText = taskCard.querySelector('.text-sm.font-medium.text-blue-700');
                             if (progressBar) progressBar.style.width = `${progress}%`;
                             if (progressText) progressText.textContent = `${progress}%`;
+
+                            if (status) {
+                                const statusBadge = taskCard.querySelector('.badge-status');
+                                if (statusBadge) {
+                                    statusBadge.textContent = status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+
+                                    // Update color classes
+                                    statusBadge.className = 'badge-status text-xs font-semibold px-3 py-1 rounded-full'; // Reset classes
+                                    if (status === 'completed') {
+                                        statusBadge.classList.add('bg-green-100', 'text-green-800');
+                                    } else if (status === 'in_progress') {
+                                        statusBadge.classList.add('bg-blue-100', 'text-blue-800');
+                                    } else if (status === 'for_review') {
+                                        statusBadge.classList.add('bg-orange-100', 'text-orange-800');
+                                    } else if (status === 'pending') {
+                                        statusBadge.classList.add('bg-yellow-100', 'text-yellow-800');
+                                    } else {
+                                        statusBadge.classList.add('bg-gray-100', 'text-gray-800');
+                                    }
+                                }
+                            }
                         }
                     },
 

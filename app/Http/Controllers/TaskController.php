@@ -233,6 +233,7 @@ class TaskController extends Controller
         return response()->json([
             'message' => 'Status sub-tugas berhasil diperbarui.',
             'task_progress' => $subTask->task->progress,
+            'task_status' => $subTask->task->status,
             'completed_subtasks' => $completed_subtasks,
             'total_subtasks' => $total_subtasks,
         ]);

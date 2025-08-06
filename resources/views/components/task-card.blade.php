@@ -18,6 +18,7 @@
             </p>
         </div>
         <div class="flex items-center space-x-2 flex-shrink-0">
+            <span class="badge-status text-xs font-semibold px-3 py-1 rounded-full {{ $task->status_color_class }}">{{ \Illuminate\Support\Str::title(str_replace('_', ' ', $task->status)) }}</span>
             @can('update', $task)
                 <a href="{{ route('tasks.edit', $task) }}" class="inline-block px-3 py-1 text-xs font-semibold text-amber-800 bg-amber-100 rounded-full hover:bg-amber-200 transition-colors">Edit</a>
             @endcan
