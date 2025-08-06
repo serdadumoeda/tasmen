@@ -139,7 +139,7 @@ class TaskController extends Controller
                 ]);
                 $redirect->with('success', 'Tugas berhasil diperbarui dan file berhasil diunggah.');
             } catch (\Exception $e) {
-                $redirect->with('error', 'Tugas berhasil diperbarui, tetapi file gagal diunggah.');
+                $redirect->with('error', 'Tugas berhasil diperbarui, tetapi file gagal diunggah: ' . $e->getMessage());
             }
         } else {
             $redirect->with('success', 'Tugas berhasil diperbarui.');
@@ -227,19 +227,26 @@ class TaskController extends Controller
             'file' => 'required|file|mimes:pdf,jpg,jpeg,png,doc,docx,xls,xlsx|max:2048',
         ]);
 
-        $file = $request->file('file');
-        $path = $file->store('attachments', 'public');
+        try {
+            $file = $request->file('file');
+            $path = $file->store('attachments', 'public');
 
-        $attachment = $task->attachments()->create([
-            'user_id' => auth()->id(),
-            'filename' => $file->getClientOriginalName(),
-            'path' => $path
-        ]);
+            $attachment = $task->attachments()->create([
+                'user_id' => auth()->id(),
+                'filename' => $file->getClientOriginalName(),
+                'path' => $path
+            ]);
 
-        return response()->json([
-            'success' => true,
-            'attachment_html' => view('partials._attachment-item', compact('attachment'))->render(),
-        ]);
+            return response()->json([
+                'success' => true,
+                'attachment_html' => view('partials._attachment-item', compact('attachment'))->render(),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengunggah file: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
     public function toggleSubTask(SubTask $subTask)
