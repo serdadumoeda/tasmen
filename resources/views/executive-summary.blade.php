@@ -158,7 +158,7 @@
                 <div class="space-y-6">
                     <div class="bg-white p-6 rounded-xl shadow-xl hover:shadow-2xl transition-shadow duration-300"> {{-- Meningkatkan shadow --}}
                         <h3 class="font-bold text-xl text-gray-800 mb-4 flex items-center">
-                            <i class="fas fa-bell mr-3 text-orange-600"></i> Kegiatan Perlu Perhatian Strategis
+                            <i class="fas fa-exclamation-triangle mr-3 text-red-600"></i> Kegiatan Perlu Perhatian Strategis
                         </h3>
                         <div class="space-y-4">
                             @forelse($criticalProjects as $project)
