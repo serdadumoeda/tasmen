@@ -239,11 +239,6 @@ if (count($words) >= 2) {
                                 <td class="py-2 px-1">:</td>
                                 <td class="py-2 px-1">Srintika Yuni Kharisma</td>
                             </tr>
-                            <tr class="hover:bg-gray-50 transition-colors duration-100">
-                                <td class="py-2 px-1 font-semibold text-gray-600">Perancang & Developer</td>
-                                <td class="py-2 px-1">:</td>
-                                <td class="py-2 px-1">Arif Budi Setiawan</td>
-                            </tr>
                         </tbody>
                     </table>
                 </div>

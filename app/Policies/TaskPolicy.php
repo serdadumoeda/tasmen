@@ -28,9 +28,9 @@ class TaskPolicy
         }
 
         // Untuk tugas ad-hoc, manajer dari penerima tugas bisa melihat
-        if (!$task->project_id && $user->isManager() && $user->unit) {
+        if (!$task->project_id && $user->canManageUsers()) {
             foreach ($task->assignees as $assignee) {
-                if ($assignee->unit && in_array($assignee->unit->id, $user->unit->getAllSubordinateUnitIds())) {
+                if ($assignee->isSubordinateOf($user)) {
                     return true;
                 }
             }
