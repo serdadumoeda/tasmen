@@ -585,7 +585,10 @@
                                 body: formData,
                                 headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'), 'Accept': 'application/json' },
                             });
-                            if (!response.ok) throw new Error('Gagal mengunggah file.');
+                            if (!response.ok) {
+                                const errorData = await response.json().catch(() => ({ message: 'Gagal mengunggah file.' }));
+                                throw new Error(errorData.message);
+                            }
                             const data = await response.json();
 
                             const attachmentList = document.getElementById(`attachment-list-${taskId}`);
@@ -594,8 +597,9 @@
 
                             attachmentList.insertAdjacentHTML('beforeend', data.attachment_html);
                             form.reset();
+                            alert('File berhasil diunggah!');
                         } catch (error) {
-                            alert(error.message);
+                            alert('Gagal mengunggah file: ' + error.message);
                         }
                     },
 

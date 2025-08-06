@@ -106,7 +106,7 @@ class AdHocTaskController extends Controller
             // PERBAIKAN: Memastikan status yang dikirim valid.
             'status' => 'required|in:pending,in_progress,completed',
             'progress' => 'required|integer|min:0|max:100',
-            'file_upload' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx,xls,xlsx|max:5120',
+            'file_upload' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx,xls,xlsx|max:2048',
         ]);
         
         $assigneeIds = [];
@@ -123,14 +123,23 @@ class AdHocTaskController extends Controller
         $task->project_id = null; // Menandakan ini tugas ad-hoc
         $task->save();
         
+        $redirect = redirect()->route('adhoc-tasks.index');
+
         if ($request->hasFile('file_upload')) {
-            $file = $request->file('file_upload');
-            $path = $file->store('attachments', 'public');
-            $task->attachments()->create([
-                'user_id' => $user->id,
-                'filename' => $file->getClientOriginalName(),
-                'path' => $path
-            ]);
+            try {
+                $file = $request->file('file_upload');
+                $path = $file->store('public/attachments');
+                $task->attachments()->create([
+                    'user_id' => $user->id,
+                    'filename' => $file->getClientOriginalName(),
+                    'path' => \Illuminate\Support\Facades\Storage::url($path)
+                ]);
+                $redirect->with('success', 'Tugas harian berhasil dibuat dan file berhasil diunggah.');
+            } catch (\Exception $e) {
+                $redirect->with('error', 'Tugas harian berhasil dibuat, tetapi file gagal diunggah.');
+            }
+        } else {
+            $redirect->with('success', 'Tugas harian berhasil dibuat.');
         }
         
         $task->assignees()->sync($assigneeIds);
@@ -140,7 +149,7 @@ class AdHocTaskController extends Controller
         }
 
        
-        return redirect()->route('adhoc-tasks.index')->with('success', 'Tugas harian berhasil dibuat.');
+        return $redirect;
     }
 
 }
