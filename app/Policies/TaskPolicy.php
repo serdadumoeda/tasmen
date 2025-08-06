@@ -12,6 +12,11 @@ class TaskPolicy
      */
     public function view(User $user, Task $task): bool
     {
+        // If a user can update a task, they can certainly view it.
+        if ($this->update($user, $task)) {
+            return true;
+        }
+
         // Superadmin can view all tasks.
         if ($user->isSuperAdmin()) {
             return true;
