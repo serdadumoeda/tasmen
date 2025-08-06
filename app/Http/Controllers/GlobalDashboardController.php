@@ -21,7 +21,7 @@ class GlobalDashboardController extends Controller
         // Terapkan filter hierarkis untuk manajer, Superadmin melihat semua.
         if ($currentUser->isStaff()) {
             // Staf melihat proyek di mana mereka menjadi anggota
-            $projectQuery->whereHas('users', function ($q) use ($currentUser) {
+            $projectQuery->whereHas('members', function ($q) use ($currentUser) {
                 $q->where('user_id', $currentUser->id);
             });
             $userQuery->where('id', $currentUser->id);
