@@ -23,7 +23,10 @@ if (count($words) >= 2) {
 
                 <div class="hidden space-x-4 sm:-my-px sm:ms-10 sm:flex">
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard', 'executive.summary')" class="text-white hover:text-yellow-300 transition duration-150 ease-in-out">
-                        Beranda
+                        <div class="flex items-center">
+                            <i class="fas fa-home mr-2"></i>
+                            <span>Beranda</span>
+                        </div>
                     </x-nav-link>
 
                     {{-- Dropdown Menu Kerja --}}
