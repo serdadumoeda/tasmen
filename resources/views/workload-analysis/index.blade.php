@@ -54,7 +54,10 @@
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-100"> {{-- Divider lebih halus --}}
                                 @forelse ($subordinates as $user)
-                                    <tr id="user-row-{{ $user->id }}" class="hover:bg-gray-50 transition-colors duration-150"> {{-- ID unik untuk baris --}}
+                                    @php
+                                        $highlightClass = isset($highlightUserId) && $user->id == $highlightUserId ? 'bg-yellow-100 border-l-4 border-yellow-400' : '';
+                                    @endphp
+                                    <tr id="user-row-{{ $user->id }}" class="hover:bg-gray-50 transition-colors duration-150 {{ $highlightClass }}"> {{-- ID unik untuk baris --}}
                                         <td class="px-4 py-4 whitespace-nowrap">
                                             <div class="text-sm font-medium text-gray-900 flex items-center"><i class="fas fa-user mr-2 text-gray-500"></i> {{ $user->name }}</div>
                                             <div class="text-xs text-gray-500 ml-5">{{ $user->role }}</div>
