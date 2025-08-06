@@ -74,6 +74,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/tasks/{task}/comments', [CommentController::class, 'store'])->name('tasks.comments.store');
 
     Route::post('/tasks/{task}/attachments', [TaskController::class, 'storeAttachment'])->name('tasks.attachments.store');
+    Route::get('/attachments/{attachment}', [AttachmentController::class, 'view'])->name('attachments.view');
     Route::delete('/attachments/{attachment}', [AttachmentController::class, 'destroy'])->name('attachments.destroy');
 
     Route::get('/projects/{project}/team', [ProjectController::class, 'teamDashboard'])->name('projects.team.dashboard');
