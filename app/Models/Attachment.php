@@ -15,4 +15,9 @@ class Attachment extends Model
     { 
         return $this->belongsTo(User::class); 
     }
+
+    public function task()
+    {
+        return $this->belongsTo(Task::class);
+    }
 }
