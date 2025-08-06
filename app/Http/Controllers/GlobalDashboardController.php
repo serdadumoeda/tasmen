@@ -19,7 +19,13 @@ class GlobalDashboardController extends Controller
         $userQuery = User::query();
 
         // Terapkan filter hierarkis untuk manajer, Superadmin melihat semua.
-        if (!$currentUser->isSuperAdmin()) {
+        if ($currentUser->isStaff()) {
+            // Staf melihat proyek di mana mereka menjadi anggota
+            $projectQuery->whereHas('users', function ($q) use ($currentUser) {
+                $q->where('user_id', $currentUser->id);
+            });
+            $userQuery->where('id', $currentUser->id);
+        } elseif (!$currentUser->isSuperAdmin()) {
             $subordinateIds = $currentUser->getAllSubordinateIds();
             $subordinateIds->push($currentUser->id); // Sertakan diri sendiri
 
