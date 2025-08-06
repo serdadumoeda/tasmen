@@ -267,6 +267,21 @@
                     progressValueSpan.innerText = this.value;
                 });
             }
+
+            // Client-side validation for file size
+            const form = document.querySelector('form');
+            const fileInput = document.getElementById('file_upload');
+            const maxFileSize = 2 * 1024 * 1024; // 2MB
+
+            form.addEventListener('submit', function(event) {
+                if (fileInput.files.length > 0) {
+                    const file = fileInput.files[0];
+                    if (file.size > maxFileSize) {
+                        event.preventDefault();
+                        alert('Ukuran file tidak boleh melebihi 2MB.');
+                    }
+                }
+            });
         });
     </script>
     @endpush
