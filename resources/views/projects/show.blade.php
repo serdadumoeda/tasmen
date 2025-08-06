@@ -139,7 +139,7 @@
                     <div>
                         <div x-show="activeTab === 'tasks'" x-cloak>
                             <div class="space-y-4">
-                                @forelse($project->tasks()->orderBy('deadline', 'asc')->get() as $task)
+                                @forelse($project->tasks->sortBy('deadline') as $task)
                                     <x-task-card :task="$task"/>
                                 @empty
                                     <p class="text-gray-500 text-center py-8">Belum ada tugas di kegiatan ini.</p>
