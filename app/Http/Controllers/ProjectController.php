@@ -105,7 +105,24 @@ class ProjectController extends Controller
     {
         $this->authorize('view', $project);
 
-        $project->load('owner', 'leader', 'members', 'tasks.assignees', 'tasks.comments.user', 'tasks.attachments', 'activities.user', 'tasks.subTasks');
+        $user = Auth::user();
+        $project->load([
+            'owner',
+            'leader',
+            'members',
+            'tasks' => function ($query) use ($user) {
+                if ($user->isStaff()) {
+                    $query->whereHas('assignees', function ($q) use ($user) {
+                        $q->where('user_id', $user->id);
+                    });
+                }
+            },
+            'tasks.assignees',
+            'tasks.comments.user',
+            'tasks.attachments',
+            'activities.user',
+            'tasks.subTasks'
+        ]);
         
         // --- AWAL PERBAIKAN ---
         // Ambil data riwayat permintaan peminjaman yang terkait dengan proyek ini
