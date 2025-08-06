@@ -128,11 +128,11 @@ class AdHocTaskController extends Controller
         if ($request->hasFile('file_upload')) {
             try {
                 $file = $request->file('file_upload');
-                $path = $file->store('public/attachments');
+                $path = $file->store('attachments', 'public');
                 $task->attachments()->create([
                     'user_id' => $user->id,
                     'filename' => $file->getClientOriginalName(),
-                    'path' => \Illuminate\Support\Facades\Storage::url($path)
+                    'path' => $path
                 ]);
                 $redirect->with('success', 'Tugas harian berhasil dibuat dan file berhasil diunggah.');
             } catch (\Exception $e) {

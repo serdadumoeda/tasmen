@@ -1,5 +1,5 @@
 <li class="text-sm flex justify-between items-center" id="attachment-{{ $attachment->id }}">
-    <a href="{{ route('attachments.download', $attachment) }}" class="text-blue-600 hover:underline">{{ $attachment->filename }}</a>
+    <a href="{{ asset('storage/' . $attachment->path) }}" target="_blank" class="text-blue-600 hover:underline">{{ $attachment->filename }}</a>
     <form @submit.prevent="deleteAttachment($event, {{ $attachment->id }})">
         @csrf
         @method('DELETE')

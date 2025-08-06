@@ -37,23 +37,6 @@ class AttachmentController extends Controller
         return back()->with('success', 'File berhasil diunggah.');
     }
 
-    public function download(Attachment $attachment)
-    {
-        $task = $attachment->task;
-
-        if ($task) {
-            Gate::authorize('view', $task);
-        }
-
-        $path = str_replace('/storage/', '', $attachment->path);
-
-        if (Storage::disk('public')->exists($path)) {
-            return Storage::disk('public')->download($path, $attachment->filename);
-        }
-
-        return abort(404);
-    }
-
     public function destroy(Attachment $attachment)
     {
         $task = $attachment->task;
