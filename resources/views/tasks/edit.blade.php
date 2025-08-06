@@ -118,7 +118,7 @@
                                 <label for="assignees" class="block font-semibold text-sm text-gray-700 mb-1">
                                     <i class="fas fa-users-line mr-2 text-gray-500"></i> Ditugaskan Kepada <span class="text-red-500">*</span>
                                 </label>
-                                @if (auth()->user()->can('update', $task))
+                                @if (auth()->user()->can('update', $task) && !auth()->user()->isStaff())
                                     <select name="assignees[]" id="assignees" class="block mt-1 w-full tom-select-multiple" multiple required>
                                         @foreach ($projectMembers as $member)
                                             <option value="{{ $member->id }}" @selected(in_array($member->id, old('assignees', $task->assignees->pluck('id')->toArray())))>
