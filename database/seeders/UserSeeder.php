@@ -6,6 +6,7 @@ use App\Models\Unit;
 use App\Models\User;
 use App\Models\Jabatan;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
@@ -22,9 +23,21 @@ class UserSeeder extends Seeder
         Jabatan::truncate();
         Unit::truncate();
         DB::table('unit_paths')->truncate();
+        DB::table('activities')->truncate(); // Also truncate activities to be safe
         Schema::enableForeignKeyConstraints();
 
-        // 2. READ JSON DATA
+        // 2. CREATE AND LOGIN AS A SYSTEM USER FOR ACTIVITY LOGGING
+        $this->command->info('Preparing system user for activity logging...');
+        $systemUser = User::create([
+            'name' => 'Super Admin',
+            'email' => 'superadmin@example.com',
+            'password' => Hash::make('password'),
+            'role' => User::ROLE_SUPERADMIN,
+            'status' => 'active'
+        ]);
+        Auth::login($systemUser);
+
+        // 3. READ JSON DATA
         $this->command->info('Reading JSON data...');
         $jsonPath = database_path('data/users.json');
         if (!File::exists($jsonPath)) {
@@ -34,7 +47,7 @@ class UserSeeder extends Seeder
         $json = File::get($jsonPath);
         $data = json_decode($json);
 
-        // 3. SEED DATA
+        // 4. SEED DATA
         $this->command->info('Seeding units, jabatans, and users...');
         $bar = $this->command->getOutput()->createProgressBar(count($data));
 
@@ -75,36 +88,39 @@ class UserSeeder extends Seeder
                 continue;
             }
 
-            // --- Create User ---
-            $user = User::create([
-                'name' => $item->Nama,
-                'email' => $item->NIP . '@naker.go.id', // Create a unique email
-                'password' => Hash::make('password'),
-                'unit_id' => $finalUnit->id,
-                'role' => $finalUnit->level,
-                'status' => 'active',
+            // --- Create User (if not the superadmin we just created) ---
+            $user = User::where('nip', $item->NIP)->first();
+            if (!$user) {
+                $user = User::create([
+                    'name' => $item->Nama,
+                    'email' => $item->NIP . '@naker.go.id', // Create a unique email
+                    'password' => Hash::make('password'),
+                    'unit_id' => $finalUnit->id,
+                    'role' => $finalUnit->level,
+                    'status' => 'active',
 
-                // New profile fields
-                'nip' => $item->NIP,
-                'tempat_lahir' => $item->{'Tempat Lahir'},
-                'alamat' => $item->Alamat,
-                'tgl_lahir' => $item->{'Tgl. Lahir'},
-                'jenis_kelamin' => $item->{'L/P'},
-                'golongan' => $item->Gol,
-                'eselon' => $item->Eselon,
-                'tmt_eselon' => $item->{'TMT ESELON'},
-                'grade' => $item->GRADE,
-                'agama' => $item->Agama,
-                'telepon' => $item->Telepon,
-                'no_hp' => $item->{'No. HP'},
-                'npwp' => $item->NPWP,
-                'tmt_gol' => $item->{'TMT GOL'},
-                'pendidikan_terakhir' => $item->{'Pendidikan Terakhir'},
-                'jenis_jabatan' => $item->{'Jenis Jabatan'},
-                'tmt_cpns' => $item->{'TMT CPNS'},
-                'tmt_pns' => $item->{'TMT PNS'},
-                'tmt_jabatan' => $item->{'TMT JABATAN'},
-            ]);
+                    // New profile fields
+                    'nip' => $item->NIP,
+                    'tempat_lahir' => $item->{'Tempat Lahir'},
+                    'alamat' => $item->Alamat,
+                    'tgl_lahir' => $item->{'Tgl. Lahir'},
+                    'jenis_kelamin' => $item->{'L/P'},
+                    'golongan' => $item->Gol,
+                    'eselon' => $item->Eselon,
+                    'tmt_eselon' => $item->{'TMT ESELON'},
+                    'grade' => $item->GRADE,
+                    'agama' => $item->Agama,
+                    'telepon' => $item->Telepon,
+                    'no_hp' => $item->{'No. HP'},
+                    'npwp' => $item->NPWP,
+                    'tmt_gol' => $item->{'TMT GOL'},
+                    'pendidikan_terakhir' => $item->{'Pendidikan Terakhir'},
+                    'jenis_jabatan' => $item->{'Jenis Jabatan'},
+                    'tmt_cpns' => $item->{'TMT CPNS'},
+                    'tmt_pns' => $item->{'TMT PNS'},
+                    'tmt_jabatan' => $item->{'TMT JABATAN'},
+                ]);
+            }
 
             // --- Create Jabatan and link it to the user ---
             Jabatan::create([
@@ -122,7 +138,7 @@ class UserSeeder extends Seeder
         $bar->finish();
         $this->command->info("\nData seeding completed.");
 
-        // 4. SET ATASAN (SUPERVISOR)
+        // 5. SET ATASAN (SUPERVISOR)
         $this->command->info('Setting up supervisor relationships...');
         $allUsers = User::whereNotNull('nip')->get()->keyBy('nip');
 
@@ -133,23 +149,26 @@ class UserSeeder extends Seeder
             if (!$user) continue;
 
             $unitKerjaParts = explode(' - ', $item->{'Unit Kerja'});
-            // The atasan's unit is one level up.
-            array_pop($unitKerjaParts);
-            $atasanUnitKerja = implode(' - ', $unitKerjaParts);
+            if (count($unitKerjaParts) > 1) {
+                array_pop($unitKerjaParts);
+                $atasanUnitKerja = implode(' - ', $unitKerjaParts);
 
-            if (isset($atasanMapping[$atasanUnitKerja])) {
-                $atasanId = $atasanMapping[$atasanUnitKerja];
-                if ($user->id !== $atasanId) {
-                    $user->atasan_id = $atasanId;
-                    $user->save();
+                if (isset($atasanMapping[$atasanUnitKerja])) {
+                    $atasanId = $atasanMapping[$atasanUnitKerja];
+                    if ($user->id !== $atasanId) {
+                        $user->atasan_id = $atasanId;
+                        $user->save();
+                    }
                 }
             }
         }
         $this->command->info('Supervisor relationships set.');
 
-        // 5. REBUILD HIERARCHY PATHS
+        // 6. REBUILD HIERARCHY PATHS
         $this->command->info('Rebuilding unit hierarchy paths...');
         Unit::rebuildPaths();
         $this->command->info('Hierarchy paths rebuilt successfully.');
+
+        Auth::logout();
     }
 }
