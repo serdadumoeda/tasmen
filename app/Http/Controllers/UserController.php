@@ -105,6 +105,13 @@ class UserController extends Controller
         return view('users.modern', compact('users'));
     }
 
+    public function showProfile(User $user)
+    {
+        $this->authorize('view', $user);
+        $user->load(['unit.parentUnitRecursive', 'jabatan']);
+        return view('users.profile', compact('user'));
+    }
+
     public function create()
     {
         $this->authorize('create', User::class);

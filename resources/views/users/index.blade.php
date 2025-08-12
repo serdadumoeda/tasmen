@@ -83,6 +83,9 @@
                                             <i class="fas fa-user-secret"></i>
                                         </a>
                                     @endif
+                                    <a href="{{ route('users.profile', $user) }}" class="text-green-600 hover:text-green-900 inline-flex items-center p-2 rounded-full hover:bg-green-50 transition-colors duration-200 ml-2" title="{{ __('Lihat Profil') }}">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
                                     <a href="{{ route('users.edit', $user) }}" class="text-indigo-600 hover:text-indigo-900 inline-flex items-center p-2 rounded-full hover:bg-indigo-50 transition-colors duration-200 ml-2" title="{{ __('Edit Pengguna') }}">
                                         <i class="fas fa-edit"></i>
                                     </a>
