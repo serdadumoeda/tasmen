@@ -15,7 +15,7 @@
                         @csrf
                         
                         {{-- Pastikan users.partials.form-fields sudah di-styling dengan UI terbaru --}}
-                        @include('users.partials.form-fields')
+                        @include('users.partials.new-form-fields', ['user' => new \App\Models\User()])
 
                         <div class="flex items-center justify-end mt-8 border-t border-gray-200 pt-6"> {{-- Menambahkan margin atas, border, dan padding atas --}}
                             <a href="{{ route('users.index') }}" class="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 font-medium mr-6 transition-colors duration-200">
