@@ -48,8 +48,8 @@ class UserSeeder extends Seeder
         $json = File::get($jsonPath);
         $data = json_decode($json);
 
-        // 4. SEED DATA
-        $this->command->info('Seeding units, jabatans, and users...');
+        // 4. FIRST PASS: Create Units, Users, and Jabatans
+        $this->command->info('Pass 1/2: Seeding units, jabatans, and users...');
         $bar = $this->command->getOutput()->createProgressBar(count($data));
 
         $userJabatanMapping = [];
@@ -76,7 +76,7 @@ class UserSeeder extends Seeder
                     $unitName = $unitHierarchy->{$levelKey};
                     if (!empty($unitName) && strtolower($unitName) !== 'nan') {
                         $currentUnit = Unit::firstOrCreate(
-                            ['name' => $unitName, 'parent_unit_id' => $parentUnitId],
+                            ['name' => trim($unitName), 'parent_unit_id' => $parentUnitId],
                             ['level' => $levelName]
                         );
                         $parentUnitId = $currentUnit->id;
@@ -100,13 +100,13 @@ class UserSeeder extends Seeder
 
                 // --- Create User ---
                 $user = User::create([
-                    'name' => $item->Nama,
-                    'email' => $item->NIP . '@naker.go.id',
+                    'name' => trim($item->Nama),
+                    'email' => trim($item->NIP) . '@naker.go.id',
                     'password' => Hash::make('password'),
                     'unit_id' => $finalUnit->id,
                     'role' => $role,
                     'status' => 'active',
-                    'nip' => $item->NIP,
+                    'nip' => trim($item->NIP),
                     'tempat_lahir' => $item->{'Tempat Lahir'},
                     'alamat' => $item->Alamat,
                     'tgl_lahir' => $item->{'Tgl. Lahir'},
@@ -128,12 +128,12 @@ class UserSeeder extends Seeder
                 ]);
 
                 Jabatan::create([
-                    'name' => $item->Jabatan,
+                    'name' => trim($item->Jabatan),
                     'unit_id' => $finalUnit->id,
                     'user_id' => $user->id,
                 ]);
 
-                $userJabatanMapping[$item->{'Unit Kerja'}] = $user->id;
+                $userJabatanMapping[trim($item->{'Unit Kerja'})] = $user->id;
 
             } catch (Throwable $e) {
                 $this->command->error("\nFailed to seed user at index {$index} ({$item->Nama}): " . $e->getMessage());
@@ -143,19 +143,19 @@ class UserSeeder extends Seeder
         }
 
         $bar->finish();
-        $this->command->info("\nData seeding completed.");
+        $this->command->info("\nPass 1/2 completed.");
 
-        // 5. SET ATASAN (SUPERVISOR)
-        $this->command->info('Setting up supervisor relationships...');
+        // 5. SECOND PASS: SET ATASAN (SUPERVISOR)
+        $this->command->info('Pass 2/2: Setting up supervisor relationships...');
         $allUsers = User::whereNotNull('nip')->get()->keyBy('nip');
 
         foreach ($data as $item) {
             if (empty($item->NIP)) continue;
 
-            $user = $allUsers->get($item->NIP);
+            $user = $allUsers->get(trim($item->NIP));
             if (!$user) continue;
 
-            $unitKerjaParts = explode(' - ', $item->{'Unit Kerja'});
+            $unitKerjaParts = explode(' - ', trim($item->{'Unit Kerja'}));
             if (count($unitKerjaParts) > 1) {
                 array_pop($unitKerjaParts);
                 $atasanUnitKerja = implode(' - ', $unitKerjaParts);
