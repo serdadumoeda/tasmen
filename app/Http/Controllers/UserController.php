@@ -108,7 +108,9 @@ class UserController extends Controller
     public function showProfile(User $user)
     {
         $this->authorize('view', $user);
-        $user->load(['unit.parentUnitRecursive', 'jabatan']);
+        // The getUnitPathAttribute accessor on the User model handles the unit path.
+        // We only need to ensure the direct relationships are loaded if not already.
+        $user->loadMissing(['unit', 'jabatan', 'atasan']);
         return view('users.profile', compact('user'));
     }
 
