@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
+use Throwable;
 
 class UserSeeder extends Seeder
 {
@@ -23,7 +24,7 @@ class UserSeeder extends Seeder
         Jabatan::truncate();
         Unit::truncate();
         DB::table('unit_paths')->truncate();
-        DB::table('activities')->truncate(); // Also truncate activities to be safe
+        DB::table('activities')->truncate();
         Schema::enableForeignKeyConstraints();
 
         // 2. CREATE AND LOGIN AS A SYSTEM USER FOR ACTIVITY LOGGING
@@ -51,55 +52,60 @@ class UserSeeder extends Seeder
         $this->command->info('Seeding units, jabatans, and users...');
         $bar = $this->command->getOutput()->createProgressBar(count($data));
 
-        $atasanMapping = [];
+        $userJabatanMapping = [];
 
-        foreach ($data as $item) {
-            if (empty($item->Nama) || empty($item->Jabatan) || empty($item->NIP)) {
-                $bar->advance();
-                continue; // Skip records without essential info
-            }
-
-            // --- Create Unit Hierarchy ---
-            $parentUnitId = null;
-            $unitHierarchy = $item->unit_kerja;
-            $unitLevels = [
-                'kementerian' => Unit::LEVEL_MENTERI,
-                'eselon_1' => Unit::LEVEL_ESELON_I,
-                'eselon_2' => Unit::LEVEL_ESELON_II,
-                'koordinator' => Unit::LEVEL_KOORDINATOR,
-                'sub_koordinator' => Unit::LEVEL_SUB_KOORDINATOR,
-            ];
-
-            $currentUnit = null;
-            foreach ($unitLevels as $levelKey => $levelName) {
-                $unitName = $unitHierarchy->{$levelKey};
-                if (!empty($unitName) && strtolower($unitName) !== 'nan') {
-                    $currentUnit = Unit::firstOrCreate(
-                        ['name' => $unitName, 'parent_unit_id' => $parentUnitId],
-                        ['level' => $levelName]
-                    );
-                    $parentUnitId = $currentUnit->id;
+        foreach ($data as $index => $item) {
+            try {
+                if (empty($item->Nama) || empty($item->Jabatan) || empty($item->NIP)) {
+                    continue;
                 }
-            }
 
-            $finalUnit = $currentUnit;
-            if (!$finalUnit) {
-                $bar->advance();
-                continue;
-            }
+                // --- Create Unit Hierarchy ---
+                $parentUnitId = null;
+                $unitHierarchy = $item->unit_kerja;
+                $unitLevels = [
+                    'kementerian' => Unit::LEVEL_MENTERI,
+                    'eselon_1' => Unit::LEVEL_ESELON_I,
+                    'eselon_2' => Unit::LEVEL_ESELON_II,
+                    'koordinator' => Unit::LEVEL_KOORDINATOR,
+                    'sub_koordinator' => Unit::LEVEL_SUB_KOORDINATOR,
+                ];
 
-            // --- Create User (if not the superadmin we just created) ---
-            $user = User::where('nip', $item->NIP)->first();
-            if (!$user) {
+                $currentUnit = null;
+                foreach ($unitLevels as $levelKey => $levelName) {
+                    $unitName = $unitHierarchy->{$levelKey};
+                    if (!empty($unitName) && strtolower($unitName) !== 'nan') {
+                        $currentUnit = Unit::firstOrCreate(
+                            ['name' => $unitName, 'parent_unit_id' => $parentUnitId],
+                            ['level' => $levelName]
+                        );
+                        $parentUnitId = $currentUnit->id;
+                    }
+                }
+
+                $finalUnit = $currentUnit;
+                if (!$finalUnit) {
+                    $this->command->warn("\nSkipping user {$item->Nama} due to missing unit info.");
+                    continue;
+                }
+
+                // --- Determine Role ---
+                $role = match (trim($item->Eselon ?? '')) {
+                    '1-A' => User::ROLE_ESELON_I,
+                    '2-A' => User::ROLE_ESELON_II,
+                    '3-A' => User::ROLE_KOORDINATOR,
+                    '4-A' => User::ROLE_SUB_KOORDINATOR,
+                    default => $finalUnit->level,
+                };
+
+                // --- Create User ---
                 $user = User::create([
                     'name' => $item->Nama,
-                    'email' => $item->NIP . '@naker.go.id', // Create a unique email
+                    'email' => $item->NIP . '@naker.go.id',
                     'password' => Hash::make('password'),
                     'unit_id' => $finalUnit->id,
-                    'role' => $finalUnit->level,
+                    'role' => $role,
                     'status' => 'active',
-
-                    // New profile fields
                     'nip' => $item->NIP,
                     'tempat_lahir' => $item->{'Tempat Lahir'},
                     'alamat' => $item->Alamat,
@@ -120,19 +126,20 @@ class UserSeeder extends Seeder
                     'tmt_pns' => $item->{'TMT PNS'},
                     'tmt_jabatan' => $item->{'TMT JABATAN'},
                 ]);
+
+                Jabatan::create([
+                    'name' => $item->Jabatan,
+                    'unit_id' => $finalUnit->id,
+                    'user_id' => $user->id,
+                ]);
+
+                $userJabatanMapping[$item->{'Unit Kerja'}] = $user->id;
+
+            } catch (Throwable $e) {
+                $this->command->error("\nFailed to seed user at index {$index} ({$item->Nama}): " . $e->getMessage());
+            } finally {
+                $bar->advance();
             }
-
-            // --- Create Jabatan and link it to the user ---
-            Jabatan::create([
-                'name' => $item->Jabatan,
-                'unit_id' => $finalUnit->id,
-                'user_id' => $user->id,
-            ]);
-
-            // Store the created user for atasan mapping
-            $atasanMapping[$item->{'Unit Kerja'}] = $user->id;
-
-            $bar->advance();
         }
 
         $bar->finish();
@@ -153,8 +160,8 @@ class UserSeeder extends Seeder
                 array_pop($unitKerjaParts);
                 $atasanUnitKerja = implode(' - ', $unitKerjaParts);
 
-                if (isset($atasanMapping[$atasanUnitKerja])) {
-                    $atasanId = $atasanMapping[$atasanUnitKerja];
+                if (isset($userJabatanMapping[$atasanUnitKerja])) {
+                    $atasanId = $userJabatanMapping[$atasanUnitKerja];
                     if ($user->id !== $atasanId) {
                         $user->atasan_id = $atasanId;
                         $user->save();
