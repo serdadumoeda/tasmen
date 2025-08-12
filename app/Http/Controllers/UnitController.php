@@ -248,6 +248,13 @@ class UnitController extends Controller
 
     // --- API METHODS ---
 
+    public function getChildren(Unit $unit)
+    {
+        // We only need id and name for the dropdown
+        $children = $unit->childUnits()->orderBy('name')->get(['id', 'name']);
+        return response()->json($children);
+    }
+
     public function getVacantJabatans(Unit $unit)
     {
         // This is for the chained dropdown in user creation form
