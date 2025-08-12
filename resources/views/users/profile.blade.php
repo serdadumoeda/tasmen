@@ -65,7 +65,7 @@
                     <dl class="divide-y divide-gray-200">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8">
                             @php
-                            profile_field('Unit Kerja', optional($user->unit)->name);
+                            profile_field('Unit Kerja', $user->unit_path);
                             profile_field('Jabatan', optional($user->jabatan)->name);
                             profile_field('Jenis Jabatan', $user->jenis_jabatan);
                             profile_field('Golongan', $user->golongan);

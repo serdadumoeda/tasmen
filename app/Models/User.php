@@ -95,6 +95,28 @@ class User extends Authenticatable
         return $this->belongsTo(Unit::class);
     }
 
+    /**
+     * Get the full hierarchical path of the user's unit.
+     *
+     * @return string
+     */
+    public function getUnitPathAttribute(): string
+    {
+        if (!$this->unit) {
+            return '-';
+        }
+
+        $path = [$this->unit->name];
+        $parent = $this->unit->parentUnit;
+
+        while ($parent) {
+            array_unshift($path, $parent->name);
+            $parent = $parent->parentUnit;
+        }
+
+        return implode(' - ', $path);
+    }
+
     public function tasks(): BelongsToMany
     {
         return $this->belongsToMany(Task::class);
