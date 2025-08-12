@@ -6,122 +6,150 @@ use App\Models\Unit;
 use App\Models\User;
 use App\Models\Jabatan;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 
 class UserSeeder extends Seeder
 {
     public function run(): void
     {
+        // 1. PREPARE DATABASE
+        $this->command->info('Truncating tables...');
         Schema::disableForeignKeyConstraints();
         User::truncate();
         Jabatan::truncate();
         Unit::truncate();
+        DB::table('unit_paths')->truncate();
         Schema::enableForeignKeyConstraints();
 
-        // --- PREPARE SUPERADMIN FOR ACTIVITY LOGGING ---
-        $superAdmin = User::create([
-            'name' => 'Super Admin', 'email' => 'superadmin@example.com', 'password' => Hash::make('password'), 'role' => User::ROLE_SUPERADMIN, 'status' => User::STATUS_ACTIVE
-        ]);
-        Auth::login($superAdmin);
-
-
-        // --- UNIT AND JABATAN CREATION ---
-
-        // New Top Level: Menteri
-        $menteri_unit = Unit::create(['name' => 'Kementerian', 'level' => Unit::LEVEL_MENTERI]);
-        $menteri_unit->jabatans()->create(['name' => 'Menteri']);
-
-        // Eselon I, now a child of Menteri
-        $eselon1 = Unit::create(['name' => 'Badan Perencanaan dan Pengembangan', 'level' => Unit::LEVEL_ESELON_I, 'parent_unit_id' => $menteri_unit->id]);
-        $eselon1->jabatans()->create(['name' => 'Kepala Badan Perencanaan dan Pengembangan']);
-
-        $eselon2_keuangan = Unit::create(['name' => 'Divisi Keuangan', 'level' => Unit::LEVEL_ESELON_II, 'parent_unit_id' => $eselon1->id]);
-        $eselon2_keuangan->jabatans()->create(['name' => 'Kepala Pusat Data dan Teknologi Informasi']);
-
-        $eselon2_sdm = Unit::create(['name' => 'Divisi SDM', 'level' => Unit::LEVEL_ESELON_II, 'parent_unit_id' => $eselon1->id]);
-        $eselon2_sdm->jabatans()->create(['name' => 'Kepala Pusat Sumber Daya Manusia']);
-
-        $koordinator_anggaran = Unit::create(['name' => 'Koordinator Anggaran', 'level' => Unit::LEVEL_KOORDINATOR, 'parent_unit_id' => $eselon2_keuangan->id]);
-        $koordinator_anggaran->jabatans()->create(['name' => 'Koordinator Perencanaan Anggaran']);
-
-        $koordinator_rekrutmen = Unit::create(['name' => 'Koordinator Rekrutmen', 'level' => Unit::LEVEL_KOORDINATOR, 'parent_unit_id' => $eselon2_sdm->id]);
-        $koordinator_rekrutmen->jabatans()->create(['name' => 'Koordinator Rekrutmen dan Seleksi']);
-
-        $sub_koordinator_belanja = Unit::create(['name' => 'Sub Koordinator Belanja', 'level' => Unit::LEVEL_SUB_KOORDINATOR, 'parent_unit_id' => $koordinator_anggaran->id]);
-        $sub_koordinator_belanja->jabatans()->create(['name' => 'Analis Anggaran Belanja']);
-
-        $sub_koordinator_pendapatan = Unit::create(['name' => 'Sub Koordinator Pendapatan', 'level' => Unit::LEVEL_SUB_KOORDINATOR, 'parent_unit_id' => $koordinator_anggaran->id]);
-        $sub_koordinator_pendapatan->jabatans()->create(['name' => 'Analis Anggaran Pendapatan']);
-
-        $sub_koordinator_talenta = Unit::create(['name' => 'Sub Koordinator Pengembangan Talenta', 'level' => Unit::LEVEL_SUB_KOORDINATOR, 'parent_unit_id' => $koordinator_rekrutmen->id]);
-        $sub_koordinator_talenta->jabatans()->create(['name' => 'Analis Pengembangan Talenta']);
-
-        $sub_koordinator_units = collect([$sub_koordinator_belanja, $sub_koordinator_pendapatan, $sub_koordinator_talenta]);
-        for ($i = 0; $i < 40; $i++) {
-            $sub_koordinator_units->random()->jabatans()->create(['name' => 'Staf Pelaksana']);
+        // 2. READ JSON DATA
+        $this->command->info('Reading JSON data...');
+        $jsonPath = database_path('data/users.json');
+        if (!File::exists($jsonPath)) {
+            $this->command->error('users.json file not found!');
+            return;
         }
+        $json = File::get($jsonPath);
+        $data = json_decode($json);
 
-        // --- USER CREATION ---
+        // 3. SEED DATA
+        $this->command->info('Seeding units, jabatans, and users...');
+        $bar = $this->command->getOutput()->createProgressBar(count($data));
 
-        $createUserForJabatan = function(string $jabatanName, string $userName, string $email, string $role, ?User $atasan) {
-            $jabatan = Jabatan::where('name', $jabatanName)->whereNull('user_id')->first();
-            if (!$jabatan) { return; }
-            $user = User::create(['name' => $userName, 'email' => $email, 'password' => Hash::make('password'), 'role' => $role, 'unit_id' => $jabatan->unit_id, 'atasan_id' => $atasan ? $atasan->id : null, 'status' => User::STATUS_ACTIVE]);
-            $jabatan->update(['user_id' => $user->id]);
-            return $user;
-        };
+        $atasanMapping = [];
 
-        $menteri_user = $createUserForJabatan('Menteri', 'Budi Arie Setiadi', 'menteri@example.com', User::ROLE_MENTERI, null);
-        $eselon1_user = $createUserForJabatan('Kepala Badan Perencanaan dan Pengembangan', 'Anwar Sanusi', 'eselon1@example.com', User::ROLE_ESELON_I, $menteri_user);
-        $eselon2_keuangan_user = $createUserForJabatan('Kepala Pusat Data dan Teknologi Informasi', 'Mokhammad Farid Makruf', 'ka.keuangan@example.com', User::ROLE_ESELON_II, $eselon1_user);
-        $eselon2_sdm_user = $createUserForJabatan('Kepala Pusat Sumber Daya Manusia', 'Kepala Divisi SDM', 'ka.sdm@example.com', User::ROLE_ESELON_II, $eselon1_user);
-        $koor_anggaran_user = $createUserForJabatan('Koordinator Perencanaan Anggaran', 'Ananto Wijoyo', 'koor.anggaran@example.com', User::ROLE_KOORDINATOR, $eselon2_keuangan_user);
-        $koor_rekrutmen_user = $createUserForJabatan('Koordinator Rekrutmen dan Seleksi', 'Koordinator Rekrutmen', 'koor.rekrutmen@example.com', User::ROLE_KOORDINATOR, $eselon2_sdm_user);
-        $subkoor_belanja_user = $createUserForJabatan('Analis Anggaran Belanja', 'Sub Koordinator Belanja', 'subkoor.belanja@example.com', User::ROLE_SUB_KOORDINATOR, $koor_anggaran_user);
-        $subkoor_pendapatan_user = $createUserForJabatan('Analis Anggaran Pendapatan', 'Sub Koordinator Pendapatan', 'subkoor.pendapatan@example.com', User::ROLE_SUB_KOORDINATOR, $koor_anggaran_user);
-        $subkoor_talenta_user = $createUserForJabatan('Analis Pengembangan Talenta', 'Sub Koordinator Pengembangan Talenta', 'subkoor.talenta@example.com', User::ROLE_SUB_KOORDINATOR, $koor_rekrutmen_user);
-
-        $vacantStaffPositions = Jabatan::where('name', 'Staf Pelaksana')->whereNull('user_id')->with('unit.parentUnit.jabatans.user')->get();
-
-        // --- Create a specific user for testing ---
-        $testUserCreated = false;
-        if ($vacantStaffPositions->isNotEmpty()) {
-            $firstJabatan = $vacantStaffPositions->first();
-            $supervisor = $firstJabatan->unit->parentUnit->jabatans->first()->user ?? null;
-            if ($supervisor) {
-                $testUser = User::factory()->create([
-                    'name' => 'Staf Uji Coba',
-                    'email' => 'staf.test@example.com', // Predictable email
-                    'role' => User::ROLE_STAF,
-                    'password' => Hash::make('password'),
-                    'unit_id' => $firstJabatan->unit_id,
-                    'atasan_id' => $supervisor->id
-                ]);
-                $firstJabatan->update(['user_id' => $testUser->id]);
-                $testUserCreated = true;
+        foreach ($data as $item) {
+            if (empty($item->Nama) || empty($item->Jabatan) || empty($item->NIP)) {
+                $bar->advance();
+                continue; // Skip records without essential info
             }
-        }
 
-        // --- Create remaining random users ---
-        $remainingPositions = $testUserCreated ? $vacantStaffPositions->skip(1) : $vacantStaffPositions;
-        foreach ($remainingPositions as $jabatan) {
-            $supervisor = $jabatan->unit->parentUnit->jabatans->first()->user ?? null;
+            // --- Create Unit Hierarchy ---
+            $parentUnitId = null;
+            $unitHierarchy = $item->unit_kerja;
+            $unitLevels = [
+                'kementerian' => Unit::LEVEL_MENTERI,
+                'eselon_1' => Unit::LEVEL_ESELON_I,
+                'eselon_2' => Unit::LEVEL_ESELON_II,
+                'koordinator' => Unit::LEVEL_KOORDINATOR,
+                'sub_koordinator' => Unit::LEVEL_SUB_KOORDINATOR,
+            ];
 
-            if (!$supervisor) {
-                $this->command->warn("Could not find supervisor for a staff in unit: " . $jabatan->unit->name);
+            $currentUnit = null;
+            foreach ($unitLevels as $levelKey => $levelName) {
+                $unitName = $unitHierarchy->{$levelKey};
+                if (!empty($unitName) && strtolower($unitName) !== 'nan') {
+                    $currentUnit = Unit::firstOrCreate(
+                        ['name' => $unitName, 'parent_unit_id' => $parentUnitId],
+                        ['level' => $levelName]
+                    );
+                    $parentUnitId = $currentUnit->id;
+                }
+            }
+
+            $finalUnit = $currentUnit;
+            if (!$finalUnit) {
+                $bar->advance();
                 continue;
             }
 
-            $user = User::factory()->create([
-                'role' => User::ROLE_STAF,
+            // --- Create User ---
+            $user = User::create([
+                'name' => $item->Nama,
+                'email' => $item->NIP . '@naker.go.id', // Create a unique email
                 'password' => Hash::make('password'),
-                'unit_id' => $jabatan->unit_id,
-                'atasan_id' => $supervisor->id
+                'unit_id' => $finalUnit->id,
+                'role' => $finalUnit->level,
+                'status' => 'active',
+
+                // New profile fields
+                'nip' => $item->NIP,
+                'tempat_lahir' => $item->{'Tempat Lahir'},
+                'alamat' => $item->Alamat,
+                'tgl_lahir' => $item->{'Tgl. Lahir'},
+                'jenis_kelamin' => $item->{'L/P'},
+                'golongan' => $item->Gol,
+                'eselon' => $item->Eselon,
+                'tmt_eselon' => $item->{'TMT ESELON'},
+                'grade' => $item->GRADE,
+                'agama' => $item->Agama,
+                'telepon' => $item->Telepon,
+                'no_hp' => $item->{'No. HP'},
+                'npwp' => $item->NPWP,
+                'tmt_gol' => $item->{'TMT GOL'},
+                'pendidikan_terakhir' => $item->{'Pendidikan Terakhir'},
+                'jenis_jabatan' => $item->{'Jenis Jabatan'},
+                'tmt_cpns' => $item->{'TMT CPNS'},
+                'tmt_pns' => $item->{'TMT PNS'},
+                'tmt_jabatan' => $item->{'TMT JABATAN'},
             ]);
 
-            $jabatan->update(['user_id' => $user->id]);
+            // --- Create Jabatan and link it to the user ---
+            Jabatan::create([
+                'name' => $item->Jabatan,
+                'unit_id' => $finalUnit->id,
+                'user_id' => $user->id,
+            ]);
+
+            // Store the created user for atasan mapping
+            $atasanMapping[$item->{'Unit Kerja'}] = $user->id;
+
+            $bar->advance();
         }
+
+        $bar->finish();
+        $this->command->info("\nData seeding completed.");
+
+        // 4. SET ATASAN (SUPERVISOR)
+        $this->command->info('Setting up supervisor relationships...');
+        $allUsers = User::whereNotNull('nip')->get()->keyBy('nip');
+
+        foreach ($data as $item) {
+            if (empty($item->NIP)) continue;
+
+            $user = $allUsers->get($item->NIP);
+            if (!$user) continue;
+
+            $unitKerjaParts = explode(' - ', $item->{'Unit Kerja'});
+            // The atasan's unit is one level up.
+            array_pop($unitKerjaParts);
+            $atasanUnitKerja = implode(' - ', $unitKerjaParts);
+
+            if (isset($atasanMapping[$atasanUnitKerja])) {
+                $atasanId = $atasanMapping[$atasanUnitKerja];
+                if ($user->id !== $atasanId) {
+                    $user->atasan_id = $atasanId;
+                    $user->save();
+                }
+            }
+        }
+        $this->command->info('Supervisor relationships set.');
+
+        // 5. REBUILD HIERARCHY PATHS
+        $this->command->info('Rebuilding unit hierarchy paths...');
+        Unit::rebuildPaths();
+        $this->command->info('Hierarchy paths rebuilt successfully.');
     }
 }
