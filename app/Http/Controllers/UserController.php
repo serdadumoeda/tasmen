@@ -410,4 +410,39 @@ class UserController extends Controller
 
         return redirect()->route('users.index')->with('success', 'Sesi peniruan telah berakhir.');
     }
+
+    public function showImportForm()
+    {
+        $this->authorize('create', User::class);
+        return view('users.import');
+    }
+
+    public function handleImport(Request $request)
+    {
+        $this->authorize('create', User::class);
+
+        $request->validate([
+            'user_import' => ['required', 'file', 'mimes:csv,txt'],
+        ]);
+
+        $path = $request->file('user_import')->getRealPath();
+        $file = fopen($path, 'r');
+
+        $header = fgetcsv($file);
+
+        $data = [];
+        while ($row = fgetcsv($file)) {
+            if (count($header) !== count($row)) {
+                continue; // Skip malformed rows
+            }
+            $data[] = array_combine($header, $row);
+        }
+
+        fclose($file);
+
+        $importer = new \App\Services\OrganizationalDataImporterService();
+        $importer->processData($data);
+
+        return redirect()->route('users.index')->with('success', 'Data pengguna berhasil diimpor.');
+    }
 }
