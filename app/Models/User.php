@@ -48,7 +48,6 @@ class User extends Authenticatable
         'role',
         'atasan_id',
         'unit_id',
-        'jabatan_id',
         'status',
         'nip',
         'tempat_lahir',
