@@ -157,11 +157,6 @@ class UserController extends Controller
         return view('users.edit', compact('user', 'units', 'supervisors'));
     }
 
-    public function showProfile(User $user)
-    {
-        return view('users.profile', compact('user'));
-    }
-
     public function update(Request $request, User $user)
     {
         $this->authorize('update', $user);
