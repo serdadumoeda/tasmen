@@ -153,6 +153,15 @@ class OrganizationalDataSeeder extends Seeder
         // Set Atasan ID
         $this->setAtasan();
 
+        // Create a default Super Admin user
+        User::create([
+            'name' => 'Super Admin',
+            'email' => 'admin@example.com',
+            'password' => Hash::make('password'),
+            'role' => User::ROLE_SUPERADMIN,
+            'status' => 'active',
+        ]);
+
         if ($dbDriver === 'mysql') {
             DB::statement('SET FOREIGN_KEY_CHECKS=1;');
         } elseif ($dbDriver === 'pgsql') {
