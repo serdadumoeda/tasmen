@@ -108,9 +108,12 @@ class UserController extends Controller
     public function create()
     {
         $this->authorize('create', User::class);
-        $units = Unit::orderBy('name')->get();
         $supervisors = User::orderBy('name')->get();
-        return view('users.create', compact('units', 'supervisors'));
+        $eselonIUnits = Unit::where('level', Unit::LEVEL_ESELON_I)->orderBy('name')->get();
+        $user = new User();
+        $selectedUnitPath = []; // For create form, the path is empty
+
+        return view('users.create', compact('user', 'supervisors', 'eselonIUnits', 'selectedUnitPath'));
     }
 
     public function store(Request $request)
@@ -151,10 +154,19 @@ class UserController extends Controller
     public function edit(User $user)
     {
         $this->authorize('update', $user);
-        $units = Unit::orderBy('name')->get();
-        $supervisors = User::where('id', '!=', $user->id)->orderBy('name')->get(); // User cannot be their own supervisor
+        $supervisors = User::where('id', '!=', $user->id)->orderBy('name')->get();
+        $eselonIUnits = Unit::where('level', Unit::LEVEL_ESELON_I)->orderBy('name')->get();
 
-        return view('users.edit', compact('user', 'units', 'supervisors'));
+        $selectedUnitPath = [];
+        if ($user->unit) {
+            $user->load('unit');
+            // Get ancestors ordered from top-level down to the direct parent
+            $ancestors = $user->unit->ancestors()->orderBy('depth', 'desc')->get();
+            $selectedUnitPath = $ancestors->pluck('id')->toArray();
+            $selectedUnitPath[] = $user->unit->id;
+        }
+
+        return view('users.edit', compact('user', 'supervisors', 'eselonIUnits', 'selectedUnitPath'));
     }
 
     public function update(Request $request, User $user)
