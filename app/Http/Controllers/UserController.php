@@ -109,7 +109,8 @@ class UserController extends Controller
     {
         $this->authorize('create', User::class);
         $supervisors = User::orderBy('name')->get();
-        $eselonIUnits = Unit::where('level', Unit::LEVEL_ESELON_I)->orderBy('name')->get();
+        // Get top-level units (Eselon I) by checking for null parent_unit_id
+        $eselonIUnits = Unit::whereNull('parent_unit_id')->orderBy('name')->get();
         $user = new User();
         $selectedUnitPath = []; // For create form, the path is empty
 
@@ -154,7 +155,16 @@ class UserController extends Controller
 
         $userData = $validated;
         $userData['password'] = Hash::make($validated['password']);
-        $userData['role'] = $unit->level;
+
+        // Determine role based on the depth of the unit in the hierarchy
+        $depth = $unit->depth;
+        $userData['role'] = match ($depth) {
+            0 => User::ROLE_ESELON_I,
+            1 => User::ROLE_ESELON_II,
+            2 => User::ROLE_KOORDINATOR,
+            3 => User::ROLE_SUB_KOORDINATOR,
+            default => User::ROLE_STAF,
+        };
 
         // Convert date formats for database
         foreach(['tgl_lahir', 'tmt_eselon', 'tmt_cpns', 'tmt_pns'] as $dateField) {
@@ -176,13 +186,14 @@ class UserController extends Controller
     {
         $this->authorize('update', $user);
         $supervisors = User::where('id', '!=', $user->id)->orderBy('name')->get();
-        $eselonIUnits = Unit::where('level', Unit::LEVEL_ESELON_I)->orderBy('name')->get();
+        // Get top-level units (Eselon I) by checking for null parent_unit_id
+        $eselonIUnits = Unit::whereNull('parent_unit_id')->orderBy('name')->get();
 
         $selectedUnitPath = [];
         if ($user->unit) {
             $user->load('unit');
             // Get ancestors ordered from top-level down to the direct parent
-            $ancestors = $user->unit->ancestors()->orderBy('depth', 'desc')->get();
+            $ancestors = $user->unit->ancestors()->orderBy('depth', 'asc')->get();
             $selectedUnitPath = $ancestors->pluck('id')->toArray();
             $selectedUnitPath[] = $user->unit->id;
         }
@@ -254,8 +265,15 @@ class UserController extends Controller
                 unset($updateData['password']);
             }
 
-            // Set role based on new unit
-            $updateData['role'] = $newJabatan->unit->level;
+            // Determine role based on the depth of the new unit in the hierarchy
+            $depth = $newJabatan->unit->depth;
+            $updateData['role'] = match ($depth) {
+                0 => User::ROLE_ESELON_I,
+                1 => User::ROLE_ESELON_II,
+                2 => User::ROLE_KOORDINATOR,
+                3 => User::ROLE_SUB_KOORDINATOR,
+                default => User::ROLE_STAF,
+            };
 
             // Convert date formats for database
             foreach(['tgl_lahir', 'tmt_eselon', 'tmt_cpns', 'tmt_pns'] as $dateField) {
