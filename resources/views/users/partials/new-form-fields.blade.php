@@ -217,19 +217,26 @@ $(document).ready(function() {
                 url: `/api/units/${selectedValue}/children`,
                 type: 'GET',
                 success: function(data) {
+                    console.log('Successfully fetched child units. Response:', data);
                     const placeholder = nextSelect.data('placeholder');
                     nextSelect.empty().append(new Option(placeholder, ''));
                     if (data.length > 0) {
+                        console.log(`Found ${data.length} child units. Populating dropdown.`);
                         $.each(data, function(key, unit) {
                             nextSelect.append(new Option(unit.name, unit.id));
                         });
                         nextSelect.prop('disabled', false);
                     } else {
+                        console.log('Response contained 0 child units.');
                         nextSelect.html(new Option('-- Tidak ada unit bawahan --', '')).prop('disabled', true);
                     }
                 },
-                error: function() {
-                    nextSelect.html(new Option('-- Gagal memuat data --', '')).prop('disabled', true);
+                error: function(jqXHR, textStatus, errorThrown) {
+                    console.error('AJAX call failed to fetch child units.');
+                    console.error('Status:', textStatus);
+                    console.error('Error:', errorThrown);
+                    console.error('Response:', jqXHR.responseText);
+                    nextSelect.html(new Option('-- Gagal memuat data --', '')).prop('disabled',true);
                 }
             });
         }
