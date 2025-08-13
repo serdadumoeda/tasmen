@@ -105,49 +105,41 @@ class UserController extends Controller
         return view('users.modern', compact('users'));
     }
 
-    public function showProfile(User $user)
-    {
-        $this->authorize('view', $user);
-        // The getUnitPathAttribute accessor on the User model handles the unit path.
-        // We only need to ensure the direct relationships are loaded if not already.
-        $user->loadMissing(['unit', 'jabatan', 'atasan']);
-        return view('users.profile', compact('user'));
-    }
-
     public function create()
     {
         $this->authorize('create', User::class);
-        $eselonIUnits = Unit::where('level', Unit::LEVEL_ESELON_I)->orderBy('name')->get();
+        $units = Unit::orderBy('name')->get();
         $supervisors = User::orderBy('name')->get();
-
-        // Pass an empty array for selectedUnitPath for consistency
-        $selectedUnitPath = [];
-
-        return view('users.create', compact('eselonIUnits', 'supervisors', 'selectedUnitPath'));
+        return view('users.create', compact('units', 'supervisors'));
     }
 
     public function store(Request $request)
     {
         $this->authorize('create', User::class);
 
-        // Merge all profile fields into a single validation array
-        $validationRules = array_merge($this->getProfileValidationRules(), [
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'jabatan_id' => ['required', Rule::exists('jabatans', 'id')->whereNull('user_id')],
+            'unit_id' => ['required', 'exists:units,id'],
+            'jabatan_id' => ['required', Rule::exists('jabatans', 'id')->where('unit_id', $request->unit_id)->whereNull('user_id')],
+            'atasan_id' => ['nullable', 'exists:users,id'],
+            'status' => ['required', 'in:active,suspended'],
         ]);
 
-        $validated = $request->validate($validationRules);
-
-        $jabatan = \App\Models\Jabatan::find($validated['jabatan_id']);
+        $jabatan = Jabatan::find($validated['jabatan_id']);
         $unit = $jabatan->unit;
 
         DB::transaction(function () use ($validated, $jabatan, $unit) {
-            $user = User::create(array_merge($validated, [
+            $user = User::create([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
                 'password' => Hash::make($validated['password']),
+                'status' => $validated['status'],
+                'atasan_id' => $validated['atasan_id'],
                 'unit_id' => $unit->id,
                 'role' => $unit->level,
-            ]));
+            ]);
 
             $jabatan->user_id = $user->id;
             $jabatan->save();
@@ -159,111 +151,80 @@ class UserController extends Controller
     public function edit(User $user)
     {
         $this->authorize('update', $user);
-        $eselonIUnits = Unit::where('level', Unit::LEVEL_ESELON_I)->orderBy('name')->get();
-        $supervisors = User::where('id', '!=', $user->id)->orderBy('name')->get();
+        $units = Unit::orderBy('name')->get();
+        $supervisors = User::where('id', '!=', $user->id)->orderBy('name')->get(); // User cannot be their own supervisor
 
-        $selectedUnitPath = [];
-        if ($user->unit) {
-            $pathCollection = collect();
-            $currentUnit = $user->unit;
-            while ($currentUnit) {
-                $pathCollection->prepend($currentUnit);
-                $currentUnit = $currentUnit->parentUnit;
-            }
-            $selectedUnitPath = $pathCollection->pluck('id')->toArray();
-        }
-
-        return view('users.edit', compact('user', 'eselonIUnits', 'supervisors', 'selectedUnitPath'));
+        return view('users.edit', compact('user', 'units', 'supervisors'));
     }
 
     public function update(Request $request, User $user)
     {
         $this->authorize('update', $user);
 
-        $validationRules = array_merge($this->getProfileValidationRules($user->id), [
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
-            'password' => ['nullable', 'confirmed', Rules\Password::defaults()],
+            'unit_id' => ['required', 'exists:units,id'],
             'jabatan_id' => ['required', 'exists:jabatans,id'],
+            'atasan_id' => ['nullable', 'exists:users,id', 'not_in:'.$user->id],
+            'status' => ['required', 'in:active,suspended'],
+            'password' => ['nullable', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        $validated = $request->validate($validationRules);
-
-        $newJabatan = \App\Models\Jabatan::find($validated['jabatan_id']);
+        $newJabatan = Jabatan::find($validated['jabatan_id']);
 
         if ($newJabatan->user_id && $newJabatan->user_id !== $user->id) {
             return back()->withInput()->with('error', 'Jabatan yang dipilih sudah diisi oleh pengguna lain.');
         }
 
-        $pindahUnit = $user->unit_id !== $newJabatan->unit_id;
+        $oldUnitId = $user->unit_id;
+        $pindahUnit = $oldUnitId !== $newJabatan->unit_id;
 
         DB::transaction(function () use ($user, $validated, $newJabatan, $request, $pindahUnit) {
+            // Kosongkan jabatan lama jika ada dan berbeda
             if ($user->jabatan && $user->jabatan->id !== $newJabatan->id) {
                 $user->jabatan->user_id = null;
                 $user->jabatan->save();
             }
 
-            $updateData = array_merge($validated, [
+            $updateData = [
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'status' => $validated['status'],
+                'atasan_id' => $validated['atasan_id'],
                 'unit_id' => $newJabatan->unit_id,
                 'role' => $newJabatan->unit->level,
-            ]);
+                'password' => $request->filled('password') ? Hash::make($validated['password']) : $user->password,
+            ];
 
-            if ($request->filled('password')) {
-                $updateData['password'] = Hash::make($validated['password']);
-            } else {
-                unset($updateData['password']);
-            }
-
+            // Jika user pindah unit, reset atasannya untuk mencegah relasi yang tidak valid.
             if ($pindahUnit) {
                 $updateData['atasan_id'] = null;
             }
 
             $user->update($updateData);
 
+            // Tugaskan user ke jabatan baru
             $newJabatan->user_id = $user->id;
             $newJabatan->save();
         });
 
+        $newRole = $newJabatan->unit->level;
+        $roleChanged = $user->role !== $newRole;
+
         $redirect = redirect()->route('users.index');
 
         if ($pindahUnit) {
-            return $redirect->with('success', 'User berhasil diperbarui. Atasan telah direset karena pindah unit, harap tetapkan atasan baru.');
+            $redirect->with('success', 'User berhasil diperbarui. Atasan telah direset karena pindah unit, harap tetapkan atasan baru.');
+        } else {
+            $redirect->with('success', 'User berhasil diperbarui.');
         }
 
-        return $redirect->with('success', 'User berhasil diperbarui.');
-    }
+        if ($roleChanged && !$pindahUnit) { // Tampilkan pesan role change hanya jika tidak ada pesan pindah unit
+             $redirect->with('warning', "Role pengguna telah diperbarui dari '{$user->role}' menjadi '{$newRole}'.");
+        }
 
-    /**
-     * Get the validation rules for profile fields.
-     *
-     * @param  int|null  $userId
-     * @return array
-     */
-    private function getProfileValidationRules(int $userId = null): array
-    {
-        return [
-            'name' => ['required', 'string', 'max:255'],
-            'nip' => ['nullable', 'string', 'max:255', Rule::unique('users')->ignore($userId)],
-            'tempat_lahir' => ['nullable', 'string', 'max:255'],
-            'alamat' => ['nullable', 'string'],
-            'tgl_lahir' => ['nullable', 'string', 'max:255'],
-            'jenis_kelamin' => ['nullable', 'string', 'max:1'],
-            'golongan' => ['nullable', 'string', 'max:255'],
-            'eselon' => ['nullable', 'string', 'max:255'],
-            'tmt_eselon' => ['nullable', 'string', 'max:255'],
-            'grade' => ['nullable', 'string', 'max:255'],
-            'agama' => ['nullable', 'string', 'max:255'],
-            'telepon' => ['nullable', 'string', 'max:255'],
-            'no_hp' => ['nullable', 'string', 'max:255'],
-            'npwp' => ['nullable', 'string', 'max:255'],
-            'tmt_gol' => ['nullable', 'string', 'max:255'],
-            'pendidikan_terakhir' => ['nullable', 'string', 'max:255'],
-            'jenis_jabatan' => ['nullable', 'string', 'max:255'],
-            'tmt_cpns' => ['nullable', 'string', 'max:255'],
-            'tmt_pns' => ['nullable', 'string', 'max:255'],
-            'tmt_jabatan' => ['nullable', 'string', 'max:255'],
-            'atasan_id' => ['nullable', 'exists:users,id'],
-            'status' => ['required', 'in:active,suspended'],
-        ];
+        return $redirect;
     }
 
     public function destroy(User $user)
