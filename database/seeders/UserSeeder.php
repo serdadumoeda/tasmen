@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Throwable;
+use Carbon\Carbon;
 
 class UserSeeder extends Seeder
 {
@@ -46,97 +47,111 @@ class UserSeeder extends Seeder
             return;
         }
         $json = File::get($jsonPath);
-        $data = json_decode($json);
+        $data = json_decode($json, true); // Decode as an associative array
+
+        if (empty($data)) {
+            $this->command->error('No data found in users.json or there was a parsing error.');
+            return;
+        }
 
         // 4. FIRST PASS: Create Units, Users, and Jabatans
         $this->command->info('Pass 1/2: Seeding units, jabatans, and users...');
         $bar = $this->command->getOutput()->createProgressBar(count($data));
 
         $userJabatanMapping = [];
+        $unitToHeadUserMapping = [];
 
         foreach ($data as $index => $item) {
             try {
-                if (empty($item->Nama) || empty($item->Jabatan) || empty($item->NIP)) {
+                $nip = trim($item['NIP']);
+                if (empty($item['Nama']) || empty($item['Jabatan']) || empty($nip)) {
+                    $this->command->warn("\nSkipping user at index {$index} due to missing essential data.");
                     continue;
                 }
 
-                // --- Create Unit Hierarchy ---
+                // --- Create Unit Hierarchy from specific fields ---
                 $parentUnitId = null;
-                $unitHierarchy = $item->unit_kerja;
-                $unitLevels = [
-                    'kementerian' => Unit::LEVEL_MENTERI,
-                    'eselon_1' => Unit::LEVEL_ESELON_I,
-                    'eselon_2' => Unit::LEVEL_ESELON_II,
-                    'koordinator' => Unit::LEVEL_KOORDINATOR,
-                    'sub_koordinator' => Unit::LEVEL_SUB_KOORDINATOR,
+                $unitHierarchyLevels = [
+                    'Unit Kerja (Induk)' => Unit::LEVEL_MENTERI,
+                    'Unit Kerja Eselon I' => Unit::LEVEL_ESELON_I,
+                    'Unit Kerja Eselon II' => Unit::LEVEL_ESELON_II,
+                    'Unit Kerja Koordinator' => Unit::LEVEL_KOORDINATOR,
+                    'Unit Kerja Sub Koordinator' => Unit::LEVEL_SUB_KOORDINATOR,
                 ];
 
-                $currentUnit = null;
-                foreach ($unitLevels as $levelKey => $levelName) {
-                    $unitName = $unitHierarchy->{$levelKey};
-                    if (!empty($unitName) && strtolower($unitName) !== 'nan') {
-                        $currentUnit = Unit::firstOrCreate(
-                            ['name' => trim($unitName), 'parent_unit_id' => $parentUnitId],
-                            ['level' => $levelName]
+                $lastCreatedUnitId = null;
+                foreach ($unitHierarchyLevels as $key => $level) {
+                    $unitName = trim($item[$key] ?? '');
+                    if (!empty($unitName) && strtolower($unitName) !== 'null' && strtolower($unitName) !== 'nan') {
+                        $unit = Unit::firstOrCreate(
+                            ['name' => $unitName, 'parent_unit_id' => $parentUnitId],
+                            ['level' => $level]
                         );
-                        $parentUnitId = $currentUnit->id;
+                        $parentUnitId = $unit->id;
+                        $lastCreatedUnitId = $unit->id;
                     }
                 }
 
-                $finalUnit = $currentUnit;
-                if (!$finalUnit) {
-                    $this->command->warn("\nSkipping user {$item->Nama} due to missing unit info.");
+                $finalUnitId = $lastCreatedUnitId;
+                if (!$finalUnitId) {
+                    $this->command->warn("\nSkipping user {$item['Nama']} due to missing unit info.");
                     continue;
                 }
 
                 // --- Determine Role ---
-                $role = match (trim($item->Eselon ?? '')) {
+                $role = match (trim($item['Eselon'] ?? '')) {
                     '1-A' => User::ROLE_ESELON_I,
                     '2-A' => User::ROLE_ESELON_II,
                     '3-A' => User::ROLE_KOORDINATOR,
                     '4-A' => User::ROLE_SUB_KOORDINATOR,
-                    default => $finalUnit->level,
+                    default => Unit::find($finalUnitId)->level,
                 };
 
                 // --- Create User ---
                 $user = User::create([
-                    'name' => trim($item->Nama),
-                    'email' => trim($item->NIP) . '@naker.go.id',
+                    'name' => trim($item['Nama']),
+                    'email' => $nip . '@naker.go.id',
                     'password' => Hash::make('password'),
-                    'unit_id' => $finalUnit->id,
+                    'unit_id' => $finalUnitId,
                     'role' => $role,
                     'status' => 'active',
-                    'nip' => trim($item->NIP),
-                    'tempat_lahir' => $item->{'Tempat Lahir'},
-                    'alamat' => $item->Alamat,
-                    'tgl_lahir' => $item->{'Tgl. Lahir'},
-                    'jenis_kelamin' => $item->{'L/P'},
-                    'golongan' => $item->Gol,
-                    'eselon' => $item->Eselon,
-                    'tmt_eselon' => $item->{'TMT ESELON'},
-                    'grade' => $item->GRADE,
-                    'agama' => $item->Agama,
-                    'telepon' => $item->Telepon,
-                    'no_hp' => $item->{'No. HP'},
-                    'npwp' => $item->NPWP,
-                    'tmt_gol' => $item->{'TMT GOL'},
-                    'pendidikan_terakhir' => $item->{'Pendidikan Terakhir'},
-                    'jenis_jabatan' => $item->{'Jenis Jabatan'},
-                    'tmt_cpns' => $item->{'TMT CPNS'},
-                    'tmt_pns' => $item->{'TMT PNS'},
-                    'tmt_jabatan' => $item->{'TMT JABATAN'},
+                    'nip' => $nip,
+                    'tempat_lahir' => $item['Tempat Lahir'],
+                    'alamat' => $item['Alamat'],
+                    'tgl_lahir' => $this->formatDate($item['Tgl. Lahir']),
+                    'jenis_kelamin' => $item['L/P'],
+                    'golongan' => $item['Gol'],
+                    'eselon' => $item['Eselon'],
+                    'tmt_eselon' => $this->formatDate($item['TMT ESELON']),
+                    'grade' => $item['GRADE'],
+                    'agama' => $item['Agama'],
+                    'telepon' => $item['Telepon'],
+                    'no_hp' => $item['No. HP'],
+                    'npwp' => $item['NPWP'],
+                    'tmt_gol' => null, // Not in JSON
+                    'pendidikan_terakhir' => $item['Pendidikan Terakhir'],
+                    'jenis_jabatan' => $item['Jenis Jabatan'],
+                    'tmt_cpns' => $this->formatDate($item['TMT CPNS']),
+                    'tmt_pns' => $this->formatDate($item['TMT PNS']),
+                    'tmt_jabatan' => null, // Not in JSON
                 ]);
 
                 Jabatan::create([
-                    'name' => trim($item->Jabatan),
-                    'unit_id' => $finalUnit->id,
+                    'name' => trim($item['Jabatan']),
+                    'unit_id' => $finalUnitId,
                     'user_id' => $user->id,
                 ]);
 
-                $userJabatanMapping[trim($item->{'Unit Kerja'})] = $user->id;
+                // Store mapping for supervisor lookup
+                $userJabatanMapping[$nip] = ['user_id' => $user->id, 'unit_id' => $finalUnitId];
+
+                // If user is a head of a unit, map their user_id to the unit_id
+                if (str_contains(strtolower($item['Jabatan']), 'kepala') || str_contains(strtolower($item['Jabatan']), 'sekretaris')) {
+                    $unitToHeadUserMapping[$finalUnitId] = $user->id;
+                }
 
             } catch (Throwable $e) {
-                $this->command->error("\nFailed to seed user at index {$index} ({$item->Nama}): " . $e->getMessage());
+                $this->command->error("\nFailed to seed user at index {$index} ({$item['Nama']}): " . $e->getMessage());
             } finally {
                 $bar->advance();
             }
@@ -147,29 +162,25 @@ class UserSeeder extends Seeder
 
         // 5. SECOND PASS: SET ATASAN (SUPERVISOR)
         $this->command->info('Pass 2/2: Setting up supervisor relationships...');
-        $allUsers = User::whereNotNull('nip')->get()->keyBy('nip');
+        $allUsers = User::with('unit')->get();
+        $bar2 = $this->command->getOutput()->createProgressBar($allUsers->count());
 
-        foreach ($data as $item) {
-            if (empty($item->NIP)) continue;
+        foreach($allUsers as $user) {
+            if ($user->unit && $user->unit->parent_unit_id) {
+                $parentUnitId = $user->unit->parent_unit_id;
+                // Find the head of the parent unit
+                $atasanId = $unitToHeadUserMapping[$parentUnitId] ?? null;
 
-            $user = $allUsers->get(trim($item->NIP));
-            if (!$user) continue;
-
-            $unitKerjaParts = explode(' - ', trim($item->{'Unit Kerja'}));
-            if (count($unitKerjaParts) > 1) {
-                array_pop($unitKerjaParts);
-                $atasanUnitKerja = implode(' - ', $unitKerjaParts);
-
-                if (isset($userJabatanMapping[$atasanUnitKerja])) {
-                    $atasanId = $userJabatanMapping[$atasanUnitKerja];
-                    if ($user->id !== $atasanId) {
-                        $user->atasan_id = $atasanId;
-                        $user->save();
-                    }
+                if ($atasanId && $user->id !== $atasanId) {
+                    $user->atasan_id = $atasanId;
+                    $user->save();
                 }
             }
+            $bar2->advance();
         }
-        $this->command->info('Supervisor relationships set.');
+
+        $bar2->finish();
+        $this->command->info("\nSupervisor relationships set.");
 
         // 6. REBUILD HIERARCHY PATHS
         $this->command->info('Rebuilding unit hierarchy paths...');
@@ -177,5 +188,27 @@ class UserSeeder extends Seeder
         $this->command->info('Hierarchy paths rebuilt successfully.');
 
         Auth::logout();
+    }
+
+    /**
+     * Format date from d-m-Y to Y-m-d.
+     * Handles null, empty, or invalid date strings.
+     */
+    private function formatDate($dateString): ?string
+    {
+        if (empty($dateString) || strtolower($dateString) === 'null') {
+            return null;
+        }
+        try {
+            return Carbon::createFromFormat('d-m-Y', trim($dateString))->format('Y-m-d');
+        } catch (\Exception $e) {
+            // Also try with another format if the first fails
+            try {
+                return Carbon::createFromFormat('d/m/Y', trim($dateString))->format('Y-m-d');
+            } catch (\Exception $e2) {
+                $this->command->warn("Could not parse date: {$dateString}");
+                return null;
+            }
+        }
     }
 }
