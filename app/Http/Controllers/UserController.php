@@ -128,22 +128,43 @@ class UserController extends Controller
             'jabatan_id' => ['required', Rule::exists('jabatans', 'id')->where('unit_id', $request->unit_id)->whereNull('user_id')],
             'atasan_id' => ['nullable', 'exists:users,id'],
             'status' => ['required', 'in:active,suspended'],
+            'nip' => ['nullable', 'string', 'max:255', 'unique:'.User::class],
+            'tempat_lahir' => ['nullable', 'string', 'max:255'],
+            'tgl_lahir' => ['nullable', 'date_format:d-m-Y'],
+            'alamat' => ['nullable', 'string'],
+            'jenis_kelamin' => ['nullable', 'in:L,P'],
+            'agama' => ['nullable', 'string', 'max:255'],
+            'golongan' => ['nullable', 'string', 'max:255'],
+            'eselon' => ['nullable', 'string', 'max:255'],
+            'tmt_eselon' => ['nullable', 'date_format:d-m-Y'],
+            'grade' => ['nullable', 'string', 'max:255'],
+            'no_hp' => ['nullable', 'string', 'max:255'],
+            'telepon' => ['nullable', 'string', 'max:255'],
+            'npwp' => ['nullable', 'string', 'max:255'],
+            'pendidikan_terakhir' => ['nullable', 'string', 'max:255'],
+            'pendidikan_jurusan' => ['nullable', 'string', 'max:255'],
+            'pendidikan_universitas' => ['nullable', 'string', 'max:255'],
+            'jenis_jabatan' => ['nullable', 'string', 'max:255'],
+            'tmt_cpns' => ['nullable', 'date_format:d-m-Y'],
+            'tmt_pns' => ['nullable', 'date_format:d-m-Y'],
         ]);
 
-        $jabatan = Jabatan::find($validated['jabatan_id']);
+        $jabatan = \App\Models\Jabatan::find($validated['jabatan_id']);
         $unit = $jabatan->unit;
 
-        DB::transaction(function () use ($validated, $jabatan, $unit) {
-            $user = User::create([
-                'name' => $validated['name'],
-                'email' => $validated['email'],
-                'password' => Hash::make($validated['password']),
-                'status' => $validated['status'],
-                'atasan_id' => $validated['atasan_id'],
-                'unit_id' => $unit->id,
-                'role' => $unit->level,
-            ]);
+        $userData = $validated;
+        $userData['password'] = Hash::make($validated['password']);
+        $userData['role'] = $unit->level;
 
+        // Convert date formats for database
+        foreach(['tgl_lahir', 'tmt_eselon', 'tmt_cpns', 'tmt_pns'] as $dateField) {
+            if (!empty($userData[$dateField])) {
+                $userData[$dateField] = Carbon::createFromFormat('d-m-Y', $userData[$dateField])->format('Y-m-d');
+            }
+        }
+
+        DB::transaction(function () use ($userData, $jabatan) {
+            $user = User::create($userData);
             $jabatan->user_id = $user->id;
             $jabatan->save();
         });
@@ -169,6 +190,13 @@ class UserController extends Controller
         return view('users.edit', compact('user', 'supervisors', 'eselonIUnits', 'selectedUnitPath'));
     }
 
+    public function profile(User $user)
+    {
+        $this->authorize('view', $user);
+        $user->load(['unit.parentUnit', 'jabatan', 'atasan']);
+        return view('users.profile', compact('user'));
+    }
+
     public function update(Request $request, User $user)
     {
         $this->authorize('update', $user);
@@ -176,14 +204,33 @@ class UserController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
+            'password' => ['nullable', 'confirmed', Rules\Password::defaults()],
             'unit_id' => ['required', 'exists:units,id'],
             'jabatan_id' => ['required', 'exists:jabatans,id'],
             'atasan_id' => ['nullable', 'exists:users,id', 'not_in:'.$user->id],
             'status' => ['required', 'in:active,suspended'],
-            'password' => ['nullable', 'confirmed', Rules\Password::defaults()],
+            'nip' => ['nullable', 'string', 'max:255', Rule::unique('users')->ignore($user->id)],
+            'tempat_lahir' => ['nullable', 'string', 'max:255'],
+            'tgl_lahir' => ['nullable', 'date_format:d-m-Y'],
+            'alamat' => ['nullable', 'string'],
+            'jenis_kelamin' => ['nullable', 'in:L,P'],
+            'agama' => ['nullable', 'string', 'max:255'],
+            'golongan' => ['nullable', 'string', 'max:255'],
+            'eselon' => ['nullable', 'string', 'max:255'],
+            'tmt_eselon' => ['nullable', 'date_format:d-m-Y'],
+            'grade' => ['nullable', 'string', 'max:255'],
+            'no_hp' => ['nullable', 'string', 'max:255'],
+            'telepon' => ['nullable', 'string', 'max:255'],
+            'npwp' => ['nullable', 'string', 'max:255'],
+            'pendidikan_terakhir' => ['nullable', 'string', 'max:255'],
+            'pendidikan_jurusan' => ['nullable', 'string', 'max:255'],
+            'pendidikan_universitas' => ['nullable', 'string', 'max:255'],
+            'jenis_jabatan' => ['nullable', 'string', 'max:255'],
+            'tmt_cpns' => ['nullable', 'date_format:d-m-Y'],
+            'tmt_pns' => ['nullable', 'date_format:d-m-Y'],
         ]);
 
-        $newJabatan = Jabatan::find($validated['jabatan_id']);
+        $newJabatan = \App\Models\Jabatan::find($validated['jabatan_id']);
 
         if ($newJabatan->user_id && $newJabatan->user_id !== $user->id) {
             return back()->withInput()->with('error', 'Jabatan yang dipilih sudah diisi oleh pengguna lain.');
@@ -199,15 +246,23 @@ class UserController extends Controller
                 $user->jabatan->save();
             }
 
-            $updateData = [
-                'name' => $validated['name'],
-                'email' => $validated['email'],
-                'status' => $validated['status'],
-                'atasan_id' => $validated['atasan_id'],
-                'unit_id' => $newJabatan->unit_id,
-                'role' => $newJabatan->unit->level,
-                'password' => $request->filled('password') ? Hash::make($validated['password']) : $user->password,
-            ];
+            $updateData = $validated;
+
+            if ($request->filled('password')) {
+                $updateData['password'] = Hash::make($validated['password']);
+            } else {
+                unset($updateData['password']);
+            }
+
+            // Set role based on new unit
+            $updateData['role'] = $newJabatan->unit->level;
+
+            // Convert date formats for database
+            foreach(['tgl_lahir', 'tmt_eselon', 'tmt_cpns', 'tmt_pns'] as $dateField) {
+                if (!empty($updateData[$dateField])) {
+                    $updateData[$dateField] = Carbon::createFromFormat('d-m-Y', $updateData[$dateField])->format('Y-m-d');
+                }
+            }
 
             // Jika user pindah unit, reset atasannya untuk mencegah relasi yang tidak valid.
             if ($pindahUnit) {

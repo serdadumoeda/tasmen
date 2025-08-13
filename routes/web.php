@@ -83,6 +83,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('users/hierarchy', [UserController::class, 'hierarchy'])->name('users.hierarchy');
     Route::get('users/modern', [UserController::class, 'modern'])->name('users.modern');
+    Route::get('users/{user}/profile', [UserController::class, 'profile'])->name('users.profile');
     Route::resource('users', UserController::class);
     Route::get('/api/users/search', [App\Http\Controllers\UserController::class, 'search'])->name('api.users.search');
 
