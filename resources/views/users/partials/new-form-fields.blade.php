@@ -135,33 +135,35 @@ $(document).ready(function() {
             return;
         }
 
+        let url = `/api/units/${unitId}/vacant-jabatans`;
+        @if ($user->exists)
+            url += `?user_id={{ $user->id }}`;
+        @endif
+
         $.ajax({
-            url: `/api/units/${unitId}/vacant-jabatans`,
+            url: url,
             type: 'GET',
             success: function(data) {
                 jabatanSelect.empty().append('<option value="">-- Pilih Jabatan --</option>');
 
-                // If editing, add the current user's jabatan to the list so it can be re-selected
-                @if($user->exists && $user->jabatan)
-                    if (unitId == '{{ $user->unit_id }}') {
-                        jabatanSelect.append(new Option('{{ $user->jabatan->name }} (Current)', '{{ $user->jabatan->id }}', false, true));
-                    }
-                @endif
-
                 if (data.length > 0) {
                     $.each(data, function(key, jabatan) {
-                        jabatanSelect.append(new Option(jabatan.name, jabatan.id));
+                        // Set the 'selected' property if the current jabatan id matches the old one
+                        let isSelected = (jabatan.id == selectedId);
+                        jabatanSelect.append(new Option(jabatan.name, jabatan.id, false, isSelected));
                     });
                 }
 
-                if (jabatanSelect.find('option').length <= 1) {
-                    jabatanSelect.html('<option value="">-- Tidak ada jabatan kosong --</option>');
-                } else {
-                    jabatanSelect.prop('disabled', false);
+                // After populating, if a selectedId was passed, ensure it's selected.
+                // This is a fallback for cases where the initial selection might not have caught.
+                if (selectedId) {
+                    jabatanSelect.val(selectedId);
                 }
 
-                if (selectedId) {
-                    jabatanSelect.val(selectedId).trigger('change');
+                if (jabatanSelect.find('option').length <= 1) {
+                    jabatanSelect.html('<option value="">-- Tidak ada jabatan tersedia --</option>');
+                } else {
+                    jabatanSelect.prop('disabled', false);
                 }
             },
             error: function() {

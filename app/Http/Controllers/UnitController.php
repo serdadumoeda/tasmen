@@ -255,11 +255,19 @@ class UnitController extends Controller
         return response()->json($children);
     }
 
-    public function getVacantJabatans(Unit $unit)
+    public function getVacantJabatans(Request $request, Unit $unit)
     {
-        // This is for the chained dropdown in user creation form
-        $vacantJabatans = $unit->jabatans()->whereNull('user_id')->get(['id', 'name']);
+        $userIdBeingEdited = $request->query('user_id');
 
-        return response()->json($vacantJabatans);
+        $query = $unit->jabatans()->where(function ($q) use ($userIdBeingEdited) {
+            $q->whereNull('user_id');
+            if ($userIdBeingEdited) {
+                $q->orWhere('user_id', $userIdBeingEdited);
+            }
+        });
+
+        $jabatans = $query->orderBy('name')->get(['id', 'name']);
+
+        return response()->json($jabatans);
     }
 }
