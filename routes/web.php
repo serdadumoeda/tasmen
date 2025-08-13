@@ -172,6 +172,10 @@ Route::middleware(['auth', 'superadmin'])->prefix('admin')->name('admin.')->grou
     Route::post('units/{unit}/jabatans', [UnitController::class, 'storeJabatan'])->name('units.jabatans.store');
     Route::delete('jabatans/{jabatan}', [UnitController::class, 'destroyJabatan'])->name('jabatans.destroy');
 
+    // User Import Routes
+    Route::get('/users/import', [UserController::class, 'showImportForm'])->name('users.import.show');
+    Route::post('/users/import', [UserController::class, 'handleImport'])->name('users.import.handle');
+
     // Impersonation Routes
     Route::get('/users/{user}/impersonate', [UserController::class, 'impersonate'])->name('users.impersonate');
 
