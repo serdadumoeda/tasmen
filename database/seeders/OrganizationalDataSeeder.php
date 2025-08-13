@@ -20,12 +20,18 @@ class OrganizationalDataSeeder extends Seeder
      */
     public function run(): void
     {
-        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        $dbDriver = DB::connection()->getDriverName();
+
+        if ($dbDriver === 'mysql') {
+            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        } elseif ($dbDriver === 'pgsql') {
+            DB::statement("SET session_replication_role = 'replica';");
+        }
+
         User::truncate();
         Jabatan::truncate();
         Unit::truncate();
         DB::table('unit_paths')->truncate();
-        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
         $json = File::get(database_path('data/users_profile_data.json'));
         $data = json_decode($json);
@@ -147,6 +153,12 @@ class OrganizationalDataSeeder extends Seeder
 
         // Set Atasan ID
         $this->setAtasan();
+
+        if ($dbDriver === 'mysql') {
+            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+        } elseif ($dbDriver === 'pgsql') {
+            DB::statement("SET session_replication_role = 'origin';");
+        }
 
         $this->command->getOutput()->progressFinish();
     }
