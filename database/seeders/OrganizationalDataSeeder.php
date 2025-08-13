@@ -38,7 +38,7 @@ class OrganizationalDataSeeder extends Seeder
 
         // Get data from JSON file
         $json = File::get(database_path('data/users_profile_data.json'));
-        $data = json_decode($json, true); // Decode as an associative array
+        $data = json_decode($json); // Decode as an array of objects
 
         if (json_last_error() !== JSON_ERROR_NONE) {
             $this->command->error('JSON file is invalid: ' . json_last_error_msg());
