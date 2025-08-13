@@ -214,7 +214,7 @@ $(document).ready(function() {
         if (nextSelect.length) {
             nextSelect.prop('disabled', true).html('<option value="">-- Memuat... --</option>');
             $.ajax({
-                url: `/units/${selectedValue}/children`,
+                url: `/api/units/${selectedValue}/children`,
                 type: 'GET',
                 success: function(data) {
                     const placeholder = nextSelect.data('placeholder');
