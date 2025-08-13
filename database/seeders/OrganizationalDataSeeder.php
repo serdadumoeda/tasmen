@@ -118,7 +118,6 @@ class OrganizationalDataSeeder extends Seeder
                 'email' => strtolower(str_replace(' ', '.', preg_replace('/[^a-zA-Z0-9\s]/', '', $item->Nama))) . '@example.com',
                 'password' => Hash::make('password'),
                 'unit_id' => $lastUnitId,
-                'jabatan_id' => $jabatan->id,
                 'role' => $role,
                 'status' => 'active',
                 'tempat_lahir' => $item->{'Tempat Lahir'},
