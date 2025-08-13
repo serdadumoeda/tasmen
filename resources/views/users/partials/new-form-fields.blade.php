@@ -39,7 +39,14 @@ function form_textarea($label, $name, $user, $is_required = false) {
         {{ form_input('Tempat Lahir', 'tempat_lahir', $user) }}
         {{ form_input('Tgl. Lahir', 'tgl_lahir', $user, 'text', false, 'placeholder="DD-MM-YYYY"') }}
         {{ form_textarea('Alamat', 'alamat', $user) }}
-        {{ form_input('Jenis Kelamin (L/P)', 'jenis_kelamin', $user) }}
+        <div class="mb-4">
+            <label for="jenis_kelamin" class="block font-semibold text-sm text-gray-700 mb-1">Jenis Kelamin</label>
+            <select id="jenis_kelamin" name="jenis_kelamin" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500">
+                <option value="">-- Pilih --</option>
+                <option value="L" @selected(old('jenis_kelamin', $user->jenis_kelamin ?? '') == 'L')>Laki-laki</option>
+                <option value="P" @selected(old('jenis_kelamin', $user->jenis_kelamin ?? '') == 'P')>Perempuan</option>
+            </select>
+        </div>
         {{ form_input('Agama', 'agama', $user) }}
         {{ form_input('No. HP', 'no_hp', $user) }}
         {{ form_input('Telepon', 'telepon', $user) }}
@@ -50,15 +57,15 @@ function form_textarea($label, $name, $user, $is_required = false) {
     <div class="md:col-span-1">
         <h3 class="text-lg font-medium text-gray-900 border-b pb-2 mb-4">Informasi Kepegawaian</h3>
         {{ form_input('Golongan', 'golongan', $user) }}
-        {{ form_input('TMT Golongan', 'tmt_gol', $user, 'text', false, 'placeholder="DD-MM-YYYY"') }}
         {{ form_input('Eselon', 'eselon', $user) }}
         {{ form_input('TMT Eselon', 'tmt_eselon', $user, 'text', false, 'placeholder="DD-MM-YYYY"') }}
         {{ form_input('Jenis Jabatan', 'jenis_jabatan', $user) }}
         {{ form_input('Grade', 'grade', $user) }}
         {{ form_input('Pendidikan Terakhir', 'pendidikan_terakhir', $user) }}
+        {{ form_input('Jurusan', 'pendidikan_jurusan', $user) }}
+        {{ form_input('Universitas', 'pendidikan_universitas', $user) }}
         {{ form_input('TMT CPNS', 'tmt_cpns', $user, 'text', false, 'placeholder="DD-MM-YYYY"') }}
         {{ form_input('TMT PNS', 'tmt_pns', $user, 'text', false, 'placeholder="DD-MM-YYYY"') }}
-        {{ form_input('TMT Jabatan', 'tmt_jabatan', $user, 'text', false, 'placeholder="DD-MM-YYYY"') }}
     </div>
 
     {{-- Kolom Kanan: Unit & Akses --}}

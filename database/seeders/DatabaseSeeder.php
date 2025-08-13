@@ -15,13 +15,14 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
         $this->call([
-            UnitSeeder::class,
-            UserSeeder::class,
-            ProjectSeeder::class,
-            TaskSeeder::class,
-            TimeLogSeeder::class,
-            SpecialAssignmentSeeder::class,
-            AdHocTaskSeeder::class,
+            OrganizationalDataSeeder::class,
+            // UnitSeeder::class,
+            // UserSeeder::class,
+            // ProjectSeeder::class,
+            // TaskSeeder::class,
+            // TimeLogSeeder::class,
+            // SpecialAssignmentSeeder::class,
+            // AdHocTaskSeeder::class,
         ]);
 
         // Panggil PerformanceCalculatorService untuk memastikan data kinerja terisi
