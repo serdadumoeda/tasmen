@@ -19,7 +19,7 @@ class UnitController extends Controller
     {
         $this->authorize('viewAny', Unit::class);
         $units = Unit::whereNull('parent_unit_id')
-                     ->with('childrenRecursive')
+                     ->with(['childrenRecursive.kepalaUnit', 'kepalaUnit'])
                      ->orderBy('name')
                      ->get();
 

@@ -173,10 +173,21 @@ class UserController extends Controller
             }
         }
 
-        DB::transaction(function () use ($userData, $jabatan) {
+        DB::transaction(function () use ($userData, $jabatan, $unit) {
             $user = User::create($userData);
             $jabatan->user_id = $user->id;
             $jabatan->save();
+
+            $leadershipRoles = [
+                User::ROLE_ESELON_I, User::ROLE_ESELON_II,
+                User::ROLE_KOORDINATOR, User::ROLE_SUB_KOORDINATOR
+            ];
+
+            // If the new user has a leadership role, set them as the head of their unit.
+            if (in_array($user->role, $leadershipRoles)) {
+                $unit->kepala_unit_id = $user->id;
+                $unit->save();
+            }
         });
 
         return redirect()->route('users.index')->with('success', 'User berhasil dibuat dan ditempatkan pada jabatan.');
@@ -251,50 +262,62 @@ class UserController extends Controller
         $pindahUnit = $oldUnitId !== $newJabatan->unit_id;
 
         DB::transaction(function () use ($user, $validated, $newJabatan, $request, $pindahUnit) {
-            // Kosongkan jabatan lama jika ada dan berbeda
+            $oldUnit = $user->unit;
+            $newUnit = $newJabatan->unit;
+
+            // 1. Clear old head of unit status if necessary
+            if ($oldUnit && $oldUnit->kepala_unit_id === $user->id) {
+                $newRole = $this->getRoleFromDepth($newUnit->depth);
+                $isLosingLeadership = !$this->isLeadershipRole($newRole);
+
+                if ($pindahUnit || $isLosingLeadership) {
+                    $oldUnit->kepala_unit_id = null;
+                    $oldUnit->save();
+                }
+            }
+
+            // 2. Free up old position
             if ($user->jabatan && $user->jabatan->id !== $newJabatan->id) {
                 $user->jabatan->user_id = null;
                 $user->jabatan->save();
             }
 
+            // 3. Prepare user update data
             $updateData = $validated;
-
             if ($request->filled('password')) {
                 $updateData['password'] = Hash::make($validated['password']);
             } else {
                 unset($updateData['password']);
             }
 
-            // Determine role based on the depth of the new unit in the hierarchy
-            $depth = $newJabatan->unit->depth;
-            $updateData['role'] = match ($depth) {
-                0 => User::ROLE_ESELON_I,
-                1 => User::ROLE_ESELON_II,
-                2 => User::ROLE_KOORDINATOR,
-                3 => User::ROLE_SUB_KOORDINATOR,
-                default => User::ROLE_STAF,
-            };
+            $updateData['role'] = $this->getRoleFromDepth($newUnit->depth);
 
-            // Convert date formats for database
             foreach(['tgl_lahir', 'tmt_eselon', 'tmt_cpns', 'tmt_pns'] as $dateField) {
                 if (!empty($updateData[$dateField])) {
                     $updateData[$dateField] = Carbon::createFromFormat('d-m-Y', $updateData[$dateField])->format('Y-m-d');
                 }
             }
 
-            // Jika user pindah unit, reset atasannya untuk mencegah relasi yang tidak valid.
             if ($pindahUnit) {
                 $updateData['atasan_id'] = null;
             }
 
+            // 4. Update the user
             $user->update($updateData);
+            $user->refresh(); // Refresh to get the latest data including the new role
 
-            // Tugaskan user ke jabatan baru
+            // 5. Assign new position
             $newJabatan->user_id = $user->id;
             $newJabatan->save();
+
+            // 6. Set new head of unit status if necessary
+            if ($this->isLeadershipRole($user->role)) {
+                $newUnit->kepala_unit_id = $user->id;
+                $newUnit->save();
+            }
         });
 
-        $newRole = $newJabatan->unit->level;
+        $newRole = $user->role;
         $roleChanged = $user->role !== $newRole;
 
         $redirect = redirect()->route('users.index');
@@ -462,5 +485,30 @@ class UserController extends Controller
         $importer->processData($data);
 
         return redirect()->route('users.index')->with('success', 'Data pengguna berhasil diimpor.');
+    }
+
+    /**
+     * Determines a user's role based on the depth of their unit in the hierarchy.
+     */
+    private function getRoleFromDepth(int $depth): string
+    {
+        return match ($depth) {
+            0 => User::ROLE_ESELON_I,
+            1 => User::ROLE_ESELON_II,
+            2 => User::ROLE_KOORDINATOR,
+            3 => User::ROLE_SUB_KOORDINATOR,
+            default => User::ROLE_STAF,
+        };
+    }
+
+    /**
+     * Checks if a given role is a leadership role.
+     */
+    private function isLeadershipRole(string $role): bool
+    {
+        return in_array($role, [
+            User::ROLE_ESELON_I, User::ROLE_ESELON_II,
+            User::ROLE_KOORDINATOR, User::ROLE_SUB_KOORDINATOR
+        ]);
     }
 }
