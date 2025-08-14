@@ -39,8 +39,8 @@
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-100">
                                 <tr>
-                                    <th class="py-3 px-6 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider rounded-tl-lg">Nama</th>
-                                    <th class="py-3 px-6 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Level</th>
+                                    <th class="py-3 px-6 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider rounded-tl-lg">Nama Unit</th>
+                                    <th class="py-3 px-6 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Kepala Unit</th>
                                     <th class="py-3 px-6 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Unit Atasan</th>
                                     <th class="py-3 px-6 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider rounded-tr-lg">Aksi</th>
                                 </tr>

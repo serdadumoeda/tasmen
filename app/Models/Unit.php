@@ -39,6 +39,11 @@ class Unit extends Model
         return $this->belongsTo(Unit::class, 'parent_unit_id');
     }
 
+    public function kepalaUnit(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'kepala_unit_id');
+    }
+
     public function childUnits(): HasMany
     {
         return $this->hasMany(Unit::class, 'parent_unit_id');

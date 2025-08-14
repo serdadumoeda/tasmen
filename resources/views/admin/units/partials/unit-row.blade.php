@@ -11,7 +11,7 @@
             {{ $unit->name }}
         </span>
     </td>
-    <td class="py-2 px-4 border-b text-sm text-gray-700">{{ $unit->level }}</td>
+    <td class="py-2 px-4 border-b text-sm text-gray-700">{{ $unit->kepalaUnit->name ?? '---' }}</td>
     <td class="py-2 px-4 border-b text-sm text-gray-700">{{ $unit->parentUnit->name ?? '-' }}</td>
     <td class="py-2 px-4 border-b text-center">
         <a href="{{ route('admin.units.edit', $unit) }}" class="text-indigo-600 hover:text-indigo-900 inline-flex items-center p-2 rounded-full hover:bg-indigo-50 transition-colors duration-200" title="Edit Unit">
