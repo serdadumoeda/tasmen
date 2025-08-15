@@ -187,13 +187,17 @@ class UnitController extends Controller
         // $user->peminjamanRequests()->delete();
 
         // c. Hapus objek yang dimiliki/dipimpin oleh user
-        // PENTING: Keputusan bisnis adalah menghapus, bukan me-reassign.
-        \App\Models\Project::where('leader_id', $user->id)->orWhere('owner_id', $user->id)->delete();
+        // PENTING: Logika ini terlalu destruktif dan dinonaktifkan. Menghapus user tidak seharusnya menghapus proyek.
+        // Proyek harus dialihkan secara manual atau melalui fitur terpisah.
+        // \App\Models\Project::where('leader_id', $user->id)->orWhere('owner_id', $user->id)->delete();
+
         // Lakukan hal yang sama untuk Task jika ada kolom creator_id
         // \App\Models\Task::where('creator_id', $user->id)->delete();
 
         // d. Update atasan untuk bawahan
-        \App\Models\User::where('atasan_id', $user->id)->update(['atasan_id' => $user->atasan_id]);
+        // Logika ini tidak diperlukan dan berpotensi salah.
+        // Foreign key constraint `onDelete('set null')` pada tabel users sudah menangani ini secara otomatis dan aman di level database.
+        // \App\Models\User::where('atasan_id', $user->id)->update(['atasan_id' => $user->atasan_id]);
 
         // e. Jabatan sudah akan terhapus saat unit dihapus,
         // jadi kita tidak perlu mengosongkannya di sini.

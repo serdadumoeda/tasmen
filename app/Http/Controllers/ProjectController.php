@@ -252,22 +252,13 @@ class ProjectController extends Controller
 
         $startDate = \Carbon\Carbon::parse($project->start_date);
         $endDate = \Carbon\Carbon::parse($project->end_date);
-        $period = \Carbon\CarbonPeriod::create($startDate, $endDate);
-        $labels = [];
-        foreach ($period as $date) {
-            $labels[] = $date->format('d M');
-        }
-        $totalHours = $project->tasks()->sum('estimated_hours');
-        $projectDurationDays = $startDate->diffInDays($endDate) + 1;
-        $plannedHoursPerDay = ($projectDurationDays > 0) ? $totalHours / $projectDurationDays : 0;
-        $plannedCumulative = [];
-        $cumulative = 0;
-        for ($i = 0; $i < count($labels); $i++) {
-            $cumulative += $plannedHoursPerDay;
-            $plannedCumulative[] = round($cumulative, 2);
-        }
+        $period = \Carbon\CarbonPeriod::create($startDate, $endDate)->toArray(); // Convert to array once
+
+        $labels = array_map(fn($date) => $date->format('d M'), $period);
+        $dateStrings = array_map(fn($date) => $date->format('Y-m-d'), $period);
+
         // --- Rencana (Planned) ---
-        $plannedDailyHours = array_fill_keys(array_map(fn($d) => $d->format('Y-m-d'), iterator_to_array($period)), 0);
+        $plannedDailyHours = array_fill_keys($dateStrings, 0);
         $tasks = $project->tasks()->whereNotNull('deadline')->where('estimated_hours', '>', 0)->get();
         $totalHours = $tasks->sum('estimated_hours');
 
@@ -310,8 +301,7 @@ class ProjectController extends Controller
 
         $actualCumulative = [];
         $cumulative = 0;
-        foreach ($period as $date) {
-            $dateString = $date->format('Y-m-d');
+        foreach ($dateStrings as $dateString) {
             if (isset($dailyActualHours[$dateString])) {
                 $cumulative += $dailyActualHours[$dateString];
             }

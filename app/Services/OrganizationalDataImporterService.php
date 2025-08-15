@@ -117,6 +117,7 @@ class OrganizationalDataImporterService
     {
         if (isset($item->Eselon)) {
             return match ($item->Eselon) {
+                'Menteri' => User::ROLE_MENTERI,
                 '1-A' => User::ROLE_ESELON_I,
                 '2-A' => User::ROLE_ESELON_II,
                 '3-A' => User::ROLE_KOORDINATOR,
@@ -129,7 +130,13 @@ class OrganizationalDataImporterService
 
     private function prepareUserData(object $item, int $unitId, string $role): array
     {
-        $email = strtolower(str_replace(' ', '.', preg_replace('/[^a-zA-Z0-9\s]/', '', $item->Nama))) . '@example.com';
+        $baseEmail = strtolower(str_replace(' ', '.', preg_replace('/[^a-zA-Z0-9\s]/', '', $item->Nama))) . '@example.com';
+        $email = $baseEmail;
+        $counter = 1;
+        while (User::where('email', $email)->where('nip', '!=', $item->NIP)->exists()) {
+            $email = str_replace('@', $counter . '@', $baseEmail);
+            $counter++;
+        }
 
         $data = [
             'name' => $item->Nama,
@@ -192,8 +199,11 @@ class OrganizationalDataImporterService
     private function isStructuralHead(string $role): bool
     {
         return in_array($role, [
-            User::ROLE_ESELON_I, User::ROLE_ESELON_II,
-            User::ROLE_KOORDINATOR, User::ROLE_SUB_KOORDINATOR
+            User::ROLE_MENTERI,
+            User::ROLE_ESELON_I,
+            User::ROLE_ESELON_II,
+            User::ROLE_KOORDINATOR,
+            User::ROLE_SUB_KOORDINATOR
         ]);
     }
 

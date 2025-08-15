@@ -157,14 +157,12 @@ class UserController extends Controller
         $userData['password'] = Hash::make($validated['password']);
 
         // Determine role based on the depth of the unit in the hierarchy
-        $depth = $unit->depth;
-        $userData['role'] = match ($depth) {
-            0 => User::ROLE_ESELON_I,
-            1 => User::ROLE_ESELON_II,
-            2 => User::ROLE_KOORDINATOR,
-            3 => User::ROLE_SUB_KOORDINATOR,
-            default => User::ROLE_STAF,
-        };
+        $userData['role'] = $this->getRoleFromDepth($unit->depth);
+
+        // Safeguard: Only Superadmins can create a Menteri
+        if ($userData['role'] === User::ROLE_MENTERI && !auth()->user()->isSuperAdmin()) {
+            return back()->withInput()->with('error', 'Anda tidak memiliki izin untuk membuat pengguna dengan peran Menteri.');
+        }
 
         // Convert date formats for database
         foreach(['tgl_lahir', 'tmt_eselon', 'tmt_cpns', 'tmt_pns'] as $dateField) {
@@ -259,6 +257,7 @@ class UserController extends Controller
         }
 
         $oldUnitId = $user->unit_id;
+        $oldRole = $user->role; // Capture the role before any changes
         $pindahUnit = $oldUnitId !== $newJabatan->unit_id;
 
         DB::transaction(function () use ($user, $validated, $newJabatan, $request, $pindahUnit) {
@@ -292,6 +291,11 @@ class UserController extends Controller
 
             $updateData['role'] = $this->getRoleFromDepth($newUnit->depth);
 
+            // Safeguard: Only Superadmins can assign a Menteri role
+            if ($updateData['role'] === User::ROLE_MENTERI && !auth()->user()->isSuperAdmin()) {
+                throw new \Illuminate\Auth\Access\AuthorizationException('Anda tidak memiliki izin untuk menetapkan peran Menteri.');
+            }
+
             foreach(['tgl_lahir', 'tmt_eselon', 'tmt_cpns', 'tmt_pns'] as $dateField) {
                 if (!empty($updateData[$dateField])) {
                     $updateData[$dateField] = Carbon::createFromFormat('d-m-Y', $updateData[$dateField])->format('Y-m-d');
@@ -317,8 +321,7 @@ class UserController extends Controller
             }
         });
 
-        $newRole = $user->role;
-        $roleChanged = $user->role !== $newRole;
+        $roleChanged = $oldRole !== $user->role;
 
         $redirect = redirect()->route('users.index');
 
@@ -329,7 +332,7 @@ class UserController extends Controller
         }
 
         if ($roleChanged && !$pindahUnit) { // Tampilkan pesan role change hanya jika tidak ada pesan pindah unit
-             $redirect->with('warning', "Role pengguna telah diperbarui dari '{$user->role}' menjadi '{$newRole}'.");
+             $redirect->with('warning', "Role pengguna telah diperbarui dari '{$oldRole}' menjadi '{$user->role}'.");
         }
 
         return $redirect;
@@ -470,10 +473,19 @@ class UserController extends Controller
         $file = fopen($path, 'r');
 
         $header = fgetcsv($file);
+        // Basic header validation
+        $expectedHeaders = ['Nama', 'NIP', 'Jabatan']; // Add more required headers
+        if (count(array_intersect($expectedHeaders, $header)) !== count($expectedHeaders)) {
+            return back()->with('error', 'Format file CSV tidak sesuai. Pastikan kolom ' . implode(', ', $expectedHeaders) . ' ada.');
+        }
 
         $data = [];
+        $skippedRows = [];
+        $rowNumber = 1;
         while ($row = fgetcsv($file)) {
+            $rowNumber++;
             if (count($header) !== count($row)) {
+                $skippedRows[] = $rowNumber;
                 continue; // Skip malformed rows
             }
             $data[] = array_combine($header, $row);
@@ -484,7 +496,12 @@ class UserController extends Controller
         $importer = new \App\Services\OrganizationalDataImporterService();
         $importer->processData($data);
 
-        return redirect()->route('users.index')->with('success', 'Data pengguna berhasil diimpor.');
+        $successMessage = 'Data pengguna berhasil diimpor.';
+        if (!empty($skippedRows)) {
+            $successMessage .= ' Peringatan: Beberapa baris dilewati karena format tidak sesuai (Baris: ' . implode(', ', $skippedRows) . ').';
+        }
+
+        return redirect()->route('users.index')->with('success', $successMessage);
     }
 
     /**
@@ -493,10 +510,11 @@ class UserController extends Controller
     private function getRoleFromDepth(int $depth): string
     {
         return match ($depth) {
-            0 => User::ROLE_ESELON_I,
-            1 => User::ROLE_ESELON_II,
-            2 => User::ROLE_KOORDINATOR,
-            3 => User::ROLE_SUB_KOORDINATOR,
+            0 => User::ROLE_MENTERI,
+            1 => User::ROLE_ESELON_I,
+            2 => User::ROLE_ESELON_II,
+            3 => User::ROLE_KOORDINATOR,
+            4 => User::ROLE_SUB_KOORDINATOR,
             default => User::ROLE_STAF,
         };
     }
@@ -507,8 +525,11 @@ class UserController extends Controller
     private function isLeadershipRole(string $role): bool
     {
         return in_array($role, [
-            User::ROLE_ESELON_I, User::ROLE_ESELON_II,
-            User::ROLE_KOORDINATOR, User::ROLE_SUB_KOORDINATOR
+            User::ROLE_MENTERI,
+            User::ROLE_ESELON_I,
+            User::ROLE_ESELON_II,
+            User::ROLE_KOORDINATOR,
+            User::ROLE_SUB_KOORDINATOR
         ]);
     }
 }
