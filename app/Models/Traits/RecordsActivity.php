@@ -39,8 +39,10 @@ trait RecordsActivity
 
     public function recordActivity($description)
     {
+        $owner = $this->activityOwner();
+
         $this->activity()->create([
-            'user_id' => auth()->id() ?? $this->activityOwner()->id,
+            'user_id' => auth()->id() ?? ($owner ? $owner->id : null),
             'description' => $description,
             'project_id' => class_basename($this) === 'Project' ? $this->id : $this->project_id,
             'before' => $this->getActivityChanges('before'),
