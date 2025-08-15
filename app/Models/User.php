@@ -161,6 +161,8 @@ class User extends Authenticatable
     }
 
 
+
+
     // --- QUERY SCOPES ---
 
     public function scopeTeamMembers($query, User $manager)
@@ -178,6 +180,19 @@ class User extends Authenticatable
         // Chain the query conditions.
         return $query->whereIn('unit_id', array_unique($unitIds))
                      ->where('id', '!=', $manager->id);
+    }
+
+    public function scopeInUnitAndSubordinatesOf($query, User $manager)
+    {
+        if (!$manager->unit) {
+            // If manager has no unit, scope to only themself.
+            return $query->where('id', $manager->id);
+        }
+
+        $unitIds = $manager->unit->getAllSubordinateUnitIds();
+        $unitIds[] = $manager->unit->id;
+
+        return $query->whereIn('unit_id', array_unique($unitIds));
     }
 
 

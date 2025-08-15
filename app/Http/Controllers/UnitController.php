@@ -112,6 +112,11 @@ class UnitController extends Controller
     {
         $this->authorize('delete', $unit);
 
+        // Hard-coded authorization check to ensure only superadmins can delete units.
+        if (!Auth::user()->isSuperAdmin()) {
+            return back()->with('error', 'Hanya Superadmin yang dapat menghapus unit organisasi.');
+        }
+
         try {
             DB::transaction(function () use ($unit) {
                 $this->deleteUnitRecursively($unit);

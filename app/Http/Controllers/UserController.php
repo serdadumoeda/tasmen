@@ -29,26 +29,15 @@ class UserController extends Controller
         $this->authorize('viewAny', User::class);
 
         $loggedInUser = Auth::user();
-        $query = User::with(['unit', 'jabatan', 'atasan.jabatan'])->orderBy('name');
+        $query = User::with(['unit', 'jabatan', 'atasan.jabatan']);
 
         // Jika pengguna yang login bukan Superadmin, batasi daftar pengguna
         if (!$loggedInUser->isSuperAdmin()) {
-            // 1. Jangan tampilkan superadmin lain
-            $query->where('role', '!=', User::ROLE_SUPERADMIN);
-
-            // 2. Ambil semua ID unit bawahan
-            if ($loggedInUser->unit) {
-                $subordinateUnitIds = $loggedInUser->unit->getAllSubordinateUnitIds();
-                // Tambahkan unit pengguna itu sendiri ke dalam daftar
-                $subordinateUnitIds[] = $loggedInUser->unit->id;
-
-                // Filter pengguna berdasarkan unit-unit ini
-                $query->whereIn('unit_id', $subordinateUnitIds);
-            } else {
-                // Jika pengguna tidak punya unit, dia hanya bisa melihat dirinya sendiri
-                $query->where('id', $loggedInUser->id);
-            }
+            $query->inUnitAndSubordinatesOf($loggedInUser)
+                  ->where('role', '!=', User::ROLE_SUPERADMIN);
         }
+
+        $query->orderBy('name');
 
         if ($request->has('search')) {
             $search = strtolower($request->input('search'));
@@ -149,6 +138,22 @@ class UserController extends Controller
             'tmt_cpns' => ['nullable', 'date_format:d-m-Y'],
             'tmt_pns' => ['nullable', 'date_format:d-m-Y'],
         ]);
+
+        // Custom validation for atasan_id based on role hierarchy
+        if ($request->filled('atasan_id')) {
+            $newJabatanForRole = \App\Models\Jabatan::find($validated['jabatan_id']);
+            $newUnitForRole = $newJabatanForRole->unit;
+            $newRole = $this->getRoleFromDepth($newUnitForRole->depth);
+
+            $atasan = User::find($request->atasan_id);
+
+            if (isset($this->VALID_PARENT_ROLES[$newRole])) {
+                $validParentRoles = $this->VALID_PARENT_ROLES[$newRole];
+                if (!$atasan || !in_array($atasan->role, $validParentRoles)) {
+                    return back()->withInput()->with('error', 'Atasan yang dipilih memiliki peran yang tidak sesuai dengan hierarki yang diizinkan.');
+                }
+            }
+        }
 
         $jabatan = \App\Models\Jabatan::find($validated['jabatan_id']);
         $unit = $jabatan->unit;

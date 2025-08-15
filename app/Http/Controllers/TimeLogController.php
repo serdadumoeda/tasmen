@@ -17,7 +17,11 @@ class TimeLogController extends Controller
         DB::transaction(function () use ($task) {
             // Hentikan dulu timer lain yang mungkin sedang berjalan untuk user ini
             // Kunci baris untuk mencegah race condition
-            $runningLog = Auth::user()->timeLogs()->whereNull('end_time')->lockForUpdate()->first();
+            $runningLog = Auth::user()->timeLogs()
+                ->whereNull('end_time')
+                ->orderBy('start_time', 'desc')
+                ->lockForUpdate()
+                ->first();
 
             if ($runningLog) {
                 $runningLog->end_time = now();

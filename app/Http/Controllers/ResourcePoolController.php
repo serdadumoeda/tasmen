@@ -34,7 +34,6 @@ class ResourcePoolController extends Controller
             ];
         });
 
-        // PERBAIKAN: Kita tidak lagi memerlukan $averageWorkload
         return view('resource_pool.index', [
             'workloadData' => $workloadData,
         ]);
@@ -45,6 +44,10 @@ class ResourcePoolController extends Controller
      */
     public function update(Request $request, User $user)
     {
+        // Prevent users from updating their own status, unless they are a Superadmin
+        if (Auth::id() === $user->id && !Auth::user()->isSuperAdmin()) {
+            return response()->json(['success' => false, 'message' => 'Anda tidak dapat mengubah status resource pool diri sendiri.'], 403);
+        }
 
         if (!Auth::user()->isSuperAdmin() && !Auth::user()->is($user->atasan) && !$user->isSubordinateOf(Auth::user())) {
             return response()->json(['success' => false, 'message' => 'Anda tidak berwenang mengubah status pengguna ini.'], 403);
