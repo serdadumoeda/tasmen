@@ -379,10 +379,19 @@ class UserController extends Controller
         return redirect()->route('users.index')->with('success', 'User berhasil dihapus dan jabatan telah dikosongkan.');
     }
 
-    public function getUsersByUnit(Unit $unit)
+    public function getUsersByUnitFromId(int $unitId)
+    {
+        $users = User::where('unit_id', $unitId)
+                     ->orderBy('name')
+                     ->get(['id', 'name', 'email']);
+
+        return response()->json(['users' => $users]);
+    }
+
+    public function getUsersByUnitFromModel(Unit $unit)
     {
         $users = $unit->users()
-            ->with('jabatan') // Eager load jabatan for efficiency
+            ->with('jabatan')
             ->orderBy('name')
             ->get()
             ->map(function ($user) {
