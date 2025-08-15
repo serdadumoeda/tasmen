@@ -45,22 +45,12 @@ class UnitController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:units,name',
-            'level' => ['required', Rule::in(array_column(\App\Models\Unit::LEVELS, 'name'))],
             'parent_unit_id' => 'nullable|exists:units,id',
-            'main_jabatan_name' => 'required|string|max:255',
         ]);
 
-        $unit = Unit::create([
-            'name' => $validated['name'],
-            'level' => $validated['level'],
-            'parent_unit_id' => $validated['parent_unit_id'],
-        ]);
+        Unit::create($validated);
 
-        $unit->jabatans()->create([
-            'name' => $validated['main_jabatan_name'],
-        ]);
-
-        return redirect()->route('admin.units.index')->with('success', 'Unit dan Jabatan Pimpinan berhasil dibuat.');
+        return redirect()->route('admin.units.index')->with('success', 'Unit berhasil dibuat.');
     }
 
     /**
@@ -93,29 +83,24 @@ class UnitController extends Controller
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255', Rule::unique('units')->ignore($unit->id)],
-            'level' => ['required', Rule::in(array_column(\App\Models\Unit::LEVELS, 'name'))],
             'parent_unit_id' => 'nullable|exists:units,id',
         ]);
 
-        // Validasi anti-loop hirarki
+        // Anti-loop validation
         $newParentId = $request->input('parent_unit_id');
         if ($newParentId) {
+            // A unit cannot be its own parent.
+            if ($newParentId == $unit->id) {
+                 return back()->withInput()->withErrors(['parent_unit_id' => 'Sebuah unit tidak dapat menjadi induk bagi dirinya sendiri.']);
+            }
+            // A unit cannot be a child of one of its own descendants.
             $subordinateIds = $unit->getAllSubordinateUnitIds();
-            // Sebuah unit tidak bisa menjadi parent bagi dirinya sendiri atau turunannya.
             if (in_array($newParentId, $subordinateIds)) {
                 return back()->withInput()->withErrors(['parent_unit_id' => 'Tidak dapat menetapkan unit ini sebagai anak dari salah satu turunannya sendiri.']);
             }
         }
 
-        // Simpan level lama untuk perbandingan
-        $oldLevel = $unit->level;
-
         $unit->update($validated);
-
-        // Jika level unit berubah, update role semua user di dalamnya
-        if ($oldLevel !== $validated['level']) {
-            $unit->users()->update(['role' => $validated['level']]);
-        }
 
         return redirect()->route('admin.units.index')->with('success', 'Unit berhasil diperbarui.');
     }
