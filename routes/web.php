@@ -184,3 +184,4 @@ Route::middleware(['auth', 'superadmin'])->prefix('admin')->name('admin.')->grou
 });
 
 Route::get('/api/units/{unit}/vacant-jabatans', [UnitController::class, 'getVacantJabatans'])->name('api.units.vacant-jabatans')->middleware('auth');
+Route::get('/api/units/{unit}/users', [UserController::class, 'getUsersByUnitFromModel'])->name('api.units.users')->middleware('auth');
