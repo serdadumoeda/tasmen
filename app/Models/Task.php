@@ -19,7 +19,6 @@ class Task extends Model
         'estimated_hours',
         'status',
         'priority',
-        'pending_review',
     ];
 
     /**
@@ -95,7 +94,7 @@ class Task extends Model
         // =============      LOGIKA PERPINDAHAN OTOMATIS      ============
         // ==========================================================
         // Logika ini hanya berjalan jika tugas tidak sedang dalam proses review manual.
-        if (!$this->pending_review) {
+        if ($this->status !== 'for_review') {
             if ($this->progress >= 100) {
                 $this->status = 'completed'; // Jika progress 100%, otomatis pindah ke Selesai.
             } elseif ($this->progress > 0) {

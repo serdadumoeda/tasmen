@@ -103,8 +103,8 @@ class AdHocTaskController extends Controller
             'description' => 'nullable|string',
             'deadline' => 'required|date',
             'estimated_hours' => 'required|numeric|min:0.1',
-            // PERBAIKAN: Memastikan status yang dikirim valid.
-            'status' => 'required|in:pending,in_progress,completed',
+            // PERBAIKAN: Memastikan status yang dikirim valid dan konsisten dengan TaskController.
+            'status' => 'required|in:pending,in_progress,for_review,completed',
             'progress' => 'required|integer|min:0|max:100',
             'file_upload' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx,xls,xlsx|max:2048',
         ]);

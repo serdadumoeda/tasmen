@@ -20,7 +20,7 @@ class ResourcePoolController extends Controller
         $workloadData = $teamMembers->map(function ($member) {
             // Hitung total jam dari tugas yang belum selesai
             $totalAssignedHours = $member->tasks()
-                ->where('status', '!=', 'Selesai')
+                ->where('status', '!=', 'completed')
                 ->sum('estimated_hours');
 
             // Hitung persentase beban kerja
@@ -46,7 +46,7 @@ class ResourcePoolController extends Controller
     public function update(Request $request, User $user)
     {
 
-        if (!Auth::user()->is($user->parent) && !$user->isSubordinateOf(Auth::user())) {
+        if (!Auth::user()->is($user->atasan) && !$user->isSubordinateOf(Auth::user())) {
             return response()->json(['success' => false, 'message' => 'Anda tidak berwenang mengubah status pengguna ini.'], 403);
         }
         
