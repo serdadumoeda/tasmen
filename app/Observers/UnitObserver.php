@@ -74,9 +74,11 @@ class UnitObserver
      */
     public function deleted(Unit $unit): void
     {
-        // The cascading delete on the foreign key in the migration should handle this.
-        // But as a fallback, we can explicitly delete.
-        DB::table('unit_paths')->where('descendant_id', $unit->id)->delete();
+        // When a unit is deleted, we must remove all path entries where it was
+        // either an ancestor or a descendant to prevent orphaned data.
+        DB::table('unit_paths')->where('descendant_id', $unit->id)
+                                ->orWhere('ancestor_id', $unit->id)
+                                ->delete();
     }
 
     /**

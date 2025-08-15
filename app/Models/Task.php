@@ -11,12 +11,15 @@ class Task extends Model
     use HasFactory, RecordsActivity; 
 
     protected $fillable = [
-        'title', 
-        'description', 
-        'deadline', 
+        'title',
+        'description',
+        'deadline',
         'progress',
-        'project_id', 
-        'estimated_hours'
+        'project_id',
+        'estimated_hours',
+        'status',
+        'priority',
+        'pending_review',
     ];
 
     /**
@@ -73,9 +76,8 @@ class Task extends Model
         
         if ($totalSubTasks > 0) {
             // Jika ada sub-tugas, hitung progress berdasarkan jumlah yang selesai.
-            $completedSubTasks = $this->relationLoaded('subTasks')
-                ? $subTasks->where('is_completed', true)->count()
-                : $subTasks->where('is_completed', true)->count(); // Query builder
+            // Logika disederhanakan: where()->count() berfungsi baik pada collection maupun query builder.
+            $completedSubTasks = $subTasks->where('is_completed', true)->count();
 
             $this->progress = round(($completedSubTasks / $totalSubTasks) * 100);
         } else {

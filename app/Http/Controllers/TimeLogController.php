@@ -14,10 +14,15 @@ class TimeLogController extends Controller
     public function start(Task $task)
     {
         // Hentikan dulu timer lain yang mungkin sedang berjalan untuk user ini
-        Auth::user()->timeLogs()->whereNull('end_time')->update([
-            'end_time' => now(),
-        ]);
+        $runningLog = Auth::user()->timeLogs()->whereNull('end_time')->first();
+        if ($runningLog) {
+            $runningLog->end_time = now();
+            $diffInSeconds = $runningLog->start_time->diffInSeconds($runningLog->end_time);
+            $runningLog->duration_in_minutes = round($diffInSeconds / 60);
+            $runningLog->save();
+        }
 
+        // Buat log waktu baru untuk tugas yang sekarang dimulai
         $timeLog = $task->timeLogs()->create([
             'user_id' => Auth::id(),
             'start_time' => now(),

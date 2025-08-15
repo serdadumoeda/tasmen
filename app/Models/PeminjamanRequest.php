@@ -10,9 +10,16 @@ class PeminjamanRequest extends Model
 {
     use HasFactory;
 
-    protected $guarded = [];
-
-
+    protected $fillable = [
+        'project_id',
+        'requester_id',
+        'requested_user_id',
+        'approver_id',
+        'status',
+        'message',
+        'rejection_reason',
+        'due_date',
+    ];
 
     public function project(): BelongsTo
     {
