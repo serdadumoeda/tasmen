@@ -19,19 +19,19 @@ class ProjectController extends Controller
     
     public function index()
     {
-        // PERBAIKAN: Sederhanakan query dan andalkan Global Scope (HierarchicalScope)
-        // untuk memfilter proyek secara otomatis berdasarkan peran pengguna.
         $user = Auth::user();
 
-        // HierarchicalScope akan secara otomatis:
-        // 1. Tidak menerapkan filter untuk Superadmin (menampilkan semua).
-        // 2. Menerapkan filter hierarki untuk Manajer (Eselon, Koordinator).
-        // 3. Menerapkan filter keterlibatan langsung untuk Staf.
-        $allProjects = Project::with('owner', 'leader')->latest()->get();
+        // The HierarchicalScope is now active, so this query is automatically
+        // filtered based on the user's role and hierarchy.
+        $allVisibleProjects = Project::with(['owner', 'leader', 'members'])->latest()->get();
 
-        // Pisahkan proyek berdasarkan kepemilikan untuk ditampilkan di view.
-        $ownedProjects = $allProjects->where('owner_id', $user->id);
-        $memberProjects = $allProjects->where('owner_id', '!=', $user->id);
+        // Separate projects into those owned by the user and those where they are a member.
+        $ownedProjects = $allVisibleProjects->where('owner_id', $user->id);
+
+        $memberProjects = $allVisibleProjects->filter(function ($project) use ($user) {
+            // A project is a "member project" if the user is a member but not the owner.
+            return $project->owner_id !== $user->id && $project->members->contains($user);
+        });
 
         return view('dashboard', compact('ownedProjects', 'memberProjects'));
     }
@@ -142,7 +142,7 @@ class ProjectController extends Controller
             }
         }
 
-        $projectMembers = $project->members()->orderBy('name')->get();
+        $projectMembers = $project->members->sortBy('name');
         $taskStatuses = $project->tasks->countBy('status');
         
         $stats = [

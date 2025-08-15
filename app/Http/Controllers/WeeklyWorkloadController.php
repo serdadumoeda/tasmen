@@ -46,9 +46,9 @@ class WeeklyWorkloadController extends Controller
         // 5. Eager load tugas untuk setiap anggota tim
         // Ini akan digunakan untuk menghitung beban kerja
         $subordinatesQuery->with(['tasks' => function ($query) {
+            // Get all unfinished tasks, including overdue ones.
             $query->where('status', '!=', 'completed')
-                  ->whereNotNull('deadline')
-                  ->where('deadline', '>', Carbon::now());
+                  ->whereNotNull('deadline');
         }]);
     
         // 6. Ambil data dengan paginasi

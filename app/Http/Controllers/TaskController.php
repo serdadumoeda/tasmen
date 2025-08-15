@@ -91,7 +91,7 @@ class TaskController extends Controller
             'description' => 'nullable|string',
             'deadline' => 'nullable|date',
             'progress' => 'required|integer|min:0|max:100',
-            'status' => 'required|string|in:pending,in_progress,completed,pending_review',
+            'status' => 'required|string|in:pending,in_progress,completed,for_review',
             'priority' => 'required|in:low,medium,high',
             'assignees' => 'nullable|array',
             'assignees.*' => 'exists:users,id',
@@ -108,7 +108,7 @@ class TaskController extends Controller
             // Jika progress 100% dan status sebelumnya BUKAN 'completed', jalankan alur persetujuan.
             if ((int)$validated['progress'] === 100 && $task->getOriginal('status') !== 'completed') {
                 if ($user->id !== $task->project->leader_id && $user->id !== $task->project->owner_id) {
-                    $task->status = 'pending_review';
+                    $task->status = 'for_review';
                 } else {
                     $task->status = 'completed';
                 }
@@ -171,8 +171,8 @@ class TaskController extends Controller
 
         // Setujui tugasnya
         $task->update([
+            'status' => 'completed',
             'progress' => 100,
-            'pending_review' => false,
         ]);
 
         // Beri notifikasi ke anggota tim bahwa tugas mereka telah disetujui (opsional)

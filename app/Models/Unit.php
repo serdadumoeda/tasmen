@@ -156,6 +156,7 @@ class Unit extends Model
 
     public function descendants()
     {
-        return $this->belongsToMany(self::class, 'unit_paths', 'ancestor_id', 'descendant_id');
+        return $this->belongsToMany(self::class, 'unit_paths', 'ancestor_id', 'descendant_id')
+                    ->where('depth', '>', 0);
     }
 }

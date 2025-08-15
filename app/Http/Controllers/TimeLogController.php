@@ -7,26 +7,31 @@ use App\Models\TimeLog;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class TimeLogController extends Controller
 {
     // Memulai timer untuk sebuah tugas
     public function start(Task $task)
     {
-        // Hentikan dulu timer lain yang mungkin sedang berjalan untuk user ini
-        $runningLog = Auth::user()->timeLogs()->whereNull('end_time')->first();
-        if ($runningLog) {
-            $runningLog->end_time = now();
-            $diffInSeconds = $runningLog->start_time->diffInSeconds($runningLog->end_time);
-            $runningLog->duration_in_minutes = round($diffInSeconds / 60);
-            $runningLog->save();
-        }
+        DB::transaction(function () use ($task) {
+            // Hentikan dulu timer lain yang mungkin sedang berjalan untuk user ini
+            // Kunci baris untuk mencegah race condition
+            $runningLog = Auth::user()->timeLogs()->whereNull('end_time')->lockForUpdate()->first();
 
-        // Buat log waktu baru untuk tugas yang sekarang dimulai
-        $timeLog = $task->timeLogs()->create([
-            'user_id' => Auth::id(),
-            'start_time' => now(),
-        ]);
+            if ($runningLog) {
+                $runningLog->end_time = now();
+                $diffInSeconds = $runningLog->start_time->diffInSeconds($runningLog->end_time);
+                $runningLog->duration_in_minutes = round($diffInSeconds / 60);
+                $runningLog->save();
+            }
+
+            // Buat log waktu baru untuk tugas yang sekarang dimulai
+            $task->timeLogs()->create([
+                'user_id' => Auth::id(),
+                'start_time' => now(),
+            ]);
+        });
 
         return response()->json([
             'message' => 'Timer dimulai.',
