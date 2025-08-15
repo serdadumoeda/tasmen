@@ -161,6 +161,26 @@ class User extends Authenticatable
     }
 
 
+    // --- QUERY SCOPES ---
+
+    public function scopeTeamMembers($query, User $manager)
+    {
+        if (!$manager->unit) {
+            // Return a query that yields no results if the manager has no unit.
+            return $query->whereRaw('1 = 0');
+        }
+
+        // Get IDs of all subordinate units.
+        $unitIds = $manager->unit->getAllSubordinateUnitIds();
+        // Add the manager's own unit ID to include colleagues.
+        $unitIds[] = $manager->unit->id;
+
+        // Chain the query conditions.
+        return $query->whereIn('unit_id', array_unique($unitIds))
+                     ->where('id', '!=', $manager->id);
+    }
+
+
     // --- FUNGSI BANTUAN & HAK AKSES ---
     
     public function isSubordinateOf(User $manager): bool

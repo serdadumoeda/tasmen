@@ -29,13 +29,8 @@ class WeeklyWorkloadController extends Controller
         if ($manager->role === User::ROLE_SUPERADMIN) {
             $subordinatesQuery = User::where('id', '!=', $manager->id);
         } else {
-            // Ambil ID unit dari semua unit di bawah manajer ini
-            $subordinateUnitIds = $manager->unit ? $manager->unit->getAllSubordinateUnitIds() : [];
-            // Tambahkan unit manajer itu sendiri
-            $subordinateUnitIds[] = $manager->unit_id;
-            
-            $subordinatesQuery = User::whereIn('unit_id', array_unique($subordinateUnitIds))
-                                     ->where('id', '!=', $manager->id);
+            // Gunakan scope yang sudah distandarisasi di model User
+            $subordinatesQuery = User::teamMembers($manager);
         }
     
         // 4. Terapkan filter pencarian nama jika ada

@@ -19,19 +19,15 @@ class BudgetRealizationController extends Controller
         $project = $budgetItem->project;
         $this->authorize('update', $project);
 
+        $sisaAnggaran = $budgetItem->remaining_cost;
+
         $validated = $request->validate([
-            'amount' => 'required|numeric|min:0',
+            'amount' => ['required', 'numeric', 'min:0', 'max:' . $sisaAnggaran],
             'transaction_date' => 'required|date',
             'description' => 'nullable|string',
-            // 'receipt_path' => 'nullable|file|mimes:jpg,png,pdf|max:2048' // Contoh jika ada upload
+        ], [
+            'amount.max' => 'Jumlah realisasi tidak boleh melebihi sisa anggaran yang tersedia (Rp ' . number_format($sisaAnggaran, 0, ',', '.') . ').'
         ]);
-
-        // Pastikan total realisasi tidak melebihi sisa anggaran (opsional, tapi direkomendasikan)
-        $sisaAnggaran = $budgetItem->remaining_cost;
-        if ($validated['amount'] > $sisaAnggaran) {
-             // Beri peringatan, tapi tetap lanjutkan. Atau batalkan dengan validasi.
-             // return back()->with('error', 'Jumlah realisasi melebihi sisa anggaran!');
-        }
 
 
         $budgetItem->realizations()->create([

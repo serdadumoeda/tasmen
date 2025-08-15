@@ -250,6 +250,22 @@ class UserController extends Controller
             'tmt_pns' => ['nullable', 'date_format:d-m-Y'],
         ]);
 
+        // Custom validation for atasan_id based on role hierarchy
+        if ($request->filled('atasan_id')) {
+            $newJabatanForRole = \App\Models\Jabatan::find($validated['jabatan_id']);
+            $newUnitForRole = $newJabatanForRole->unit;
+            $newRole = $this->getRoleFromDepth($newUnitForRole->depth);
+
+            $atasan = User::find($request->atasan_id);
+
+            if (isset($this->VALID_PARENT_ROLES[$newRole])) {
+                $validParentRoles = $this->VALID_PARENT_ROLES[$newRole];
+                if (!$atasan || !in_array($atasan->role, $validParentRoles)) {
+                    return back()->withInput()->with('error', 'Atasan yang dipilih memiliki peran yang tidak sesuai dengan hierarki yang diizinkan.');
+                }
+            }
+        }
+
         $newJabatan = \App\Models\Jabatan::find($validated['jabatan_id']);
 
         if ($newJabatan->user_id && $newJabatan->user_id !== $user->id) {
@@ -363,21 +379,22 @@ class UserController extends Controller
         return redirect()->route('users.index')->with('success', 'User berhasil dihapus dan jabatan telah dikosongkan.');
     }
 
-    public function getUsersByUnit($eselon2_id)
+    public function getUsersByUnit(Unit $unit)
     {
-        // Find the unit to ensure it exists, though the main logic relies on the ID.
-        $unit = Unit::find($eselon2_id);
+        $users = $unit->users()
+            ->with('jabatan') // Eager load jabatan for efficiency
+            ->orderBy('name')
+            ->get()
+            ->map(function ($user) {
+                return [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'jabatan' => $user->jabatan ? $user->jabatan->name : 'N/A',
+                ];
+            });
 
-        if (!$unit) {
-            return response()->json(['users' => []]); // Return empty if unit doesn't exist
-        }
-
-        // Fetch users belonging to the specified unit ID.
-        $users = User::where('unit_id', $eselon2_id)
-                     ->orderBy('name')
-                     ->get(['id', 'name', 'email']); // Select only necessary fields
-
-        return response()->json(['users' => $users]);
+        return response()->json($users);
     }
 
     public function getWorkloadSummary(User $user)
@@ -416,7 +433,6 @@ class UserController extends Controller
             return response()->json([]);
         }
 
-        // PERBAIKAN: Cari berdasarkan nama atau email
         $search = strtolower($query);
         $users = User::where(function ($q) use ($search) {
                         $q->whereRaw('LOWER(name) LIKE ?', ["%{$search}%"])

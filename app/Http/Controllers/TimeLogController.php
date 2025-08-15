@@ -77,14 +77,24 @@ class TimeLogController extends Controller
             'log_date' => 'required|date',
         ]);
 
-        $logTime = Carbon::parse($validated['log_date']);
-        
+        $startTime = Carbon::parse($validated['log_date']);
         $durationInMinutes = (int) $validated['duration_in_minutes'];
+        $endTime = $startTime->copy()->addMinutes($durationInMinutes);
+
+        // Validasi tumpang tindih
+        $isOverlapping = TimeLog::where('user_id', Auth::id())
+            ->where('start_time', '<', $endTime)
+            ->where('end_time', '>', $startTime)
+            ->exists();
+
+        if ($isOverlapping) {
+            return back()->withInput()->with('error', 'Waktu yang Anda masukkan tumpang tindih dengan catatan waktu yang sudah ada.');
+        }
 
         $timeLog = $task->timeLogs()->create([
             'user_id' => Auth::id(),
-            'start_time' => $logTime,
-            'end_time' => $logTime->copy()->addMinutes($durationInMinutes), 
+            'start_time' => $startTime,
+            'end_time' => $endTime,
             'duration_in_minutes' => $durationInMinutes,
         ]);
 
