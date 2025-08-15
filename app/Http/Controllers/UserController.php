@@ -363,6 +363,23 @@ class UserController extends Controller
         return redirect()->route('users.index')->with('success', 'User berhasil dihapus dan jabatan telah dikosongkan.');
     }
 
+    public function getUsersByUnit($eselon2_id)
+    {
+        // Find the unit to ensure it exists, though the main logic relies on the ID.
+        $unit = Unit::find($eselon2_id);
+
+        if (!$unit) {
+            return response()->json(['users' => []]); // Return empty if unit doesn't exist
+        }
+
+        // Fetch users belonging to the specified unit ID.
+        $users = User::where('unit_id', $eselon2_id)
+                     ->orderBy('name')
+                     ->get(['id', 'name', 'email']); // Select only necessary fields
+
+        return response()->json(['users' => $users]);
+    }
+
     public function getWorkloadSummary(User $user)
     {
         $activeProjectsCount = $user->projects()
@@ -374,7 +391,7 @@ class UserController extends Controller
 
         $activeAdhocTasksCount = $user->tasks()
                                      ->whereNull('project_id')
-                                     ->where('status', '!=', 'Selesai')
+                                     ->where('status', '!=', 'completed')
                                      ->count();
         
         $activeSkCount = $user->getActiveSkCountAttribute();
