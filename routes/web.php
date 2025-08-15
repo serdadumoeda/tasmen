@@ -31,7 +31,7 @@ Route::get('/', function () {
 });
 
 
-Route::get('/get-users-by-unit/{unit}', [UserController::class, 'getUsersByUnit'])->name('users.by-unit');
+Route::get('/get-users-by-unit/{unitId}', [UserController::class, 'getUsersByUnitFromId'])->name('users.by-unit');
 
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
