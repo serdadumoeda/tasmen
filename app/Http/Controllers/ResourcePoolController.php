@@ -71,8 +71,8 @@ class ResourcePoolController extends Controller
     {
         $members = User::where('is_in_resource_pool', true)
                         ->where('id', '!=', Auth::id()) // Jangan tampilkan diri sendiri
-                        ->with('parent') // Muat relasi atasan (jika diperlukan)
-                        ->get(['id', 'name', 'pool_availability_notes', 'role', 'parent_id']); // Sertakan 'role'
+                        ->with('atasan') // Muat relasi atasan (jika diperlukan)
+                        ->get(['id', 'name', 'pool_availability_notes', 'role', 'atasan_id']); // Sertakan 'role'
 
         return response()->json($members);
     }
