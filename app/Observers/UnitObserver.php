@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Models\Unit;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 
 class UnitObserver
 {
@@ -12,6 +13,8 @@ class UnitObserver
      */
     public function created(Unit $unit): void
     {
+        $this->clearHierarchyCache($unit);
+
         // Insert the path to itself
         DB::table('unit_paths')->insert([
             'ancestor_id' => $unit->id,
@@ -54,6 +57,13 @@ class UnitObserver
     public function updated(Unit $unit): void
     {
         if ($unit->isDirty('parent_unit_id')) {
+            // Clear cache for both old and new hierarchies
+            $this->clearHierarchyCache($unit);
+            $oldParentId = $unit->getOriginal('parent_unit_id');
+            if ($oldParentId) {
+                $this->clearHierarchyCache(Unit::find($oldParentId));
+            }
+
             // A simple approach: rebuild paths for the moved unit and all its descendants.
             $descendantIds = $unit->descendants()->pluck('id')->toArray();
 
@@ -74,6 +84,8 @@ class UnitObserver
      */
     public function deleted(Unit $unit): void
     {
+        $this->clearHierarchyCache($unit);
+
         // When a unit is deleted, we must remove all path entries where it was
         // either an ancestor or a descendant to prevent orphaned data.
         DB::table('unit_paths')->where('descendant_id', $unit->id)
@@ -87,5 +99,28 @@ class UnitObserver
     protected function rebuildPathsFor(Unit $unit)
     {
         $this->created($unit); // The logic is the same as creating a new unit
+    }
+
+    /**
+     * Clears the cached hierarchy for all managers affected by a unit change.
+     */
+    private function clearHierarchyCache(Unit $unit)
+    {
+        if (!$unit) {
+            return;
+        }
+
+        // Eager load kepalaUnit to avoid N+1 queries
+        $ancestors = $unit->ancestors()->with('kepalaUnit')->get();
+
+        // Add the unit itself to the collection, also with kepalaUnit loaded
+        $unit->load('kepalaUnit');
+        $affectedUnits = $ancestors->push($unit);
+
+        foreach ($affectedUnits as $affectedUnit) {
+            if ($affectedUnit->kepalaUnit) {
+                Cache::forget('subordinate_unit_ids_for_user_' . $affectedUnit->kepalaUnit->id);
+            }
+        }
     }
 }
