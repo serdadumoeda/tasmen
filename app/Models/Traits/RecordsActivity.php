@@ -66,8 +66,9 @@ trait RecordsActivity
         }
     
         // Jika tidak ada proyek (misal: tugas ad-hoc atau model User),
-        // pemilik aktivitas adalah user yang sedang login atau user itu sendiri.
-        return auth()->user() ?? $this;
+        // pemilik aktivitas adalah user yang sedang login.
+        // Jika tidak ada user login (misal: dari seeder), kembalikan null.
+        return auth()->user();
     }
 
     public function getActivityChanges($type)
