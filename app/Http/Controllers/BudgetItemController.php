@@ -97,6 +97,12 @@ class BudgetItemController extends Controller
     public function destroy(Project $project, BudgetItem $budgetItem)
     {
         $this->authorize('update', $project);
+
+        // Ensure the budget item belongs to the specified project
+        if ($budgetItem->project_id !== $project->id) {
+            throw new \Illuminate\Auth\Access\AuthorizationException('This action is unauthorized.');
+        }
+
         $budgetItem->delete();
         return redirect()->route('projects.budget-items.index', $project)->with('success', 'Item anggaran berhasil dihapus.');
     }
