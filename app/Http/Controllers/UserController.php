@@ -504,6 +504,13 @@ class UserController extends Controller
         return redirect()->route('users.index')->with('success', $successMessage);
     }
 
+    public function getUsersByUnit(Unit $unit)
+    {
+        // Eager load the jabatan for each user to display it if needed.
+        $users = $unit->users()->with('jabatan')->orderBy('name')->get();
+        return response()->json($users);
+    }
+
     /**
      * Determines a user's role based on the depth of their unit in the hierarchy.
      */
