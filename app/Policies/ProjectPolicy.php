@@ -35,7 +35,8 @@ class ProjectPolicy
 
         // Manajer bisa melihat proyek milik bawahannya
         if ($user->isManager() && $user->unit && $project->owner && $project->owner->unit) {
-            return in_array($project->owner->unit->id, $user->unit->getAllSubordinateUnitIds());
+            // Use the cached method to prevent N+1 performance issues
+            return $user->getSubordinateUnitIdsWithCache()->contains($project->owner->unit->id);
         }
 
         return false;
@@ -66,7 +67,8 @@ class ProjectPolicy
 
         // Manajer dari pemilik bisa update
         if ($user->isManager() && $user->unit && $project->owner && $project->owner->unit) {
-            return in_array($project->owner->unit->id, $user->unit->getAllSubordinateUnitIds());
+            // Use the cached method to prevent N+1 performance issues
+            return $user->getSubordinateUnitIdsWithCache()->contains($project->owner->unit->id);
         }
 
         return false;
