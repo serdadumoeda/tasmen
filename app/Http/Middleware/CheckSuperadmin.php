@@ -16,7 +16,13 @@ class CheckSuperadmin
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // Jika user tidak login ATAU rolenya bukan superadmin
+        // If an admin is impersonating another user, they should be able to leave.
+        // The original user's ID is in the session, proving they are an admin.
+        if (session()->has('impersonator_id')) {
+            return $next($request);
+        }
+
+        // If user is not logged in OR their role is not superadmin
         if (!auth()->check() || auth()->user()->role !== User::ROLE_SUPERADMIN) {
             abort(403, 'ANDA TIDAK MEMILIKI HAK AKSES.');
         }

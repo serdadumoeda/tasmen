@@ -15,6 +15,8 @@ use App\Policies\TaskPolicy;
 use App\Policies\UnitPolicy;
 use App\Policies\UserPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
+use Illuminate\Support\Facades\Gate;
+use App\Models\User;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -39,6 +41,22 @@ class AuthServiceProvider extends ServiceProvider
     {
         $this->registerPolicies();
 
-        //
+        Gate::before(function ($user, $ability) {
+            // First, check if a Superadmin is impersonating another user.
+            // If so, they should retain all their original permissions.
+            if (session()->has('impersonator_id')) {
+                $impersonator = User::find(session('impersonator_id'));
+                if ($impersonator && $impersonator->isSuperAdmin()) {
+                    return true;
+                }
+            }
+
+            // If not impersonating, fall back to the normal Superadmin check.
+            if ($user->isSuperAdmin()) {
+                return true;
+            }
+
+            return null; // Defer to the model's policy for other users.
+        });
     }
 }
