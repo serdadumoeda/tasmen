@@ -339,13 +339,44 @@ class ProjectController extends Controller
     public function teamDashboard(Project $project)
     {
         $this->authorize('viewTeamDashboard', $project);
-        $project->load(['members', 'tasks.assignees']);
+        // Eager load all necessary relationships to prevent N+1 queries
+        $project->load(['members', 'tasks.assignees', 'tasks.timeLogs']);
+
         $teamSummary = collect();
         foreach ($project->members as $member) {
             $memberTasks = $project->tasks->filter(function ($task) use ($member) {
                 return $task->assignees->contains($member);
             });
-            $averageProgress = $memberTasks->isEmpty() ? 0 : round($memberTasks->avg('progress'));
+
+            if ($memberTasks->isEmpty()) {
+                // Add member with zero stats if they have no tasks
+                $teamSummary->push([
+                    'member_id' => $member->id,
+                    'member_name' => $member->name,
+                    'total_tasks' => 0,
+                    'pending_tasks' => 0,
+                    'inprogress_tasks' => 0,
+                    'completed_tasks' => 0,
+                    'overdue_tasks' => 0,
+                    'total_estimated_hours' => 0,
+                    'total_logged_hours' => 0,
+                    'weighted_average_progress' => 0,
+                    'priority_counts' => collect(\App\Models\Task::PRIORITIES)->mapWithKeys(fn($p) => [$p => 0]),
+                ]);
+                continue;
+            }
+
+            $totalEstimatedHours = $memberTasks->sum('estimated_hours');
+            $totalLoggedMinutes = $memberTasks->flatMap->timeLogs->sum('duration_in_minutes');
+
+            $weightedProgressSum = $memberTasks->reduce(function ($carry, $task) {
+                return $carry + ($task->progress * $task->estimated_hours);
+            }, 0);
+
+            $weightedAverageProgress = ($totalEstimatedHours > 0)
+                ? round($weightedProgressSum / $totalEstimatedHours)
+                : round($memberTasks->avg('progress')); // Fallback to simple average if no hours estimated
+
             $teamSummary->push([
                 'member_id' => $member->id,
                 'member_name' => $member->name,
@@ -354,10 +385,32 @@ class ProjectController extends Controller
                 'inprogress_tasks' => $memberTasks->where('status', 'in_progress')->count(),
                 'completed_tasks' => $memberTasks->where('status', 'completed')->count(),
                 'overdue_tasks' => $memberTasks->where('deadline', '<', now())->where('status', '!=', 'completed')->count(),
-                'average_progress' => $averageProgress
+                'total_estimated_hours' => round($totalEstimatedHours, 1),
+                'total_logged_hours' => round($totalLoggedMinutes / 60, 1),
+                'weighted_average_progress' => $weightedAverageProgress,
+                'priority_counts' => $memberTasks->countBy('priority'),
             ]);
         }
         return view('projects.team-dashboard', compact('project', 'teamSummary'));
+    }
+
+    public function getTeamMemberTasks(Project $project, User $user)
+    {
+        $this->authorize('view', $project);
+
+        // Ensure the requested user is actually a member of this project
+        if (!$project->members->contains($user)) {
+            return response()->json(['error' => 'User not found in this project.'], 404);
+        }
+
+        $tasks = $user->tasks()
+            ->where('project_id', $project->id)
+            ->with('subTasks') // Eager load subtasks
+            ->orderBy('deadline', 'asc')
+            ->get();
+
+        // We return a JSON response that can be fetched with JavaScript.
+        return response()->json($tasks);
     }
 
     public function downloadReport(Project $project)
