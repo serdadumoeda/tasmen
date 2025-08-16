@@ -74,10 +74,10 @@ class ResourcePoolController extends Controller
     {
         $members = User::where('is_in_resource_pool', true)
                         ->where('id', '!=', Auth::id())
-                        ->with('atasan:id,name')   // muat nama atasan saja
+                        ->with('atasan:id,name') // Still only load id and name to be safe
                         ->get(['id','name','role','pool_availability_notes','atasan_id']);
 
-        // Transformasi ke array sederhana untuk mencegah siklus rekursif
+        // Transform to an array, but maintain the nested structure the frontend expects
         $formatted = $members->map(function ($user) {
             return [
                 'id'   => $user->id,
@@ -85,7 +85,10 @@ class ResourcePoolController extends Controller
                 'role' => $user->role,
                 'pool_availability_notes' => $user->pool_availability_notes,
                 'atasan_id'   => $user->atasan_id,
-                'atasan_name' => $user->atasan?->name,
+                'atasan' => $user->atasan ? [         // Recreate the nested atasan object
+                    'id' => $user->atasan->id,
+                    'name' => $user->atasan->name,
+                ] : null,
             ];
         });
 
