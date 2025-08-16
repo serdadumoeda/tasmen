@@ -55,7 +55,7 @@
                 <div class="p-6 text-gray-900">
                     
                     {{-- Blok Persetujuan untuk Pimpinan (jika ada) --}}
-                    @if ($task->project && $task->status === 'pending_review' && Gate::allows('approve', $task))
+                    @if ($task->project && $task->status === 'for_review' && Gate::allows('approve', $task))
                         <div class="mb-6 p-5 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 rounded-lg shadow-md flex items-start">
                             <i class="fas fa-exclamation-triangle text-yellow-500 text-2xl mr-4 mt-1"></i>
                             <div>
@@ -78,7 +78,7 @@
                         @csrf
                         @method('PUT')
                         
-                        <fieldset @if($task->status === 'pending_review' && !auth()->user()->can('approve', $task)) disabled @endif>
+                        <fieldset @if($task->status === 'for_review' && !auth()->user()->can('approve', $task)) disabled @endif>
                             
                             @if ($errors->any())
                                 <div class="mb-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg shadow-md" role="alert">
@@ -161,8 +161,8 @@
                                 <select name="status" id="status" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" required>
                                     <option value="pending" @selected(old('status', $task->status) == 'pending')>Menunggu</option>
                                     <option value="in_progress" @selected(old('status', $task->status) == 'in_progress')>Dikerjakan</option>
+                                    <option value="for_review" @selected(old('status', $task->status) == 'for_review')>Untuk Direview</option>
                                     <option value="completed" @selected(old('status', $task->status) == 'completed')>Selesai</option>
-                                    <option value="pending_review" @selected(old('status', $task->status) == 'pending_review')>Menunggu Review</option>
                                 </select>
                             </div>
 
@@ -170,10 +170,20 @@
                                 <label for="priority" class="block text-sm font-semibold text-gray-700 mb-1">
                                     <i class="fas fa-flag mr-2 text-gray-500"></i> Prioritas <span class="text-red-500">*</span>
                                 </label>
+                                @php
+                                $priorityLabels = [
+                                    'low' => 'Rendah',
+                                    'medium' => 'Sedang',
+                                    'high' => 'Tinggi',
+                                    'critical' => 'Kritis',
+                                ];
+                                @endphp
                                 <select name="priority" id="priority" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" required>
-                                    <option value="low" @selected(old('priority', $task->priority ?? 'medium') == 'low')>Rendah</option>
-                                    <option value="medium" @selected(old('priority', $task->priority ?? 'medium') == 'medium')>Sedang</option>
-                                    <option value="high" @selected(old('priority', $task->priority ?? 'medium') == 'high')>Tinggi</option>
+                                    @foreach(App\Models\Task::PRIORITIES as $priorityValue)
+                                        <option value="{{ $priorityValue }}" @selected(old('priority', $task->priority ?? 'medium') == $priorityValue)>
+                                            {{ $priorityLabels[$priorityValue] ?? ucfirst($priorityValue) }}
+                                        </option>
+                                    @endforeach
                                 </select>
                             </div>
                             
@@ -201,7 +211,7 @@
                         </fieldset>
 
                         {{-- Tombol Simpan --}}
-                        @if($task->status !== 'pending_review' || auth()->user()->can('approve', $task))
+                        @if($task->status !== 'for_review' || auth()->user()->can('approve', $task))
                             <div class="flex items-center justify-between mt-8 pt-6 border-t border-gray-200"> {{-- Border dan padding atas --}}
                                 @if ($task->project_id)
                                     <a href="{{ route('projects.show', $task->project) }}" class="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 font-medium transition-colors duration-200">

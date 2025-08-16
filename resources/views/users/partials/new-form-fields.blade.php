@@ -92,7 +92,6 @@ function form_textarea($label, $name, $user, $is_required = false) {
             <label for="sub_koordinator" class="block font-semibold text-sm text-gray-700 mb-1">4. Sub Koordinator</label>
             <select id="sub_koordinator" class="unit-select block mt-1 w-full rounded-lg shadow-sm border-gray-300" data-level="4" data-placeholder="-- Pilih Sub Koordinator --" disabled><option value="">-- Pilih Koordinator Dahulu --</option></select>
         </div>
-        <input type="hidden" name="unit_id" id="unit_id" value="{{ old('unit_id', $user->unit_id ?? '') }}">
         <div class="mb-4">
             <label for="jabatan_id" class="block font-semibold text-sm text-gray-700 mb-1">5. Jabatan</label>
             <select name="jabatan_id" id="jabatan_id" required class="block mt-1 w-full rounded-lg shadow-sm border-gray-300" disabled><option value="">-- Pilih Unit Kerja Terakhir --</option></select>

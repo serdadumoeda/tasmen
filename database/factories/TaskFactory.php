@@ -28,7 +28,7 @@ class TaskFactory extends Factory
             'deadline' => $this->faker->dateTimeBetween('+1 week', '+3 months'),
             'project_id' => Project::factory(),
             'estimated_hours' => $this->faker->numberBetween(4, 40),
-            'priority' => $this->faker->randomElement(['Low', 'Normal', 'High', 'Critical']),
+            'priority' => $this->faker->randomElement(Task::PRIORITIES),
         ];
     }
 }

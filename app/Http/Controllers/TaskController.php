@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Gate;
 use App\Notifications\TaskAssigned;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Notification;
 use App\Notifications\TaskRequiresApproval;
 use App\Models\SubTask;
@@ -92,7 +93,7 @@ class TaskController extends Controller
             'deadline' => 'nullable|date',
             'progress' => 'required|integer|min:0|max:100',
             'status' => 'required|string|in:pending,in_progress,completed,for_review',
-            'priority' => 'required|in:low,medium,high',
+            'priority' => ['required', Rule::in(Task::PRIORITIES)],
             'assignees' => 'nullable|array',
             'assignees.*' => 'exists:users,id',
             // PERBAIKAN: Menambahkan validasi untuk unggahan file

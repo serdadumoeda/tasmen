@@ -96,8 +96,11 @@ class PerformanceCalculatorService
     private function getPriorityWeight(string $priority): int
     {
         return match (strtolower($priority)) {
-            'critical' => 4, 'high' => 3, 'low' => 1,
-            default => 2, // Normal
+            'critical' => 4,
+            'high' => 3,
+            'medium' => 2,
+            'low' => 1,
+            default => 2, // Default to medium's weight
         };
     }
 

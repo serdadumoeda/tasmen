@@ -37,7 +37,7 @@
         <div class="flex justify-between mb-1 items-center">
             <span class="text-base font-medium text-blue-700">Progress</span>
             <div>
-                @if($task->pending_review)
+                @if($task->status === 'for_review')
                     <span class="px-2 py-1 text-xs font-semibold text-orange-800 bg-orange-200 rounded-full">Menunggu Review</span>
                 @endif
                 <span class="text-sm font-medium text-blue-700 ml-2">{{ $task->progress }}%</span>
@@ -51,7 +51,7 @@
     {{-- Tombol Aksi Persetujuan --}}
     <div class="mt-4 flex justify-end">
         @can('approve', $task)
-            @if($task->pending_review)
+            @if($task->status === 'for_review')
                 <form action="{{ route('tasks.approve', $task) }}" method="POST" class="inline-block">
                     @csrf
                     <button type="submit" class="px-4 py-2 bg-green-500 text-white text-sm font-bold rounded-lg hover:bg-green-600 shadow">Setujui & Selesaikan</button>

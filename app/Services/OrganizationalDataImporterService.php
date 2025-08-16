@@ -189,11 +189,31 @@ class OrganizationalDataImporterService
 
     private function getOrCreateJabatan(object $item, int $unitId, int $userId): Jabatan
     {
+        $jabatanType = $this->isJabatanStruktural($item) ? 'struktural' : 'fungsional';
+
         $jabatan = Jabatan::updateOrCreate(
             ['name' => $item->Jabatan, 'unit_id' => $unitId],
-            ['user_id' => $userId]
+            [
+                'user_id' => $userId,
+                'type' => $jabatanType,
+            ]
         );
         return $jabatan;
+    }
+
+    private function isJabatanStruktural(object $item): bool
+    {
+        if (empty($item->Eselon)) {
+            return false;
+        }
+
+        $role = $this->determineRole($item);
+
+        // Jabatan dianggap struktural jika role-nya adalah salah satu dari peran pimpinan
+        return in_array($role, [
+            User::ROLE_MENTERI, User::ROLE_ESELON_I, User::ROLE_ESELON_II,
+            User::ROLE_KOORDINATOR, User::ROLE_SUB_KOORDINATOR
+        ]);
     }
 
     private function isStructuralHead(string $role): bool

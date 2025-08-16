@@ -10,6 +10,8 @@ class Task extends Model
 {
     use HasFactory, RecordsActivity; 
 
+    public const PRIORITIES = ['low', 'medium', 'high', 'critical'];
+
     protected $fillable = [
         'title',
         'description',
