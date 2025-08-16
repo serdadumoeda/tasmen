@@ -142,8 +142,13 @@ class UserController extends Controller
         // Custom validation for atasan_id based on role hierarchy
         if ($request->filled('atasan_id')) {
             $newJabatanForRole = \App\Models\Jabatan::find($validated['jabatan_id']);
-            $newUnitForRole = $newJabatanForRole->unit;
-            $newRole = $this->getRoleFromDepth($newUnitForRole->depth);
+
+            // Correctly determine the prospective role based on Jabatan type
+            if ($newJabatanForRole->type === 'struktural') {
+                $newRole = $this->getRoleFromDepth($newJabatanForRole->unit->depth);
+            } else {
+                $newRole = User::ROLE_STAF;
+            }
 
             $atasan = User::find($request->atasan_id);
 
@@ -262,8 +267,13 @@ class UserController extends Controller
         // Custom validation for atasan_id based on role hierarchy
         if ($request->filled('atasan_id')) {
             $newJabatanForRole = \App\Models\Jabatan::find($validated['jabatan_id']);
-            $newUnitForRole = $newJabatanForRole->unit;
-            $newRole = $this->getRoleFromDepth($newUnitForRole->depth);
+
+            // Correctly determine the prospective role based on Jabatan type
+            if ($newJabatanForRole->type === 'struktural') {
+                $newRole = $this->getRoleFromDepth($newJabatanForRole->unit->depth);
+            } else {
+                $newRole = User::ROLE_STAF;
+            }
 
             $atasan = User::find($request->atasan_id);
 

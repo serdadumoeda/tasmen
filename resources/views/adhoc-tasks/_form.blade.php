@@ -45,19 +45,23 @@
         </div>
     </div>
     
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-            <label for="status" class="block font-semibold text-sm text-gray-700 mb-1">Status</label>
-            <select name="status" id="status" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition" required>
-                <option value="pending" @selected(old('status', $task->status ?? '') == 'pending')>Pending</option>
-                <option value="in_progress" @selected(old('status', $task->status ?? '') == 'in_progress')>In Progress</option>
-                <option value="completed" @selected(old('status', $task->status ?? '') == 'completed')>Completed</option>
-            </select>
-        </div>
-        <div>
-            <label for="progress" class="block font-semibold text-sm text-gray-700 mb-1">Progress: <span id="progress-value">{{ old('progress', $task->progress ?? 0) }}</span>%</label>
-            <input type="range" name="progress" id="progress" min="0" max="100" class="block mt-1 w-full h-2 rounded-full appearance-none bg-gray-200 cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-indigo-600 [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-indigo-600 [&::-moz-range-thumb]:shadow-md" value="{{ old('progress', $task->progress ?? 0) }}" oninput="document.getElementById('progress-value').innerText = this.value">
-        </div>
+    <div>
+        <label for="priority" class="block font-semibold text-sm text-gray-700 mb-1">Prioritas</label>
+        @php
+        $priorityLabels = [
+            'low' => 'Rendah',
+            'medium' => 'Sedang',
+            'high' => 'Tinggi',
+            'critical' => 'Kritis',
+        ];
+        @endphp
+        <select name="priority" id="priority" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150">
+            @foreach(App\Models\Task::PRIORITIES as $priorityValue)
+                <option value="{{ $priorityValue }}" @selected(old('priority', $task->priority ?? 'medium') == $priorityValue)>
+                    {{ $priorityLabels[$priorityValue] ?? ucfirst($priorityValue) }}
+                </option>
+            @endforeach
+        </select>
     </div>
     
     <div>

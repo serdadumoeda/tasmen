@@ -184,12 +184,16 @@ class UnitController extends Controller
 
         // b. Hapus data HasMany yang terkait langsung
         $user->timeLogs()->delete();
-        // Asumsi ada model Comment, Attachment, Notification, PeminjamanRequest
-        // Jika tidak ada, baris ini bisa di-comment atau dihapus.
-        // $user->comments()->delete();
-        // $user->attachments()->delete();
-        // $user->notifications()->delete();
-        // $user->peminjamanRequests()->delete();
+        $user->notifications()->delete();
+
+        // Asumsi ada model PeminjamanRequest yang berelasi dengan user
+        if (method_exists($user, 'peminjamanRequests')) {
+            $user->peminjamanRequests()->delete();
+        }
+
+        // Komentar dan lampiran terikat pada Task, bukan User secara langsung.
+        // Menghapusnya di sini akan rumit dan mungkin tidak diinginkan jika tugas
+        // itu sendiri tidak dihapus.
 
         // c. Hapus objek yang dimiliki/dipimpin oleh user
         // PENTING: Logika ini terlalu destruktif dan dinonaktifkan. Menghapus user tidak seharusnya menghapus proyek.
