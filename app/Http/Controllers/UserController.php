@@ -502,6 +502,12 @@ class UserController extends Controller
             return redirect()->route('users.index')->with('error', 'Tidak dapat meniru sesama Superadmin.');
         }
 
+        // TOTAL FIX: Prevent impersonating an unverified user to avoid a redirect loop
+        // with the 'verified' middleware.
+        if (!$user->hasVerifiedEmail()) {
+            return redirect()->route('admin.users.index')->with('error', 'Gagal meniru: Pengguna "' . $user->name . '" belum memverifikasi email mereka.');
+        }
+
         // Store the original user's ID
         $originalUserId = Auth::id();
 
