@@ -114,8 +114,8 @@ class UserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'unit_id' => ['required', 'exists:units,id'],
-            'jabatan_id' => ['required', Rule::exists('jabatans', 'id')->where('unit_id', $request->unit_id)->whereNull('user_id')],
+            // unit_id will be derived from jabatan_id, so it's not needed here.
+            'jabatan_id' => ['required', Rule::exists('jabatans', 'id')->whereNull('user_id')],
             'atasan_id' => ['nullable', 'exists:users,id'],
             'status' => ['required', 'in:active,suspended'],
             'nip' => ['nullable', 'string', 'max:255', 'unique:'.User::class],
@@ -159,10 +159,15 @@ class UserController extends Controller
         $unit = $jabatan->unit;
 
         $userData = $validated;
+        $userData['unit_id'] = $unit->id; // Set unit_id from the position's unit
         $userData['password'] = Hash::make($validated['password']);
 
-        // Determine role based on the depth of the unit in the hierarchy
-        $userData['role'] = $this->getRoleFromDepth($unit->depth);
+        // Determine role based on the Jabatan type
+        if ($jabatan->type === 'struktural') {
+            $userData['role'] = $this->getRoleFromDepth($unit->depth);
+        } else {
+            $userData['role'] = User::ROLE_STAF;
+        }
 
         // Safeguard: Only Superadmins can create a Menteri
         if ($userData['role'] === User::ROLE_MENTERI && !auth()->user()->isSuperAdmin()) {
@@ -230,7 +235,6 @@ class UserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
             'password' => ['nullable', 'confirmed', Rules\Password::defaults()],
-            'unit_id' => ['required', 'exists:units,id'],
             'jabatan_id' => ['required', 'exists:jabatans,id'],
             'atasan_id' => ['nullable', 'exists:users,id', 'not_in:'.$user->id],
             'status' => ['required', 'in:active,suspended'],
@@ -272,6 +276,8 @@ class UserController extends Controller
         }
 
         $newJabatan = \App\Models\Jabatan::find($validated['jabatan_id']);
+        // Force unit_id to be consistent with the selected Jabatan's unit
+        $validated['unit_id'] = $newJabatan->unit_id;
 
         if ($newJabatan->user_id && $newJabatan->user_id !== $user->id) {
             return back()->withInput()->with('error', 'Jabatan yang dipilih sudah diisi oleh pengguna lain.');
@@ -310,7 +316,12 @@ class UserController extends Controller
                 unset($updateData['password']);
             }
 
-            $updateData['role'] = $this->getRoleFromDepth($newUnit->depth);
+            // Determine role based on the new Jabatan type
+            if ($newJabatan->type === 'struktural') {
+                $updateData['role'] = $this->getRoleFromDepth($newUnit->depth);
+            } else {
+                $updateData['role'] = User::ROLE_STAF;
+            }
 
             // Safeguard: Only Superadmins can assign a Menteri role
             if ($updateData['role'] === User::ROLE_MENTERI && !auth()->user()->isSuperAdmin()) {
