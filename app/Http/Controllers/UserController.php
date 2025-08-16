@@ -537,10 +537,11 @@ class UserController extends Controller
 
         // Login back as the original user
         $originalUserId = session('impersonator_id');
-        Auth::login(User::find($originalUserId));
 
-        // Forget the impersonator_id from session
+        // Forget the impersonator_id from session BEFORE logging back in
         session()->forget('impersonator_id');
+
+        Auth::login(User::find($originalUserId));
 
         return redirect()->route('users.index')->with('success', 'Sesi peniruan telah berakhir.');
     }
