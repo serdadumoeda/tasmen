@@ -101,7 +101,8 @@ class AdHocTaskController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'deadline' => 'required|date',
+            'start_date' => 'nullable|date',
+            'deadline' => 'required|date|after_or_equal:start_date',
             'estimated_hours' => 'required|numeric|min:0.1',
             'priority' => ['nullable', \Illuminate\Validation\Rule::in(Task::PRIORITIES)],
             'file_upload' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx,xls,xlsx|max:2048',

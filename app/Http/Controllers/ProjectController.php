@@ -266,8 +266,13 @@ class ProjectController extends Controller
         $totalHours = $tasks->sum('estimated_hours');
 
         foreach ($tasks as $task) {
-            $taskStart = $startDate; // Asumsi semua pekerjaan bisa dimulai dari awal proyek
+            // Gunakan start_date tugas jika ada, jika tidak, gunakan tanggal mulai proyek
+            $taskStart = $task->start_date ? \Carbon\Carbon::parse($task->start_date) : $startDate;
             $taskEnd = \Carbon\Carbon::parse($task->deadline);
+            // Pastikan tanggal mulai tidak setelah tanggal selesai
+            if ($taskStart->gt($taskEnd)) {
+                continue; // Lewati tugas dengan data tanggal yang tidak valid
+            }
             $taskDurationDays = $taskStart->diffInDays($taskEnd) + 1;
 
             if ($taskDurationDays > 0) {
@@ -309,6 +314,12 @@ class ProjectController extends Controller
                 $cumulative += $dailyActualHours[$dateString];
             }
             $actualCumulative[] = round($cumulative, 2);
+        }
+
+        // Normalize to percentage if totalHours is not zero
+        if ($totalHours > 0) {
+            $plannedCumulative = array_map(fn($val) => round(($val / $totalHours) * 100, 2), $plannedCumulative);
+            $actualCumulative = array_map(fn($val) => round(($val / $totalHours) * 100, 2), $actualCumulative);
         }
 
         $chartData = [
@@ -400,34 +411,50 @@ class ProjectController extends Controller
         $tasks = $project->tasks()
             ->whereNotNull('deadline')
             ->with('assignees')
-            ->get(['id', 'title', 'deadline', 'status', 'project_id']);
+            ->get(['id', 'title', 'start_date', 'deadline', 'status', 'project_id', 'priority']);
 
         $events = $tasks->map(function ($task) use ($project) {
-            $color = '#3b82f6'; 
-            switch ($task->status) {
-                case 'pending': $color = '#facc15'; break;
-                case 'completed': $color = '#22c55e'; break;
-                case 'for_review': $color = '#f97316'; break;
+            $color = '#3b82f6'; // Default blue
+            switch ($task->priority) {
+                case 'high': $color = '#ef4444'; break; // red-500
+                case 'critical': $color = '#8b5cf6'; break; // violet-500
+                case 'medium': $color = '#f97316'; break; // orange-500
+                case 'low': $color = '#22c55e'; break; // green-500
             }
-            if ($task->deadline < now() && $task->status !== 'completed') {
-                $color = '#ef4444';
+            if ($task->status === 'completed') {
+                $color = '#6b7280'; // gray-500
             }
 
             $assigneeNames = $task->assignees->pluck('name')->join(', ');
 
             return [
+                'id' => $task->id,
                 'title' => $task->title,
-                'start' => $task->deadline,
+                'start' => $task->start_date ? $task->start_date->format('Y-m-d') : $task->deadline->format('Y-m-d'),
+                'end' => $task->deadline->addDay()->format('Y-m-d'), // Add a day to make the end date inclusive
                 'url'   => route('projects.show', $project->id) . '#task-' . $task->id,
                 'color' => $color,
                 'borderColor' => $color,
                 'extendedProps' => [
                     'project_name' => $project->name,
                     'assignees' => $assigneeNames ?: 'Belum ditugaskan',
-                    'status' => ucfirst(str_replace('_', ' ', $task->status))
+                    'status' => ucfirst(str_replace('_', ' ', $task->status)),
+                    'priority' => ucfirst($task->priority),
                 ]
             ];
         });
+
+        // Add the project duration as a background event
+        if ($project->start_date && $project->end_date) {
+            $events->prepend([
+                'id' => 'project_duration',
+                'title' => 'Durasi Proyek',
+                'start' => $project->start_date->format('Y-m-d'),
+                'end' => $project->end_date->addDay()->format('Y-m-d'),
+                'display' => 'background',
+                'color' => '#eef2ff' // indigo-50
+            ]);
+        }
 
         return response()->json($events);
     }
