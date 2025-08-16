@@ -19,9 +19,8 @@ class WeeklyWorkloadController extends Controller
         $search = $request->input('search');
     
         // 2. Otorisasi: Hanya manajer yang diizinkan yang bisa mengakses
-        // Anda bisa sesuaikan logikanya, di sini saya asumsikan semua manajer bisa
-        if (!$manager) { // Contoh sederhana, pastikan user adalah manajer
-            abort(403, 'Anda harus login sebagai manajer untuk mengakses halaman ini.');
+        if (!$manager || !$manager->canManageUsers()) {
+            abort(403, 'Anda tidak memiliki izin untuk mengakses halaman ini.');
         }
     
         // 3. Dapatkan query dasar untuk mengambil data bawahan

@@ -93,7 +93,7 @@ class GlobalDashboardController extends Controller
             $activityQuery->whereIn('user_id', $visibleUserIds);
         }
 
-        $recentActivities = $activityQuery->take(15)->get();
+        $recentActivities = $activityQuery->paginate(15, ['*'], 'activityPage');
 
         return view('global-dashboard', compact('stats', 'allProjects', 'recentActivities', 'chartData', 'search', 'status'));
     }

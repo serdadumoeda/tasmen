@@ -93,7 +93,7 @@ class PeminjamanRequestController extends Controller
         $peminjamanRequest = PeminjamanRequest::create($request->all() + [
             'requester_id' => Auth::id(),
             'approver_id' => $approver->id,
-            'due_date' => now()->addWeekday()
+            'due_date' => now()->addWeekdays(3)
         ]);
 
         Notification::send($approver, new PeminjamanRequested($peminjamanRequest));

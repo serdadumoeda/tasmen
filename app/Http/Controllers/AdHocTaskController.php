@@ -103,9 +103,7 @@ class AdHocTaskController extends Controller
             'description' => 'nullable|string',
             'deadline' => 'required|date',
             'estimated_hours' => 'required|numeric|min:0.1',
-            // PERBAIKAN: Memastikan status yang dikirim valid dan konsisten dengan TaskController.
-            'status' => 'required|in:pending,in_progress,for_review,completed',
-            'progress' => 'required|integer|min:0|max:100',
+            'priority' => ['nullable', \Illuminate\Validation\Rule::in(Task::PRIORITIES)],
             'file_upload' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx,xls,xlsx|max:2048',
         ]);
         
@@ -117,9 +115,12 @@ class AdHocTaskController extends Controller
             $assigneeIds[] = $user->id;
         }
 
-        // Menggunakan fill untuk keamanan dan kemudahan
+        // Menggunakan fill untuk keamanan dan kemudahan, dan menambahkan default
         $task = new Task();
         $task->fill($validated);
+        $task->status = 'pending';
+        $task->progress = 0;
+        $task->priority = $request->input('priority', 'medium'); // Set default priority
         $task->project_id = null; // Menandakan ini tugas ad-hoc
         $task->save();
         

@@ -21,17 +21,20 @@ class ProjectController extends Controller
     {
         $user = Auth::user();
 
-        // The HierarchicalScope is now active, so this query is automatically
-        // filtered based on the user's role and hierarchy.
-        $allVisibleProjects = Project::with(['owner', 'leader', 'members'])->latest()->get();
+        // The HierarchicalScope is automatically applied.
+        $baseQuery = Project::with(['owner', 'leader', 'members'])->latest();
 
-        // Separate projects into those owned by the user and those where they are a member.
-        $ownedProjects = $allVisibleProjects->where('owner_id', $user->id);
+        // Create two separate paginated queries.
+        $ownedProjects = (clone $baseQuery)
+            ->where('owner_id', $user->id)
+            ->paginate(10, ['*'], 'ownedPage');
 
-        $memberProjects = $allVisibleProjects->filter(function ($project) use ($user) {
-            // A project is a "member project" if the user is a member but not the owner.
-            return $project->owner_id !== $user->id && $project->members->contains($user);
-        });
+        $memberProjects = (clone $baseQuery)
+            ->where('owner_id', '!=', $user->id)
+            ->whereHas('members', function ($query) use ($user) {
+                $query->where('user_id', $user->id);
+            })
+            ->paginate(10, ['*'], 'memberPage');
 
         return view('dashboard', compact('ownedProjects', 'memberProjects'));
     }
