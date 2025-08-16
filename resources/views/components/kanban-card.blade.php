@@ -23,6 +23,7 @@
         $progress = $task->progress;
         $assignees = $task->assignees;
         $statusColorClass = match($task->priority) {
+            'critical' => 'border-l-purple-600',
             'high' => 'border-l-red-500',
             'medium' => 'border-l-yellow-500',
             'low' => 'border-l-green-500',

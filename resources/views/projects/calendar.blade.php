@@ -140,6 +140,10 @@
             let priorityColor = '';
             if (info.event.extendedProps.priority) {
                 switch (info.event.extendedProps.priority.toLowerCase()) {
+                    case 'critical':
+                        priorityIcon = '<i class="fas fa-bomb text-purple-600 mr-2"></i>';
+                        priorityColor = 'text-purple-700';
+                        break;
                     case 'high':
                         priorityIcon = '<i class="fas fa-fire text-red-500 mr-2"></i>';
                         priorityColor = 'text-red-700';

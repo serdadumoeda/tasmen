@@ -293,7 +293,11 @@ class UserController extends Controller
 
             // 1. Clear old head of unit status if necessary
             if ($oldUnit && $oldUnit->kepala_unit_id === $user->id) {
-                $newRole = $this->getRoleFromDepth($newUnit->depth);
+                // Correctly determine the new role based on the new position's type
+                $newRole = ($newJabatan->type === 'struktural')
+                    ? $this->getRoleFromDepth($newUnit->depth)
+                    : User::ROLE_STAF;
+
                 $isLosingLeadership = !$this->isLeadershipRole($newRole);
 
                 if ($pindahUnit || $isLosingLeadership) {
