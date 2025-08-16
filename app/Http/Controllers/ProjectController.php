@@ -278,8 +278,11 @@ class ProjectController extends Controller
             if ($taskDurationDays > 0) {
                 $hoursPerDay = $task->estimated_hours / $taskDurationDays;
                 for ($date = $taskStart->copy(); $date->lte($taskEnd); $date->addDay()) {
-                    if ($date->lte($endDate)) { // Hanya tambahkan jika masih dalam periode proyek
-                       $plannedDailyHours[$date->format('Y-m-d')] += $hoursPerDay;
+                    $currentDateStr = $date->format('Y-m-d');
+                    // Directly check if the date key exists in our planned hours array.
+                    // This is the most robust way to prevent the "Undefined array key" error.
+                    if (isset($plannedDailyHours[$currentDateStr])) {
+                       $plannedDailyHours[$currentDateStr] += $hoursPerDay;
                     }
                 }
             }
