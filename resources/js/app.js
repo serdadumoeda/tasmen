@@ -1,5 +1,8 @@
 import './bootstrap';
 import Alpine from 'alpinejs';
+import Sortable from 'sortablejs';
+
+window.Sortable = Sortable;
 
 // Import jQuery and make it globally available
 import $ from 'jquery';
