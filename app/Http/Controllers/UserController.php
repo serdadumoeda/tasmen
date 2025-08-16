@@ -498,15 +498,18 @@ class UserController extends Controller
     public function impersonate(User $user)
     {
         // Cannot impersonate other superadmins
-        if ($user->isSuperAdmin()) {
+        if ($user->isSuperAdmin() && !$user->is(auth()->user())) {
             return redirect()->route('users.index')->with('error', 'Tidak dapat meniru sesama Superadmin.');
         }
 
-        // Store original user's id in session
-        session(['impersonator_id' => Auth::id()]);
+        // Store the original user's ID
+        $originalUserId = Auth::id();
 
-        // Login as the new user
+        // Login as the new user. This will regenerate the session.
         Auth::login($user);
+
+        // Now, store the original user's ID in the new session.
+        session(['impersonator_id' => $originalUserId]);
 
         return redirect()->route('dashboard')->with('success', 'Anda sekarang meniru ' . $user->name);
     }
