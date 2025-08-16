@@ -134,8 +134,10 @@ class ExecutiveSummaryController extends Controller
     
     private function getAllSubordinatesIteratively(User $user, $includeSelf = false): Collection
     {
-        if ($user->role === User::ROLE_SUPERADMIN) {
-            return User::where('id', '!=', $user->id)->get();
+        // SUPERADMIN FIX: A Superadmin does not have organizational subordinates in the same way.
+        // Loading all users is a performance killer and incorrect. Return an empty collection.
+        if ($user->isSuperAdmin()) {
+            return collect();
         }
 
         if (!$user->unit) {

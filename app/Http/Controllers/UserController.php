@@ -353,6 +353,11 @@ class UserController extends Controller
             }
 
             // 4. Update the user
+            // Safeguard: Prevent a Superadmin's role from being accidentally changed by this form.
+            // The Superadmin role should be managed separately and intentionally.
+            if ($user->isSuperAdmin()) {
+                unset($updateData['role']);
+            }
             $user->update($updateData);
             $user->refresh(); // Refresh to get the latest data including the new role
 
