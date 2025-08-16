@@ -73,10 +73,22 @@ class ResourcePoolController extends Controller
     public function getAvailableMembers()
     {
         $members = User::where('is_in_resource_pool', true)
-                        ->where('id', '!=', Auth::id()) // Jangan tampilkan diri sendiri
-                        ->with('atasan') // Muat relasi atasan (jika diperlukan)
-                        ->get(['id', 'name', 'pool_availability_notes', 'role', 'atasan_id']); // Sertakan 'role'
+                        ->where('id', '!=', Auth::id())
+                        ->with('atasan:id,name')   // muat nama atasan saja
+                        ->get(['id','name','role','pool_availability_notes','atasan_id']);
 
-        return response()->json($members);
+        // Transformasi ke array sederhana untuk mencegah siklus rekursif
+        $formatted = $members->map(function ($user) {
+            return [
+                'id'   => $user->id,
+                'name' => $user->name,
+                'role' => $user->role,
+                'pool_availability_notes' => $user->pool_availability_notes,
+                'atasan_id'   => $user->atasan_id,
+                'atasan_name' => $user->atasan?->name,
+            ];
+        });
+
+        return response()->json($formatted);
     }
 }

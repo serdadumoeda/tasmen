@@ -34,15 +34,6 @@ class Unit extends Model
         'parent_unit_id',
     ];
 
-    /**
-     * The relationships that should be hidden for serialization.
-     *
-     * @var array
-     */
-    protected $hidden = [
-        'kepalaUnit',
-    ];
-
     public function parentUnit(): BelongsTo
     {
         return $this->belongsTo(Unit::class, 'parent_unit_id');
