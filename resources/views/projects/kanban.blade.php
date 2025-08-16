@@ -104,7 +104,7 @@
         </div>
     </div>
 
-    <x-slot name="scripts">
+    @push('scripts')
         <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
         {{-- Axios sudah di-bundle di app.js, jadi tidak perlu CDN --}}
         <script>
@@ -171,5 +171,5 @@
                 });
             });
         </script>
-    </x-slot>
+    @endpush
 </x-app-layout>
