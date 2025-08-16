@@ -20,6 +20,9 @@ class User extends Authenticatable
     // Trait HasApiTokens sekarang akan ditemukan
     use HasApiTokens, HasFactory, Notifiable, RecordsActivity;
 
+    // Cache for subordinate unit IDs to prevent N+1 issues in policies.
+    public ?\Illuminate\Support\Collection $subordinateUnitIdsCache = null;
+
     public const ROLE_MENTERI = 'Menteri';
     public const ROLE_SUPERADMIN = 'Superadmin';
     public const ROLE_ESELON_I = 'Eselon I';
@@ -204,7 +207,27 @@ class User extends Authenticatable
             return false;
         }
 
-        return in_array($this->unit->id, $manager->unit->getAllSubordinateUnitIds());
+        // Use the cached method to prevent N+1 performance issues.
+        return in_array($this->unit->id, $manager->getSubordinateUnitIdsWithCache()->toArray());
+    }
+
+    /**
+     * Get all subordinate unit IDs, with in-request caching to prevent N+1 problems.
+     */
+    public function getSubordinateUnitIdsWithCache(): \Illuminate\Support\Collection
+    {
+        if ($this->subordinateUnitIdsCache !== null) {
+            return $this->subordinateUnitIdsCache;
+        }
+
+        if (!$this->unit) {
+            return $this->subordinateUnitIdsCache = collect();
+        }
+
+        // Note: The toArray() and collect() might seem redundant, but it ensures
+        // the result is a new collection instance, preventing accidental modification
+        // of the original model's relations if it were an Eloquent collection.
+        return $this->subordinateUnitIdsCache = collect($this->unit->getAllSubordinateUnitIds());
     }
     
     public function getAllSubordinateIds()
