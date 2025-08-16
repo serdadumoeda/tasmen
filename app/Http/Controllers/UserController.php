@@ -505,6 +505,13 @@ class UserController extends Controller
             return redirect()->route('users.index')->with('error', 'Tidak dapat meniru sesama Superadmin.');
         }
 
+        // TOTAL FIX: Prevent impersonating an unverified user to avoid a redirect loop
+        // with the 'verified' middleware.
+        if (!$user->hasVerifiedEmail()) {
+            // The user list route is 'users.index', not 'admin.users.index'.
+            return redirect()->route('users.index')->with('error', 'Gagal meniru: Pengguna "' . $user->name . '" belum memverifikasi email mereka.');
+        }
+
         // Store the original user's ID
         $originalUserId = Auth::id();
 
@@ -530,11 +537,10 @@ class UserController extends Controller
 
         // Login back as the original user
         $originalUserId = session('impersonator_id');
-
-        // Forget the impersonator_id from session BEFORE logging back in
-        session()->forget('impersonator_id');
-
         Auth::login(User::find($originalUserId));
+
+        // Forget the impersonator_id from session
+        session()->forget('impersonator_id');
 
         return redirect()->route('users.index')->with('success', 'Sesi peniruan telah berakhir.');
     }

@@ -73,25 +73,10 @@ class ResourcePoolController extends Controller
     public function getAvailableMembers()
     {
         $members = User::where('is_in_resource_pool', true)
-                        ->where('id', '!=', Auth::id())
-                        ->with('atasan:id,name') // Still only load id and name to be safe
-                        ->get(['id','name','role','pool_availability_notes','atasan_id']);
+                        ->where('id', '!=', Auth::id()) // Jangan tampilkan diri sendiri
+                        ->with('atasan') // Muat relasi atasan (jika diperlukan)
+                        ->get(['id', 'name', 'pool_availability_notes', 'role', 'atasan_id']); // Sertakan 'role'
 
-        // Transform to an array, but maintain the nested structure the frontend expects
-        $formatted = $members->map(function ($user) {
-            return [
-                'id'   => $user->id,
-                'name' => $user->name,
-                'role' => $user->role,
-                'pool_availability_notes' => $user->pool_availability_notes,
-                'atasan_id'   => $user->atasan_id,
-                'atasan' => $user->atasan ? [         // Recreate the nested atasan object
-                    'id' => $user->atasan->id,
-                    'name' => $user->atasan->name,
-                ] : null,
-            ];
-        });
-
-        return response()->json($formatted);
+        return response()->json($members);
     }
 }
