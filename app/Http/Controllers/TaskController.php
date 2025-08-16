@@ -90,7 +90,8 @@ class TaskController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'deadline' => 'nullable|date',
+            'start_date' => 'nullable|date',
+            'deadline' => 'nullable|date|after_or_equal:start_date',
             'progress' => 'required|integer|min:0|max:100',
             'status' => 'required|string|in:pending,in_progress,completed,for_review',
             'priority' => ['required', Rule::in(Task::PRIORITIES)],

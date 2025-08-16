@@ -141,10 +141,16 @@
                             
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6"> {{-- Gap dan margin lebih besar --}}
                                 <div>
+                                    <label for="start_date" class="block font-semibold text-sm text-gray-700 mb-1">
+                                        <i class="fas fa-calendar-day mr-2 text-gray-500"></i> Tanggal Mulai
+                                    </label>
+                                    <input type="date" name="start_date" id="start_date" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" value="{{ old('start_date', optional($task->start_date)->format('Y-m-d')) }}">
+                                </div>
+                                <div>
                                     <label for="deadline" class="block font-semibold text-sm text-gray-700 mb-1">
                                         <i class="fas fa-calendar-alt mr-2 text-gray-500"></i> Deadline <span class="text-red-500">*</span>
                                     </label>
-                                    <input type="date" name="deadline" id="deadline" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" value="{{ old('deadline', \Carbon\Carbon::parse($task->deadline)->format('Y-m-d')) }}" required>
+                                    <input type="date" name="deadline" id="deadline" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" value="{{ old('deadline', optional($task->deadline)->format('Y-m-d')) }}" required>
                                 </div>
                                 <div>
                                     <label for="estimated_hours" class="block font-semibold text-sm text-gray-700 mb-1">
