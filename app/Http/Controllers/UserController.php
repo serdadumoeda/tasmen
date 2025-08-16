@@ -60,14 +60,17 @@ class UserController extends Controller
 
         if ($loggedInUser->isSuperAdmin()) {
             // Superadmin melihat seluruh pohon unit dari level teratas.
+            // FIX: Remove 'childrenRecursive.users' to prevent memory exhaustion from infinite loops in data.
+            // The view will lazy-load children, which is safer.
             $units = Unit::whereNull('parent_unit_id')
-                         ->with(['users', 'childrenRecursive.users'])
+                         ->with('users')
                          ->orderBy('name')
                          ->get();
         } else {
             // Pengguna lain melihat sub-pohon yang dimulai dari unit mereka sendiri.
+            // FIX: Remove 'childrenRecursive.users' to prevent memory exhaustion.
             $units = Unit::where('id', $loggedInUser->unit_id)
-                         ->with(['users', 'childrenRecursive.users'])
+                         ->with('users')
                          ->orderBy('name')
                          ->get();
         }
@@ -505,7 +508,8 @@ class UserController extends Controller
         // TOTAL FIX: Prevent impersonating an unverified user to avoid a redirect loop
         // with the 'verified' middleware.
         if (!$user->hasVerifiedEmail()) {
-            return redirect()->route('admin.users.index')->with('error', 'Gagal meniru: Pengguna "' . $user->name . '" belum memverifikasi email mereka.');
+            // The user list route is 'users.index', not 'admin.users.index'.
+            return redirect()->route('users.index')->with('error', 'Gagal meniru: Pengguna "' . $user->name . '" belum memverifikasi email mereka.');
         }
 
         // Store the original user's ID
