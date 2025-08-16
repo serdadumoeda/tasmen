@@ -78,6 +78,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/attachments/{attachment}', [AttachmentController::class, 'destroy'])->name('attachments.destroy');
 
     Route::get('/projects/{project}/team', [ProjectController::class, 'teamDashboard'])->name('projects.team.dashboard');
+    Route::get('/projects/{project}/team/{user}/tasks', [ProjectController::class, 'getTeamMemberTasks'])->name('projects.team-member-tasks');
 
     Route::get('/global-dashboard', [GlobalDashboardController::class, 'index'])->name('global.dashboard');
 
