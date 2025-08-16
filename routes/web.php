@@ -37,9 +37,6 @@ use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    // Impersonation Leave Route
-    Route::get('/admin/users/impersonate/leave', [UserController::class, 'leaveImpersonate'])->name('admin.users.impersonate.leave');
-
     // Rute default setelah login adalah Beranda baru.
     Route::get('/dashboard', [HomeController::class, 'index'])->name('dashboard');
     // Rute untuk daftar kegiatan (proyek)
@@ -179,6 +176,7 @@ Route::middleware(['auth', 'superadmin'])->prefix('admin')->name('admin.')->grou
 
     // Impersonation Routes
     Route::get('/users/{user}/impersonate', [UserController::class, 'impersonate'])->name('users.impersonate');
+    Route::get('/users/impersonate/leave', [UserController::class, 'leaveImpersonate'])->name('users.impersonate.leave');
 
     // Activity Log Route
     Route::get('/activities', [\App\Http\Controllers\ActivityController::class, 'index'])->name('activities.index');
