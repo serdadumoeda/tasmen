@@ -49,11 +49,6 @@ class Unit extends Model
         return $this->hasMany(Unit::class, 'parent_unit_id');
     }
 
-    public function childrenRecursive()
-    {
-        return $this->children()->with('childrenRecursive');
-    }
-
     public function jabatans(): HasMany
     {
         return $this->hasMany(Jabatan::class);
