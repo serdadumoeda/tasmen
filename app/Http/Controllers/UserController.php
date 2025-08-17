@@ -31,7 +31,6 @@ class UserController extends Controller
         $loggedInUser = Auth::user();
         $query = User::with(['unit', 'jabatan', 'atasan.jabatan']);
 
-        // Jika pengguna yang login bukan Superadmin, batasi daftar pengguna
         if (!$loggedInUser->isSuperAdmin()) {
             $query->inUnitAndSubordinatesOf($loggedInUser)
                   ->where('role', '!=', User::ROLE_SUPERADMIN);
@@ -59,18 +58,13 @@ class UserController extends Controller
         $loggedInUser = Auth::user();
 
         if ($loggedInUser->isSuperAdmin()) {
-            // Superadmin melihat seluruh pohon unit dari level teratas.
-            // FIX: Remove 'childrenRecursive.users' to prevent memory exhaustion from infinite loops in data.
-            // The view will lazy-load children, which is safer.
             $units = Unit::whereNull('parent_unit_id')
-                         ->with('users')
+                         ->with(['users', 'childrenRecursive'])
                          ->orderBy('name')
                          ->get();
         } else {
-            // Pengguna lain melihat sub-pohon yang dimulai dari unit mereka sendiri.
-            // FIX: Remove 'childrenRecursive.users' to prevent memory exhaustion.
             $units = Unit::where('id', $loggedInUser->unit_id)
-                         ->with('users')
+                         ->with(['users', 'childrenRecursive'])
                          ->orderBy('name')
                          ->get();
         }
@@ -101,10 +95,9 @@ class UserController extends Controller
     {
         $this->authorize('create', User::class);
         $supervisors = User::orderBy('name')->get();
-        // Get top-level units (Eselon I) by checking for null parent_unit_id
         $eselonIUnits = Unit::whereNull('parent_unit_id')->orderBy('name')->get();
         $user = new User();
-        $selectedUnitPath = []; // For create form, the path is empty
+        $selectedUnitPath = [];
 
         return view('users.create', compact('user', 'supervisors', 'eselonIUnits', 'selectedUnitPath'));
     }
@@ -117,7 +110,6 @@ class UserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            // unit_id will be derived from jabatan_id, so it's not needed here.
             'jabatan_id' => ['required', Rule::exists('jabatans', 'id')->whereNull('user_id')],
             'atasan_id' => ['nullable', 'exists:users,id'],
             'status' => ['required', 'in:active,suspended'],
@@ -142,47 +134,31 @@ class UserController extends Controller
             'tmt_pns' => ['nullable', 'date_format:d-m-Y'],
         ]);
 
+        $jabatan = \App\Models\Jabatan::find($validated['jabatan_id']);
+        $unit = $jabatan->unit;
+
+        $userData = $validated;
+        $userData['unit_id'] = $unit->id;
+        $userData['password'] = Hash::make($validated['password']);
+
+        // Determine role based on the Jabatan type
+        $userData['role'] = ($jabatan->type === 'struktural') ? $this->getRoleFromDepth($unit->depth) : User::ROLE_STAF;
+
+        if ($userData['role'] === User::ROLE_MENTERI && !auth()->user()->isSuperAdmin()) {
+            return back()->withInput()->with('error', 'Anda tidak memiliki izin untuk membuat pengguna dengan peran Menteri.');
+        }
+
         // Custom validation for atasan_id based on role hierarchy
         if ($request->filled('atasan_id')) {
-            $newJabatanForRole = \App\Models\Jabatan::find($validated['jabatan_id']);
-
-            // Correctly determine the prospective role based on Jabatan type
-            if ($newJabatanForRole->type === 'struktural') {
-                $newRole = $this->getRoleFromDepth($newJabatanForRole->unit->depth);
-            } else {
-                $newRole = User::ROLE_STAF;
-            }
-
             $atasan = User::find($request->atasan_id);
-
-            if (isset($this->VALID_PARENT_ROLES[$newRole])) {
-                $validParentRoles = $this->VALID_PARENT_ROLES[$newRole];
+            if (isset($this->VALID_PARENT_ROLES[$userData['role']])) {
+                $validParentRoles = $this->VALID_PARENT_ROLES[$userData['role']];
                 if (!$atasan || !in_array($atasan->role, $validParentRoles)) {
                     return back()->withInput()->with('error', 'Atasan yang dipilih memiliki peran yang tidak sesuai dengan hierarki yang diizinkan.');
                 }
             }
         }
-
-        $jabatan = \App\Models\Jabatan::find($validated['jabatan_id']);
-        $unit = $jabatan->unit;
-
-        $userData = $validated;
-        $userData['unit_id'] = $unit->id; // Set unit_id from the position's unit
-        $userData['password'] = Hash::make($validated['password']);
-
-        // Determine role based on the Jabatan type
-        if ($jabatan->type === 'struktural') {
-            $userData['role'] = $this->getRoleFromDepth($unit->depth);
-        } else {
-            $userData['role'] = User::ROLE_STAF;
-        }
-
-        // Safeguard: Only Superadmins can create a Menteri
-        if ($userData['role'] === User::ROLE_MENTERI && !auth()->user()->isSuperAdmin()) {
-            return back()->withInput()->with('error', 'Anda tidak memiliki izin untuk membuat pengguna dengan peran Menteri.');
-        }
-
-        // Convert date formats for database
+        
         foreach(['tgl_lahir', 'tmt_eselon', 'tmt_cpns', 'tmt_pns'] as $dateField) {
             if (!empty($userData[$dateField])) {
                 $userData[$dateField] = Carbon::createFromFormat('d-m-Y', $userData[$dateField])->format('Y-m-d');
@@ -194,13 +170,8 @@ class UserController extends Controller
             $jabatan->user_id = $user->id;
             $jabatan->save();
 
-            $leadershipRoles = [
-                User::ROLE_ESELON_I, User::ROLE_ESELON_II,
-                User::ROLE_KOORDINATOR, User::ROLE_SUB_KOORDINATOR
-            ];
-
-            // If the new user has a leadership role, set them as the head of their unit.
-            if (in_array($user->role, $leadershipRoles)) {
+            // Set new head of unit status if necessary
+            if ($this->isLeadershipRole($user->role)) {
                 $unit->kepala_unit_id = $user->id;
                 $unit->save();
             }
@@ -213,13 +184,11 @@ class UserController extends Controller
     {
         $this->authorize('update', $user);
         $supervisors = User::where('id', '!=', $user->id)->orderBy('name')->get();
-        // Get top-level units (Eselon I) by checking for null parent_unit_id
         $eselonIUnits = Unit::whereNull('parent_unit_id')->orderBy('name')->get();
 
         $selectedUnitPath = [];
         if ($user->unit) {
             $user->load('unit');
-            // Get ancestors ordered from top-level down to the direct parent
             $ancestors = $user->unit->ancestors()->orderBy('depth', 'asc')->get();
             $selectedUnitPath = $ancestors->pluck('id')->toArray();
             $selectedUnitPath[] = $user->unit->id;
@@ -267,19 +236,24 @@ class UserController extends Controller
             'tmt_pns' => ['nullable', 'date_format:d-m-Y'],
         ]);
 
-        // Custom validation for atasan_id based on role hierarchy
+        $newJabatan = \App\Models\Jabatan::find($validated['jabatan_id']);
+        $validated['unit_id'] = $newJabatan->unit_id;
+
+        if ($newJabatan->user_id && $newJabatan->user_id !== $user->id) {
+            return back()->withInput()->with('error', 'Jabatan yang dipilih sudah diisi oleh pengguna lain.');
+        }
+
+        $oldUnit = $user->unit;
+        $oldRole = $user->role;
+        $pindahUnit = $user->unit_id !== $newJabatan->unit_id;
+
+        // Determine the prospective new role based on the new jabatan
+        $newUnit = $newJabatan->unit;
+        $newRole = ($newJabatan->type === 'struktural') ? $this->getRoleFromDepth($newUnit->depth) : User::ROLE_STAF;
+
+        // Custom validation for atasan_id based on new role hierarchy
         if ($request->filled('atasan_id')) {
-            $newJabatanForRole = \App\Models\Jabatan::find($validated['jabatan_id']);
-
-            // Correctly determine the prospective role based on Jabatan type
-            if ($newJabatanForRole->type === 'struktural') {
-                $newRole = $this->getRoleFromDepth($newJabatanForRole->unit->depth);
-            } else {
-                $newRole = User::ROLE_STAF;
-            }
-
             $atasan = User::find($request->atasan_id);
-
             if (isset($this->VALID_PARENT_ROLES[$newRole])) {
                 $validParentRoles = $this->VALID_PARENT_ROLES[$newRole];
                 if (!$atasan || !in_array($atasan->role, $validParentRoles)) {
@@ -287,44 +261,23 @@ class UserController extends Controller
                 }
             }
         }
-
-        $newJabatan = \App\Models\Jabatan::find($validated['jabatan_id']);
-        // Force unit_id to be consistent with the selected Jabatan's unit
-        $validated['unit_id'] = $newJabatan->unit_id;
-
-        if ($newJabatan->user_id && $newJabatan->user_id !== $user->id) {
-            return back()->withInput()->with('error', 'Jabatan yang dipilih sudah diisi oleh pengguna lain.');
-        }
-
-        $oldUnitId = $user->unit_id;
-        $oldRole = $user->role; // Capture the role before any changes
-        $pindahUnit = $oldUnitId !== $newJabatan->unit_id;
-
-        DB::transaction(function () use ($user, $validated, $newJabatan, $request, $pindahUnit) {
-            $oldUnit = $user->unit;
-            $newUnit = $newJabatan->unit;
-
-            // 1. Clear old head of unit status if necessary
+        
+        DB::transaction(function () use ($user, $validated, $newJabatan, $request, $pindahUnit, $oldUnit, $newUnit) {
+            // 1. Clear old head of unit status if the user was the head of their old unit
             if ($oldUnit && $oldUnit->kepala_unit_id === $user->id) {
-                // Correctly determine the new role based on the new position's type
-                $newRole = ($newJabatan->type === 'struktural')
-                    ? $this->getRoleFromDepth($newUnit->depth)
-                    : User::ROLE_STAF;
-
-                $isLosingLeadership = !$this->isLeadershipRole($newRole);
-
-                if ($pindahUnit || $isLosingLeadership) {
+                // If the user is moving units or losing their leadership role
+                if ($pindahUnit || !$this->isLeadershipRole($newUnit->depth)) {
                     $oldUnit->kepala_unit_id = null;
                     $oldUnit->save();
                 }
             }
-
-            // 2. Free up old position
+        
+            // 2. Free up old position if it's different from the new one
             if ($user->jabatan && $user->jabatan->id !== $newJabatan->id) {
                 $user->jabatan->user_id = null;
                 $user->jabatan->save();
             }
-
+        
             // 3. Prepare user update data
             $updateData = $validated;
             if ($request->filled('password')) {
@@ -332,51 +285,42 @@ class UserController extends Controller
             } else {
                 unset($updateData['password']);
             }
-
-            // Determine role based on the new Jabatan type
-            if ($newJabatan->type === 'struktural') {
-                $updateData['role'] = $this->getRoleFromDepth($newUnit->depth);
-            } else {
-                $updateData['role'] = User::ROLE_STAF;
-            }
-
-            // Safeguard: Only Superadmins can assign a Menteri role
+        
+            $updateData['role'] = ($newJabatan->type === 'struktural') ? $this->getRoleFromDepth($newUnit->depth) : User::ROLE_STAF;
+        
             if ($updateData['role'] === User::ROLE_MENTERI && !auth()->user()->isSuperAdmin()) {
                 throw new \Illuminate\Auth\Access\AuthorizationException('Anda tidak memiliki izin untuk menetapkan peran Menteri.');
             }
-
+        
             foreach(['tgl_lahir', 'tmt_eselon', 'tmt_cpns', 'tmt_pns'] as $dateField) {
                 if (!empty($updateData[$dateField])) {
                     $updateData[$dateField] = Carbon::createFromFormat('d-m-Y', $updateData[$dateField])->format('Y-m-d');
                 }
             }
-
+        
             if ($pindahUnit) {
                 $updateData['atasan_id'] = null;
             }
-
+        
             // 4. Update the user
-            // Safeguard: Prevent a Superadmin's role from being accidentally changed by this form.
-            // The Superadmin role should be managed separately and intentionally.
             if ($user->isSuperAdmin()) {
                 unset($updateData['role']);
             }
             $user->update($updateData);
-            $user->refresh(); // Refresh to get the latest data including the new role
-
+            $user->refresh();
+        
             // 5. Assign new position
             $newJabatan->user_id = $user->id;
             $newJabatan->save();
-
+        
             // 6. Set new head of unit status if necessary
             if ($this->isLeadershipRole($user->role)) {
                 $newUnit->kepala_unit_id = $user->id;
                 $newUnit->save();
             }
         });
-
+        
         $roleChanged = $oldRole !== $user->role;
-
         $redirect = redirect()->route('users.index');
 
         if ($pindahUnit) {
@@ -385,7 +329,7 @@ class UserController extends Controller
             $redirect->with('success', 'User berhasil diperbarui.');
         }
 
-        if ($roleChanged && !$pindahUnit) { // Tampilkan pesan role change hanya jika tidak ada pesan pindah unit
+        if ($roleChanged && !$pindahUnit) {
              $redirect->with('warning', "Role pengguna telah diperbarui dari '{$oldRole}' menjadi '{$user->role}'.");
         }
 
@@ -408,10 +352,6 @@ class UserController extends Controller
 
             // Hapus user
             $user->delete();
-
-            // Logika untuk menghapus unit jika kosong tidak lagi relevan di sini
-            // karena jabatan dan user sudah tidak terikat secara langsung dengan unit
-            // saat penghapusan user.
         });
 
         return redirect()->route('users.index')->with('success', 'User berhasil dihapus dan jabatan telah dikosongkan.');
@@ -492,56 +432,51 @@ class UserController extends Controller
         return response()->json($users);
     }
 
-    /**
-     * Impersonate the given user.
-     *
-     * @param  \App\Models\User  $user
-     * @return \Illuminate\Http\RedirectResponse
-     */
     public function impersonate(User $user)
     {
-        // Cannot impersonate other superadmins
+        // 1. Periksa apakah pengguna yang ditiru adalah Superadmin
+        //    Superadmin tidak bisa meniru Superadmin lain.
         if ($user->isSuperAdmin() && !$user->is(auth()->user())) {
             return redirect()->route('users.index')->with('error', 'Tidak dapat meniru sesama Superadmin.');
         }
 
-        // TOTAL FIX: Prevent impersonating an unverified user to avoid a redirect loop
-        // with the 'verified' middleware.
-        if (!$user->hasVerifiedEmail()) {
-            // The user list route is 'users.index', not 'admin.users.index'.
-            return redirect()->route('users.index')->with('error', 'Gagal meniru: Pengguna "' . $user->name . '" belum memverifikasi email mereka.');
+        // 2. Periksa apakah pengguna yang ditiru telah memverifikasi email
+        //    Ini adalah langkah krusial untuk mencegah redirect loop.
+        //    Middleware 'verified' akan terus mengalihkan jika email belum terverifikasi.
+        if ($user instanceof MustVerifyEmail && !$user->hasVerifiedEmail()) {
+            return redirect()->route('users.index')->with('error', 'Tidak dapat meniru pengguna yang belum memverifikasi emailnya.');
         }
 
-        // Store the original user's ID
-        $originalUserId = Auth::id();
-
-        // Login as the new user. This will regenerate the session.
+        // 3. Simpan ID pengguna asli ke dalam session
+        session(['impersonator_id' => Auth::id()]);
+        
+        // 4. Login sebagai pengguna yang akan ditiru
         Auth::login($user);
 
-        // Now, store the original user's ID in the new session.
-        session(['impersonator_id' => $originalUserId]);
-
+        // 5. Arahkan ke rute yang tidak akan memicu loop
+        //    Mengarah ke dashboard adalah pilihan yang aman.
         return redirect()->route('dashboard')->with('success', 'Anda sekarang meniru ' . $user->name);
     }
 
-    /**
-     * Revert impersonation.
-     *
-     * @return \Illuminate\Http\RedirectResponse
-     */
+
     public function leaveImpersonate()
     {
+        // 1. Periksa apakah ada sesi impersonasi yang aktif
         if (!session()->has('impersonator_id')) {
             return redirect('/')->with('error', 'Tidak ada sesi peniruan untuk ditinggalkan.');
         }
 
-        // Login back as the original user
+        // 2. Dapatkan ID pengguna asli dari sesi
         $originalUserId = session('impersonator_id');
-        Auth::login(User::find($originalUserId));
+        $originalUser = User::find($originalUserId);
 
-        // Forget the impersonator_id from session
+        // 3. Login kembali sebagai pengguna asli
+        Auth::login($originalUser);
+
+        // 4. Hapus ID impersonator dari sesi
         session()->forget('impersonator_id');
 
+        // 5. Arahkan pengguna kembali ke halaman daftar user
         return redirect()->route('users.index')->with('success', 'Sesi peniruan telah berakhir.');
     }
 
@@ -563,8 +498,7 @@ class UserController extends Controller
         $file = fopen($path, 'r');
 
         $header = fgetcsv($file);
-        // Basic header validation
-        $expectedHeaders = ['Nama', 'NIP', 'Jabatan']; // Add more required headers
+        $expectedHeaders = ['Nama', 'NIP', 'Jabatan'];
         if (count(array_intersect($expectedHeaders, $header)) !== count($expectedHeaders)) {
             return back()->with('error', 'Format file CSV tidak sesuai. Pastikan kolom ' . implode(', ', $expectedHeaders) . ' ada.');
         }
@@ -576,7 +510,7 @@ class UserController extends Controller
             $rowNumber++;
             if (count($header) !== count($row)) {
                 $skippedRows[] = $rowNumber;
-                continue; // Skip malformed rows
+                continue;
             }
             $data[] = array_combine($header, $row);
         }
@@ -596,14 +530,10 @@ class UserController extends Controller
 
     public function getUsersByUnit(Unit $unit)
     {
-        // Eager load the jabatan for each user to display it if needed.
         $users = $unit->users()->with('jabatan')->orderBy('name')->get();
         return response()->json($users);
     }
 
-    /**
-     * Determines a user's role based on the depth of their unit in the hierarchy.
-     */
     private function getRoleFromDepth(int $depth): string
     {
         return match ($depth) {
@@ -616,9 +546,6 @@ class UserController extends Controller
         };
     }
 
-    /**
-     * Checks if a given role is a leadership role.
-     */
     private function isLeadershipRole(string $role): bool
     {
         return in_array($role, [

@@ -18,7 +18,7 @@ class Unit extends Model
     public const LEVEL_ESELON_II = 'Eselon II';
     public const LEVEL_KOORDINATOR = 'Koordinator';
     public const LEVEL_SUB_KOORDINATOR = 'Sub Koordinator';
-    public const LEVEL_STAF = 'Staf'; // Note: This is a user role, not a unit level in the migration
+    public const LEVEL_STAF = 'Staf';
 
     public const LEVELS = [
         ['name' => self::LEVEL_MENTERI],
@@ -32,49 +32,54 @@ class Unit extends Model
         'name',
         'level',
         'parent_unit_id',
+        'kepala_unit_id', // Pastikan kolom ini ada di fillable
     ];
 
+    /**
+     * Relasi ke unit induk (parent).
+     */
     public function parentUnit(): BelongsTo
     {
         return $this->belongsTo(Unit::class, 'parent_unit_id');
     }
 
+    /**
+     * Relasi ke kepala unit.
+     */
     public function kepalaUnit(): BelongsTo
     {
         return $this->belongsTo(User::class, 'kepala_unit_id');
     }
-
+    
+    /**
+     * Relasi ke unit anak (children).
+     */
     public function childUnits(): HasMany
     {
         return $this->hasMany(Unit::class, 'parent_unit_id');
     }
-
+    
     public function childrenRecursive()
     {
-        return $this->children()->with('childrenRecursive');
+        return $this->childUnits()->with('childrenRecursive');
     }
-
+    
     public function jabatans(): HasMany
     {
         return $this->hasMany(Jabatan::class);
     }
-
-    public function users()
+    
+    public function users(): HasMany
     {
         return $this->hasMany(User::class);
     }
-
-    public function children()
-    {
-        return $this->hasMany(Unit::class, 'parent_unit_id');
-    }
-
+    
     public function getAllSubordinateUnitIds(): array
     {
         // Use the new, performant Closure Table relationship
         return $this->descendants()->pluck('id')->toArray();
     }
-
+    
     public function getLevelNumber(): int
     {
         return match ($this->level) {
@@ -86,13 +91,9 @@ class Unit extends Model
             default => 99,
         };
     }
-
+    
     // --- HIERARCHY MANAGEMENT (CLOSURE TABLE) ---
-
-    /**
-     * Rebuild the entire unit_paths table.
-     * Should be called after manual database changes or for initial setup.
-     */
+    
     public static function rebuildPaths()
     {
         \Illuminate\Support\Facades\DB::transaction(function () {
@@ -103,11 +104,7 @@ class Unit extends Model
             }
         });
     }
-
-    /**
-     * Insert the hierarchy paths for a single unit.
-     * @param Unit $unit
-     */
+    
     private static function insertPaths(Unit $unit)
     {
         // Insert path to self
@@ -116,7 +113,7 @@ class Unit extends Model
             'descendant_id' => $unit->id,
             'depth' => 0,
         ]);
-
+    
         // Insert paths from ancestors
         $depth = 1;
         $parent = $unit->parentUnit;
@@ -130,10 +127,7 @@ class Unit extends Model
             $depth++;
         }
     }
-
-    /**
-     * Detach a unit from its parent and re-attach its children to its grandparent.
-     */
+    
     public function disconnect()
     {
         // Delete paths from this unit's ancestors to its descendants
@@ -141,19 +135,19 @@ class Unit extends Model
             ->whereIn('descendant_id', $this->descendants()->pluck('id'))
             ->whereIn('ancestor_id', $this->ancestors()->where('id', '!=', $this->id)->pluck('id'))
             ->delete();
-
+    
         // Re-link children to the grandparent
         foreach ($this->childUnits as $child) {
             $child->parent_unit_id = $this->parent_unit_id;
-            $child->save(); // This will trigger path rebuilding if the model is observed
+            $child->save();
         }
     }
-
+    
     public function ancestors()
     {
         return $this->belongsToMany(self::class, 'unit_paths', 'descendant_id', 'ancestor_id');
     }
-
+    
     public function descendants()
     {
         return $this->belongsToMany(self::class, 'unit_paths', 'ancestor_id', 'descendant_id')

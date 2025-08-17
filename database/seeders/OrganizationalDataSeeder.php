@@ -45,10 +45,20 @@ class OrganizationalDataSeeder extends Seeder
             return;
         }
 
-        // Process data using the service
-        $importer = new OrganizationalDataImporterService($this->command);
-        $importer->processData($data);
-
+        // Disables the UnitObserver temporarily to prevent the error during seeding.
+        Unit::withoutEvents(function () use ($data) {
+            // Process data using the service
+            $importer = new OrganizationalDataImporterService($this->command);
+            $importer->processData($data);
+        });
+        
+        // Re-enable foreign key checks
+        if ($dbDriver === 'mysql') {
+            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+        } elseif ($dbDriver === 'pgsql') {
+            DB::statement("SET session_replication_role = 'origin';");
+        }
+        
         // Create a default Super Admin user
         User::create([
             'name' => 'Super Admin',
@@ -58,13 +68,6 @@ class OrganizationalDataSeeder extends Seeder
             'status' => 'active',
         ]);
         $this->command->info('Default Super Admin created.');
-
-        // Re-enable foreign key checks
-        if ($dbDriver === 'mysql') {
-            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
-        } elseif ($dbDriver === 'pgsql') {
-            DB::statement("SET session_replication_role = 'origin';");
-        }
 
         $this->command->info('--- Organizational Data Seeding Finished ---');
     }

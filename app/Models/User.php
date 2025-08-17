@@ -11,9 +11,9 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Carbon;
-// Pastikan baris ini ada dan benar setelah menginstal Sanctum
 use App\Models\Traits\RecordsActivity;
 use Laravel\Sanctum\HasApiTokens;
+use App\Models\Unit; // Pastikan ini diimpor
 
 class User extends Authenticatable
 {
@@ -92,8 +92,6 @@ class User extends Authenticatable
         'performance_data_updated_at' => 'datetime',
     ];
 
-    // ... sisa kode model Anda tidak perlu diubah ...
-
     // --- RELASI ---
 
     public function atasan(): BelongsTo
@@ -118,7 +116,7 @@ class User extends Authenticatable
 
     /**
      * Get the full hierarchical path of the user's unit.
-     *
+     * MENGGUNAKAN CLOSURE TABLE UNTUK MENCEGAH REKURSIF
      * @return string
      */
     public function getUnitPathAttribute(): string
@@ -127,13 +125,10 @@ class User extends Authenticatable
             return '-';
         }
 
-        $path = [$this->unit->name];
-        $parent = $this->unit->parentUnit;
-
-        while ($parent) {
-            array_unshift($path, $parent->name);
-            $parent = $parent->parentUnit;
-        }
+        // Use the Closure Table relationship to get ancestors in the correct order.
+        $ancestors = $this->unit->ancestors()->orderBy('depth', 'asc')->get();
+        $path = $ancestors->pluck('name')->toArray();
+        $path[] = $this->unit->name;
 
         return implode(' - ', $path);
     }

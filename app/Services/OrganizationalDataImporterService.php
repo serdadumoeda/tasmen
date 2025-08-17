@@ -28,7 +28,9 @@ class OrganizationalDataImporterService
             $this->command->getOutput()->progressStart(count($data));
         }
 
+        // Cache existing users to avoid re-hashing passwords on updates.
         $this->userCache = User::pluck('id', 'nip')->toArray();
+        $this->unitCache = Unit::pluck('id', 'name')->toArray();
 
         foreach ($data as $item) {
             try {
@@ -43,7 +45,9 @@ class OrganizationalDataImporterService
                 $this->command->getOutput()->progressAdvance();
             }
         }
-
+        
+        // After all units and users are created, we can safely update supervisors
+        // without worrying about a recursive loop during the creation process.
         $this->updateSupervisorForAllUsers();
         Unit::rebuildPaths();
 
@@ -100,12 +104,12 @@ class OrganizationalDataImporterService
 
             $cacheKey = $parentUnitId . '_' . $unitName;
             if (isset($this->unitCache[$cacheKey])) {
-                $unit = $this->unitCache[$cacheKey];
+                $unit = Unit::find($this->unitCache[$cacheKey]);
             } else {
                 $unit = Unit::firstOrCreate(
                     ['name' => $unitName, 'parent_unit_id' => $parentUnitId]
                 );
-                $this->unitCache[$cacheKey] = $unit;
+                $this->unitCache[$cacheKey] = $unit->id;
             }
             $parentUnitId = $unit->id;
             $lastUnit = $unit;
@@ -230,23 +234,34 @@ class OrganizationalDataImporterService
     private function updateSupervisorForAllUsers(): void
     {
         $this->logInfo('Updating supervisor relationships...');
-        $users = User::with('unit')->get();
+        // Eager load units to reduce queries and find all unit heads first.
+        $users = User::with('unit.parentUnit')->get();
+        $unitHeads = Unit::whereNotNull('kepala_unit_id')->pluck('kepala_unit_id', 'id')->toArray();
+        $updates = [];
+
         foreach ($users as $user) {
             if (!$user->unit) continue;
 
-            // Find the head of the user's own unit
-            $kepalaUnitSendiri = User::find($user->unit->kepala_unit_id);
+            $supervisorId = null;
 
-            if ($kepalaUnitSendiri && $kepalaUnitSendiri->id !== $user->id) {
+            // Find the head of the user's own unit
+            if (isset($unitHeads[$user->unit->id]) && $unitHeads[$user->unit->id] !== $user->id) {
                 // If there is a head of this unit, and it's not the user themselves, that's the supervisor.
-                $user->atasan_id = $kepalaUnitSendiri->id;
-            } elseif ($user->unit->parentUnit) {
+                $supervisorId = $unitHeads[$user->unit->id];
+            } elseif ($user->unit->parentUnit && isset($unitHeads[$user->unit->parentUnit->id])) {
                 // Otherwise, the supervisor is the head of the parent unit.
-                $user->atasan_id = $user->unit->parentUnit->kepala_unit_id;
-            } else {
-                $user->atasan_id = null;
+                $supervisorId = $unitHeads[$user->unit->parentUnit->id];
             }
-            $user->save();
+
+            if ($user->atasan_id !== $supervisorId) {
+                $updates[$user->id] = $supervisorId;
+            }
+        }
+
+        if (!empty($updates)) {
+            foreach ($updates as $userId => $atasanId) {
+                User::where('id', $userId)->update(['atasan_id' => $atasanId]);
+            }
         }
         $this->logInfo('Supervisor relationships updated.');
     }
