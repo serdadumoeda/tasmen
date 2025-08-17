@@ -15,8 +15,13 @@ class Jabatan extends Model
         'name',
         'type',
         'role',
+        'can_manage_users',
         'unit_id',
         'user_id',
+    ];
+
+    protected $casts = [
+        'can_manage_users' => 'boolean',
     ];
 
     public function unit(): BelongsTo

@@ -15,6 +15,7 @@ use App\Models\Traits\RecordsActivity;
 use Laravel\Sanctum\HasApiTokens;
 use App\Models\Unit; // Pastikan ini diimpor
 use App\Models\Project;
+use App\Models\Jabatan;
 use App\Scopes\HierarchicalScope;
 
 class User extends Authenticatable
@@ -265,6 +266,12 @@ class User extends Authenticatable
 
     public function canManageUsers(): bool
     {
+        // Delegated admin check
+        if ($this->jabatan?->can_manage_users) {
+            return true;
+        }
+
+        // Default role-based check
         return in_array($this->role, [self::ROLE_MENTERI, self::ROLE_SUPERADMIN, self::ROLE_ESELON_I, self::ROLE_ESELON_II, self::ROLE_KOORDINATOR]);
     }
 
