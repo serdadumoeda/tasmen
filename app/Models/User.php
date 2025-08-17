@@ -14,6 +14,8 @@ use Illuminate\Support\Carbon;
 use App\Models\Traits\RecordsActivity;
 use Laravel\Sanctum\HasApiTokens;
 use App\Models\Unit; // Pastikan ini diimpor
+use App\Models\Project;
+use App\Scopes\HierarchicalScope;
 
 class User extends Authenticatable
 {
@@ -283,8 +285,20 @@ class User extends Authenticatable
 
     public function isManager(): bool
     {
-        $isStructuralManager = in_array($this->role, [self::ROLE_MENTERI, self::ROLE_ESELON_I, self::ROLE_ESELON_II, self::ROLE_KOORDINATOR, self::ROLE_SUB_KOORDINATOR]);
-        $isFunctionalManager = $this->ledProjects()->exists();
+        $isStructuralManager = in_array($this->role, [
+            self::ROLE_MENTERI,
+            self::ROLE_ESELON_I,
+            self::ROLE_ESELON_II,
+            self::ROLE_KOORDINATOR,
+            self::ROLE_SUB_KOORDINATOR
+        ]);
+
+        // To prevent infinite recursion with HierarchicalScope, we query without it.
+        // The ledProjects() relationship is on the Project model, which has the scope.
+        $isFunctionalManager = $this->ledProjects()
+                                    ->withoutGlobalScope(HierarchicalScope::class)
+                                    ->exists();
+
         return $isStructuralManager || $isFunctionalManager;
     }
     
