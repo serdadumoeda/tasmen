@@ -19,9 +19,10 @@ class CheckProfileIsComplete
         $user = Auth::user();
 
         // If the user is authenticated, their profile is incomplete (no unit_id),
+        // AND THEY ARE NOT A SUPERADMIN,
         // and they are not already on the 'complete profile' page or trying to log out,
         // then redirect them.
-        if ($user && is_null($user->unit_id) && !$request->routeIs('profile.complete.*') && !$request->routeIs('logout')) {
+        if ($user && !$user->isSuperAdmin() && is_null($user->unit_id) && !$request->routeIs('profile.complete.*') && !$request->routeIs('logout')) {
             return redirect()->route('profile.complete.create')->with('warning', 'Harap lengkapi profil Anda untuk melanjutkan.');
         }
 
