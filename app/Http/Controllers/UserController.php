@@ -142,8 +142,8 @@ class UserController extends Controller
         $userData['unit_id'] = $unit->id;
         $userData['password'] = Hash::make($validated['password']);
 
-        // NEW LOGIC: Role is inherited from the selected Jabatan
-        $userData['role'] = $jabatan->role;
+        // UPDATED LOGIC: Role is inherited from Jabatan, with a fallback to the old calculation.
+        $userData['role'] = $jabatan->role ?? $this->calculateRoleFromUnitDepth($unit);
 
         if ($userData['role'] === User::ROLE_MENTERI && !auth()->user()->isSuperAdmin()) {
             return back()->withInput()->with('error', 'Anda tidak memiliki izin untuk membuat pengguna dengan peran Menteri.');
@@ -247,8 +247,8 @@ class UserController extends Controller
         $pindahUnit = $user->unit_id !== $newJabatan->unit_id;
 
         $newUnit = $newJabatan->unit;
-        // NEW LOGIC: The new role is inherited from the Jabatan itself.
-        $newRole = $newJabatan->role;
+        // UPDATED LOGIC: The new role is inherited from Jabatan, with a fallback.
+        $newRole = $newJabatan->role ?? $this->calculateRoleFromUnitDepth($newUnit);
 
         if ($request->filled('atasan_id')) {
             $atasan = User::find($request->atasan_id);
@@ -281,7 +281,7 @@ class UserController extends Controller
                 unset($updateData['password']);
             }
         
-            // NEW LOGIC: Role is inherited from the selected Jabatan
+            // UPDATED LOGIC: Role is inherited from the selected Jabatan, using the pre-calculated new role
             $updateData['role'] = $newRole;
         
             if ($updateData['role'] === User::ROLE_MENTERI && !auth()->user()->isSuperAdmin()) {
@@ -519,5 +519,24 @@ class UserController extends Controller
             User::ROLE_KOORDINATOR,
             User::ROLE_SUB_KOORDINATOR
         ]);
+    }
+
+    /**
+     * Fallback method to determine role based on unit depth.
+     * This is used if a Jabatan's role has not been backfilled.
+     */
+    private function calculateRoleFromUnitDepth(Unit $unit): string
+    {
+        // The depth is the number of ancestors. Root is 0.
+        $depth = $unit->ancestors()->count();
+
+        return match ($depth) {
+            0 => User::ROLE_MENTERI,
+            1 => User::ROLE_ESELON_I,
+            2 => User::ROLE_ESELON_II,
+            3 => User::ROLE_KOORDINATOR,
+            4 => User::ROLE_SUB_KOORDINATOR,
+            default => User::ROLE_STAF,
+        };
     }
 }
