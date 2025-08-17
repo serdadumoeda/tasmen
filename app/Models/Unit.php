@@ -159,4 +159,29 @@ class Unit extends Model
         return $this->belongsToMany(self::class, 'unit_paths', 'ancestor_id', 'descendant_id')
                     ->where('depth', '>', 0);
     }
+
+    /**
+     * Get the Eselon II ancestor for this unit.
+     *
+     * @return Unit|null
+     */
+    public function getEselonIIAncestor(): ?Unit
+    {
+        // The depth of the unit itself relative to its own ancestors (i.e., its level in the hierarchy)
+        $selfDepth = $this->ancestors()->count();
+
+        // If this unit is an Eselon II unit (depth 2), return itself.
+        // Depth is 0-indexed: 0=Menteri, 1=Eselon I, 2=Eselon II
+        if ($selfDepth === 2) {
+            return $this;
+        }
+
+        // Otherwise, find the ancestor that is at depth 2.
+        // The 'depth' in the unit_paths table is relative from the ancestor to the descendant.
+        // So we need to find an ancestor where the path from it to `this` unit has a certain depth.
+        // A more direct way is to just find an ancestor whose own depth is 2.
+        return $this->ancestors()->get()->first(function ($ancestor) {
+            return $ancestor->ancestors()->count() === 2;
+        });
+    }
 }

@@ -74,9 +74,9 @@
                     <form action="{{ route('admin.units.jabatans.store', $unit) }}" method="POST" class="border-t border-gray-200 pt-6">
                         @csrf
                         <h4 class="font-semibold text-lg text-gray-800 mb-4">Tambah Jabatan Baru</h4>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
                             {{-- Nama Jabatan --}}
-                            <div>
+                            <div class="md:col-span-2">
                                 <label for="jabatan_name" class="block text-sm font-medium text-gray-700">Nama Jabatan</label>
                                 <input type="text" name="name" id="jabatan_name" class="mt-1 block w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" placeholder="e.g., Staf Pelaksana" required>
                             </div>
@@ -99,6 +99,12 @@
                                     @endforeach
                                 </select>
                             </div>
+                        </div>
+                        <div class="mt-6">
+                             <label for="can_manage_users" class="flex items-center">
+                                <input type="checkbox" name="can_manage_users" id="can_manage_users" value="1" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500">
+                                <span class="ml-2 text-sm text-gray-600">Dapat Mengelola Pengguna di Unit Eselon II nya</span>
+                            </label>
                         </div>
                         <div class="flex justify-end mt-6">
                             <button type="submit" class="inline-flex items-center px-5 py-2.5 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150 shadow-md">

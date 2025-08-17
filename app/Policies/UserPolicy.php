@@ -47,7 +47,18 @@ class UserPolicy
      */
     public function update(User $user, User $model): bool
     {
-        // Pengguna bisa mengedit bawahannya.
+        // Delegated admin with Eselon II scope
+        if ($user->jabatan?->can_manage_users) {
+            $userEselonII = $user->unit?->getEselonIIAncestor();
+            $modelEselonII = $model->unit?->getEselonIIAncestor();
+
+            // Allow if both are in the same Eselon II unit branch
+            if ($userEselonII && $modelEselonII && $userEselonII->id === $modelEselonII->id) {
+                return true;
+            }
+        }
+
+        // Default logic: a user can edit their own subordinates.
         return $model->isSubordinateOf($user);
     }
 
