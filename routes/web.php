@@ -12,6 +12,7 @@ use App\Http\Controllers\WorkloadAnalysisController;
 use App\Http\Controllers\TimeLogController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SubTaskController;
+use App\Http\Controllers\CompleteProfileController;
 use App\Http\Controllers\BudgetItemController;
 use App\Http\Controllers\SpecialAssignmentController;
 use App\Http\Controllers\AdHocTaskController;
@@ -154,6 +155,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/notifications/unread', [NotificationController::class, 'getUnread'])->name('notifications.unread');
     Route::post('/notifications/mark-as-read', [NotificationController::class, 'markAsRead'])->name('notifications.markAsRead');
 
+    // Routes for completing user profile
+    Route::get('/profile/complete', [CompleteProfileController::class, 'create'])->name('profile.complete.create');
+    Route::post('/profile/complete', [CompleteProfileController::class, 'store'])->name('profile.complete.store');
 });
 
 use App\Http\Controllers\Api\UnitApiController;

@@ -26,20 +26,9 @@ class RegisterRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
+            'nip' => ['required', 'string', 'max:255', 'unique:'.User::class],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'unit_id' => ['required', 'exists:units,id'],
-            'jabatan_id' => [
-                'required',
-                'exists:jabatans,id',
-                // Custom rule to ensure the selected Jabatan is not already taken.
-                function ($attribute, $value, $fail) {
-                    $jabatan = Jabatan::find($value);
-                    if ($jabatan && $jabatan->user_id) {
-                        $fail(__('Jabatan yang dipilih sudah terisi. Silakan pilih yang lain.'));
-                    }
-                },
-            ],
         ];
     }
 }

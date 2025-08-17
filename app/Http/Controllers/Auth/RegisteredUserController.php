@@ -24,13 +24,7 @@ class RegisteredUserController extends Controller
      */
     public function create(): View
     {
-        // Correctly fetch Eselon I units using the constant from the Unit model.
-        $eselonIUnits = Unit::where('level', Unit::LEVEL_ESELON_I)->orderBy('name')->get();
-
-        // Pass a variable for the selected path for consistency with the form, even though it's empty on register.
-        $selectedUnitPath = [];
-
-        return view('auth.register', compact('eselonIUnits', 'selectedUnitPath'));
+        return view('auth.register');
     }
 
     /**
@@ -40,37 +34,21 @@ class RegisteredUserController extends Controller
      */
     public function store(RegisterRequest $request): RedirectResponse
     {
-        $user = DB::transaction(function () use ($request) {
-            $jabatan = Jabatan::with('unit')->find($request->jabatan_id);
-
-            // Re-validate that the position is still vacant inside the transaction
-            if (!$jabatan || $jabatan->user_id) {
-                throw ValidationException::withMessages([
-                    'jabatan_id' => __('Jabatan yang dipilih tidak lagi tersedia. Silakan pilih jabatan lain.'),
-                ]);
-            }
-
-            // Create the user, deriving unit and role from the chosen Jabatan
-            $user = User::create([
-                'name' => $request->name,
-                'email' => $request->email,
-                'password' => Hash::make($request->password),
-                'unit_id' => $jabatan->unit_id,
-                'role' => $jabatan->unit->level,
-                'status' => User::STATUS_ACTIVE,
-            ]);
-
-            // Assign the new user to the Jabatan
-            $jabatan->user_id = $user->id;
-            $jabatan->save();
-
-            return $user;
-        });
+        $user = User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'nip' => $request->nip,
+            'password' => Hash::make($request->password),
+            'role' => User::ROLE_STAF, // Assign a default role
+            'unit_id' => null, // No unit assigned on registration
+            'status' => User::STATUS_ACTIVE,
+        ]);
 
         event(new Registered($user));
 
         Auth::login($user);
 
+        // Redirect to the dashboard, the new middleware will handle the rest.
         return redirect(route('dashboard', absolute: false));
     }
 }
