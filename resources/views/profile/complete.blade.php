@@ -44,7 +44,7 @@
                                 <select id="sub_koordinator" class="unit-select block mt-1 w-full rounded-lg shadow-sm border-gray-300" data-level="4" data-placeholder="-- Pilih Sub Koordinator --" disabled><option value="">-- Pilih Koordinator Dahulu --</option></select>
                             </div>
                             <div class="mb-4">
-                                <label for="jabatan_id" class="block font-semibold text-sm text-gray-700 mb-1">5. Jabatan</label>
+                                <label for="jabatan_id" class="block font-semibold text-sm text-gray-700 mb-1">5. Jabatan <span class="text-red-500 font-bold">*</span></label>
                                 <select name="jabatan_id" id="jabatan_id" required class="block mt-1 w-full rounded-lg shadow-sm border-gray-300" disabled><option value="">-- Pilih Unit Kerja Terakhir --</option></select>
                                 <x-input-error :messages="$errors->get('jabatan_id')" class="mt-2" />
                             </div>
