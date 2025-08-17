@@ -21,7 +21,7 @@ class CompleteProfileController extends Controller
             return redirect()->route('dashboard');
         }
 
-        $eselonIUnits = Unit::where('level', Unit::LEVEL_ESELON_I)->orderBy('name')->get();
+        $eselonIUnits = Unit::whereNull('parent_unit_id')->orderBy('name')->get();
         $selectedUnitPath = []; // For the form partial
 
         return view('profile.complete', compact('eselonIUnits', 'selectedUnitPath'));
