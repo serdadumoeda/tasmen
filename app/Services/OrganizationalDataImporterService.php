@@ -193,16 +193,56 @@ class OrganizationalDataImporterService
 
     private function getOrCreateJabatan(object $item, int $unitId, int $userId): Jabatan
     {
-        $jabatanType = $this->isJabatanStruktural($item) ? 'struktural' : 'fungsional';
+        $jabatanName = $item->Jabatan;
+        if (empty($jabatanName)) {
+            // If there's no Jabatan name in the source data, we can't proceed.
+            // We'll log this, though it's unlikely to happen with valid data.
+            $this->logError("Skipping Jabatan creation for User ID: {$userId} due to empty Jabatan name.");
+            // Depending on business rules, you might want to return null or throw an exception.
+            // For now, we'll let it fail, but a more graceful handle might be needed.
+        }
 
-        $jabatan = Jabatan::updateOrCreate(
-            ['name' => $item->Jabatan, 'unit_id' => $unitId],
-            [
-                'user_id' => $userId,
-                'type' => $jabatanType,
-            ]
-        );
-        return $jabatan;
+        $jabatanType = $this->isJabatanStruktural($item) ? 'struktural' : 'fungsional';
+        $role = $this->determineRole($item);
+
+        // First, check if this specific user is already in a Jabatan with this name/unit.
+        // This makes the import process idempotent.
+        $existingJabatan = Jabatan::where('name', $jabatanName)
+                                ->where('unit_id', $unitId)
+                                ->where('user_id', $userId)
+                                ->first();
+
+        if ($existingJabatan) {
+            // The user is already correctly assigned. Just ensure the details are up-to-date.
+            $existingJabatan->type = $jabatanType;
+            $existingJabatan->role = $role;
+            $existingJabatan->save();
+            return $existingJabatan;
+        }
+
+        // The user is not in this Jabatan. Let's see if there's a vacant one.
+        $vacantJabatan = Jabatan::where('name', $jabatanName)
+                               ->where('unit_id', $unitId)
+                               ->whereNull('user_id')
+                               ->first();
+
+        if ($vacantJabatan) {
+            // An empty slot exists. Let's assign the user to it.
+            $vacantJabatan->user_id = $userId;
+            $vacantJabatan->type = $jabatanType;
+            $vacantJabatan->role = $role;
+            $vacantJabatan->save();
+            return $vacantJabatan;
+        }
+
+        // No vacant slots found. We must create a new Jabatan slot for this user.
+        return Jabatan::create([
+            'name'      => $jabatanName,
+            'unit_id'   => $unitId,
+            'user_id'   => $userId,
+            'type'      => $jabatanType,
+            'role'      => $role,
+        ]);
     }
 
     private function isJabatanStruktural(object $item): bool
