@@ -366,4 +366,23 @@ class User extends Authenticatable
     {
         return $this->specialAssignments()->where('status', 'disetujui')->count();
     }
+
+    /**
+     * Get the valid supervisor roles for a given subordinate role.
+     * This centralizes the business logic for organizational hierarchy.
+     *
+     * @param string $subordinateRole
+     * @return array|null
+     */
+    public static function getValidSupervisorRolesFor(string $subordinateRole): ?array
+    {
+        $validParentRolesMap = [
+            self::ROLE_ESELON_II => [self::ROLE_ESELON_I],
+            self::ROLE_KOORDINATOR => [self::ROLE_ESELON_II],
+            self::ROLE_SUB_KOORDINATOR => [self::ROLE_KOORDINATOR],
+            self::ROLE_STAF => [self::ROLE_KOORDINATOR, self::ROLE_SUB_KOORDINATOR],
+        ];
+
+        return $validParentRolesMap[$subordinateRole] ?? null;
+    }
 }

@@ -18,13 +18,6 @@ class UserController extends Controller
 {
     use AuthorizesRequests;
 
-    private $VALID_PARENT_ROLES = [
-        Unit::LEVEL_ESELON_II => [Unit::LEVEL_ESELON_I],
-        Unit::LEVEL_KOORDINATOR => [Unit::LEVEL_ESELON_II],
-        Unit::LEVEL_SUB_KOORDINATOR => [Unit::LEVEL_KOORDINATOR],
-        Unit::LEVEL_STAF => [Unit::LEVEL_KOORDINATOR, Unit::LEVEL_SUB_KOORDINATOR],
-    ];
-
     public function index(Request $request)
     {
         $this->authorize('viewAny', User::class);
@@ -151,9 +144,10 @@ class UserController extends Controller
 
         if ($request->filled('atasan_id')) {
             $atasan = User::find($request->atasan_id);
-            if (isset($this->VALID_PARENT_ROLES[$userData['role']])) {
-                $validParentRoles = $this->VALID_PARENT_ROLES[$userData['role']];
-                if (!$atasan || !in_array($atasan->role, $validParentRoles)) {
+            $validSupervisorRoles = User::getValidSupervisorRolesFor($userData['role']);
+
+            if ($validSupervisorRoles !== null) {
+                if (!$atasan || !in_array($atasan->role, $validSupervisorRoles)) {
                     return back()->withInput()->with('error', 'Atasan yang dipilih memiliki peran yang tidak sesuai dengan hierarki yang diizinkan.');
                 }
             }
@@ -252,9 +246,10 @@ class UserController extends Controller
 
         if ($request->filled('atasan_id')) {
             $atasan = User::find($request->atasan_id);
-            if (isset($this->VALID_PARENT_ROLES[$newRole])) {
-                $validParentRoles = $this->VALID_PARENT_ROLES[$newRole];
-                if (!$atasan || !in_array($atasan->role, $validParentRoles)) {
+            $validSupervisorRoles = User::getValidSupervisorRolesFor($newRole);
+
+            if ($validSupervisorRoles !== null) {
+                if (!$atasan || !in_array($atasan->role, $validSupervisorRoles)) {
                     return back()->withInput()->with('error', 'Atasan yang dipilih memiliki peran yang tidak sesuai dengan hierarki yang diizinkan.');
                 }
             }
