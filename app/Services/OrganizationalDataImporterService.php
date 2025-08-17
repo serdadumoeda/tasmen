@@ -137,7 +137,6 @@ class OrganizationalDataImporterService
         // or structural staff without a clear Eselon mapping.
         $depth = $unit->ancestors()->count();
         return match ($depth) {
-            0 => User::ROLE_MENTERI,
             1 => User::ROLE_ESELON_I,
             2 => User::ROLE_ESELON_II,
             3 => User::ROLE_KOORDINATOR,
