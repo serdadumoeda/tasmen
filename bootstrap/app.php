@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Daftarkan middleware di sini
         $middleware->web(append: [
             \App\Http\Middleware\MarkNotificationAsRead::class,
+            \App\Http\Middleware\CheckProfileIsComplete::class,
         ]);
 
         $middleware->alias([
