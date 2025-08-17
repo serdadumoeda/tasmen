@@ -32,7 +32,7 @@ class Unit extends Model
         'name',
         'level',
         'parent_unit_id',
-        'kepala_unit_id', // Pastikan kolom ini ada di fillable
+        'kepala_unit_id',
     ];
 
     /**
@@ -58,12 +58,23 @@ class Unit extends Model
     {
         return $this->hasMany(Unit::class, 'parent_unit_id');
     }
-    
-    public function childrenRecursive()
+
+    public function childrenRecursive(): HasMany
     {
         return $this->childUnits()->with('childrenRecursive');
     }
+
     
+
+    /**
+     * Relasi rekursif untuk memuat semua anak unit secara hierarkis.
+     * Penting: Menggunakan with() agar tidak terjadi infinite loop.
+     */
+    public function allChildren(): HasMany
+    {
+        return $this->childUnits()->with('allChildren');
+    }
+
     public function jabatans(): HasMany
     {
         return $this->hasMany(Jabatan::class);
@@ -76,7 +87,6 @@ class Unit extends Model
     
     public function getAllSubordinateUnitIds(): array
     {
-        // Use the new, performant Closure Table relationship
         return $this->descendants()->pluck('id')->toArray();
     }
     
@@ -107,14 +117,12 @@ class Unit extends Model
     
     private static function insertPaths(Unit $unit)
     {
-        // Insert path to self
         \Illuminate\Support\Facades\DB::table('unit_paths')->insert([
             'ancestor_id' => $unit->id,
             'descendant_id' => $unit->id,
             'depth' => 0,
         ]);
     
-        // Insert paths from ancestors
         $depth = 1;
         $parent = $unit->parentUnit;
         while ($parent) {
@@ -130,13 +138,11 @@ class Unit extends Model
     
     public function disconnect()
     {
-        // Delete paths from this unit's ancestors to its descendants
         \Illuminate\Support\Facades\DB::table('unit_paths')
             ->whereIn('descendant_id', $this->descendants()->pluck('id'))
             ->whereIn('ancestor_id', $this->ancestors()->where('id', '!=', $this->id)->pluck('id'))
             ->delete();
     
-        // Re-link children to the grandparent
         foreach ($this->childUnits as $child) {
             $child->parent_unit_id = $this->parent_unit_id;
             $child->save();

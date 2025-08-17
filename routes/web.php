@@ -36,7 +36,7 @@ Route::get('/get-users-by-unit/{unitId}', [UserController::class, 'getUsersByUni
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth'])->group(function () {
     // Rute default setelah login adalah Beranda baru.
     Route::get('/dashboard', [HomeController::class, 'index'])->name('dashboard');
     // Rute untuk daftar kegiatan (proyek)

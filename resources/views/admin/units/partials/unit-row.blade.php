@@ -3,7 +3,7 @@
 <tr class="hover:bg-gray-50 transition-colors duration-150">
     <td class="py-2 px-4 border-b text-sm text-gray-900 font-medium">
         <span style="padding-left: {{ $level * 20 }}px;">
-            @if(count($unit->childrenRecursive) > 0)
+            @if(count($unit->allChildren) > 0)
                 <i class="fas fa-folder-open text-yellow-500 mr-2"></i>
             @else
                 <i class="fas fa-folder text-gray-400 mr-2"></i>
@@ -27,8 +27,8 @@
     </td>
 </tr>
 
-@if (count($unit->childrenRecursive) > 0)
-    @foreach ($unit->childrenRecursive as $child)
+@if (count($unit->allChildren) > 0)
+    @foreach ($unit->allChildren as $child)
         @include('admin.units.partials.unit-row', ['unit' => $child, 'level' => $level + 1])
     @endforeach
 @endif

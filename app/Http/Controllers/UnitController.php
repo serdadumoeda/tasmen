@@ -17,12 +17,20 @@ class UnitController extends Controller
     {
         $this->authorize('viewAny', Unit::class);
         
-        // Muat relasi kepalaUnit, parentUnit, dan childrenRecursive
-        // untuk memastikan semua data hierarki tersedia di view
-        $units = Unit::with('kepalaUnit', 'parentUnit', 'childrenRecursive.kepalaUnit')
-                     ->whereNull('parent_unit_id')
-                     ->orderBy('name')
-                     ->get();
+        // PENTING: Perbaiki eager loading di sini.
+        // Kita perlu secara eksplisit memuat relasi yang akan digunakan di view
+        // untuk setiap level hierarki.
+        $units = Unit::with([
+            'kepalaUnit',
+            'parentUnit',
+            'childrenRecursive' => function ($query) {
+                // Muat relasi-relasi yang dibutuhkan untuk anak-anak
+                $query->with('kepalaUnit', 'parentUnit');
+            }
+        ])
+        ->whereNull('parent_unit_id')
+        ->orderBy('name')
+        ->get();
 
         return view('admin.units.index', compact('units'));
     }
@@ -110,10 +118,12 @@ class UnitController extends Controller
 
     private function deleteUnitRecursively(Unit $unit)
     {
+        // 1. Hapus semua anak (sub-unit) terlebih dahulu
         foreach ($unit->childUnits as $child) {
             $this->deleteUnitRecursively($child);
         }
 
+        // 2. Hapus semua konten di dalam unit ini
         $this->deleteUnitContents($unit);
     }
 

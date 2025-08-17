@@ -12,6 +12,7 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 
 class UserController extends Controller
 {
@@ -141,14 +142,12 @@ class UserController extends Controller
         $userData['unit_id'] = $unit->id;
         $userData['password'] = Hash::make($validated['password']);
 
-        // Determine role based on the Jabatan type
         $userData['role'] = ($jabatan->type === 'struktural') ? $this->getRoleFromDepth($unit->depth) : User::ROLE_STAF;
 
         if ($userData['role'] === User::ROLE_MENTERI && !auth()->user()->isSuperAdmin()) {
             return back()->withInput()->with('error', 'Anda tidak memiliki izin untuk membuat pengguna dengan peran Menteri.');
         }
 
-        // Custom validation for atasan_id based on role hierarchy
         if ($request->filled('atasan_id')) {
             $atasan = User::find($request->atasan_id);
             if (isset($this->VALID_PARENT_ROLES[$userData['role']])) {
@@ -170,7 +169,6 @@ class UserController extends Controller
             $jabatan->user_id = $user->id;
             $jabatan->save();
 
-            // Set new head of unit status if necessary
             if ($this->isLeadershipRole($user->role)) {
                 $unit->kepala_unit_id = $user->id;
                 $unit->save();
@@ -247,11 +245,9 @@ class UserController extends Controller
         $oldRole = $user->role;
         $pindahUnit = $user->unit_id !== $newJabatan->unit_id;
 
-        // Determine the prospective new role based on the new jabatan
         $newUnit = $newJabatan->unit;
         $newRole = ($newJabatan->type === 'struktural') ? $this->getRoleFromDepth($newUnit->depth) : User::ROLE_STAF;
 
-        // Custom validation for atasan_id based on new role hierarchy
         if ($request->filled('atasan_id')) {
             $atasan = User::find($request->atasan_id);
             if (isset($this->VALID_PARENT_ROLES[$newRole])) {
@@ -263,22 +259,18 @@ class UserController extends Controller
         }
         
         DB::transaction(function () use ($user, $validated, $newJabatan, $request, $pindahUnit, $oldUnit, $newUnit) {
-            // 1. Clear old head of unit status if the user was the head of their old unit
             if ($oldUnit && $oldUnit->kepala_unit_id === $user->id) {
-                // If the user is moving units or losing their leadership role
                 if ($pindahUnit || !$this->isLeadershipRole($newUnit->depth)) {
                     $oldUnit->kepala_unit_id = null;
                     $oldUnit->save();
                 }
             }
         
-            // 2. Free up old position if it's different from the new one
             if ($user->jabatan && $user->jabatan->id !== $newJabatan->id) {
                 $user->jabatan->user_id = null;
                 $user->jabatan->save();
             }
         
-            // 3. Prepare user update data
             $updateData = $validated;
             if ($request->filled('password')) {
                 $updateData['password'] = Hash::make($validated['password']);
@@ -302,18 +294,15 @@ class UserController extends Controller
                 $updateData['atasan_id'] = null;
             }
         
-            // 4. Update the user
             if ($user->isSuperAdmin()) {
                 unset($updateData['role']);
             }
             $user->update($updateData);
             $user->refresh();
         
-            // 5. Assign new position
             $newJabatan->user_id = $user->id;
             $newJabatan->save();
         
-            // 6. Set new head of unit status if necessary
             if ($this->isLeadershipRole($user->role)) {
                 $newUnit->kepala_unit_id = $user->id;
                 $newUnit->save();
@@ -341,16 +330,12 @@ class UserController extends Controller
         $this->authorize('delete', $user);
 
         DB::transaction(function () use ($user) {
-            // Cek apakah user punya jabatan, jika iya, kosongkan.
             if ($user->jabatan) {
                 $user->jabatan->user_id = null;
                 $user->jabatan->save();
             }
 
-            // Hapus relasi atasan-bawahan
             User::where('atasan_id', $user->id)->update(['atasan_id' => $user->atasan_id]);
-
-            // Hapus user
             $user->delete();
         });
 
@@ -434,49 +419,36 @@ class UserController extends Controller
 
     public function impersonate(User $user)
     {
-        // 1. Periksa apakah pengguna yang ditiru adalah Superadmin
-        //    Superadmin tidak bisa meniru Superadmin lain.
         if ($user->isSuperAdmin() && !$user->is(auth()->user())) {
             return redirect()->route('users.index')->with('error', 'Tidak dapat meniru sesama Superadmin.');
         }
 
-        // 2. Periksa apakah pengguna yang ditiru telah memverifikasi email
-        //    Ini adalah langkah krusial untuk mencegah redirect loop.
-        //    Middleware 'verified' akan terus mengalihkan jika email belum terverifikasi.
+        // Penanganan kasus email belum terverifikasi
         if ($user instanceof MustVerifyEmail && !$user->hasVerifiedEmail()) {
             return redirect()->route('users.index')->with('error', 'Tidak dapat meniru pengguna yang belum memverifikasi emailnya.');
         }
 
-        // 3. Simpan ID pengguna asli ke dalam session
-        session(['impersonator_id' => Auth::id()]);
+        $impersonatorId = Auth::id();
         
-        // 4. Login sebagai pengguna yang akan ditiru
         Auth::login($user);
 
-        // 5. Arahkan ke rute yang tidak akan memicu loop
-        //    Mengarah ke dashboard adalah pilihan yang aman.
+        session(['impersonator_id' => $impersonatorId]);
+
         return redirect()->route('dashboard')->with('success', 'Anda sekarang meniru ' . $user->name);
     }
 
-
     public function leaveImpersonate()
     {
-        // 1. Periksa apakah ada sesi impersonasi yang aktif
         if (!session()->has('impersonator_id')) {
             return redirect('/')->with('error', 'Tidak ada sesi peniruan untuk ditinggalkan.');
         }
 
-        // 2. Dapatkan ID pengguna asli dari sesi
         $originalUserId = session('impersonator_id');
         $originalUser = User::find($originalUserId);
 
-        // 3. Login kembali sebagai pengguna asli
         Auth::login($originalUser);
-
-        // 4. Hapus ID impersonator dari sesi
         session()->forget('impersonator_id');
 
-        // 5. Arahkan pengguna kembali ke halaman daftar user
         return redirect()->route('users.index')->with('success', 'Sesi peniruan telah berakhir.');
     }
 
