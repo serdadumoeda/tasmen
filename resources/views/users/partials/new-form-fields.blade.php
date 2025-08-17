@@ -35,9 +35,9 @@ function form_textarea($label, $name, $user, $is_required = false) {
         <h3 class="text-lg font-medium text-gray-900 border-b pb-2 mb-4">Informasi Pribadi</h3>
         {{ form_input('Nama Lengkap', 'name', $user, 'text', true) }}
         {{ form_input('Email', 'email', $user, 'email', true) }}
-        {{ form_input('NIP', 'nip', $user) }}
+        {{ form_input('NIP', 'nip', $user, 'text', true) }}
         {{ form_input('Tempat Lahir', 'tempat_lahir', $user) }}
-        {{ form_input('Tgl. Lahir', 'tgl_lahir', $user, 'text', false, 'placeholder="DD-MM-YYYY"') }}
+        {{ form_input('Tgl. Lahir', 'tgl_lahir', $user, 'text', true, 'placeholder="DD-MM-YYYY"') }}
         {{ form_textarea('Alamat', 'alamat', $user) }}
         <div class="mb-4">
             <label for="jenis_kelamin" class="block font-semibold text-sm text-gray-700 mb-1">Jenis Kelamin</label>
@@ -93,8 +93,9 @@ function form_textarea($label, $name, $user, $is_required = false) {
             <select id="sub_koordinator" class="unit-select block mt-1 w-full rounded-lg shadow-sm border-gray-300" data-level="4" data-placeholder="-- Pilih Sub Koordinator --" disabled><option value="">-- Pilih Koordinator Dahulu --</option></select>
         </div>
         <div class="mb-4">
-            <label for="jabatan_id" class="block font-semibold text-sm text-gray-700 mb-1">5. Jabatan</label>
-            <select name="jabatan_id" id="jabatan_id" required class="block mt-1 w-full rounded-lg shadow-sm border-gray-300" disabled><option value="">-- Pilih Unit Kerja Terakhir --</option></select>
+            <label for="jabatan_id" class="block font-semibold text-sm text-gray-700 mb-1">5. Jabatan (Opsional)</label>
+            <select name="jabatan_id" id="jabatan_id" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300" disabled><option value="">-- Pilih Unit Kerja Terakhir --</option></select>
+            <p class="text-xs text-gray-500 mt-1">Jika dikosongkan, pengguna harus melengkapi profil saat login pertama.</p>
         </div>
         <div class="mb-4">
             <label for="atasan_id" class="block font-semibold text-sm text-gray-700 mb-1">Atasan Langsung</label>

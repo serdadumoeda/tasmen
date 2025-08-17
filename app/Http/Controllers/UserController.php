@@ -104,12 +104,12 @@ class UserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'jabatan_id' => ['required', Rule::exists('jabatans', 'id')->whereNull('user_id')],
+            'jabatan_id' => ['nullable', Rule::exists('jabatans', 'id')->whereNull('user_id')],
             'atasan_id' => ['nullable', 'exists:users,id'],
-            'status' => ['required', 'in:active,suspended'],
-            'nip' => ['nullable', 'string', 'max:255', 'unique:'.User::class],
+            'status' => ['nullable', 'in:active,suspended'],
+            'nip' => ['required', 'string', 'max:255', 'unique:'.User::class],
             'tempat_lahir' => ['nullable', 'string', 'max:255'],
-            'tgl_lahir' => ['nullable', 'date_format:d-m-Y'],
+            'tgl_lahir' => ['required', 'date_format:d-m-Y'],
             'alamat' => ['nullable', 'string'],
             'jenis_kelamin' => ['nullable', 'in:L,P'],
             'agama' => ['nullable', 'string', 'max:255'],
@@ -128,15 +128,21 @@ class UserController extends Controller
             'tmt_pns' => ['nullable', 'date_format:d-m-Y'],
         ]);
 
-        $jabatan = \App\Models\Jabatan::find($validated['jabatan_id']);
-        $unit = $jabatan->unit;
-
         $userData = $validated;
-        $userData['unit_id'] = $unit->id;
         $userData['password'] = Hash::make($validated['password']);
 
-        // UPDATED LOGIC: Role is inherited from Jabatan, with a fallback to the old calculation.
-        $userData['role'] = $jabatan->role ?? $this->calculateRoleFromUnitDepth($unit);
+        // If no jabatan is selected, create a user without a unit and with a default role.
+        // The middleware will force them to complete their profile upon login.
+        if (empty($validated['jabatan_id'])) {
+            $userData['unit_id'] = null;
+            $userData['role'] = User::ROLE_STAF;
+            $jabatan = null;
+        } else {
+            $jabatan = \App\Models\Jabatan::find($validated['jabatan_id']);
+            $unit = $jabatan->unit;
+            $userData['unit_id'] = $unit->id;
+            $userData['role'] = $jabatan->role ?? $this->calculateRoleFromUnitDepth($unit);
+        }
 
         if ($userData['role'] === User::ROLE_MENTERI && !auth()->user()->isSuperAdmin()) {
             return back()->withInput()->with('error', 'Anda tidak memiliki izin untuk membuat pengguna dengan peran Menteri.');
@@ -159,14 +165,17 @@ class UserController extends Controller
             }
         }
 
-        DB::transaction(function () use ($userData, $jabatan, $unit) {
+        DB::transaction(function () use ($userData, $jabatan) {
             $user = User::create($userData);
-            $jabatan->user_id = $user->id;
-            $jabatan->save();
 
-            if ($this->isLeadershipRole($user->role)) {
-                $unit->kepala_unit_id = $user->id;
-                $unit->save();
+            if ($jabatan) {
+                $jabatan->user_id = $user->id;
+                $jabatan->save();
+
+                if ($this->isLeadershipRole($user->role)) {
+                    $jabatan->unit->kepala_unit_id = $user->id;
+                    $jabatan->unit->save();
+                }
             }
         });
 
@@ -205,12 +214,12 @@ class UserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
             'password' => ['nullable', 'confirmed', Rules\Password::defaults()],
-            'jabatan_id' => ['required', 'exists:jabatans,id'],
+            'jabatan_id' => ['nullable', 'exists:jabatans,id'],
             'atasan_id' => ['nullable', 'exists:users,id', 'not_in:'.$user->id],
-            'status' => ['required', 'in:active,suspended'],
-            'nip' => ['nullable', 'string', 'max:255', Rule::unique('users')->ignore($user->id)],
+            'status' => ['nullable', 'in:active,suspended'],
+            'nip' => ['required', 'string', 'max:255', Rule::unique('users')->ignore($user->id)],
             'tempat_lahir' => ['nullable', 'string', 'max:255'],
-            'tgl_lahir' => ['nullable', 'date_format:d-m-Y'],
+            'tgl_lahir' => ['required', 'date_format:d-m-Y'],
             'alamat' => ['nullable', 'string'],
             'jenis_kelamin' => ['nullable', 'in:L,P'],
             'agama' => ['nullable', 'string', 'max:255'],
