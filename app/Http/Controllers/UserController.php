@@ -142,7 +142,8 @@ class UserController extends Controller
         $userData['unit_id'] = $unit->id;
         $userData['password'] = Hash::make($validated['password']);
 
-        $userData['role'] = ($jabatan->type === 'struktural') ? $this->getRoleFromDepth($unit->depth) : User::ROLE_STAF;
+        // NEW LOGIC: Role is inherited from the selected Jabatan
+        $userData['role'] = $jabatan->role;
 
         if ($userData['role'] === User::ROLE_MENTERI && !auth()->user()->isSuperAdmin()) {
             return back()->withInput()->with('error', 'Anda tidak memiliki izin untuk membuat pengguna dengan peran Menteri.');
@@ -246,7 +247,8 @@ class UserController extends Controller
         $pindahUnit = $user->unit_id !== $newJabatan->unit_id;
 
         $newUnit = $newJabatan->unit;
-        $newRole = ($newJabatan->type === 'struktural') ? $this->getRoleFromDepth($newUnit->depth) : User::ROLE_STAF;
+        // NEW LOGIC: The new role is inherited from the Jabatan itself.
+        $newRole = $newJabatan->role;
 
         if ($request->filled('atasan_id')) {
             $atasan = User::find($request->atasan_id);
@@ -258,9 +260,10 @@ class UserController extends Controller
             }
         }
         
-        DB::transaction(function () use ($user, $validated, $newJabatan, $request, $pindahUnit, $oldUnit, $newUnit) {
+        DB::transaction(function () use ($user, $validated, $newJabatan, $request, $pindahUnit, $oldUnit, $newUnit, $newRole) {
             if ($oldUnit && $oldUnit->kepala_unit_id === $user->id) {
-                if ($pindahUnit || !$this->isLeadershipRole($newUnit->depth)) {
+                // The isLeadershipRole check now uses the new role directly
+                if ($pindahUnit || !$this->isLeadershipRole($newRole)) {
                     $oldUnit->kepala_unit_id = null;
                     $oldUnit->save();
                 }
@@ -278,7 +281,8 @@ class UserController extends Controller
                 unset($updateData['password']);
             }
         
-            $updateData['role'] = ($newJabatan->type === 'struktural') ? $this->getRoleFromDepth($newUnit->depth) : User::ROLE_STAF;
+            // NEW LOGIC: Role is inherited from the selected Jabatan
+            $updateData['role'] = $newRole;
         
             if ($updateData['role'] === User::ROLE_MENTERI && !auth()->user()->isSuperAdmin()) {
                 throw new \Illuminate\Auth\Access\AuthorizationException('Anda tidak memiliki izin untuk menetapkan peran Menteri.');
@@ -504,18 +508,6 @@ class UserController extends Controller
     {
         $users = $unit->users()->with('jabatan')->orderBy('name')->get();
         return response()->json($users);
-    }
-
-    private function getRoleFromDepth(int $depth): string
-    {
-        return match ($depth) {
-            0 => User::ROLE_MENTERI,
-            1 => User::ROLE_ESELON_I,
-            2 => User::ROLE_ESELON_II,
-            3 => User::ROLE_KOORDINATOR,
-            4 => User::ROLE_SUB_KOORDINATOR,
-            default => User::ROLE_STAF,
-        };
     }
 
     private function isLeadershipRole(string $role): bool
