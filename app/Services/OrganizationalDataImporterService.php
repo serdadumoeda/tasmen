@@ -67,7 +67,7 @@ class OrganizationalDataImporterService
         }
 
         // 2. Determine Role
-        $role = $this->determineRole($item);
+        $role = $this->determineRole($item, $unit);
 
         // 3. Prepare User Data
         $userData = $this->prepareUserData($item, $unit->id, $role);
@@ -79,7 +79,7 @@ class OrganizationalDataImporterService
         );
 
         // 5. Get or Create Jabatan and link to User
-        $this->getOrCreateJabatan($item, $unit->id, $user->id);
+        $this->getOrCreateJabatan($item, $unit->id, $user->id, $role);
 
         // 6. If user is a structural head, update the unit
         if ($this->isStructuralHead($role)) {
@@ -117,19 +117,33 @@ class OrganizationalDataImporterService
         return $lastUnit;
     }
 
-    private function determineRole(object $item): string
+    private function determineRole(object $item, Unit $unit): string
     {
-        if (isset($item->Eselon)) {
-            return match ($item->Eselon) {
-                'Menteri' => User::ROLE_MENTERI,
+        // Priority 1: Use the explicit "Eselon" field if it's a structural one.
+        if (!empty($item->Eselon)) {
+            $role = match ($item->Eselon) {
                 '1-A' => User::ROLE_ESELON_I,
                 '2-A' => User::ROLE_ESELON_II,
                 '3-A' => User::ROLE_KOORDINATOR,
                 '4-A' => User::ROLE_SUB_KOORDINATOR,
-                default => User::ROLE_STAF,
+                default => null, // Not a recognized structural eselon, so we'll ignore it.
             };
+            if ($role) {
+                return $role;
+            }
         }
-        return User::ROLE_STAF;
+
+        // Priority 2: Infer the role from the depth of the unit for functional staff
+        // or structural staff without a clear Eselon mapping.
+        $depth = $unit->ancestors()->count();
+        return match ($depth) {
+            0 => User::ROLE_MENTERI,
+            1 => User::ROLE_ESELON_I,
+            2 => User::ROLE_ESELON_II,
+            3 => User::ROLE_KOORDINATOR,
+            4 => User::ROLE_SUB_KOORDINATOR,
+            default => User::ROLE_STAF,
+        };
     }
 
     private function prepareUserData(object $item, int $unitId, string $role): array
@@ -191,29 +205,27 @@ class OrganizationalDataImporterService
         return $data;
     }
 
-    private function getOrCreateJabatan(object $item, int $unitId, int $userId): Jabatan
+    private function getOrCreateJabatan(object $item, int $unitId, int $userId, string $role): Jabatan
     {
         $jabatanName = $item->Jabatan;
         if (empty($jabatanName)) {
-            // If there's no Jabatan name in the source data, we can't proceed.
-            // We'll log this, though it's unlikely to happen with valid data.
             $this->logError("Skipping Jabatan creation for User ID: {$userId} due to empty Jabatan name.");
-            // Depending on business rules, you might want to return null or throw an exception.
-            // For now, we'll let it fail, but a more graceful handle might be needed.
+            // Create a default placeholder Jabatan to avoid crashes downstream
+            return Jabatan::firstOrCreate(
+                ['user_id' => $userId],
+                ['name' => 'Jabatan Belum Diatur', 'unit_id' => $unitId, 'type' => 'fungsional', 'role' => User::ROLE_STAF]
+            );
         }
 
-        $jabatanType = $this->isJabatanStruktural($item) ? 'struktural' : 'fungsional';
-        $role = $this->determineRole($item);
+        $jabatanType = $this->isJabatanStruktural($role) ? 'struktural' : 'fungsional';
 
         // First, check if this specific user is already in a Jabatan with this name/unit.
-        // This makes the import process idempotent.
         $existingJabatan = Jabatan::where('name', $jabatanName)
                                 ->where('unit_id', $unitId)
                                 ->where('user_id', $userId)
                                 ->first();
 
         if ($existingJabatan) {
-            // The user is already correctly assigned. Just ensure the details are up-to-date.
             $existingJabatan->type = $jabatanType;
             $existingJabatan->role = $role;
             $existingJabatan->save();
@@ -227,7 +239,6 @@ class OrganizationalDataImporterService
                                ->first();
 
         if ($vacantJabatan) {
-            // An empty slot exists. Let's assign the user to it.
             $vacantJabatan->user_id = $userId;
             $vacantJabatan->type = $jabatanType;
             $vacantJabatan->role = $role;
@@ -245,14 +256,8 @@ class OrganizationalDataImporterService
         ]);
     }
 
-    private function isJabatanStruktural(object $item): bool
+    private function isJabatanStruktural(string $role): bool
     {
-        if (empty($item->Eselon)) {
-            return false;
-        }
-
-        $role = $this->determineRole($item);
-
         // Jabatan dianggap struktural jika role-nya adalah salah satu dari peran pimpinan
         return in_array($role, [
             User::ROLE_MENTERI, User::ROLE_ESELON_I, User::ROLE_ESELON_II,
