@@ -18,11 +18,11 @@ class ApiKeyController extends Controller
         $clients = ApiClient::with('tokens')->get();
 
         $availableScopes = [
-            'read:projects' => 'Baca Data Proyek',
-            'read:tasks' => 'Baca Data Tugas',
-            'read:users' => 'Baca Data Pengguna & Unit',
-            'read:assignments' => 'Baca Data Penugasan Khusus',
-            'read:budgets' => 'Baca Data Anggaran',
+            'read:projects' => 'Membaca data Proyek',
+            'read:tasks' => 'Membaca data Tugas (termasuk Tugas Harian)',
+            'read:users' => 'Membaca data Pengguna dan Unit Organisasi',
+            'read:assignments' => 'Membaca data Penugasan Khusus (SK Penugasan)',
+            'read:budgets' => 'Membaca data Anggaran (alokasi dan realisasi)',
         ];
 
         return view('admin.api_keys.index', compact('clients', 'availableScopes'));
