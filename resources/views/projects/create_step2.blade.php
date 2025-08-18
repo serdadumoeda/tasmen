@@ -1,4 +1,8 @@
 <x-app-layout>
+    <x-slot name="styles">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.min.css">
+    </x-slot>
+
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
             {{ __('Buat Kegiatan Baru (Langkah 2 dari 2): Bentuk Tim') }}
@@ -61,7 +65,7 @@
                                         <i class="fas fa-user-plus mr-2"></i> Tambah Anggota
                                     </button>
                                 </div>
-                                <select name="members[]" id="members" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 tom-select" multiple required>
+                                <select name="members[]" id="members" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 tom-select" multiple required placeholder="Pilih anggota tim...">
                                     @php
                                         $projectMemberIds = collect(old('members', isset($project) ? $project->members->pluck('id')->all() : []));
                                     @endphp
@@ -87,7 +91,6 @@
                                         </option>
                                     @endforeach
                                 </select>
-                                <p class="text-xs text-gray-500 mt-1">Tahan tombol Ctrl (atau Cmd di Mac) untuk memilih lebih dari satu anggota.</p>
                                 <div id="membersWorkloadInfo" class="mt-2 text-sm text-gray-600 p-2 bg-gray-50 rounded-md shadow-sm"></div> {{-- Styling for workload info div --}}
                             </div>
                         </div>
