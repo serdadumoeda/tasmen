@@ -23,6 +23,17 @@
         
         <h2 class="text-3xl font-extrabold mb-8">Dashboard</h2>
 
+        <!-- Search and Filter Form -->
+        <div class="mb-6 p-4 bg-white rounded-xl shadow">
+            <form action="{{ route('projects.index') }}" method="GET" class="flex flex-col sm:flex-row items-center gap-4">
+                <div class="flex-grow w-full sm:w-auto">
+                    <label for="search" class="sr-only">Cari Kegiatan</label>
+                    <input type="text" name="search" id="search" placeholder="Cari berdasarkan nama atau deskripsi..." value="{{ request('search') }}" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition duration-150">
+                </div>
+                <button type="submit" class="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700">Cari</button>
+            </form>
+        </div>
+
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-10">
             <div class="bg-white p-6 rounded-xl shadow hover:shadow-lg transition duration-300 text-center">
                 <i class="bi bi-file-earmark-text text-4xl text-teal-600 mb-3"></i>

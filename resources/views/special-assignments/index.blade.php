@@ -17,25 +17,36 @@
     <div class="py-8"> 
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white p-6 rounded-xl shadow-xl mb-6">
-                <form action="{{ route('special-assignments.index') }}" method="GET" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-                    <input type="text" name="search" placeholder="Cari berdasarkan judul atau nomor SK..." value="{{ request('search') }}" class="rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition duration-150">
-                    
-                    @if(auth()->user()->canManageUsers())
-                    <select name="personnel_id" class="rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition duration-150">
-                        <option value="">-- Semua Personil --</option>
-                        @foreach($subordinates as $user)
-                            <option value="{{ $user->id }}" @selected(request('personnel_id') == $user->id)>{{ $user->name }}</option>
-                        @endforeach
-                    </select>
-                    @endif
+                <form action="{{ route('special-assignments.index') }}" method="GET">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <input type="text" name="search" placeholder="Cari judul atau nomor SK..." value="{{ request('search') }}" class="lg:col-span-2 rounded-lg border-gray-300 shadow-sm text-sm">
 
-                    <div class="flex space-x-3">
-                        <button type="submit" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition ease-in-out duration-150 shadow-md hover:shadow-lg">
-                            <i class="fas fa-filter mr-2"></i> Filter
-                        </button>
-                        <a href="{{ route('special-assignments.index') }}" class="inline-flex items-center px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 transition ease-in-out duration-150 shadow-sm hover:shadow-md">
-                            <i class="fas fa-redo mr-2"></i> Reset
-                        </a>
+                        <select name="status" class="rounded-lg border-gray-300 shadow-sm text-sm">
+                            <option value="">Semua Status</option>
+                            <option value="AKTIF" @selected(request('status') == 'AKTIF')>Aktif</option>
+                            <option value="SELESAI" @selected(request('status') == 'SELESAI')>Selesai</option>
+                        </select>
+
+                        @if(auth()->user()->canManageUsers())
+                        <select name="member_id" class="rounded-lg border-gray-300 shadow-sm text-sm">
+                            <option value="">Semua Personil</option>
+                            @foreach($subordinates as $user)
+                                <option value="{{ $user->id }}" @selected(request('member_id') == $user->id)>{{ $user->name }}</option>
+                            @endforeach
+                        </select>
+                        @endif
+                    </div>
+                    <div class="mt-4 flex flex-col sm:flex-row justify-end items-center gap-3">
+                        <div>
+                            <label for="sort_by" class="text-sm font-medium text-gray-700">Urutkan:</label>
+                            <select name="sort_by" id="sort_by" class="rounded-lg border-gray-300 shadow-sm text-sm" onchange="this.form.submit()">
+                                <option value="created_at" @selected(request('sort_by', 'created_at') == 'created_at')>Tanggal Dibuat</option>
+                                <option value="end_date" @selected(request('sort_by') == 'end_date')>Tanggal Selesai</option>
+                                <option value="title" @selected(request('sort_by') == 'title')>Judul</option>
+                            </select>
+                        </div>
+                        <a href="{{ route('special-assignments.index') }}" class="w-full sm:w-auto text-center px-4 py-2 bg-gray-600 text-white rounded-lg text-xs hover:bg-gray-700">Reset</a>
+                        <button type="submit" class="w-full sm:w-auto px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs hover:bg-indigo-700">Filter</button>
                     </div>
                 </form>
             </div>
