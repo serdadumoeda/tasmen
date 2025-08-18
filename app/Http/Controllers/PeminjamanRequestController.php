@@ -15,9 +15,12 @@ use App\Scopes\HierarchicalScope;
 use App\Notifications\PeminjamanRequested;
 use App\Notifications\PeminjamanApproved;
 use App\Notifications\PeminjamanRejected;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class PeminjamanRequestController extends Controller
 {
+    use AuthorizesRequests;
+
     public function index()
     {
         return redirect()->route('peminjaman-requests.my-requests');
