@@ -172,6 +172,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/profile/complete', [CompleteProfileController::class, 'store'])->name('profile.complete.store');
 });
 
+use App\Http\Controllers\Admin\ApiKeyController;
 use App\Http\Controllers\Api\UnitApiController;
 use App\Http\Controllers\UnitController;
 
@@ -196,6 +197,12 @@ Route::middleware(['auth', 'superadmin'])->prefix('admin')->name('admin.')->grou
 
     // Activity Log Route
     Route::get('/activities', [\App\Http\Controllers\ActivityController::class, 'index'])->name('activities.index');
+
+    // API Key Management
+    Route::resource('api-keys', ApiKeyController::class)->except(['show', 'edit'])->parameters(['api-keys' => 'client']);
+    Route::post('api-keys/{client}/tokens', [ApiKeyController::class, 'generateToken'])->name('api-keys.tokens.store');
+    Route::delete('api-keys/{client}/tokens/{tokenId}', [ApiKeyController::class, 'revokeToken'])->name('api-keys.tokens.destroy');
+    Route::patch('api-keys/{client}/status', [ApiKeyController::class, 'update'])->name('api-keys.status.update');
 });
 
 Route::get('/api/units/{unit}/vacant-jabatans', [UnitController::class, 'getVacantJabatans'])->name('api.units.vacant-jabatans')->middleware('auth');
