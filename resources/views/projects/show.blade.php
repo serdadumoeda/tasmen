@@ -1,6 +1,7 @@
 <x-app-layout>
     {{-- Slot untuk memuat CSS khusus halaman ini --}}
     <x-slot name="styles">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.min.css">
         <style>
             .progress-bar { transition: width 0.6s ease; }
             [x-cloak] { display: none !important; }
@@ -278,7 +279,7 @@
                                     </div>
                                     <div>
                                         <label for="add_assignees" class="block text-sm font-semibold text-gray-700 mb-1">Tugaskan Kepada <span class="text-red-600">*</span></label>
-                                        <select name="assignees[]" id="add_assignees" multiple class="block w-full"> {{-- Kelas Tom Select akan diterapkan oleh JS --}}
+                                        <select name="assignees[]" id="add_assignees" multiple class="block w-full" placeholder="Pilih pelaksana tugas">
                                             @foreach($projectMembers as $member)
                                                 <option value="{{ $member->id }}">{{ $member->name }}</option>
                                             @endforeach
@@ -338,7 +339,11 @@
                     },
                     initTomSelect() {
                          console.log('Initializing TomSelect for #add_assignees');
-                         new TomSelect('#add_assignees', { plugins: ['remove_button'], create: false });
+                         new TomSelect('#add_assignees', {
+                             plugins: ['remove_button'],
+                             create: false,
+                             placeholder: 'Pilih pelaksana tugas'
+                         });
                     },
                     initChart() {
                         const ctx = document.getElementById('taskStatusChart');
