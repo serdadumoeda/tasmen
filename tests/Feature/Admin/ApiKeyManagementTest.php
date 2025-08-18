@@ -60,15 +60,20 @@ class ApiKeyManagementTest extends TestCase
         $this->assertDatabaseHas('api_clients', ['name' => 'Test Client']);
     }
 
-    public function test_superadmin_can_generate_a_token_for_a_client()
+    public function test_superadmin_can_generate_a_token_for_a_client_with_scopes()
     {
         $client = ApiClient::factory()->create();
+        $scopes = ['read:projects', 'read:tasks'];
 
         $response = $this->actingAs($this->superadmin)
-            ->post(route('admin.api-keys.tokens.store', $client));
+            ->post(route('admin.api_keys.tokens.store', $client), [
+                'scopes' => $scopes,
+            ]);
 
         $response->assertSessionHas('newApiKey');
         $this->assertCount(1, $client->tokens);
+        $token = $client->tokens->first();
+        $this->assertEquals($scopes, $token->abilities);
     }
 
     public function test_superadmin_can_revoke_a_token()

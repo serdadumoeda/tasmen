@@ -93,10 +93,15 @@
                                             <div>
                                                 <p class="text-sm font-mono">
                                                     <span class="font-semibold">{{ $token->name }}</span>
-                                                    (ID: {{ $token->id }})
                                                 </p>
                                                 <p class="text-xs text-gray-500">
-                                                    Scopes: {{ $token->abilities ? implode(', ', $token->abilities) : 'none' }} |
+                                                    <strong class="font-semibold">Hak Akses:</strong>
+                                                    @if(empty($token->abilities) || in_array('*', $token->abilities))
+                                                        <span class="italic">Akses Penuh</span>
+                                                    @else
+                                                        {{ implode(', ', $token->abilities) }}
+                                                    @endif
+                                                    |
                                                     Created: {{ $token->created_at->format('Y-m-d') }}
                                                 </p>
                                             </div>
@@ -112,11 +117,22 @@
                                 </div>
 
                                 {{-- Generate New Token Form --}}
-                                <form method="POST" action="{{ route('admin.api_keys.tokens.store', $client) }}" class="mt-4">
+                                <form method="POST" action="{{ route('admin.api_keys.tokens.store', $client) }}" class="mt-6">
                                     @csrf
+                                    <div class="mb-4">
+                                        <h6 class="font-medium text-sm text-gray-700">Pilih Hak Akses (Scopes)</h6>
+                                        <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                            @foreach($availableScopes as $scope => $description)
+                                                <label class="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-50">
+                                                    <input type="checkbox" name="scopes[]" value="{{ $scope }}" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500">
+                                                    <span>{{ $description }} <span class="text-xs text-gray-500">({{ $scope }})</span></span>
+                                                </label>
+                                            @endforeach
+                                        </div>
+                                        <p class="mt-2 text-xs text-gray-500">Jika tidak ada yang dipilih, kunci akan memiliki akses penuh.</p>
+                                    </div>
                                     <div class="flex items-center gap-4">
                                         <x-primary-button>Generate New Key</x-primary-button>
-                                        {{-- Optional: Add scope selection here in the future --}}
                                     </div>
                                 </form>
                             </div>

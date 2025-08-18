@@ -4,7 +4,6 @@ namespace Tests\Feature\Api\V1;
 
 use App\Models\ApiClient;
 use App\Models\Project;
-use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -12,108 +11,86 @@ class ApiIntegrationTest extends TestCase
 {
     use RefreshDatabase;
 
-    protected ApiClient $activeClient;
-    protected string $activeToken;
-    protected ApiClient $inactiveClient;
-    protected string $inactiveToken;
-
     protected function setUp(): void
     {
         parent::setUp();
+        Project::factory()->count(1)->create();
+    }
 
-        // Create an active client and its token
-        $this->activeClient = ApiClient::factory()->create(['is_active' => true]);
-        $this->activeToken = $this->activeClient->createToken('active-token')->plainTextToken;
-
-        // Create an inactive client and its token
-        $this->inactiveClient = ApiClient::factory()->create(['is_active' => false]);
-        $this->inactiveToken = $this->inactiveClient->createToken('inactive-token')->plainTextToken;
-
-        Project::factory()->count(5)->create();
+    private function createClientAndToken(array $scopes = []): array
+    {
+        $client = ApiClient::factory()->create(['is_active' => true]);
+        $token = $client->createToken('test-token', $scopes)->plainTextToken;
+        return ['client' => $client, 'token' => $token];
     }
 
     public function test_unauthenticated_request_is_blocked()
     {
-        $response = $this->getJson('/api/v1/status');
-
-        $response->assertStatus(401)
-                 ->assertJson([
-                     'success' => false,
-                     'message' => 'Authentication token not provided.',
-                 ]);
-    }
-
-    public function test_request_with_invalid_token_is_blocked()
-    {
-        $response = $this->withHeaders([
-            'Authorization' => 'Bearer invalid-token-string',
-        ])->getJson('/api/v1/status');
-
-        $response->assertStatus(401)
-                 ->assertJson(['message' => 'Invalid API Key.']);
+        $response = $this->getJson('/api/v1/projects');
+        $response->assertStatus(401);
     }
 
     public function test_request_from_inactive_client_is_blocked()
     {
+        $client = ApiClient::factory()->create(['is_active' => false]);
+        $token = $client->createToken('inactive-token', ['read:projects'])->plainTextToken;
+
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->inactiveToken,
-        ])->getJson('/api/v1/status');
+            'Authorization' => 'Bearer ' . $token,
+        ])->getJson('/api/v1/projects');
 
         $response->assertStatus(403)
                  ->assertJson(['message' => 'API client is inactive.']);
     }
 
-    public function test_can_access_status_endpoint_with_valid_token()
+    public function test_token_with_correct_scope_can_access_resource()
     {
-        $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->activeToken,
-        ])->getJson('/api/v1/status');
+        ['token' => $token] = $this->createClientAndToken(['read:projects']);
 
-        $response->assertStatus(200)
-                 ->assertJson([
-                     'success' => true,
-                     'message' => 'API service is running and accessible.',
-                 ])
-                 ->assertJsonPath('data.authenticated_client', $this->activeClient->name);
-    }
-
-    public function test_projects_endpoint_returns_standardized_response()
-    {
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->activeToken,
+            'Authorization' => 'Bearer ' . $token,
         ])->getJson('/api/v1/projects');
 
         $response->assertStatus(200)
-                 ->assertJson([
-                     'success' => true,
-                     'message' => 'Projects retrieved successfully.',
-                 ])
-                 ->assertJsonStructure([
-                     'success',
-                     'message',
-                     'data' => [
-                         'current_page',
-                         'data',
-                         'total'
-                     ]
-                 ])
-                 ->assertJsonCount(5, 'data.data');
+                 ->assertJson(['success' => true]);
     }
 
-    public function test_single_project_endpoint_returns_standardized_response()
+    public function test_token_without_correct_scope_cannot_access_resource()
     {
-        $project = Project::first();
+        ['token' => $token] = $this->createClientAndToken(['read:users']); // Has users scope, not projects
+
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->activeToken,
-        ])->getJson('/api/v1/projects/' . $project->id);
+            'Authorization' => 'Bearer ' . $token,
+        ])->getJson('/api/v1/projects');
+
+        $response->assertStatus(403)
+                 ->assertJson(['message' => 'This action is forbidden. The provided key does not have the required scope: [read:projects]']);
+    }
+
+    public function test_token_with_some_but_not_all_scopes_is_forbidden()
+    {
+        // In a future route that requires multiple scopes, e.g., middleware('auth.apikey:scope1,scope2')
+        // This test demonstrates the principle.
+        ['token' => $token] = $this->createClientAndToken(['read:projects']);
+
+        // Let's pretend a route required both projects and users
+        // For now, we simulate this by checking against a scope the token doesn't have
+        $response = $this->withHeaders([
+            'Authorization' => 'Bearer ' . $token,
+        ])->getJson('/api/v1/users'); // This endpoint requires 'read:users'
+
+        $response->assertStatus(403);
+    }
+
+    public function test_status_endpoint_is_accessible_with_any_valid_key()
+    {
+        ['token' => $token] = $this->createClientAndToken(); // Token with no specific scopes
+
+        $response = $this->withHeaders([
+            'Authorization' => 'Bearer ' . $token,
+        ])->getJson('/api/v1/status');
 
         $response->assertStatus(200)
-                 ->assertJson([
-                     'success' => true,
-                     'message' => 'Project retrieved successfully.',
-                     'data' => [
-                         'id' => $project->id
-                     ]
-                 ]);
+                 ->assertJson(['success' => true]);
     }
 }

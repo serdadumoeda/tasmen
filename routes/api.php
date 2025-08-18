@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\ProjectApiController;
+use App\Http\Controllers\Api\V1\StatusController;
 use App\Http\Controllers\Api\V1\TaskApiController;
 use App\Http\Controllers\Api\V1\UserApiController;
 use Illuminate\Support\Facades\Route;
@@ -9,20 +10,27 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 | API V1 Routes
 |--------------------------------------------------------------------------
-|
-| These routes are for external system-to-system integrations.
-| They are protected by the `auth.apikey` middleware, which validates
-| a bearer token against an active ApiClient.
-|
 */
 
-use App\Http\Controllers\Api\V1\StatusController;
+Route::prefix('v1')->middleware('log.api')->group(function () {
 
-Route::middleware(['auth.apikey', 'log.api'])->prefix('v1')->group(function () {
-    // Health check / status endpoint
-    Route::get('/status', StatusController::class);
+    // This endpoint only requires a valid key, no specific scopes.
+    Route::middleware('auth.apikey')->get('/status', StatusController::class);
 
-    Route::apiResource('/projects', ProjectApiController::class)->only(['index', 'show']);
-    Route::apiResource('/users', UserApiController::class)->only(['index', 'show']);
-    Route::apiResource('/tasks', TaskApiController::class)->only(['index', 'show']);
+    // Group for endpoints requiring 'read:projects' scope
+    Route::middleware('auth.apikey:read:projects')->group(function () {
+        Route::apiResource('/projects', ProjectApiController::class)->only(['index', 'show']);
+    });
+
+    // Group for endpoints requiring 'read:users' scope
+    Route::middleware('auth.apikey:read:users')->group(function () {
+        Route::apiResource('/users', UserApiController::class)->only(['index', 'show']);
+    });
+
+    // Group for endpoints requiring 'read:tasks' scope
+    Route::middleware('auth.apikey:read:tasks')->group(function () {
+        Route::apiResource('/tasks', TaskApiController::class)->only(['index', 'show']);
+    });
+
+    // Future endpoints for budgets, assignments, etc. would be added here in their own scoped groups.
 });
