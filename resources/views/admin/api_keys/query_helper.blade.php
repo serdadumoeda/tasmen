@@ -28,8 +28,9 @@
                     <div class="space-y-6">
                         {{-- Resource Selection --}}
                         <div>
-                            <label for="resource" class="block font-medium text-sm text-gray-700">1. Pilih Sumber Data</label>
-                            <select id="resource" x-model="selectedResource" @change="resetFilters" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                            <label for="resource" class="block font-medium text-sm text-gray-700">1. Pilih Sumber Data (Resource)</label>
+                            <p class="text-xs text-gray-500 mt-1">Pilih jenis data utama yang ingin Anda tarik. Pilihan ini akan menentukan filter apa saja yang tersedia.</p>
+                            <select id="resource" x-model="selectedResource" @change="resetFilters" class="mt-2 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
                                 <option value="">-- Pilih Sumber Data --</option>
                                 <template x-for="(resource, key) in resources" :key="key">
                                     <option :value="key" x-text="resource.label"></option>
@@ -39,8 +40,9 @@
 
                         {{-- Filters Section --}}
                         <div x-show="selectedResource">
-                            <h4 class="font-medium text-sm text-gray-700">2. Tambahkan Filter</h4>
-                            <div class="mt-2 space-y-3 border-l-2 border-gray-200 pl-4">
+                            <label class="block font-medium text-sm text-gray-700">2. Tambahkan Kriteria Filter</label>
+                            <p class="text-xs text-gray-500 mt-1">Anda bisa menambahkan satu atau lebih kriteria untuk menyaring data. Klik "Tambah Filter" untuk menambahkan baris baru.</p>
+                            <div class="mt-2 space-y-3 border-l-2 border-gray-200 pl-4 pt-2">
                                 <template x-for="(filter, index) in activeFilters" :key="index">
                                     <div class="flex items-center space-x-2 p-2 bg-gray-50 rounded-md">
                                         <select x-model="filter.field" class="w-1/3 border-gray-300 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
@@ -63,7 +65,8 @@
 
                         {{-- Generated URL --}}
                         <div x-show="selectedResource">
-                             <h4 class="font-medium text-sm text-gray-700">3. URL yang Dihasilkan</h4>
+                             <label class="block font-medium text-sm text-gray-700">3. URL API Final</label>
+                             <p class="text-xs text-gray-500 mt-1">URL ini dibuat secara otomatis berdasarkan pilihan Anda. Salin dan berikan URL ini kepada tim teknis yang akan menggunakannya.</p>
                              <div class="mt-2 relative">
                                 <input type="text" :value="generatedUrl" readonly class="font-mono text-sm block w-full p-2.5 pr-12 bg-gray-100 border-gray-300 rounded-md">
                                 <button @click="copyToClipboard($el)" class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-600 hover:text-gray-900">
