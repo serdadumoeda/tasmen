@@ -23,15 +23,35 @@
 
                     <!-- Filter and Search Form -->
                     <form action="{{ route('adhoc-tasks.index') }}" method="GET" class="mb-6">
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div class="md:col-span-2">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 items-center">
+                            <div class="sm:col-span-2 md:col-span-2">
                                 <label for="search" class="sr-only">Cari</label>
-                                <input type="text" name="search" id="search" placeholder="Cari berdasarkan judul atau deskripsi..." value="{{ request('search') }}" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition">
+                                <input type="text" name="search" id="search" placeholder="Cari judul atau deskripsi..." value="{{ request('search') }}" class="block w-full rounded-lg border-gray-300 shadow-sm text-sm">
                             </div>
+
+                            <div>
+                                <label for="status" class="sr-only">Status</label>
+                                <select name="status" id="status" class="block w-full rounded-lg border-gray-300 shadow-sm text-sm">
+                                    <option value="">Semua Status</option>
+                                    <option value="pending" @selected(request('status') == 'pending')>Menunggu</option>
+                                    <option value="in_progress" @selected(request('status') == 'in_progress')>Dikerjakan</option>
+                                    <option value="completed" @selected(request('status') == 'completed')>Selesai</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="priority" class="sr-only">Prioritas</label>
+                                <select name="priority" id="priority" class="block w-full rounded-lg border-gray-300 shadow-sm text-sm">
+                                    <option value="">Semua Prioritas</option>
+                                    @foreach(\App\Models\Task::PRIORITIES as $priority)
+                                        <option value="{{ $priority }}" @selected(request('priority') == $priority)>{{ ucfirst($priority) }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
                             @if(Auth::user()->canManageUsers())
                             <div>
                                 <label for="personnel_id" class="sr-only">Filter Personel</label>
-                                <select name="personnel_id" id="personnel_id" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition">
+                                <select name="personnel_id" id="personnel_id" class="block w-full rounded-lg border-gray-300 shadow-sm text-sm">
                                     <option value="">Semua Personel</option>
                                     @foreach($subordinates as $subordinate)
                                         <option value="{{ $subordinate->id }}" @selected(request('personnel_id') == $subordinate->id)>{{ $subordinate->name }}</option>
@@ -39,9 +59,18 @@
                                 </select>
                             </div>
                             @endif
-                            <div>
-                                <button type="submit" class="w-full inline-flex justify-center items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:outline-none">Cari / Filter</button>
+                        </div>
+                        <div class="mt-4 flex flex-col sm:flex-row justify-end items-center gap-3">
+                             <div>
+                                <label for="sort_by" class="text-sm font-medium text-gray-700">Urutkan:</label>
+                                <select name="sort_by" id="sort_by" class="rounded-lg border-gray-300 shadow-sm text-sm" onchange="this.form.submit()">
+                                    <option value="deadline" @selected(request('sort_by', 'deadline') == 'deadline')>Deadline</option>
+                                    <option value="priority" @selected(request('sort_by') == 'priority')>Prioritas</option>
+                                    <option value="created_at" @selected(request('sort_by') == 'created_at')>Tanggal Dibuat</option>
+                                </select>
                             </div>
+                            <a href="{{ route('adhoc-tasks.index') }}" class="w-full sm:w-auto text-center px-4 py-2 bg-gray-600 text-white rounded-lg text-xs hover:bg-gray-700">Reset</a>
+                            <button type="submit" class="w-full sm:w-auto px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs hover:bg-indigo-700">Filter</button>
                         </div>
                     </form>
 

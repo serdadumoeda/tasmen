@@ -139,12 +139,63 @@
                     </div>
                     <div>
                         <div x-show="activeTab === 'tasks'" x-cloak>
+                            <!-- Task Filter and Search Form -->
+                            <div class="mb-6 p-4 bg-gray-50 rounded-lg shadow-inner">
+                                <form action="{{ route('projects.show', $project) }}" method="GET">
+                                    <input type="hidden" name="tab" value="tasks">
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                                        <div>
+                                            <label for="task_search" class="sr-only">Cari Tugas</label>
+                                            <input type="text" name="task_search" id="task_search" placeholder="Cari judul tugas..." value="{{ request('task_search') }}" class="block w-full rounded-md border-gray-300 shadow-sm text-sm">
+                                        </div>
+                                        <div>
+                                            <label for="task_status" class="sr-only">Status</label>
+                                            <select name="task_status" id="task_status" class="block w-full rounded-md border-gray-300 shadow-sm text-sm">
+                                                <option value="">Semua Status</option>
+                                                <option value="pending" @selected(request('task_status') == 'pending')>Menunggu</option>
+                                                <option value="in_progress" @selected(request('task_status') == 'in_progress')>Dikerjakan</option>
+                                                <option value="for_review" @selected(request('task_status') == 'for_review')>Direview</option>
+                                                <option value="completed" @selected(request('task_status') == 'completed')>Selesai</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label for="task_priority" class="sr-only">Prioritas</label>
+                                            <select name="task_priority" id="task_priority" class="block w-full rounded-md border-gray-300 shadow-sm text-sm">
+                                                <option value="">Semua Prioritas</option>
+                                                @foreach(\App\Models\Task::PRIORITIES as $priority)
+                                                    <option value="{{ $priority }}" @selected(request('task_priority') == $priority)>{{ ucfirst($priority) }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label for="task_assignee" class="sr-only">Pelaksana</label>
+                                            <select name="task_assignee" id="task_assignee" class="block w-full rounded-md border-gray-300 shadow-sm text-sm">
+                                                <option value="">Semua Pelaksana</option>
+                                                @foreach($projectMembers as $member)
+                                                    <option value="{{ $member->id }}" @selected(request('task_assignee') == $member->id)>{{ $member->name }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="mt-4 flex justify-end gap-2">
+                                        <a href="{{ route('projects.show', $project) }}?tab=tasks" class="px-4 py-2 bg-gray-600 text-white rounded-md text-xs hover:bg-gray-700">Reset</a>
+                                        <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-md text-xs hover:bg-indigo-700">Filter</button>
+                                    </div>
+                                </form>
+                            </div>
+
                             <div class="space-y-4">
-                                @forelse($project->tasks->sortBy('deadline') as $task)
+                                @forelse($tasks as $task)
                                     <x-task-card :task="$task"/>
                                 @empty
-                                    <p class="text-gray-500 text-center py-8">Belum ada tugas di kegiatan ini.</p>
+                                    <div class="text-center py-8">
+                                        <p class="text-gray-500">Tidak ada tugas yang cocok dengan kriteria Anda.</p>
+                                    </div>
                                 @endforelse
+                            </div>
+
+                            <div class="mt-6">
+                                {{ $tasks->links() }}
                             </div>
                         </div>
                         <div x-show="activeTab === 'info'" x-cloak>

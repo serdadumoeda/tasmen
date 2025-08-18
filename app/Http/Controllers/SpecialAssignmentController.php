@@ -52,7 +52,24 @@ class SpecialAssignmentController extends Controller
             });
         }
 
-        $assignments = $query->latest()->paginate(15);
+        // Filter by status
+        if ($request->filled('status')) {
+            $query->where('status', $request->input('status'));
+        }
+
+        // Filter by member
+        if ($request->filled('member_id')) {
+            $query->whereHas('members', fn($q) => $q->where('user_id', $request->input('member_id')));
+        }
+
+        // Sorting
+        $sortBy = $request->input('sort_by', 'created_at');
+        $sortDir = $request->input('sort_dir', 'desc');
+        if (in_array($sortBy, ['title', 'status', 'start_date', 'end_date', 'created_at'])) {
+            $query->orderBy($sortBy, $sortDir);
+        }
+
+        $assignments = $query->paginate(15)->appends($request->query());
         
         // Ambil data bawahan untuk dropdown filter (hanya untuk pimpinan)
         $subordinates = $currentUser->canManageUsers() ? User::whereIn('id', $currentUser->getAllSubordinateIds())->orderBy('name')->get() : collect();

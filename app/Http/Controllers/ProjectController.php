@@ -19,15 +19,26 @@ class ProjectController extends Controller
     use AuthorizesRequests;
 
     
-    public function index()
+    public function index(Request $request)
     {
-        // The HierarchicalScope is automatically applied, ensuring users see only the projects they are authorized to view.
-        $projects = Project::with([
-            'owner', 'leader', 'members', 'tasks'
-        ])
-        ->withSum('budgetItems', 'total_cost')
-        ->latest()
-        ->paginate(15);
+        // The HierarchicalScope is automatically applied.
+        $query = Project::with(['owner', 'leader', 'members', 'tasks'])
+            ->withSum('budgetItems', 'total_cost');
+
+        // 1. Search functionality
+        if ($request->filled('search')) {
+            $searchTerm = $request->input('search');
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('name', 'like', "%{$searchTerm}%")
+                  ->orWhere('description', 'like', "%{$searchTerm}%");
+            });
+        }
+
+        // Note: Filtering by the dynamic 'status' attribute is complex as it's calculated in the model.
+        // This would require a significant refactor to implement efficiently.
+        // For now, we are only implementing search.
+
+        $projects = $query->latest()->paginate(15)->appends($request->query());
 
         // --- Dashboard Stats ---
         // These stats are global for the entire system for now.
@@ -114,59 +125,71 @@ class ProjectController extends Controller
         return redirect()->route('projects.show', $project)->with('success', 'Tim proyek berhasil dibentuk!');
     }
 
-    public function show(Project $project)
+    public function show(Request $request, Project $project)
     {
         $this->authorize('view', $project);
-
         $user = Auth::user();
-        $project->load([
-            'owner',
-            'leader',
-            'members',
-            'tasks' => function ($query) use ($user) {
-                if ($user->isStaff()) {
-                    $query->whereHas('assignees', function ($q) use ($user) {
-                        $q->where('user_id', $user->id);
-                    });
-                }
-            },
-            'tasks.assignees',
-            'tasks.comments.user',
-            'tasks.attachments',
-            'activities.user',
-            'tasks.subTasks'
-        ]);
+
+        // Load project relationships, but handle tasks separately for filtering.
+        $project->load(['owner', 'leader', 'members', 'activities.user']);
+
+        // --- Task Query with Filtering, Sorting, and Pagination ---
+        $taskQuery = $project->tasks()->with(['assignees', 'comments.user', 'attachments', 'subTasks']);
+
+        // Base visibility for staff
+        if ($user->isStaff()) {
+            $taskQuery->whereHas('assignees', fn($q) => $q->where('user_id', $user->id));
+        }
+
+        // Search by title
+        if ($request->filled('task_search')) {
+            $taskQuery->where('title', 'like', '%' . $request->input('task_search') . '%');
+        }
+
+        // Filter by status
+        if ($request->filled('task_status')) {
+            $taskQuery->where('status', $request->input('task_status'));
+        }
+
+        // Filter by priority
+        if ($request->filled('task_priority')) {
+            $taskQuery->where('priority', $request->input('task_priority'));
+        }
+
+        // Filter by assignee
+        if ($request->filled('task_assignee')) {
+            $taskQuery->whereHas('assignees', fn($q) => $q->where('user_id', $request->input('task_assignee')));
+        }
+
+        // Sorting
+        $sortBy = $request->input('sort_by', 'created_at');
+        $sortDir = $request->input('sort_dir', 'desc');
+        if (in_array($sortBy, ['title', 'status', 'priority', 'deadline', 'created_at'])) {
+            $taskQuery->orderBy($sortBy, $sortDir);
+        }
+
+        // Paginate the filtered and sorted tasks
+        $tasks = $taskQuery->paginate(10, ['*'], 'tasksPage')->appends($request->query());
         
-        // --- AWAL PERBAIKAN ---
-        // Ambil data riwayat permintaan peminjaman yang terkait dengan proyek ini
+        // --- Other Data ---
         $loanRequests = PeminjamanRequest::where('project_id', $project->id)
                             ->with(['requester', 'requestedUser', 'approver'])
                             ->latest()
                             ->get();
-        // --- AKHIR PERBAIKAN ---
-
-        $tasksByUser = collect();
-        foreach ($project->tasks as $task) {
-            foreach ($task->assignees as $assignee) {
-                if (!$tasksByUser->has($assignee->id)) {
-                    $tasksByUser->put($assignee->id, collect());
-                }
-                $tasksByUser->get($assignee->id)->push($task);
-            }
-        }
-
-        $projectMembers = $project->members->sortBy('name');
-        $taskStatuses = $project->tasks->countBy('status');
         
+        $projectMembers = $project->members->sortBy('name');
+
+        // Stats should be calculated on all tasks of the project, not just the paginated/filtered ones.
+        $allTasks = $project->tasks()->get();
+        $taskStatuses = $allTasks->countBy('status');
         $stats = [
-            'total' => $project->tasks->count(),
+            'total' => $allTasks->count(),
             'pending' => $taskStatuses->get('pending', 0),
             'in_progress' => $taskStatuses->get('in_progress', 0),
             'completed' => $taskStatuses->get('completed', 0),
         ];
 
-        // Kirim variabel $loanRequests ke view
-        return view('projects.show', compact('project', 'projectMembers', 'stats', 'tasksByUser', 'loanRequests'));
+        return view('projects.show', compact('project', 'tasks', 'projectMembers', 'stats', 'loanRequests'));
     }
 
 

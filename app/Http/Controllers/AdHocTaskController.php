@@ -65,6 +65,23 @@ class AdHocTaskController extends Controller
             }
         }
 
+        // Filter by status
+        if ($request->filled('status')) {
+            $query->where('status', $request->input('status'));
+        }
+
+        // Filter by priority
+        if ($request->filled('priority')) {
+            $query->where('priority', $request->input('priority'));
+        }
+
+        // Sorting
+        $sortBy = $request->input('sort_by', 'deadline');
+        $sortDir = $request->input('sort_dir', 'asc');
+        if (in_array($sortBy, ['title', 'status', 'priority', 'deadline', 'created_at'])) {
+            $query->orderBy($sortBy, $sortDir);
+        }
+
         $assignedTasks = $query->paginate(10)->withQueryString();
 
         return view('adhoc-tasks.index', compact('assignedTasks', 'subordinates'));
