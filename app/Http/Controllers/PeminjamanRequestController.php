@@ -113,7 +113,7 @@ class PeminjamanRequestController extends Controller
             // Cari approver (Koordinator atau Eselon II) di unit saat ini.
             $approver = User::where('unit_id', $currentUnit->id)
                 ->whereIn('role', [User::ROLE_KOORDINATOR, User::ROLE_ESELON_II])
-                ->orderByRaw("FIELD(role, '".User::ROLE_KOORDINATOR."', '".User::ROLE_ESELON_II."')") // Prioritaskan Koordinator
+                ->orderByRaw("CASE role WHEN ? THEN 1 WHEN ? THEN 2 ELSE 3 END", [User::ROLE_KOORDINATOR, User::ROLE_ESELON_II])
                 ->first();
 
             if ($approver) {
