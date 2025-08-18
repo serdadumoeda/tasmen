@@ -149,16 +149,6 @@
                                             <input type="text" name="task_search" id="task_search" placeholder="Cari judul tugas..." value="{{ request('task_search') }}" class="block w-full rounded-md border-gray-300 shadow-sm text-sm">
                                         </div>
                                         <div>
-                                            <label for="task_status" class="sr-only">Status</label>
-                                            <select name="task_status" id="task_status" class="block w-full rounded-md border-gray-300 shadow-sm text-sm">
-                                                <option value="">Semua Status</option>
-                                                <option value="pending" @selected(request('task_status') == 'pending')>Menunggu</option>
-                                                <option value="in_progress" @selected(request('task_status') == 'in_progress')>Dikerjakan</option>
-                                                <option value="for_review" @selected(request('task_status') == 'for_review')>Direview</option>
-                                                <option value="completed" @selected(request('task_status') == 'completed')>Selesai</option>
-                                            </select>
-                                        </div>
-                                        <div>
                                             <label for="task_priority" class="sr-only">Prioritas</label>
                                             <select name="task_priority" id="task_priority" class="block w-full rounded-md border-gray-300 shadow-sm text-sm">
                                                 <option value="">Semua Prioritas</option>
