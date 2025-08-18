@@ -20,6 +20,11 @@
         <div class="flex items-center space-x-2 flex-shrink-0">
             <span class="badge-status text-xs font-semibold px-3 py-1 rounded-full {{ $task->status_color_class }}">{{ \Illuminate\Support\Str::title(str_replace('_', ' ', $task->status)) }}</span>
             @can('update', $task)
+                @if ($task->status !== 'completed')
+                    <button @click.prevent="quickComplete({{ $task->id }})" title="Tandai Selesai" class="inline-flex items-center justify-center h-6 w-6 text-xs font-semibold text-green-800 bg-green-100 rounded-full hover:bg-green-200 transition-colors">
+                        <i class="fas fa-check"></i>
+                    </button>
+                @endif
                 <a href="{{ route('tasks.edit', $task) }}" class="inline-block px-3 py-1 text-xs font-semibold text-amber-800 bg-amber-100 rounded-full hover:bg-amber-200 transition-colors">Edit</a>
             @endcan
             @can('delete', $task)

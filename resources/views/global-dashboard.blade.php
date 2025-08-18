@@ -80,6 +80,16 @@
                                     <input type="text" name="search" id="search" class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Cari nama kegiatan..." value="{{ $search ?? '' }}">
                                 </div>
                             </div>
+                            <div>
+                                <label for="status" class="sr-only">Status</label>
+                                <select id="status" name="status" class="block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                                    <option value="">Semua Status</option>
+                                    <option value="pending" @selected(($status ?? '') === 'pending')>Menunggu</option>
+                                    <option value="in_progress" @selected(($status ?? '') === 'in_progress')>Dikerjakan</option>
+                                    <option value="completed" @selected(($status ?? '') === 'completed')>Selesai</option>
+                                    <option value="overdue" @selected(($status ?? '') === 'overdue')>Terlambat</option>
+                                </select>
+                            </div>
                             <div class="md:col-span-3 flex justify-end space-x-2">
                                 <button type="submit" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700">Filter</button>
                                 <a href="{{ route('global.dashboard') }}" class="inline-flex items-center px-4 py-2 bg-gray-200 border border-transparent rounded-md font-semibold text-xs text-gray-800 uppercase tracking-widest hover:bg-gray-300">Reset</a>

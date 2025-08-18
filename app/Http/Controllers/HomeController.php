@@ -30,4 +30,30 @@ class HomeController extends Controller
         // Forward the request to the GlobalDashboardController and return its response
         return app(GlobalDashboardController::class)->index();
     }
+
+    public function myDashboard()
+    {
+        $user = Auth::user();
+
+        // 1. Get all tasks assigned to the current user
+        $tasks = $user->tasks()
+            ->with('project') // Eager load project info
+            ->orderBy('deadline', 'asc')
+            ->get();
+
+        // 2. Get stats for the user's tasks
+        $myTasks = $user->tasks;
+        $stats = [
+            'total' => $myTasks->count(),
+            'pending' => $myTasks->where('status', 'pending')->count(),
+            'in_progress' => $myTasks->where('status', 'in_progress')->count(),
+            'completed' => $myTasks->where('status', 'completed')->count(),
+            'overdue' => $myTasks->where('deadline', '<', now())->where('status', '!=', 'completed')->count(),
+        ];
+
+        // 3. Get recent activities initiated by the user
+        $myActivities = $user->activities()->with('subject')->latest()->take(10)->get();
+
+        return view('my-dashboard', compact('tasks', 'stats', 'myActivities'));
+    }
 }

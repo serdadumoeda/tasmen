@@ -21,13 +21,30 @@ class CommentController extends Controller
             'user_id' => auth()->id()
         ]);
 
+        // --- @mention Notification Logic ---
+        preg_match_all('/@(\w+)/', $request->body, $matches);
+        $mentionedUsernames = $matches[1];
+
+        if (!empty($mentionedUsernames)) {
+            $mentionedUsers = \App\Models\User::whereIn('name', $mentionedUsernames)->get();
+            $mentioner = auth()->user();
+
+            // Filter out the user who is making the comment
+            $recipients = $mentionedUsers->where('id', '!=', $mentioner->id);
+
+            if ($recipients->isNotEmpty()) {
+                Notification::send($recipients, new \App\Notifications\UserMentioned($comment, $mentioner));
+            }
+        }
+
+        // --- Original Notification Logic for Assignees ---
         // Beri notifikasi pada pemilik tugas dan ketua proyek, kecuali jika mereka yang berkomentar
-        $recipients = $task->assignees->push($task->project->leader)
+        $assigneeRecipients = $task->assignees->push($task->project->leader)
                 ->unique('id')
                 ->where('id', '!=', auth()->id());
 
-        if ($recipients->isNotEmpty()) {
-            Notification::send($recipients, new NewCommentOnTask($comment));
+        if ($assigneeRecipients->isNotEmpty()) {
+            Notification::send($assigneeRecipients, new NewCommentOnTask($comment));
         }
 
         if ($request->wantsJson()) {

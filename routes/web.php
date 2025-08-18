@@ -40,6 +40,7 @@ use Illuminate\Support\Facades\Auth;
 Route::middleware(['auth'])->group(function () {
     // Rute default setelah login adalah Beranda baru.
     Route::get('/dashboard', [HomeController::class, 'index'])->name('dashboard');
+    Route::get('/my-dashboard', [HomeController::class, 'myDashboard'])->name('my.dashboard');
     // Rute untuk daftar kegiatan (proyek)
     Route::get('/projects', [ProjectController::class, 'index'])->name('projects.index');
 
@@ -133,6 +134,7 @@ Route::middleware(['auth'])->group(function () {
     });
 
     Route::post('/tasks/{task}/approve', [\App\Http\Controllers\TaskController::class, 'approve'])->name('tasks.approve')->middleware('auth');
+    Route::post('/tasks/{task}/quick-complete', [\App\Http\Controllers\TaskController::class, 'quickComplete'])->name('tasks.quick-complete')->middleware('auth');
     Route::get('/projects/{project}/kanban', [\App\Http\Controllers\ProjectController::class, 'showKanban'])->name('projects.kanban')->middleware('auth');
     Route::patch('/tasks/{task}/update-status', [\App\Http\Controllers\TaskController::class, 'updateStatus'])->name('tasks.update-status')->middleware('auth');
     Route::get('/projects/{project}/calendar', [\App\Http\Controllers\ProjectController::class, 'showCalendar'])->name('projects.calendar')->middleware('auth');

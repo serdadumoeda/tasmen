@@ -279,4 +279,28 @@ class TaskController extends Controller
         ]);
     }
 
+    public function quickComplete(Task $task)
+    {
+        $this->authorize('update', $task);
+
+        // Don't do anything if the task is already complete
+        if ($task->status === 'completed') {
+            return response()->json([
+                'message' => 'Tugas sudah selesai.',
+                'task_progress' => $task->progress,
+                'task_status' => $task->status,
+            ]);
+        }
+
+        $task->update([
+            'status' => 'completed',
+            'progress' => 100,
+        ]);
+
+        return response()->json([
+            'message' => 'Tugas ditandai sebagai selesai.',
+            'task_progress' => 100,
+            'task_status' => 'completed',
+        ]);
+    }
 }
