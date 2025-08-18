@@ -9,6 +9,7 @@ use Illuminate\Http\RedirectResponse;
 use App\Http\Controllers\ExecutiveSummaryController;
 use App\Http\Controllers\GlobalDashboardController;
 use App\Services\InsightService;
+use App\Models\Activity;
 
 class HomeController extends Controller
 {
@@ -52,7 +53,11 @@ class HomeController extends Controller
         ];
 
         // 3. Get recent activities initiated by the user
-        $myActivities = $user->activities()->with('subject')->latest()->take(10)->get();
+        $myActivities = Activity::where('user_id', $user->id)
+            ->with('subject')
+            ->latest()
+            ->take(10)
+            ->get();
 
         return view('my-dashboard', compact('tasks', 'stats', 'myActivities'));
     }
