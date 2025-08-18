@@ -186,31 +186,31 @@
         <h2>DAFTAR AKUN</h2>
 
         <div class="input-group">
-          <input type="text" name="name" placeholder="Nama Lengkap" value="{{ old('name') }}" required autofocus>
+          <input type="text" name="name" placeholder="Nama Lengkap *" value="{{ old('name') }}" required autofocus>
           <i class="fas fa-user"></i>
           <x-input-error :messages="$errors->get('name')" class="mt-2" />
         </div>
 
         <div class="input-group">
-          <input type="email" name="email" placeholder="Email" value="{{ old('email') }}" required>
+          <input type="email" name="email" placeholder="Email *" value="{{ old('email') }}" required>
           <i class="fas fa-envelope"></i>
           <x-input-error :messages="$errors->get('email')" class="mt-2" />
         </div>
 
         <div class="input-group">
-          <input type="text" name="nip" placeholder="NIP (Nomor Induk Pegawai)" value="{{ old('nip') }}" required>
+          <input type="text" name="nip" placeholder="NIP (Nomor Induk Pegawai) *" value="{{ old('nip') }}" required>
           <i class="fas fa-id-card"></i>
           <x-input-error :messages="$errors->get('nip')" class="mt-2" />
         </div>
 
         <div class="input-group">
-          <input type="password" name="password" placeholder="Password" required autocomplete="new-password">
+          <input type="password" name="password" placeholder="Password *" required autocomplete="new-password">
           <i class="fas fa-lock"></i>
           <x-input-error :messages="$errors->get('password')" class="mt-2" />
         </div>
 
         <div class="input-group">
-          <input type="password" name="password_confirmation" placeholder="Konfirmasi Password" required>
+          <input type="password" name="password_confirmation" placeholder="Konfirmasi Password *" required>
           <i class="fas fa-lock"></i>
           <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
         </div>

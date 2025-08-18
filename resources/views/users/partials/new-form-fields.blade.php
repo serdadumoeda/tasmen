@@ -14,16 +14,18 @@
 function form_input($label, $name, $user, $type = 'text', $is_required = false, $extra_attrs = '') {
     $value = old($name, $user->{$name} ?? '');
     $required_attr = $is_required ? 'required' : '';
+    $required_span = $is_required ? '<span class="text-red-500 font-bold">*</span>' : '';
     echo "<div class='mb-4'>";
-    echo "<label for='{$name}' class='block font-semibold text-sm text-gray-700 mb-1'>{$label}</label>";
+    echo "<label for='{$name}' class='block font-semibold text-sm text-gray-700 mb-1'>{$label} {$required_span}</label>";
     echo "<input id='{$name}' class='block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500' type='{$type}' name='{$name}' value='{$value}' {$required_attr} {$extra_attrs} />";
     echo "</div>";
 }
 function form_textarea($label, $name, $user, $is_required = false) {
     $value = old($name, $user->{$name} ?? '');
     $required_attr = $is_required ? 'required' : '';
+    $required_span = $is_required ? '<span class="text-red-500 font-bold">*</span>' : '';
     echo "<div class='mb-4'>";
-    echo "<label for='{$name}' class='block font-semibold text-sm text-gray-700 mb-1'>{$label}</label>";
+    echo "<label for='{$name}' class='block font-semibold text-sm text-gray-700 mb-1'>{$label} {$required_span}</label>";
     echo "<textarea id='{$name}' class='block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500' name='{$name}' {$required_attr}>{$value}</textarea>";
     echo "</div>";
 }

@@ -77,13 +77,13 @@
                         <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
                             {{-- Nama Jabatan --}}
                             <div class="md:col-span-2">
-                                <label for="jabatan_name" class="block text-sm font-medium text-gray-700">Nama Jabatan</label>
+                                <label for="jabatan_name" class="block text-sm font-medium text-gray-700">Nama Jabatan <span class="text-red-500 font-bold">*</span></label>
                                 <input type="text" name="name" id="jabatan_name" class="mt-1 block w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" placeholder="e.g., Staf Pelaksana" required>
                             </div>
 
                             {{-- Tipe Jabatan --}}
                             <div>
-                                <label for="jabatan_type" class="block text-sm font-medium text-gray-700">Tipe</label>
+                                <label for="jabatan_type" class="block text-sm font-medium text-gray-700">Tipe <span class="text-red-500 font-bold">*</span></label>
                                 <select name="type" id="jabatan_type" class="mt-1 block w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" required>
                                     <option value="struktural">Struktural</option>
                                     <option value="fungsional">Fungsional</option>
@@ -92,7 +92,7 @@
 
                             {{-- Role Jabatan --}}
                             <div>
-                                <label for="jabatan_role" class="block text-sm font-medium text-gray-700">Peran (Role)</label>
+                                <label for="jabatan_role" class="block text-sm font-medium text-gray-700">Peran (Role) <span class="text-red-500 font-bold">*</span></label>
                                 <select name="role" id="jabatan_role" class="mt-1 block w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" required>
                                     @foreach(App\Models\User::ROLES as $role)
                                         <option value="{{ $role['name'] }}">{{ $role['name'] }}</option>
