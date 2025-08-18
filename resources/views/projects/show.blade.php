@@ -308,27 +308,36 @@
                     runningTaskGlobal: {{ optional(Auth::user()->timeLogs()->whereNull('end_time')->first())->task_id ?? 'null' }},
                     activeTab: 'tasks',
                     isChartInitialized: false,
+                    isTomSelectInitialized: false,
                     init() {
                         console.log('Initializing projectDetail component...');
-                        this.initTomSelect();
+
                         this.$watch('activeTab', value => {
                             console.log('activeTab changed to:', value);
                             if (value === 'info' && !this.isChartInitialized) {
-                                this.$nextTick(() => this.initChart()); // Memastikan DOM sudah render chart canvas
+                                this.$nextTick(() => this.initChart());
+                            }
+                            // Initialize TomSelect only when the 'add' tab is clicked for the first time.
+                            if (value === 'add' && !this.isTomSelectInitialized) {
+                                this.$nextTick(() => {
+                                    this.initTomSelect();
+                                    this.isTomSelectInitialized = true;
+                                });
                             }
                         });
+
                         // Jika ada hash di URL, coba aktifkan tab yang sesuai
                         if (window.location.hash) {
                             const hash = window.location.hash.substring(1);
                             if (hash === 'info') {
                                 this.activeTab = 'info';
-                                this.$nextTick(() => this.initChart()); // Inisialisasi chart segera jika tab info aktif dari hash
                             } else if (hash === 'add') {
                                 this.activeTab = 'add';
                             }
                         }
                     },
                     initTomSelect() {
+                         console.log('Initializing TomSelect for #add_assignees');
                          new TomSelect('#add_assignees', { plugins: ['remove_button'], create: false });
                     },
                     initChart() {
