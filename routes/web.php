@@ -40,7 +40,6 @@ use Illuminate\Support\Facades\Auth;
 Route::middleware(['auth'])->group(function () {
     // Rute default setelah login adalah Beranda baru.
     Route::get('/dashboard', [HomeController::class, 'index'])->name('dashboard');
-    Route::get('/my-dashboard', [HomeController::class, 'myDashboard'])->name('my.dashboard');
     // Rute untuk daftar kegiatan (proyek)
     Route::get('/projects', [ProjectController::class, 'index'])->name('projects.index');
 
