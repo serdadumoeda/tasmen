@@ -68,6 +68,40 @@ A failed request will have `success: false`, a null `data` field, and an error m
 
 ---
 
+## Filtering, Sorting, and Field Selection
+
+Our API supports advanced querying features using the `spatie/laravel-query-builder` package, following JSON:API conventions.
+
+### Filtering
+
+You can filter results by adding `filter[field]=value` to the query string.
+
+**Available Filters:**
+- **Projects (`/projects`):** `status`, `owner_id`
+- **Users (`/users`):** `status`, `unit_id`, `role`
+- **Tasks (`/tasks`):** `status`, `priority`, `project_id`
+
+**Example:**
+```
+GET /api/v1/projects?filter[status]=completed
+```
+
+### Sorting
+
+You can sort results using the `sort` parameter. Prepend a field with `-` for descending order.
+
+**Available Sorts:**
+- **Projects:** `name`, `start_date`, `end_date`
+- **Users:** `name`, `email`, `created_at`
+- **Tasks:** `title`, `due_date`, `created_at`
+
+**Example:**
+```
+GET /api/v1/tasks?sort=-created_at
+```
+
+---
+
 ## API Endpoints
 
 All endpoints listed below require the `Authorization: Bearer <token>` header.

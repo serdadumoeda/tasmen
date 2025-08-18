@@ -5,7 +5,8 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Traits\ApiResponser;
-use Illuminate\Http\Request;
+use Spatie\QueryBuilder\QueryBuilder;
+use Spatie\QueryBuilder\AllowedFilter;
 
 class UserApiController extends Controller
 {
@@ -18,9 +19,16 @@ class UserApiController extends Controller
      */
     public function index()
     {
-        $users = User::where('status', 'active')
+        $users = QueryBuilder::for(User::class)
+            ->allowedFilters([
+                AllowedFilter::exact('status'),
+                AllowedFilter::exact('unit_id'),
+                AllowedFilter::exact('role'),
+            ])
+            ->allowedSorts(['name', 'email', 'created_at'])
             ->with('unit')
-            ->paginate(20);
+            ->paginate(20)
+            ->appends(request()->query());
 
         return $this->successResponse($users, 'Users retrieved successfully.');
     }

@@ -55,6 +55,25 @@ class ApiIntegrationTest extends TestCase
                  ->assertJson(['success' => true]);
     }
 
+    public function test_api_can_filter_results()
+    {
+        // Create one project with a specific status
+        Project::factory()->create(['status' => 'completed']);
+        // Create other projects with a different status
+        Project::factory()->count(3)->create(['status' => 'in_progress']);
+
+        ['token' => $token] = $this->createClientAndToken(['read:projects']);
+
+        $response = $this->withHeaders([
+            'Authorization' => 'Bearer ' . $token,
+        ])->getJson('/api/v1/projects?filter[status]=completed');
+
+        $response->assertStatus(200)
+                 ->assertJson(['success' => true])
+                 ->assertJsonCount(1, 'data.data')
+                 ->assertJsonPath('data.data.0.status', 'completed');
+    }
+
     public function test_token_without_correct_scope_cannot_access_resource()
     {
         ['token' => $token] = $this->createClientAndToken(['read:users']); // Has users scope, not projects
