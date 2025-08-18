@@ -21,6 +21,14 @@ class ApiKeyController extends Controller
     }
 
     /**
+     * Display the API usage documentation page.
+     */
+    public function showDocs()
+    {
+        return view('admin.api_keys.docs');
+    }
+
+    /**
      * Store a newly created API client in storage.
      */
     public function store(Request $request)
