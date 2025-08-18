@@ -37,6 +37,40 @@ class ApiKeyController extends Controller
     }
 
     /**
+     * Display the API query helper page.
+     */
+    public function showQueryHelper()
+    {
+        $resources = [
+            'projects' => [
+                'label' => 'Proyek',
+                'filters' => [
+                    'status' => 'Status',
+                    'owner_id' => 'ID Pemilik',
+                ],
+            ],
+            'users' => [
+                'label' => 'Pengguna',
+                'filters' => [
+                    'status' => 'Status',
+                    'unit_id' => 'ID Unit',
+                    'role' => 'Peran',
+                ],
+            ],
+            'tasks' => [
+                'label' => 'Tugas',
+                'filters' => [
+                    'status' => 'Status',
+                    'priority' => 'Prioritas',
+                    'project_id' => 'ID Proyek',
+                ],
+            ],
+        ];
+
+        return view('admin.api_keys.query_helper', compact('resources'));
+    }
+
+    /**
      * Store a newly created API client in storage.
      */
     public function store(Request $request)

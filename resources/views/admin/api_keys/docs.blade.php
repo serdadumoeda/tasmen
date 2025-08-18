@@ -69,7 +69,26 @@
 
                     {{-- Response Format --}}
                     <div>
-                        <h3 class="text-2xl font-semibold border-b pb-2 mb-4">3. Format Respons</h3>
+                        <h3 class="text-2xl font-semibold border-b pb-2 mb-4">3. Kustomisasi Query (Filtering)</h3>
+                        <p class="text-gray-700 leading-relaxed mb-4">
+                            Anda dapat menyesuaikan data yang diterima dengan menambahkan parameter `filter` pada URL. Gunakan **API Query Helper** untuk membangun URL ini dengan mudah, atau susun secara manual.
+                        </p>
+                        <p class="text-gray-700 leading-relaxed font-semibold">
+                            Format Filter:
+                        </p>
+                        <div class="mt-2 p-3 bg-gray-100 border rounded-md text-sm">
+                            <code class="font-mono">?filter[nama_field]=nilai_filter</code>
+                        </div>
+                        <p class="mt-4 text-gray-700 leading-relaxed font-semibold">
+                            Contoh - Mengambil semua proyek dengan status 'completed':
+                        </p>
+                        <div class="mt-2 p-3 bg-gray-100 border rounded-md text-sm">
+                            <code class="font-mono">{{ url('/api/v1/projects?filter[status]=completed') }}</code>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="text-2xl font-semibold border-b pb-2 mb-4">4. Format Respons</h3>
                         <p class="text-gray-700 leading-relaxed mb-4">
                             Semua respons dari API akan dibungkus dalam format JSON yang konsisten (disebut "envelope") untuk mempermudah pemrosesan.
                         </p>

@@ -45,6 +45,13 @@ class ApiKeyManagementTest extends TestCase
         $response->assertSee('Panduan Penggunaan API');
     }
 
+    public function test_superadmin_can_access_api_query_helper_page()
+    {
+        $response = $this->actingAs($this->superadmin)->get(route('admin.api_keys.query_helper'));
+        $response->assertStatus(200);
+        $response->assertSee('API Query Helper');
+    }
+
     public function test_regular_user_cannot_access_api_key_management_page()
     {
         $response = $this->actingAs($this->regularUser)->get(route('admin.api-keys.index'));

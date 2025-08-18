@@ -200,6 +200,7 @@ Route::middleware(['auth', 'superadmin'])->prefix('admin')->name('admin.')->grou
 
     // API Key Management
     Route::get('api_keys/docs', [ApiKeyController::class, 'showDocs'])->name('api_keys.docs');
+    Route::get('api_keys/query-helper', [ApiKeyController::class, 'showQueryHelper'])->name('api_keys.query_helper');
     Route::resource('api_keys', ApiKeyController::class)->except(['show', 'edit'])->parameters(['api_keys' => 'client']);
     Route::post('api_keys/{client}/tokens', [ApiKeyController::class, 'generateToken'])->name('api_keys.tokens.store');
     Route::delete('api_keys/{client}/tokens/{tokenId}', [ApiKeyController::class, 'revokeToken'])->name('api_keys.tokens.destroy');
