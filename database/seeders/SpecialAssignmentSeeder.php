@@ -25,7 +25,7 @@ class SpecialAssignmentSeeder extends Seeder
             return;
         }
 
-        for ($i = 0; $i < 40; $i++) {
+        for ($i = 0; $i < 15; $i++) {
             $assignment = SpecialAssignment::create([
                 'title' => 'SK ' . $faker->sentence(3),
                 'description' => $faker->realText(200),
