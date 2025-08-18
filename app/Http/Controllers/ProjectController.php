@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Activity;
 use App\Models\Project;
+use App\Models\Task;
 use App\Models\User;
-use App\Models\PeminjamanRequest; 
+use App\Models\PeminjamanRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
@@ -19,24 +21,32 @@ class ProjectController extends Controller
     
     public function index()
     {
-        $user = Auth::user();
+        // The HierarchicalScope is automatically applied, ensuring users see only the projects they are authorized to view.
+        $projects = Project::with([
+            'owner', 'leader', 'members', 'tasks'
+        ])
+        ->withSum('budgetItems', 'total_cost')
+        ->latest()
+        ->paginate(15);
 
-        // The HierarchicalScope is automatically applied.
-        $baseQuery = Project::with(['owner', 'leader', 'members'])->latest();
+        // --- Dashboard Stats ---
+        // These stats are global for the entire system for now.
+        // This could be scoped to the user in the future if needed.
+        $stats = [
+            'users' => User::count(),
+            'tasks' => Task::count(),
+            'tasks_completed' => Task::where('status', 'completed')->count(),
+        ];
 
-        // Create two separate paginated queries.
-        $ownedProjects = (clone $baseQuery)
-            ->where('owner_id', $user->id)
-            ->paginate(10, ['*'], 'ownedPage');
+        // --- Recent Activity Feed ---
+        // Fetches the 5 most recent activities across all projects.
+        $activities = Activity::with('user', 'subject')
+            ->latest()
+            ->take(5)
+            ->get();
 
-        $memberProjects = (clone $baseQuery)
-            ->where('owner_id', '!=', $user->id)
-            ->whereHas('members', function ($query) use ($user) {
-                $query->where('user_id', $user->id);
-            })
-            ->paginate(10, ['*'], 'memberPage');
-
-        return view('dashboard', compact('ownedProjects', 'memberProjects'));
+        // Pass all data to the dashboard view.
+        return view('dashboard', compact('projects', 'stats', 'activities'));
     }
 
     public function createStep1()
