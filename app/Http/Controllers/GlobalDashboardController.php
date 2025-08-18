@@ -67,10 +67,11 @@ class GlobalDashboardController extends Controller
             $projectQuery->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($search) . '%']);
         }
 
-        // PERBAIKAN: Terapkan filter status di query database untuk efisiensi
-        if ($status) {
-            $projectQuery->where('status', $status);
-        }
+        // PERBAIKAN: Filter status dinonaktifkan sementara karena menyebabkan error.
+        // Kolom 'status' tidak ada di database, ini adalah accessor.
+        // if ($status) {
+        //     $projectQuery->where('status', $status);
+        // }
 
         // Ambil data dengan paginasi, dan pastikan filter tetap ada di link paginasi
         $allProjects = $projectQuery->latest()->paginate(15)->withQueryString();
