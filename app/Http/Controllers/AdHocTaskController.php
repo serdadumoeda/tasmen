@@ -105,7 +105,10 @@ class AdHocTaskController extends Controller
             $assignableUsers->push($user);
         }
         
-        return view('adhoc-tasks.create', compact('assignableUsers'));
+        return view('adhoc-tasks.create', [
+            'task' => new Task(),
+            'assignableUsers' => $assignableUsers
+        ]);
     }
 
     /**
