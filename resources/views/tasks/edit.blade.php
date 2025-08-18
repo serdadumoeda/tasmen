@@ -1,5 +1,6 @@
 <x-app-layout>
     <x-slot name="styles">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.min.css">
         <style>
             /* Style kustom untuk Tom Select (dari project.blade.php) */
             .ts-control {
@@ -119,7 +120,7 @@
                                     <i class="fas fa-users-line mr-2 text-gray-500"></i> Ditugaskan Kepada <span class="text-red-500">*</span>
                                 </label>
                                 @if (auth()->user()->can('update', $task) && !auth()->user()->isStaff())
-                                    <select name="assignees[]" id="assignees" class="block mt-1 w-full tom-select-multiple" multiple required>
+                                    <select name="assignees[]" id="assignees" class="block mt-1 w-full tom-select-multiple" multiple required placeholder="Pilih Anggota Tim...">
                                         @foreach ($projectMembers as $member)
                                             <option value="{{ $member->id }}" @selected(in_array($member->id, old('assignees', $task->assignees->pluck('id')->toArray())))>
                                                 {{ $member->name }} ({{ $member->role }})

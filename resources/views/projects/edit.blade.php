@@ -1,6 +1,7 @@
 <x-app-layout>
     {{-- Slot untuk style TomSelect yang sudah diimpor di project.blade.php --}}
     <x-slot name="styles">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.min.css">
         <style>
             /* Style kustom untuk Tom Select (menggunakan tema default) */
             .ts-control {
