@@ -63,14 +63,35 @@ class UserPolicy
     }
 
     /**
-     * Tentukan apakah user bisa menghapus user lain.
+     * Tentukan apakah user bisa menonaktifkan user lain.
      */
-    public function delete(User $user, User $model): bool
+    public function deactivate(User $user, User $model): bool
     {
         if ($user->id === $model->id) {
-            return false;
+            return false; // Cannot deactivate self
         }
+
+        // Delegated admin with Eselon II scope can deactivate within their scope
+        if ($user->jabatan?->can_manage_users) {
+            $userEselonII = $user->unit?->getEselonIIAncestor();
+            $modelEselonII = $model->unit?->getEselonIIAncestor();
+
+            if ($userEselonII && $modelEselonII && $userEselonII->id === $modelEselonII->id) {
+                return true;
+            }
+        }
+
+        // A manager can deactivate their own subordinates.
         return $model->isSubordinateOf($user);
+    }
+
+    /**
+     * Tentukan apakah user bisa mengaktifkan kembali user lain.
+     */
+    public function reactivate(User $user, User $model): bool
+    {
+        // Logic is identical to deactivation.
+        return $this->deactivate($user, $model);
     }
 
     /**
