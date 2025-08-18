@@ -84,7 +84,7 @@
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
-                                    <a href="{{ route('users.profile', $user) }}" class="text-green-600 hover:text-green-900 inline-flex items-center p-2 rounded-full hover:bg-green-50 transition-colors duration-200" title="{{ __('Lihat Profil') }}">
+                                    <a href="{{ route('users.show', $user) }}" class="text-green-600 hover:text-green-900 inline-flex items-center p-2 rounded-full hover:bg-green-50 transition-colors duration-200" title="{{ __('Lihat Profil') }}">
                                         <i class="fas fa-eye"></i>
                                     </a>
                                     @if(Auth::user()->isSuperAdmin() && Auth::id() !== $user->id && !$user->isSuperAdmin())
