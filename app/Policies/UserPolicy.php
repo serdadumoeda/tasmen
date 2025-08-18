@@ -95,6 +95,15 @@ class UserPolicy
     }
 
     /**
+     * Determine whether the user can permanently delete the model.
+     */
+    public function forceDelete(User $user, User $model): bool
+    {
+        // Only superadmins can force delete, and only if the user is already suspended.
+        return $user->isSuperAdmin() && $model->status === User::STATUS_SUSPENDED;
+    }
+
+    /**
      * Tentukan apakah seorang manajer bisa menilai perilaku kerja seorang user.
      */
     public function rateBehavior(User $manager, User $subordinate): bool
