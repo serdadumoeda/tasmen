@@ -73,7 +73,7 @@
             @endif
         </div>
 
-        <select name="members[]" id="members" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 tom-select" multiple required> {{-- Menambahkan kelas tom-select --}}
+        <select name="members[]" id="members" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 tom-select" multiple required placeholder="Pilih Anggota Tim...">
             @php
                 $projectMemberIds = collect(old('members', isset($project) ? $project->members->pluck('id')->all() : []));
             @endphp
@@ -83,7 +83,6 @@
                 </option>
             @endforeach
         </select>
-        <p class="text-xs text-gray-500 mt-1">Tahan tombol Ctrl (atau Cmd di Mac) untuk memilih lebih dari satu anggota.</p>
         <div id="membersWorkloadInfo" class="mt-2 text-sm text-gray-600 p-2 bg-gray-50 rounded-md shadow-sm"></div> {{-- Styling info beban kerja --}}
     </div>
 </div>
