@@ -33,7 +33,7 @@
                     <p class="mt-1 text-sm text-gray-600">
                         Create a new client to generate API keys for an external system.
                     </p>
-                    <form method="POST" action="{{ route('admin.api-keys.store') }}" class="mt-6 space-y-6">
+                    <form method="POST" action="{{ route('admin.api_keys.store') }}" class="mt-6 space-y-6">
                         @csrf
                         <div>
                             <x-input-label for="name" :value="__('Client Name')" />
@@ -57,7 +57,7 @@
                                 <h4 class="font-semibold text-lg">{{ $client->name }}</h4>
                                 <div class="flex items-center space-x-4">
                                     {{-- Status Toggle --}}
-                                    <form method="POST" action="{{ route('admin.api-keys.status.update', $client) }}">
+                                    <form method="POST" action="{{ route('admin.api_keys.status.update', $client) }}">
                                         @csrf
                                         @method('PATCH')
                                         <input type="hidden" name="is_active" value="{{ $client->is_active ? '0' : '1' }}">
@@ -67,7 +67,7 @@
                                     </form>
 
                                     {{-- Delete Client --}}
-                                    <form method="POST" action="{{ route('admin.api-keys.destroy', $client) }}" onsubmit="return confirm('Are you sure you want to delete this client and all its keys?');">
+                                    <form method="POST" action="{{ route('admin.api_keys.destroy', $client) }}" onsubmit="return confirm('Are you sure you want to delete this client and all its keys?');">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="text-sm font-medium text-red-600 hover:text-red-900">Delete Client</button>
@@ -94,7 +94,7 @@
                                                     Created: {{ $token->created_at->format('Y-m-d') }}
                                                 </p>
                                             </div>
-                                            <form method="POST" action="{{ route('admin.api-keys.tokens.destroy', ['client' => $client, 'tokenId' => $token->id]) }}">
+                                            <form method="POST" action="{{ route('admin.api_keys.tokens.destroy', ['client' => $client, 'tokenId' => $token->id]) }}">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" class="text-xs font-medium text-red-600 hover:text-red-900">Revoke</button>
@@ -106,7 +106,7 @@
                                 </div>
 
                                 {{-- Generate New Token Form --}}
-                                <form method="POST" action="{{ route('admin.api-keys.tokens.store', $client) }}" class="mt-4">
+                                <form method="POST" action="{{ route('admin.api_keys.tokens.store', $client) }}" class="mt-4">
                                     @csrf
                                     <div class="flex items-center gap-4">
                                         <x-primary-button>Generate New Key</x-primary-button>
