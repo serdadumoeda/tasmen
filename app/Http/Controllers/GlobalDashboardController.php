@@ -60,21 +60,33 @@ class GlobalDashboardController extends Controller
         $search = request('search');
         $status = request('status');
 
-        // Eager load relasi dan kalkulasi
-        $projectQuery->with(['leader', 'tasks'])->withSum('budgetItems', 'total_cost');
-
         if ($search) {
             $projectQuery->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($search) . '%']);
         }
 
-        // PERBAIKAN: Filter status dinonaktifkan sementara karena menyebabkan error.
-        // Kolom 'status' tidak ada di database, ini adalah accessor.
-        // if ($status) {
-        //     $projectQuery->where('status', $status);
-        // }
+        // Eager load relationships for performance. `tasks` is needed for the status accessor.
+        $projectQuery->with(['leader', 'tasks'])->withSum('budgetItems', 'total_cost');
 
-        // Ambil data dengan paginasi, dan pastikan filter tetap ada di link paginasi
-        $allProjects = $projectQuery->latest()->paginate(15)->withQueryString();
+        // Get all projects matching the search criteria first.
+        $projects = $projectQuery->latest()->get();
+
+        // Now, filter by the dynamic 'status' attribute on the collection.
+        if ($status) {
+            $projects = $projects->filter(function ($project) use ($status) {
+                return $project->status === $status;
+            });
+        }
+
+        // Manually paginate the filtered collection.
+        $allProjects = new \Illuminate\Pagination\LengthAwarePaginator(
+            $projects->forPage(\Illuminate\Pagination\Paginator::resolveCurrentPage('page'), 15),
+            $projects->count(),
+            15,
+            \Illuminate\Pagination\Paginator::resolveCurrentPage('page'),
+            ['path' => \Illuminate\Pagination\Paginator::resolveCurrentPath()]
+        );
+
+        $allProjects->withQueryString();
         // --- AKHIR LOGIKA FILTER & PENCARIAN ---
 
 

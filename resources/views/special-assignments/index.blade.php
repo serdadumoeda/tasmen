@@ -21,6 +21,11 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         <input type="text" name="search" placeholder="Cari judul atau nomor SK..." value="{{ request('search') }}" class="lg:col-span-2 rounded-lg border-gray-300 shadow-sm text-sm">
 
+                        <select name="status" class="rounded-lg border-gray-300 shadow-sm text-sm">
+                            <option value="">Semua Status</option>
+                            <option value="AKTIF" @selected(request('status') == 'AKTIF')>Aktif</option>
+                            <option value="SELESAI" @selected(request('status') == 'SELESAI')>Selesai</option>
+                        </select>
 
                         @if(auth()->user()->canManageUsers())
                         <select name="member_id" class="rounded-lg border-gray-300 shadow-sm text-sm">

@@ -149,6 +149,16 @@
                                             <input type="text" name="task_search" id="task_search" placeholder="Cari judul tugas..." value="{{ request('task_search') }}" class="block w-full rounded-md border-gray-300 shadow-sm text-sm">
                                         </div>
                                         <div>
+                                            <label for="task_status" class="sr-only">Status</label>
+                                            <select name="task_status" id="task_status" class="block w-full rounded-md border-gray-300 shadow-sm text-sm">
+                                                <option value="">Semua Status</option>
+                                                <option value="pending" @selected(request('task_status') == 'pending')>Menunggu</option>
+                                                <option value="in_progress" @selected(request('task_status') == 'in_progress')>Dikerjakan</option>
+                                                <option value="for_review" @selected(request('task_status') == 'for_review')>Direview</option>
+                                                <option value="completed" @selected(request('task_status') == 'completed')>Selesai</option>
+                                            </select>
+                                        </div>
+                                        <div>
                                             <label for="task_priority" class="sr-only">Prioritas</label>
                                             <select name="task_priority" id="task_priority" class="block w-full rounded-md border-gray-300 shadow-sm text-sm">
                                                 <option value="">Semua Prioritas</option>
@@ -668,6 +678,34 @@
                             });
                             if (!response.ok) throw new Error('Gagal menghapus file.');
                             document.getElementById(`attachment-${attachmentId}`).remove();
+                        } catch (error) {
+                            alert(error.message);
+                        }
+                    },
+
+                    async quickComplete(taskId) {
+                        if (!confirm('Tandai tugas ini sebagai selesai?')) return;
+
+                        try {
+                            const response = await fetch(`/tasks/${taskId}/quick-complete`, {
+                                method: 'POST',
+                                headers: {
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                                    'Accept': 'application/json',
+                                },
+                            });
+                            if (!response.ok) {
+                                const errorData = await response.json().catch(() => ({ message: 'Gagal memperbarui tugas.' }));
+                                throw new Error(errorData.message);
+                            }
+                            const data = await response.json();
+                            this.updateTaskProgress(taskId, data.task_progress, data.task_status);
+                            // Hide the quick complete button after completion
+                            const quickCompleteButton = document.querySelector(`#task-${taskId} button[title='Tandai Selesai']`);
+                            if(quickCompleteButton) {
+                                quickCompleteButton.style.display = 'none';
+                            }
+                            alert(data.message);
                         } catch (error) {
                             alert(error.message);
                         }
