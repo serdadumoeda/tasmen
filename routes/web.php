@@ -199,10 +199,10 @@ Route::middleware(['auth', 'superadmin'])->prefix('admin')->name('admin.')->grou
     Route::get('/activities', [\App\Http\Controllers\ActivityController::class, 'index'])->name('activities.index');
 
     // API Key Management
-    Route::resource('api-keys', ApiKeyController::class)->except(['show', 'edit'])->parameters(['api-keys' => 'client']);
-    Route::post('api-keys/{client}/tokens', [ApiKeyController::class, 'generateToken'])->name('api-keys.tokens.store');
-    Route::delete('api-keys/{client}/tokens/{tokenId}', [ApiKeyController::class, 'revokeToken'])->name('api-keys.tokens.destroy');
-    Route::patch('api-keys/{client}/status', [ApiKeyController::class, 'update'])->name('api-keys.status.update');
+    Route::resource('api_keys', ApiKeyController::class)->except(['show', 'edit'])->parameters(['api_keys' => 'client']);
+    Route::post('api_keys/{client}/tokens', [ApiKeyController::class, 'generateToken'])->name('api_keys.tokens.store');
+    Route::delete('api_keys/{client}/tokens/{tokenId}', [ApiKeyController::class, 'revokeToken'])->name('api_keys.tokens.destroy');
+    Route::patch('api_keys/{client}/status', [ApiKeyController::class, 'update'])->name('api_keys.status.update');
 });
 
 Route::get('/api/units/{unit}/vacant-jabatans', [UnitController::class, 'getVacantJabatans'])->name('api.units.vacant-jabatans')->middleware('auth');
