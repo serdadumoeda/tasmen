@@ -94,6 +94,7 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
     Route::post('/users/{user}/deactivate', [UserController::class, 'deactivate'])->name('users.deactivate');
     Route::post('/users/{user}/reactivate', [UserController::class, 'reactivate'])->name('users.reactivate');
+    Route::delete('/users/{user}/force-delete', [UserController::class, 'forceDelete'])->name('users.force-delete');
 
     Route::get('/api/users/search', [App\Http\Controllers\UserController::class, 'search'])->name('api.users.search');
 

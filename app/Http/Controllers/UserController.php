@@ -541,6 +541,23 @@ class UserController extends Controller
         return redirect()->route('users.archived')->with('success', 'Pengguna telah berhasil diaktifkan kembali.');
     }
 
+    public function forceDelete(User $user)
+    {
+        $this->authorize('forceDelete', $user);
+
+        DB::transaction(function () use ($user) {
+            // Manually nullify relationships that are RESTRICTed on delete.
+            \App\Models\Project::where('leader_id', $user->id)->update(['leader_id' => null]);
+
+            // Other relationships like jabatan, project_user, task_user, etc., are handled
+            // by onDelete('cascade') or onDelete('set null') at the database level.
+
+            $user->delete();
+        });
+
+        return redirect()->route('users.archived')->with('success', 'Pengguna telah dihapus secara permanen.');
+    }
+
     private function isLeadershipRole(string $role): bool
     {
         return in_array($role, [

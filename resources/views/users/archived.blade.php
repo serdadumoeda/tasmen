@@ -51,12 +51,23 @@
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
-                                    <form action="{{ route('users.reactivate', $user) }}" method="POST" class="inline-block" onsubmit="return confirm('{{ __('Aktifkan kembali pengguna ini?') }}');">
-                                        @csrf
-                                        <button type="submit" class="text-green-600 hover:text-green-900 inline-flex items-center p-2 rounded-full hover:bg-green-50 transition-colors duration-200" title="{{ __('Aktifkan Kembali') }}">
-                                            <i class="fas fa-user-check"></i>
-                                        </button>
-                                    </form>
+                                    @can('reactivate', $user)
+                                        <form action="{{ route('users.reactivate', $user) }}" method="POST" class="inline-block" onsubmit="return confirm('{{ __('Aktifkan kembali pengguna ini?') }}');">
+                                            @csrf
+                                            <button type="submit" class="text-green-600 hover:text-green-900 inline-flex items-center p-2 rounded-full hover:bg-green-50 transition-colors duration-200" title="{{ __('Aktifkan Kembali') }}">
+                                                <i class="fas fa-user-check"></i>
+                                            </button>
+                                        </form>
+                                    @endcan
+                                    @can('forceDelete', $user)
+                                        <form action="{{ route('users.force-delete', $user) }}" method="POST" class="inline-block ml-2" onsubmit="return confirm('{{ __('PERINGATAN: Anda akan menghapus pengguna ini secara permanen. Tindakan ini tidak dapat dibatalkan. Lanjutkan?') }}');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="text-red-600 hover:text-red-900 inline-flex items-center p-2 rounded-full hover:bg-red-50 transition-colors duration-200" title="{{ __('Hapus Permanen') }}">
+                                                <i class="fas fa-skull-crossbones"></i>
+                                            </button>
+                                        </form>
+                                    @endcan
                                 </td>
                             </tr>
                         @empty
