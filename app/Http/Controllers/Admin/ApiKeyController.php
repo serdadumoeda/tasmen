@@ -17,7 +17,15 @@ class ApiKeyController extends Controller
         // Eager load the tokens relationship
         $clients = ApiClient::with('tokens')->get();
 
-        return view('admin.api_keys.index', compact('clients'));
+        $availableScopes = [
+            'read:projects' => 'Baca Data Proyek',
+            'read:tasks' => 'Baca Data Tugas',
+            'read:users' => 'Baca Data Pengguna & Unit',
+            'read:assignments' => 'Baca Data Penugasan Khusus',
+            'read:budgets' => 'Baca Data Anggaran',
+        ];
+
+        return view('admin.api_keys.index', compact('clients', 'availableScopes'));
     }
 
     /**
