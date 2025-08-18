@@ -21,7 +21,7 @@ class ProjectSeeder extends Seeder
 
         Project::truncate();
 
-        for ($i = 0; $i < 40; $i++) {
+        for ($i = 0; $i < 20; $i++) {
             $leader = $potential_leaders->random();
             $project = Project::factory()->create([
                 'owner_id' => $leader->id,

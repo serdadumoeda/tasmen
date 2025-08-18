@@ -25,8 +25,8 @@ class TaskSeeder extends Seeder
                 continue; // Lewati proyek tanpa anggota
             }
 
-            // Buat 5 sampai 15 tugas untuk setiap proyek
-            $numberOfTasks = rand(5, 15);
+            // Buat 5 sampai 10 tugas untuk setiap proyek
+            $numberOfTasks = rand(5, 10);
 
             for ($i = 0; $i < $numberOfTasks; $i++) {
                 $task = Task::factory()->create([
@@ -37,27 +37,6 @@ class TaskSeeder extends Seeder
                 $assignees = $project->members->random(rand(1, min(3, $project->members->count())));
                 $task->assignees()->attach($assignees->pluck('id'));
             }
-        }
-
-        // --- Logic to overload the test user ---
-        $this->command->info('Overloading test user...');
-        $testUser = User::where('email', 'staf.test@example.com')->first();
-        $project = Project::first(); // Assign to the first project
-
-        if ($testUser && $project) {
-            if (!$project->members->contains($testUser)) {
-                $project->members()->attach($testUser->id);
-            }
-
-            for ($i = 0; $i < 10; $i++) {
-                $task = Task::factory()->create([
-                    'project_id' => $project->id,
-                    'estimated_hours' => 20, // 10 tasks * 20 hours = 200 hours
-                    'title' => 'Tugas Beban Kerja Ekstra ' . ($i + 1),
-                ]);
-                $task->assignees()->attach($testUser->id);
-            }
-            $this->command->info('Test user has been overloaded with 10 extra tasks.');
         }
     }
 }

@@ -42,15 +42,9 @@ class TimeLogSeeder extends Seeder
                 $estimated = $task->estimated_hours;
                 $actualHours = 0;
 
-                // --- Logic to sabotage the test user ---
-                if ($assignee->email === 'staf.test@example.com') {
-                    // Make this user inefficient
-                    $actualHours = $estimated * 1.5; // 150% of estimated time
-                } else {
-                    // Other users remain realistic
-                    $variance = (rand(-20, 20) / 100); // Variansi antara -20% dan +20%
-                    $actualHours = $estimated * (1 + $variance);
-                }
+                // Other users remain realistic
+                $variance = (rand(-20, 20) / 100); // Variansi antara -20% dan +20%
+                $actualHours = $estimated * (1 + $variance);
 
                 $actualHours = max(1, round($actualHours, 1));
 

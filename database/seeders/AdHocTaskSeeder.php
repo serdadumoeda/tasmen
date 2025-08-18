@@ -25,7 +25,7 @@ class AdHocTaskSeeder extends Seeder
             return;
         }
 
-        for ($i = 0; $i < 25; $i++) { // Membuat 25 record
+        for ($i = 0; $i < 15; $i++) { // Membuat 15 record
             // Temporarily authenticate as a random user to be the task creator
             $creator = $users->random();
             Auth::login($creator);
