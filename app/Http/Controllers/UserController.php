@@ -333,21 +333,26 @@ class UserController extends Controller
         return $redirect;
     }
 
-    public function destroy(User $user)
+    public function deactivate(User $user)
     {
-        $this->authorize('delete', $user);
+        $this->authorize('deactivate', $user);
 
         DB::transaction(function () use ($user) {
+            // Set user status to suspended
+            $user->status = User::STATUS_SUSPENDED;
+            $user->save();
+
+            // Free up their position
             if ($user->jabatan) {
                 $user->jabatan->user_id = null;
                 $user->jabatan->save();
             }
 
+            // Reassign their subordinates to their own supervisor
             User::where('atasan_id', $user->id)->update(['atasan_id' => $user->atasan_id]);
-            $user->delete();
         });
 
-        return redirect()->route('users.index')->with('success', 'User berhasil dihapus dan jabatan telah dikosongkan.');
+        return redirect()->route('users.index')->with('success', 'Pengguna telah berhasil diarsipkan/dinonaktifkan.');
     }
 
     public function getUsersByUnitFromId(int $unitId)
@@ -512,6 +517,28 @@ class UserController extends Controller
     {
         $users = $unit->users()->with('jabatan')->orderBy('name')->get();
         return response()->json($users);
+    }
+
+    public function archived()
+    {
+        $this->authorize('viewAny', User::class);
+
+        $archivedUsers = User::where('status', User::STATUS_SUSPENDED)
+            ->with(['unit', 'jabatan'])
+            ->orderBy('name')
+            ->paginate(15);
+
+        return view('users.archived', compact('archivedUsers'));
+    }
+
+    public function reactivate(User $user)
+    {
+        $this->authorize('reactivate', $user);
+
+        $user->status = User::STATUS_ACTIVE;
+        $user->save();
+
+        return redirect()->route('users.archived')->with('success', 'Pengguna telah berhasil diaktifkan kembali.');
     }
 
     private function isLeadershipRole(string $role): bool

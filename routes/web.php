@@ -83,7 +83,16 @@ Route::middleware(['auth'])->group(function () {
     Route::get('users/hierarchy', [UserController::class, 'hierarchy'])->name('users.hierarchy');
     Route::get('users/modern', [UserController::class, 'modern'])->name('users.modern');
     Route::get('users/{user}/profile', [UserController::class, 'profile'])->name('users.profile');
-    Route::resource('users', UserController::class);
+    // Custom routes for user management to replace Route::resource
+    Route::get('/users', [UserController::class, 'index'])->name('users.index');
+    Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
+    Route::post('/users', [UserController::class, 'store'])->name('users.store');
+    Route::get('/users/{user}', [UserController::class, 'show'])->name('users.show');
+    Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
+    Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
+    Route::post('/users/{user}/deactivate', [UserController::class, 'deactivate'])->name('users.deactivate');
+    Route::get('/users/archived', [UserController::class, 'archived'])->name('users.archived');
+    Route::post('/users/{user}/reactivate', [UserController::class, 'reactivate'])->name('users.reactivate');
     Route::get('/api/users/search', [App\Http\Controllers\UserController::class, 'search'])->name('api.users.search');
 
     Route::get('/workload-analysis', [WorkloadAnalysisController::class, 'index'])->name('workload.analysis');

@@ -8,6 +8,9 @@
                 <a href="{{ route('users.hierarchy') }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150 transform hover:scale-105">
                     <i class="fas fa-sitemap mr-2"></i> {{ __('Tampilan Hirarki') }}
                 </a>
+                <a href="{{ route('users.archived') }}" class="ml-3 inline-flex items-center px-4 py-2 bg-gray-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition ease-in-out duration-150 shadow-md hover:shadow-lg transform hover:scale-105">
+                    <i class="fas fa-archive mr-2"></i> {{ __('Lihat Arsip') }}
+                </a>
                 <a href="{{ route('admin.users.import.show') }}" class="ml-3 inline-flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition ease-in-out duration-150 shadow-md hover:shadow-lg transform hover:scale-105">
                     <i class="fas fa-file-import mr-2"></i> {{ __('Impor Pengguna') }}
                 </a>
@@ -92,11 +95,10 @@
                                     <a href="{{ route('users.edit', $user) }}" class="text-indigo-600 hover:text-indigo-900 inline-flex items-center p-2 rounded-full hover:bg-indigo-50 transition-colors duration-200 ml-2" title="{{ __('Edit Pengguna') }}">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    <form action="{{ route('users.destroy', $user) }}" method="POST" class="inline-block ml-2" onsubmit="return confirm('{{ __('Apakah Anda yakin ingin menghapus pengguna ini? Tindakan ini tidak dapat dibatalkan.') }}');">
+                                    <form action="{{ route('users.deactivate', $user) }}" method="POST" class="inline-block ml-2" onsubmit="return confirm('{{ __('Apakah Anda yakin ingin mengarsipkan pengguna ini?') }}');">
                                         @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="text-red-600 hover:text-red-900 inline-flex items-center p-2 rounded-full hover:bg-red-50 transition-colors duration-200" title="{{ __('Hapus Pengguna') }}">
-                                            <i class="fas fa-trash-can"></i>
+                                        <button type="submit" class="text-yellow-600 hover:text-yellow-900 inline-flex items-center p-2 rounded-full hover:bg-yellow-50 transition-colors duration-200" title="{{ __('Arsipkan Pengguna') }}">
+                                            <i class="fas fa-archive"></i>
                                         </button>
                                     </form>
                                 </td>
