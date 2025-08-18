@@ -28,6 +28,16 @@ class ApiKeyManagementTest extends TestCase
         $response->assertSee('API Key Management');
     }
 
+    public function test_superadmin_sees_new_system_settings_menu()
+    {
+        $response = $this->actingAs($this->superadmin)->get(route('dashboard'));
+
+        $response->assertStatus(200);
+        $response->assertSee('Pengaturan Sistem');
+        $response->assertSee('Manajemen Integrasi');
+        $response->assertSee('Log Aktivitas');
+    }
+
     public function test_superadmin_can_access_api_docs_page()
     {
         $response = $this->actingAs($this->superadmin)->get(route('admin.api_keys.docs'));
