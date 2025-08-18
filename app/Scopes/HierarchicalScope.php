@@ -48,7 +48,10 @@ class HierarchicalScope implements Scope
 
                     if ($subordinateUserIds->isNotEmpty()) {
                         $query->orWhereIn('owner_id', $subordinateUserIds)
-                              ->orWhereIn('leader_id', $subordinateUserIds);
+                              ->orWhereIn('leader_id', $subordinateUserIds)
+                              ->orWhereHas('members', function ($subQuery) use ($subordinateUserIds) {
+                                  $subQuery->whereIn('users.id', $subordinateUserIds);
+                              });
                     }
                 }
             }
