@@ -109,13 +109,13 @@ class UserController extends Controller
             'status' => ['nullable', 'in:active,suspended'],
             'nip' => ['required', 'string', 'max:255', 'unique:'.User::class],
             'tempat_lahir' => ['nullable', 'string', 'max:255'],
-            'tgl_lahir' => ['required', 'date_format:d-m-Y'],
+            'tgl_lahir' => ['required', 'date_format:Y-m-d'],
             'alamat' => ['nullable', 'string'],
             'jenis_kelamin' => ['nullable', 'in:L,P'],
             'agama' => ['nullable', 'string', 'max:255'],
             'golongan' => ['nullable', 'string', 'max:255'],
             'eselon' => ['nullable', 'string', 'max:255'],
-            'tmt_eselon' => ['nullable', 'date_format:d-m-Y'],
+            'tmt_eselon' => ['nullable', 'date_format:Y-m-d'],
             'grade' => ['nullable', 'string', 'max:255'],
             'no_hp' => ['nullable', 'string', 'max:255'],
             'telepon' => ['nullable', 'string', 'max:255'],
@@ -124,8 +124,8 @@ class UserController extends Controller
             'pendidikan_jurusan' => ['nullable', 'string', 'max:255'],
             'pendidikan_universitas' => ['nullable', 'string', 'max:255'],
             'jenis_jabatan' => ['nullable', 'string', 'max:255'],
-            'tmt_cpns' => ['nullable', 'date_format:d-m-Y'],
-            'tmt_pns' => ['nullable', 'date_format:d-m-Y'],
+            'tmt_cpns' => ['nullable', 'date_format:Y-m-d'],
+            'tmt_pns' => ['nullable', 'date_format:Y-m-d'],
         ]);
 
         $userData = $validated;
@@ -161,7 +161,8 @@ class UserController extends Controller
         
         foreach(['tgl_lahir', 'tmt_eselon', 'tmt_cpns', 'tmt_pns'] as $dateField) {
             if (!empty($userData[$dateField])) {
-                $userData[$dateField] = Carbon::createFromFormat('d-m-Y', $userData[$dateField])->format('Y-m-d');
+                // Ensure the date is a Carbon instance for the model, but no re-formatting is needed.
+                $userData[$dateField] = Carbon::parse($userData[$dateField]);
             }
         }
 
@@ -219,13 +220,13 @@ class UserController extends Controller
             'status' => ['nullable', 'in:active,suspended'],
             'nip' => ['required', 'string', 'max:255', Rule::unique('users')->ignore($user->id)],
             'tempat_lahir' => ['nullable', 'string', 'max:255'],
-            'tgl_lahir' => ['required', 'date_format:d-m-Y'],
+            'tgl_lahir' => ['required', 'date_format:Y-m-d'],
             'alamat' => ['nullable', 'string'],
             'jenis_kelamin' => ['nullable', 'in:L,P'],
             'agama' => ['nullable', 'string', 'max:255'],
             'golongan' => ['nullable', 'string', 'max:255'],
             'eselon' => ['nullable', 'string', 'max:255'],
-            'tmt_eselon' => ['nullable', 'date_format:d-m-Y'],
+            'tmt_eselon' => ['nullable', 'date_format:Y-m-d'],
             'grade' => ['nullable', 'string', 'max:255'],
             'no_hp' => ['nullable', 'string', 'max:255'],
             'telepon' => ['nullable', 'string', 'max:255'],
@@ -234,8 +235,8 @@ class UserController extends Controller
             'pendidikan_jurusan' => ['nullable', 'string', 'max:255'],
             'pendidikan_universitas' => ['nullable', 'string', 'max:255'],
             'jenis_jabatan' => ['nullable', 'string', 'max:255'],
-            'tmt_cpns' => ['nullable', 'date_format:d-m-Y'],
-            'tmt_pns' => ['nullable', 'date_format:d-m-Y'],
+            'tmt_cpns' => ['nullable', 'date_format:Y-m-d'],
+            'tmt_pns' => ['nullable', 'date_format:Y-m-d'],
         ]);
 
         $newJabatan = \App\Models\Jabatan::find($validated['jabatan_id']);
@@ -294,7 +295,8 @@ class UserController extends Controller
         
             foreach(['tgl_lahir', 'tmt_eselon', 'tmt_cpns', 'tmt_pns'] as $dateField) {
                 if (!empty($updateData[$dateField])) {
-                    $updateData[$dateField] = Carbon::createFromFormat('d-m-Y', $updateData[$dateField])->format('Y-m-d');
+                    // Ensure the date is a Carbon instance for the model, but no re-formatting is needed.
+                    $updateData[$dateField] = Carbon::parse($updateData[$dateField]);
                 }
             }
         

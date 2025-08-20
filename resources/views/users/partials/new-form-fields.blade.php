@@ -39,7 +39,7 @@ function form_textarea($label, $name, $user, $is_required = false) {
         {{ form_input('Email', 'email', $user, 'email', true) }}
         {{ form_input('NIP', 'nip', $user, 'text', true) }}
         {{ form_input('Tempat Lahir', 'tempat_lahir', $user) }}
-        {{ form_input('Tgl. Lahir', 'tgl_lahir', $user, 'text', true, 'placeholder="DD-MM-YYYY"') }}
+        {{ form_input('Tgl. Lahir', 'tgl_lahir', $user, 'text', true, 'placeholder="YYYY-MM-DD"') }}
         {{ form_textarea('Alamat', 'alamat', $user) }}
         <div class="mb-4">
             <label for="jenis_kelamin" class="block font-semibold text-sm text-gray-700 mb-1">Jenis Kelamin</label>
@@ -60,14 +60,14 @@ function form_textarea($label, $name, $user, $is_required = false) {
         <h3 class="text-lg font-medium text-gray-900 border-b pb-2 mb-4">Informasi Kepegawaian</h3>
         {{ form_input('Golongan', 'golongan', $user) }}
         {{ form_input('Eselon', 'eselon', $user) }}
-        {{ form_input('TMT Eselon', 'tmt_eselon', $user, 'text', false, 'placeholder="DD-MM-YYYY"') }}
+        {{ form_input('TMT Eselon', 'tmt_eselon', $user, 'text', false, 'placeholder="YYYY-MM-DD"') }}
         {{ form_input('Jenis Jabatan', 'jenis_jabatan', $user) }}
         {{ form_input('Grade', 'grade', $user) }}
         {{ form_input('Pendidikan Terakhir', 'pendidikan_terakhir', $user) }}
         {{ form_input('Jurusan', 'pendidikan_jurusan', $user) }}
         {{ form_input('Universitas', 'pendidikan_universitas', $user) }}
-        {{ form_input('TMT CPNS', 'tmt_cpns', $user, 'text', false, 'placeholder="DD-MM-YYYY"') }}
-        {{ form_input('TMT PNS', 'tmt_pns', $user, 'text', false, 'placeholder="DD-MM-YYYY"') }}
+        {{ form_input('TMT CPNS', 'tmt_cpns', $user, 'text', false, 'placeholder="YYYY-MM-DD"') }}
+        {{ form_input('TMT PNS', 'tmt_pns', $user, 'text', false, 'placeholder="YYYY-MM-DD"') }}
     </div>
 
     {{-- Kolom Kanan: Unit & Akses --}}
