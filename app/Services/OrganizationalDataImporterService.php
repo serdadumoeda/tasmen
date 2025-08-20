@@ -212,35 +212,28 @@ class OrganizationalDataImporterService
             // Create a default placeholder Jabatan to avoid crashes downstream
             return Jabatan::firstOrCreate(
                 ['user_id' => $userId],
-                ['name' => 'Jabatan Belum Diatur', 'unit_id' => $unitId, 'type' => 'fungsional', 'role' => User::ROLE_STAF]
+                ['name' => 'Jabatan Belum Diatur', 'unit_id' => $unitId]
             );
         }
 
-        $jabatanType = $this->isJabatanStruktural($role) ? 'struktural' : 'fungsional';
-
         // First, check if this specific user is already in a Jabatan with this name/unit.
-        $existingJabatan = Jabatan::where('name', $jabatanName)
+        $existingJabatan = Jabatan::where('name', 'like', $jabatanName)
                                 ->where('unit_id', $unitId)
                                 ->where('user_id', $userId)
                                 ->first();
 
         if ($existingJabatan) {
-            $existingJabatan->type = $jabatanType;
-            $existingJabatan->role = $role;
-            $existingJabatan->save();
             return $existingJabatan;
         }
 
         // The user is not in this Jabatan. Let's see if there's a vacant one.
-        $vacantJabatan = Jabatan::where('name', $jabatanName)
+        $vacantJabatan = Jabatan::where('name', 'like', $jabatanName)
                                ->where('unit_id', $unitId)
                                ->whereNull('user_id')
                                ->first();
 
         if ($vacantJabatan) {
             $vacantJabatan->user_id = $userId;
-            $vacantJabatan->type = $jabatanType;
-            $vacantJabatan->role = $role;
             $vacantJabatan->save();
             return $vacantJabatan;
         }
@@ -250,17 +243,6 @@ class OrganizationalDataImporterService
             'name'      => $jabatanName,
             'unit_id'   => $unitId,
             'user_id'   => $userId,
-            'type'      => $jabatanType,
-            'role'      => $role,
-        ]);
-    }
-
-    private function isJabatanStruktural(string $role): bool
-    {
-        // Jabatan dianggap struktural jika role-nya adalah salah satu dari peran pimpinan
-        return in_array($role, [
-            User::ROLE_MENTERI, User::ROLE_ESELON_I, User::ROLE_ESELON_II,
-            User::ROLE_KOORDINATOR, User::ROLE_SUB_KOORDINATOR
         ]);
     }
 
