@@ -72,7 +72,18 @@
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-gray-800">{{ $user->role }}</div>
+                                    @php
+                                        $role = $user->role;
+                                        $badgeColor = match ($role) {
+                                            'Superadmin', 'Menteri' => 'bg-red-100 text-red-800',
+                                            'Eselon I', 'Eselon II' => 'bg-indigo-100 text-indigo-800',
+                                            'Koordinator', 'Sub Koordinator' => 'bg-blue-100 text-blue-800',
+                                            default => 'bg-gray-100 text-gray-800',
+                                        };
+                                    @endphp
+                                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full {{ $badgeColor }}">
+                                        {{ $role }}
+                                    </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="text-sm text-gray-800">{{ $user->atasan->name ?? '-' }}</div>
