@@ -67,8 +67,10 @@ class UnitController extends Controller
     {
         $this->authorize('update', $unit);
         $units = Unit::where('id', '!=', $unit->id)->orderBy('name')->get();
-        $unit->load('jabatans.user');
-        return view('admin.units.edit', compact('unit', 'units'));
+        $unit->load('jabatans.user', 'users');
+        $usersInUnit = $unit->users()->orderBy('name')->get();
+
+        return view('admin.units.edit', compact('unit', 'units', 'usersInUnit'));
     }
 
     public function update(Request $request, Unit $unit)
@@ -78,7 +80,13 @@ class UnitController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255', Rule::unique('units')->ignore($unit->id)],
             'parent_unit_id' => 'nullable|exists:units,id',
+            'kepala_unit_id' => ['nullable', 'exists:users,id'],
         ]);
+
+        // Additional check to ensure the selected head is actually a member of the unit.
+        if ($request->filled('kepala_unit_id') && !$unit->users()->where('id', $request->kepala_unit_id)->exists()) {
+            return back()->withInput()->withErrors(['kepala_unit_id' => 'Pengguna yang dipilih bukan anggota unit ini.']);
+        }
 
         $newParentId = $request->input('parent_unit_id');
         if ($newParentId) {
@@ -93,7 +101,7 @@ class UnitController extends Controller
 
         $unit->update($validated);
 
-        return redirect()->route('admin.units.index')->with('success', 'Unit berhasil diperbarui.');
+        return redirect()->route('admin.units.edit', $unit)->with('success', 'Unit berhasil diperbarui.');
     }
 
     public function destroy(Unit $unit)
