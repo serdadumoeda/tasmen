@@ -105,6 +105,8 @@ class UserController extends Controller
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'jabatan_id' => ['nullable', Rule::exists('jabatans', 'id')->whereNull('user_id')],
+            'role' => ['required', Rule::in(collect(User::ROLES)->pluck('name')->toArray())],
+            'is_kepala_unit' => ['nullable', 'boolean'],
             'atasan_id' => ['nullable', 'exists:users,id'],
             'status' => ['nullable', 'in:active,suspended'],
             'nip' => ['required', 'string', 'max:255', 'unique:'.User::class],
@@ -135,13 +137,11 @@ class UserController extends Controller
         // The middleware will force them to complete their profile upon login.
         if (empty($validated['jabatan_id'])) {
             $userData['unit_id'] = null;
-            $userData['role'] = User::ROLE_STAF;
             $jabatan = null;
         } else {
             $jabatan = \App\Models\Jabatan::find($validated['jabatan_id']);
             $unit = $jabatan->unit;
             $userData['unit_id'] = $unit->id;
-            $userData['role'] = $this->calculateRoleFromUnitDepth($unit);
         }
 
         if ($userData['role'] === User::ROLE_MENTERI && !auth()->user()->isSuperAdmin()) {
@@ -166,16 +166,19 @@ class UserController extends Controller
             }
         }
 
-        DB::transaction(function () use ($userData, $jabatan) {
+        DB::transaction(function () use ($userData, $jabatan, $request) {
             $user = User::create($userData);
 
             if ($jabatan) {
                 $jabatan->user_id = $user->id;
                 $jabatan->save();
+            }
 
-                if ($this->isLeadershipRole($user->role)) {
-                    $jabatan->unit->kepala_unit_id = $user->id;
-                    $jabatan->unit->save();
+            // Handle manual assignment of Head of Unit
+            if ($request->has('is_kepala_unit') && $request->is_kepala_unit) {
+                if ($user->unit) {
+                    $user->unit->kepala_unit_id = $user->id;
+                    $user->unit->save();
                 }
             }
         });
@@ -216,6 +219,8 @@ class UserController extends Controller
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
             'password' => ['nullable', 'confirmed', Rules\Password::defaults()],
             'jabatan_id' => ['nullable', 'exists:jabatans,id'],
+            'role' => ['required', Rule::in(collect(User::ROLES)->pluck('name')->toArray())],
+            'is_kepala_unit' => ['nullable', 'boolean'],
             'atasan_id' => ['nullable', 'exists:users,id', 'not_in:'.$user->id],
             'status' => ['nullable', 'in:active,suspended'],
             'nip' => ['required', 'string', 'max:255', Rule::unique('users')->ignore($user->id)],
@@ -277,8 +282,8 @@ class UserController extends Controller
         $pindahUnit = $user->unit_id !== $newJabatan->unit_id;
 
         $newUnit = $newJabatan->unit;
-        // The user's structural role is now determined solely by their unit's depth.
-        $newRole = $this->calculateRoleFromUnitDepth($newUnit);
+        // Role is now manually assigned
+        $newRole = $validated['role'];
 
         if ($request->filled('atasan_id')) {
             $atasan = User::find($request->atasan_id);
@@ -292,14 +297,6 @@ class UserController extends Controller
         }
         
         DB::transaction(function () use ($user, $validated, $newJabatan, $request, $pindahUnit, $oldUnit, $newUnit, $newRole) {
-            if ($oldUnit && $oldUnit->kepala_unit_id === $user->id) {
-                // The isLeadershipRole check now uses the new role directly
-                if ($pindahUnit || !$this->isLeadershipRole($newRole)) {
-                    $oldUnit->kepala_unit_id = null;
-                    $oldUnit->save();
-                }
-            }
-        
             if ($user->jabatan && $user->jabatan->id !== $newJabatan->id) {
                 $user->jabatan->user_id = null;
                 $user->jabatan->save();
@@ -336,12 +333,23 @@ class UserController extends Controller
             $user->update($updateData);
             $user->refresh();
         
-            $newJabatan->user_id = $user->id;
-            $newJabatan->save();
-        
-            if ($this->isLeadershipRole($user->role)) {
-                $newUnit->kepala_unit_id = $user->id;
-                $newUnit->save();
+            if ($newJabatan) {
+                $newJabatan->user_id = $user->id;
+                $newJabatan->save();
+            }
+
+            // Handle manual assignment of Head of Unit
+            if ($request->has('is_kepala_unit') && $request->is_kepala_unit) {
+                if ($user->unit) {
+                    $user->unit->kepala_unit_id = $user->id;
+                    $user->unit->save();
+                }
+            } else {
+                // If checkbox is not checked, and this user was the head, remove them.
+                if ($user->unit && $user->unit->kepala_unit_id === $user->id) {
+                    $user->unit->kepala_unit_id = null;
+                    $user->unit->save();
+                }
             }
         });
         
@@ -586,32 +594,4 @@ class UserController extends Controller
         return redirect()->route('users.archived')->with('success', 'Pengguna telah dihapus secara permanen.');
     }
 
-    private function isLeadershipRole(string $role): bool
-    {
-        return in_array($role, [
-            User::ROLE_MENTERI,
-            User::ROLE_ESELON_I,
-            User::ROLE_ESELON_II,
-            User::ROLE_KOORDINATOR,
-            User::ROLE_SUB_KOORDINATOR
-        ]);
-    }
-
-    /**
-     * Fallback method to determine role based on unit depth.
-     * This is used if a Jabatan's role has not been backfilled.
-     */
-    private function calculateRoleFromUnitDepth(Unit $unit): string
-    {
-        // The depth is the number of ancestors. Root is 0.
-        $depth = $unit->ancestors()->count();
-
-        return match ($depth) {
-            1 => User::ROLE_ESELON_I,
-            2 => User::ROLE_ESELON_II,
-            3 => User::ROLE_KOORDINATOR,
-            4 => User::ROLE_SUB_KOORDINATOR,
-            default => User::ROLE_STAF,
-        };
-    }
 }

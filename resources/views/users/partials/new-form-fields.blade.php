@@ -82,6 +82,7 @@ function form_textarea($label, $name, $user, $is_required = false) {
                 @endforeach
             </select>
         </div>
+
         <div class="mb-4">
             <label for="eselon_ii" class="block font-semibold text-sm text-gray-700 mb-1">2. Unit Eselon II</label>
             <select id="eselon_ii" class="unit-select block mt-1 w-full rounded-lg shadow-sm border-gray-300" data-level="2" data-placeholder="-- Pilih Unit Eselon II --" disabled><option value="">-- Pilih Unit Eselon I Dahulu --</option></select>
@@ -108,6 +109,29 @@ function form_textarea($label, $name, $user, $is_required = false) {
                 @endforeach
             </select>
         </div>
+
+        @can('manageUsers', App\Models\User::class)
+        <div class="border-t my-6"></div>
+        <div class="mb-4">
+            <label for="role" class="block font-semibold text-sm text-gray-700 mb-1">Peran Struktural (Role) <span class="text-red-500 font-bold">*</span></label>
+            <select name="role" id="role" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500" required>
+                @foreach(App\Models\User::ROLES as $role)
+                    @if(Auth::user()->isSuperAdmin() || $role['name'] !== 'Superadmin')
+                    <option value="{{ $role['name'] }}" @selected(old('role', $user->role ?? '') == $role['name'])>{{ $role['name'] }}</option>
+                    @endif
+                @endforeach
+            </select>
+            <p class="mt-1 text-xs text-gray-500">Mengubah peran ini akan memengaruhi hak akses pengguna.</p>
+        </div>
+        <div class="mb-4">
+            <label for="is_kepala_unit" class="flex items-center">
+                <input type="checkbox" name="is_kepala_unit" id="is_kepala_unit" value="1" @checked(old('is_kepala_unit', $user->id && $user->unit && $user->id === $user->unit->kepala_unit_id)) class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500">
+                <span class="ml-2 text-sm text-gray-600 font-semibold">Jadikan Kepala Unit</span>
+            </label>
+            <p class="mt-1 text-xs text-gray-500 ml-6">Menetapkan pengguna ini sebagai kepala dari unit kerja mereka saat ini.</p>
+        </div>
+        @endcan
+
         <div class="mb-4">
             <label for="password" class="block font-semibold text-sm text-gray-700 mb-1">Password</label>
             <input id="password" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300" type="password" name="password" autocomplete="new-password">

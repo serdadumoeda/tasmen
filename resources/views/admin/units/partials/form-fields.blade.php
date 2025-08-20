@@ -21,4 +21,20 @@
         @error('parent_unit_id') <p class="text-sm text-red-600 mt-2">{{ $message }}</p> @enderror
     </div>
 
+    @if(isset($usersInUnit))
+    <div class="md:col-span-2">
+        <label for="kepala_unit_id" class="block font-semibold text-sm text-gray-700 mb-1">
+            <i class="fas fa-user-tie mr-2 text-gray-500"></i> Kepala Unit (Opsional)
+        </label>
+        <select name="kepala_unit_id" id="kepala_unit_id" class="mt-1 block w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150">
+            <option value="">-- Tidak ada / Kosongkan --</option>
+            @foreach($usersInUnit as $user)
+                <option value="{{ $user->id }}" @selected(old('kepala_unit_id', $unit->kepala_unit_id ?? '') == $user->id)>
+                    {{ $user->name }} ({{ $user->jabatan->name ?? 'N/A' }})
+                </option>
+            @endforeach
+        </select>
+        @error('kepala_unit_id') <p class="text-sm text-red-600 mt-2">{{ $message }}</p> @enderror
+    </div>
+    @endif
 </div>
