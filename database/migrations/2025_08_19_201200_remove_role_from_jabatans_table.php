@@ -12,17 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('jabatans', function (Blueprint $table) {
-            // Drop the index first to avoid potential issues
-            $sm = Schema::getConnection()->getDoctrineSchemaManager();
-            $indexes = $sm->listTableIndexes('jabatans');
-            if (array_key_exists('jabatans_role_index', $indexes)) {
-                $table->dropIndex('jabatans_role_index');
-            }
-
-            // Then drop the column
-            if (Schema::hasColumn('jabatans', 'role')) {
-                $table->dropColumn('role');
-            }
+            // Drop the index first, then the column. This is the standard, safe way.
+            $table->dropIndex(['role']);
+            $table->dropColumn('role');
         });
     }
 
@@ -32,7 +24,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('jabatans', function (Blueprint $table) {
-            $table->string('role')->nullable()->after('type')->comment('The role associated with this position, defining permissions.');
+            $table->string('role')->nullable()->after('name')->comment('The role associated with this position, defining permissions.');
             $table->index('role');
         });
     }
