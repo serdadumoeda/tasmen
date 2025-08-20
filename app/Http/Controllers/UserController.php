@@ -239,7 +239,33 @@ class UserController extends Controller
             'tmt_pns' => ['nullable', 'date_format:Y-m-d'],
         ]);
 
+        // If jabatan_id is not submitted, we assume no change in position is intended.
+        if (!array_key_exists('jabatan_id', $validated)) {
+            $updateData = $validated;
+            unset($updateData['jabatan_id']);
+
+            // Simple update for non-position related data
+            if ($request->filled('password')) {
+                $updateData['password'] = Hash::make($validated['password']);
+            } else {
+                unset($updateData['password']);
+            }
+
+            foreach(['tgl_lahir', 'tmt_eselon', 'tmt_cpns', 'tmt_pns'] as $dateField) {
+                if (!empty($updateData[$dateField])) {
+                    $updateData[$dateField] = Carbon::parse($updateData[$dateField]);
+                }
+            }
+
+            $user->update($updateData);
+            return redirect()->route('users.index')->with('success', 'User berhasil diperbarui.');
+        }
+
+        // Proceed with jabatan change logic if jabatan_id is present
         $newJabatan = \App\Models\Jabatan::find($validated['jabatan_id']);
+        if (!$newJabatan) {
+            return back()->withInput()->with('error', 'Jabatan yang dipilih tidak valid.');
+        }
         $validated['unit_id'] = $newJabatan->unit_id;
 
         if ($newJabatan->user_id && $newJabatan->user_id !== $user->id) {
