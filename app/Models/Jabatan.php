@@ -13,11 +13,9 @@ class Jabatan extends Model
 
     protected $fillable = [
         'name',
-        'type',
-        'role',
-        'can_manage_users',
         'unit_id',
         'user_id',
+        'can_manage_users',
     ];
 
     protected $casts = [

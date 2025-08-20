@@ -159,22 +159,13 @@ class UnitController extends Controller
     {
         $this->authorize('update', $unit);
 
-        // Ambil daftar nama peran yang valid dari konstanta User
-        $validRoles = collect(\App\Models\User::ROLES)->pluck('name')->toArray();
-
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'type' => ['required', Rule::in(['struktural', 'fungsional'])],
-            'role' => ['required', Rule::in($validRoles)],
             'can_manage_users' => ['nullable', 'boolean'],
         ]);
 
-        // The 'boolean' validation rule handles the checkbox value correctly.
-        // If the checkbox is not checked, it won't be in the request, and validation will treat it as false.
         $dataToCreate = [
             'name' => $validated['name'],
-            'type' => $validated['type'],
-            'role' => $validated['role'],
             'can_manage_users' => $request->has('can_manage_users'),
         ];
 

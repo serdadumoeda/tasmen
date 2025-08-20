@@ -74,37 +74,20 @@
                     <form action="{{ route('admin.units.jabatans.store', $unit) }}" method="POST" class="border-t border-gray-200 pt-6">
                         @csrf
                         <h4 class="font-semibold text-lg text-gray-800 mb-4">Tambah Jabatan Baru</h4>
-                        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                        <div class="grid grid-cols-1 gap-6">
                             {{-- Nama Jabatan --}}
-                            <div class="md:col-span-2">
-                                <label for="jabatan_name" class="block text-sm font-medium text-gray-700">Nama Jabatan <span class="text-red-500 font-bold">*</span></label>
-                                <input type="text" name="name" id="jabatan_name" class="mt-1 block w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" placeholder="e.g., Staf Pelaksana" required>
-                            </div>
-
-                            {{-- Tipe Jabatan --}}
                             <div>
-                                <label for="jabatan_type" class="block text-sm font-medium text-gray-700">Tipe <span class="text-red-500 font-bold">*</span></label>
-                                <select name="type" id="jabatan_type" class="mt-1 block w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" required>
-                                    <option value="struktural">Struktural</option>
-                                    <option value="fungsional">Fungsional</option>
-                                </select>
-                            </div>
-
-                            {{-- Role Jabatan --}}
-                            <div>
-                                <label for="jabatan_role" class="block text-sm font-medium text-gray-700">Peran (Role) <span class="text-red-500 font-bold">*</span></label>
-                                <select name="role" id="jabatan_role" class="mt-1 block w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" required>
-                                    @foreach(App\Models\User::ROLES as $role)
-                                        <option value="{{ $role['name'] }}">{{ $role['name'] }}</option>
-                                    @endforeach
-                                </select>
+                                <label for="jabatan_name" class="block text-sm font-medium text-gray-700">Nama Jabatan Fungsional <span class="text-red-500 font-bold">*</span></label>
+                                <input type="text" name="name" id="jabatan_name" class="mt-1 block w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" placeholder="e.g., Pranata Komputer Muda" required>
+                                <p class="mt-1 text-xs text-gray-500">Ini adalah titel fungsional yang melekat pada pegawai, bukan peran struktural.</p>
                             </div>
                         </div>
-                        <div class="mt-6">
+                        <div class="mt-4">
                              <label for="can_manage_users" class="flex items-center">
                                 <input type="checkbox" name="can_manage_users" id="can_manage_users" value="1" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500">
-                                <span class="ml-2 text-sm text-gray-600">Dapat Mengelola Pengguna di Unit Eselon II nya</span>
+                                <span class="ml-2 text-sm text-gray-600">Dapat Mengelola Pengguna (Izin Khusus)</span>
                             </label>
+                             <p class="mt-1 text-xs text-gray-500 ml-6">Beri izin pada jabatan ini (e.g., Kabag Umum) untuk menambah/mengubah pengguna dalam lingkup unitnya.</p>
                         </div>
                         <div class="flex justify-end mt-6">
                             <button type="submit" class="inline-flex items-center px-5 py-2.5 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150 shadow-md">
