@@ -35,28 +35,20 @@
                         </div>
                     @endif
 
-                    <div class="overflow-x-auto border border-gray-200 rounded-lg shadow-sm">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-100">
-                                <tr>
-                                    <th class="py-3 px-6 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider rounded-tl-lg">Nama Unit</th>
-                                    <th class="py-3 px-6 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Kepala Unit</th>
-                                    <th class="py-3 px-6 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Unit Atasan</th>
-                                    <th class="py-3 px-6 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider rounded-tr-lg">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-100">
-                                @forelse ($units as $unit)
-                                    @include('admin.units.partials.unit-row', ['unit' => $unit, 'level' => 0])
-                                @empty
-                                    <tr>
-                                        <td colspan="4" class="px-6 py-8 whitespace-nowrap text-center text-lg text-gray-500">
-                                            Tidak ada unit kerja yang terdaftar.
-                                        </td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
+                    <div class="space-y-2">
+                         <div class="flex items-center bg-gray-100 p-3 rounded-lg shadow-sm font-semibold text-gray-600 text-xs uppercase">
+                            <div class="w-1/3">Nama Unit</div>
+                            <div class="w-1/4">Kepala Unit</div>
+                            <div class="w-1/4">Unit Atasan</div>
+                            <div class="w-1/6 text-right">Aksi</div>
+                        </div>
+                        @forelse ($units as $unit)
+                            @include('admin.units.partials._unit-tree-item', ['unit' => $unit, 'level' => 0])
+                        @empty
+                            <div class="text-center text-gray-500 py-8">
+                                Tidak ada unit kerja yang terdaftar.
+                            </div>
+                        @endforelse
                     </div>
                 </div>
             </div>
