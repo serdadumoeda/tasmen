@@ -141,7 +141,7 @@ class UserController extends Controller
             $jabatan = \App\Models\Jabatan::find($validated['jabatan_id']);
             $unit = $jabatan->unit;
             $userData['unit_id'] = $unit->id;
-            $userData['role'] = $jabatan->role ?? $this->calculateRoleFromUnitDepth($unit);
+            $userData['role'] = $this->calculateRoleFromUnitDepth($unit);
         }
 
         if ($userData['role'] === User::ROLE_MENTERI && !auth()->user()->isSuperAdmin()) {
@@ -277,8 +277,8 @@ class UserController extends Controller
         $pindahUnit = $user->unit_id !== $newJabatan->unit_id;
 
         $newUnit = $newJabatan->unit;
-        // UPDATED LOGIC: The new role is inherited from Jabatan, with a fallback.
-        $newRole = $newJabatan->role ?? $this->calculateRoleFromUnitDepth($newUnit);
+        // The user's structural role is now determined solely by their unit's depth.
+        $newRole = $this->calculateRoleFromUnitDepth($newUnit);
 
         if ($request->filled('atasan_id')) {
             $atasan = User::find($request->atasan_id);
