@@ -105,7 +105,6 @@ class UserController extends Controller
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'jabatan_id' => ['nullable', Rule::exists('jabatans', 'id')->whereNull('user_id')],
-            'role' => ['required', Rule::in(collect(User::ROLES)->pluck('name')->toArray())],
             'is_kepala_unit' => ['nullable', 'boolean'],
             'atasan_id' => ['nullable', 'exists:users,id'],
             'status' => ['nullable', 'in:active,suspended'],
@@ -144,9 +143,8 @@ class UserController extends Controller
             $userData['unit_id'] = $unit->id;
         }
 
-        if ($userData['role'] === User::ROLE_MENTERI && !auth()->user()->isSuperAdmin()) {
-            return back()->withInput()->with('error', 'Anda tidak memiliki izin untuk membuat pengguna dengan peran Menteri.');
-        }
+        // Role will be calculated automatically, but we can set a temporary one.
+        $userData['role'] = User::ROLE_STAF;
 
         if ($request->filled('atasan_id')) {
             $atasan = User::find($request->atasan_id);
@@ -174,13 +172,12 @@ class UserController extends Controller
                 $jabatan->save();
             }
 
-            // Handle manual assignment of Head of Unit
-            if ($request->has('is_kepala_unit') && $request->is_kepala_unit) {
-                if ($user->unit) {
-                    $user->unit->kepala_unit_id = $user->id;
-                    $user->unit->save();
-                }
+            if ($request->has('is_kepala_unit') && $request->is_kepala_unit && $user->unit) {
+                $user->unit()->update(['kepala_unit_id' => $user->id]);
             }
+
+            // After all assignments, recalculate and save the definitive role.
+            User::recalculateAndSaveRole($user);
         });
 
         return redirect()->route('users.index')->with('success', 'User berhasil dibuat dan ditempatkan pada jabatan.');
@@ -219,7 +216,6 @@ class UserController extends Controller
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
             'password' => ['nullable', 'confirmed', Rules\Password::defaults()],
             'jabatan_id' => ['nullable', 'exists:jabatans,id'],
-            'role' => ['required', Rule::in(collect(User::ROLES)->pluck('name')->toArray())],
             'is_kepala_unit' => ['nullable', 'boolean'],
             'atasan_id' => ['nullable', 'exists:users,id', 'not_in:'.$user->id],
             'status' => ['nullable', 'in:active,suspended'],
@@ -282,12 +278,11 @@ class UserController extends Controller
         $pindahUnit = $user->unit_id !== $newJabatan->unit_id;
 
         $newUnit = $newJabatan->unit;
-        // Role is now manually assigned
-        $newRole = $validated['role'];
 
         if ($request->filled('atasan_id')) {
             $atasan = User::find($request->atasan_id);
-            $validSupervisorRoles = User::getValidSupervisorRolesFor($newRole);
+            // We use the user's current role for validation, as it's the most stable state before the update.
+            $validSupervisorRoles = User::getValidSupervisorRolesFor($user->role);
 
             if ($validSupervisorRoles !== null) {
                 if (!$atasan || !in_array($atasan->role, $validSupervisorRoles)) {
@@ -296,8 +291,9 @@ class UserController extends Controller
             }
         }
         
-        DB::transaction(function () use ($user, $validated, $newJabatan, $request, $pindahUnit, $oldUnit, $newUnit, $newRole) {
-            if ($user->jabatan && $user->jabatan->id !== $newJabatan->id) {
+        DB::transaction(function () use ($user, $validated, $newJabatan, $request, $pindahUnit, $oldUnit, $newUnit) {
+            // Detach old jabatan if a new one is being assigned
+            if ($newJabatan && $user->jabatan && $user->jabatan->id !== $newJabatan->id) {
                 $user->jabatan->user_id = null;
                 $user->jabatan->save();
             }
@@ -308,13 +304,9 @@ class UserController extends Controller
             } else {
                 unset($updateData['password']);
             }
-        
-            // UPDATED LOGIC: Role is inherited from the selected Jabatan, using the pre-calculated new role
-            $updateData['role'] = $newRole;
-        
-            if ($updateData['role'] === User::ROLE_MENTERI && !auth()->user()->isSuperAdmin()) {
-                throw new \Illuminate\Auth\Access\AuthorizationException('Anda tidak memiliki izin untuk menetapkan peran Menteri.');
-            }
+
+            // Unset role from validation data as it will be calculated automatically
+            unset($updateData['role']);
         
             foreach(['tgl_lahir', 'tmt_eselon', 'tmt_cpns', 'tmt_pns'] as $dateField) {
                 if (!empty($updateData[$dateField])) {
@@ -338,19 +330,20 @@ class UserController extends Controller
                 $newJabatan->save();
             }
 
-            // Handle manual assignment of Head of Unit
-            if ($request->has('is_kepala_unit') && $request->is_kepala_unit) {
-                if ($user->unit) {
+            if ($user->unit) {
+                // If checkbox is checked, make user the head.
+                if ($request->has('is_kepala_unit') && $request->is_kepala_unit) {
                     $user->unit->kepala_unit_id = $user->id;
-                    $user->unit->save();
                 }
-            } else {
                 // If checkbox is not checked, and this user was the head, remove them.
-                if ($user->unit && $user->unit->kepala_unit_id === $user->id) {
+                elseif ($user->unit->kepala_unit_id === $user->id) {
                     $user->unit->kepala_unit_id = null;
-                    $user->unit->save();
                 }
+                $user->unit->save();
             }
+
+            // After all assignments, recalculate and save the definitive role.
+            User::recalculateAndSaveRole($user);
         });
         
         $roleChanged = $oldRole !== $user->role;

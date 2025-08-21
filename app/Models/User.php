@@ -385,4 +385,47 @@ class User extends Authenticatable
 
         return $validParentRolesMap[$subordinateRole] ?? null;
     }
+
+    /**
+     * Recalculate and save the user's role based on their unit leadership status.
+     * This is the new single source of truth for determining a user's structural role.
+     */
+    public static function recalculateAndSaveRole(User $user): void
+    {
+        if (!$user->unit) {
+            $user->role = self::ROLE_STAF;
+            $user->save();
+            return;
+        }
+
+        $isHeadOfUnit = $user->unit->kepala_unit_id === $user->id;
+
+        if ($isHeadOfUnit) {
+            $newRole = self::calculateRoleFromUnit($user->unit);
+        } else {
+            $newRole = self::ROLE_STAF;
+        }
+
+        if ($user->role !== $newRole) {
+            $user->role = $newRole;
+            $user->save();
+        }
+    }
+
+    /**
+     * Calculate the structural role based on the unit's depth in the hierarchy.
+     */
+    private static function calculateRoleFromUnit(Unit $unit): string
+    {
+        // The depth is the number of ancestors. Root is 0.
+        $depth = $unit->ancestors()->count();
+
+        return match ($depth) {
+            1 => self::ROLE_ESELON_I,
+            2 => self::ROLE_ESELON_II,
+            3 => self::ROLE_KOORDINATOR,
+            4 => self::ROLE_SUB_KOORDINATOR,
+            default => self::ROLE_STAF, // Default for top-level (Menteri) or deep units
+        };
+    }
 }

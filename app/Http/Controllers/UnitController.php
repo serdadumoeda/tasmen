@@ -99,7 +99,27 @@ class UnitController extends Controller
             }
         }
 
+        $oldKepalaUnitId = $unit->kepala_unit_id;
+
         $unit->update($validated);
+
+        $newKepalaUnitId = $unit->fresh()->kepala_unit_id;
+
+        // Recalculate roles if the head of unit has changed.
+        if ($oldKepalaUnitId !== $newKepalaUnitId) {
+            if ($oldKepalaUnitId) {
+                $oldKepala = \App\Models\User::find($oldKepalaUnitId);
+                if ($oldKepala) {
+                    \App\Models\User::recalculateAndSaveRole($oldKepala);
+                }
+            }
+            if ($newKepalaUnitId) {
+                $newKepala = \App\Models\User::find($newKepalaUnitId);
+                if ($newKepala) {
+                    \App\Models\User::recalculateAndSaveRole($newKepala);
+                }
+            }
+        }
 
         return redirect()->route('admin.units.edit', $unit)->with('success', 'Unit berhasil diperbarui.');
     }
