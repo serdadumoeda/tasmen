@@ -9,9 +9,6 @@ use Carbon\Carbon;
 
 class WeeklyWorkloadController extends Controller
 {
-    // Standar jam kerja per minggu
-    const STANDARD_WEEKLY_HOURS = 37.5;
-
     public function index(Request $request)
     {
         // 1. Dapatkan pengguna yang sedang login & input pencarian
@@ -50,8 +47,14 @@ class WeeklyWorkloadController extends Controller
     
         // 7. Hitung beban kerja untuk setiap anggota tim yang ditampilkan
         $workloadData = $teamMembers->map(function ($member) {
+            $today = Carbon::now();
+            $startOfWeek = $today->copy()->startOfWeek();
+            $endOfWeek = $today->copy()->endOfWeek();
+
+            // Calculate effective hours for the current week, considering leave.
+            $effectiveWeeklyHours = $member->getEffectiveWorkingHours($startOfWeek, $endOfWeek);
+
             $totalWeeklyHours = $member->tasks->reduce(function ($carry, $task) {
-                // Perhitungan ini sama seperti logika Anda sebelumnya
                 $remainingHours = $task->estimated_hours * ((100 - $task->progress) / 100);
                 if ($remainingHours <= 0) {
                     return $carry;
@@ -72,9 +75,9 @@ class WeeklyWorkloadController extends Controller
                 return $carry + $weeklyWorkloadForTask;
             }, 0);
     
-            $workloadPercentage = (self::STANDARD_WEEKLY_HOURS > 0)
-                ? ($totalWeeklyHours / self::STANDARD_WEEKLY_HOURS) * 100
-                : 0;
+            $workloadPercentage = ($effectiveWeeklyHours > 0)
+                ? ($totalWeeklyHours / $effectiveWeeklyHours) * 100
+                : ($totalWeeklyHours > 0 ? 200 : 0); // Handle case where user is on leave but has workload
     
             // Mengembalikan data dalam format yang dibutuhkan oleh view
             return [
@@ -88,7 +91,6 @@ class WeeklyWorkloadController extends Controller
         return view('weekly_workload.index', [
             'workloadData' => $workloadData, // Gunakan data yang sudah dihitung
             'teamMembers' => $teamMembers, // Kirim juga data paginasi untuk link
-            'standardHours' => self::STANDARD_WEEKLY_HOURS,
             'search' => $search
         ]);
     }

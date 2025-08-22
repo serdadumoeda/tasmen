@@ -168,6 +168,16 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/notifications/unread', [NotificationController::class, 'getUnread'])->name('notifications.unread');
     Route::post('/notifications/mark-as-read', [NotificationController::class, 'markAsRead'])->name('notifications.markAsRead');
 
+    // Leave Management Module Routes
+    Route::group(['prefix' => 'leaves', 'as' => 'leaves.'], function () {
+        Route::get('/', [\App\Http\Controllers\LeaveController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\LeaveController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\LeaveController::class, 'store'])->name('store');
+        Route::get('/{leaveRequest}', [\App\Http\Controllers\LeaveController::class, 'show'])->name('show');
+        Route::post('/{leaveRequest}/approve', [\App\Http\Controllers\LeaveController::class, 'approve'])->name('approve');
+        Route::post('/{leaveRequest}/reject', [\App\Http\Controllers\LeaveController::class, 'reject'])->name('reject');
+    });
+
     // Routes for completing user profile
     Route::get('/profile/complete', [CompleteProfileController::class, 'create'])->name('profile.complete.create');
     Route::post('/profile/complete', [CompleteProfileController::class, 'store'])->name('profile.complete.store');
