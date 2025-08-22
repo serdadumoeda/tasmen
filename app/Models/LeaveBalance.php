@@ -16,6 +16,7 @@ class LeaveBalance extends Model
         'year',
         'total_days',
         'days_taken',
+        'carried_over_days',
     ];
 
     public function user() { return $this->belongsTo(User::class); }

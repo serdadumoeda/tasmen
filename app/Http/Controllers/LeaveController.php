@@ -89,8 +89,12 @@ class LeaveController extends Controller
         // For annual leave, check balance
         if ($leaveType->name === 'Cuti Tahunan') {
             $balance = LeaveBalance::where('user_id', $user->id)->where('year', $startDate->year)->first();
-            if (!$balance || ($balance->total_days - $balance->days_taken) < $duration) {
-                return back()->with('error', 'Sisa cuti tahunan tidak mencukupi.')->withInput();
+            $remainingCarriedOver = $balance ? $balance->carried_over_days : 0;
+            $remainingAnnual = $balance ? ($balance->total_days - $balance->days_taken) : 0;
+            $totalRemaining = $remainingCarriedOver + $remainingAnnual;
+
+            if (!$balance || $totalRemaining < $duration) {
+                return back()->with('error', "Sisa cuti tahunan tidak mencukupi. Total sisa cuti Anda: {$totalRemaining} hari.")->withInput();
             }
         }
 
@@ -153,9 +157,21 @@ class LeaveController extends Controller
             if ($leaveRequest->leaveType->name === 'Cuti Tahunan') {
                 $balance = LeaveBalance::firstOrCreate(
                     ['user_id' => $leaveRequest->user_id, 'year' => $leaveRequest->start_date->year],
-                    ['total_days' => 12] // Default to 12 if no record exists
+                    ['total_days' => 12, 'carried_over_days' => 0] // Ensure defaults are set
                 );
-                $balance->days_taken += $leaveRequest->duration_days;
+
+                $daysToDeduct = $leaveRequest->duration_days;
+
+                // Deduct from carried over days first
+                $deductedFromCarryOver = min($balance->carried_over_days, $daysToDeduct);
+                $balance->carried_over_days -= $deductedFromCarryOver;
+                $daysToDeduct -= $deductedFromCarryOver;
+
+                // Deduct the rest from the current year's balance
+                if ($daysToDeduct > 0) {
+                    $balance->days_taken += $daysToDeduct;
+                }
+
                 $balance->save();
             }
         });
