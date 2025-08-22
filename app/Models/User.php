@@ -390,6 +390,9 @@ class User extends Authenticatable
         return $validParentRolesMap[$subordinateRole] ?? null;
     }
 
+    public function leaveRequests() { return $this->hasMany(LeaveRequest::class); }
+    public function leaveBalances() { return $this->hasMany(LeaveBalance::class); }
+
     /**
      * Recalculate and save the user's role based on their unit leadership status.
      * This is the new single source of truth for determining a user's structural role.
@@ -433,5 +436,43 @@ class User extends Authenticatable
             $depth === 4 && !$isStruktural => self::ROLE_SUB_KOORDINATOR,
             default => self::ROLE_STAF,
         };
+    }
+
+    /**
+     * Calculate effective working hours for a user within a date range, accounting for leave.
+     *
+     * @param \Carbon\Carbon $startDate
+     * @param \Carbon\Carbon $endDate
+     * @return float
+     */
+    public function getEffectiveWorkingHours(\Carbon\Carbon $startDate, \Carbon\Carbon $endDate): float
+    {
+        $workdays = $startDate->diffInWeekdays($endDate) + 1;
+        $hoursPerDay = 7.5; // Based on 37.5 hours / 5 days
+
+        $approvedLeaveDays = $this->leaveRequests()
+            ->where('status', 'approved')
+            ->where(function ($query) use ($startDate, $endDate) {
+                $query->whereBetween('start_date', [$startDate, $endDate])
+                      ->orWhereBetween('end_date', [$startDate, $endDate])
+                      ->orWhere(function ($q) use ($startDate, $endDate) {
+                          $q->where('start_date', '<', $startDate)
+                            ->where('end_date', '>', $endDate);
+                      });
+            })
+            ->get()
+            ->sum(function ($leave) use ($startDate, $endDate) {
+                $leaveStart = Carbon::parse($leave->start_date);
+                $leaveEnd = Carbon::parse($leave->end_date);
+                // Clamp the leave period to the query's date range
+                $effectiveStart = $leaveStart->max($startDate);
+                $effectiveEnd = $leaveEnd->min($endDate);
+                // Calculate weekdays within the effective leave period
+                return $effectiveStart->diffInWeekdays($effectiveEnd) + 1;
+            });
+
+        $netWorkdays = $workdays - $approvedLeaveDays;
+
+        return max(0, $netWorkdays * $hoursPerDay);
     }
 }
