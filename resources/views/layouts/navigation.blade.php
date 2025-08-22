@@ -94,6 +94,7 @@ if (count($words) >= 2) {
                                             <x-dropdown-link :href="route('admin.units.index')" :active="request()->routeIs('admin.units.*')">Manajemen Unit</x-dropdown-link>
                                         @endif
                                         <x-dropdown-link :href="route('users.index')" :active="request()->routeIs('users.*')">Manajemen Pengguna</x-dropdown-link>
+                                        <x-dropdown-link :href="route('leaves.index')" :active="request()->routeIs('leaves.*')">Manajemen Cuti</x-dropdown-link>
                                         <div class="border-t border-gray-200"></div>
                                         <x-dropdown-link :href="route('peminjaman-requests.my-requests')" :active="request()->routeIs('peminjaman-requests.*')">Peminjaman Anggota</x-dropdown-link>
                                         <x-dropdown-link :href="route('resource-pool.index')" :active="request()->routeIs('resource-pool.index')">Resource Pool</x-dropdown-link>
