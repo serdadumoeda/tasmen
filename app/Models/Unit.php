@@ -31,6 +31,7 @@ class Unit extends Model
     protected $fillable = [
         'name',
         'level',
+        'type',
         'parent_unit_id',
         'kepala_unit_id',
     ];

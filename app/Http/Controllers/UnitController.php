@@ -49,6 +49,7 @@ class UnitController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:units,name',
             'parent_unit_id' => 'nullable|exists:units,id',
+            'type' => ['required', Rule::in(['Struktural', 'Fungsional'])],
         ]);
 
         Unit::create($validated);
@@ -81,6 +82,7 @@ class UnitController extends Controller
             'name' => ['required', 'string', 'max:255', Rule::unique('units')->ignore($unit->id)],
             'parent_unit_id' => 'nullable|exists:units,id',
             'kepala_unit_id' => ['nullable', 'exists:users,id'],
+            'type' => ['required', Rule::in(['Struktural', 'Fungsional'])],
         ]);
 
         // Additional check to ensure the selected head is actually a member of the unit.

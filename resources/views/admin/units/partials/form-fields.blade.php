@@ -8,6 +8,17 @@
     </div>
 
     <div>
+        <label for="type" class="block font-semibold text-sm text-gray-700 mb-1">
+            <i class="fas fa-tags mr-2 text-gray-500"></i> Tipe Unit <span class="text-red-500">*</span>
+        </label>
+        <select name="type" id="type" class="mt-1 block w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" required>
+            <option value="Fungsional" @selected(old('type', $unit->type ?? '') == 'Fungsional')>Fungsional</option>
+            <option value="Struktural" @selected(old('type', $unit->type ?? '') == 'Struktural')>Struktural</option>
+        </select>
+        @error('type') <p class="text-sm text-red-600 mt-2">{{ $message }}</p> @enderror
+    </div>
+
+    <div>
         <label for="parent_unit_id" class="block font-semibold text-sm text-gray-700 mb-1">
             <i class="fas fa-building-circle-arrow-up mr-2 text-gray-500"></i> Unit Atasan (Opsional)
         </label>

@@ -30,6 +30,8 @@ class User extends Authenticatable
     public const ROLE_SUPERADMIN = 'Superadmin';
     public const ROLE_ESELON_I = 'Eselon I';
     public const ROLE_ESELON_II = 'Eselon II';
+    public const ROLE_ESELON_III = 'Eselon III';
+    public const ROLE_ESELON_IV = 'Eselon IV';
     public const ROLE_KOORDINATOR = 'Koordinator';
     public const ROLE_SUB_KOORDINATOR = 'Sub Koordinator';
     public const ROLE_STAF = 'Staf';
@@ -39,6 +41,8 @@ class User extends Authenticatable
         ['name' => self::ROLE_SUPERADMIN],
         ['name' => self::ROLE_ESELON_I],
         ['name' => self::ROLE_ESELON_II],
+        ['name' => self::ROLE_ESELON_III],
+        ['name' => self::ROLE_ESELON_IV],
         ['name' => self::ROLE_KOORDINATOR],
         ['name' => self::ROLE_SUB_KOORDINATOR],
         ['name' => self::ROLE_STAF],
@@ -417,15 +421,17 @@ class User extends Authenticatable
      */
     private static function calculateRoleFromUnit(Unit $unit): string
     {
-        // The depth is the number of ancestors. Root is 0.
         $depth = $unit->ancestors()->count();
+        $isStruktural = $unit->type === 'Struktural';
 
-        return match ($depth) {
-            1 => self::ROLE_ESELON_I,
-            2 => self::ROLE_ESELON_II,
-            3 => self::ROLE_KOORDINATOR,
-            4 => self::ROLE_SUB_KOORDINATOR,
-            default => self::ROLE_STAF, // Default for top-level (Menteri) or deep units
+        return match (true) {
+            $depth === 1 => self::ROLE_ESELON_I,
+            $depth === 2 => self::ROLE_ESELON_II,
+            $depth === 3 && $isStruktural => self::ROLE_ESELON_III,
+            $depth === 3 && !$isStruktural => self::ROLE_KOORDINATOR,
+            $depth === 4 && $isStruktural => self::ROLE_ESELON_IV,
+            $depth === 4 && !$isStruktural => self::ROLE_SUB_KOORDINATOR,
+            default => self::ROLE_STAF,
         };
     }
 }
