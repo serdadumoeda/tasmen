@@ -174,6 +174,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/create', [\App\Http\Controllers\LeaveController::class, 'create'])->name('create');
         Route::post('/', [\App\Http\Controllers\LeaveController::class, 'store'])->name('store');
         Route::get('/{leaveRequest}', [\App\Http\Controllers\LeaveController::class, 'show'])->name('show');
+        Route::get('/{leaveRequest}/attachment', [\App\Http\Controllers\LeaveController::class, 'downloadAttachment'])->name('attachment');
         Route::post('/{leaveRequest}/approve', [\App\Http\Controllers\LeaveController::class, 'approve'])->name('approve');
         Route::post('/{leaveRequest}/reject', [\App\Http\Controllers\LeaveController::class, 'reject'])->name('reject');
     });

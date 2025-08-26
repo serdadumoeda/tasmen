@@ -18,6 +18,34 @@
                 <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
                     <div class="p-6 bg-white border-b border-gray-200">
                         <h3 class="text-lg font-bold text-gray-800 mb-4">{{ __('Permintaan Persetujuan Tim') }}</h3>
+
+                        <!-- Filters -->
+                        <form action="{{ route('leaves.index') }}" method="GET" class="mb-6 p-4 bg-gray-50 rounded-lg">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label for="filter_unit" class="block text-sm font-medium text-gray-700">Unit Kerja</label>
+                                    <select name="filter_unit" id="filter_unit" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                                        <option value="">Semua Unit</option>
+                                        @foreach($unitsInHierarchy as $unit)
+                                            <option value="{{ $unit->id }}" {{ request('filter_unit') == $unit->id ? 'selected' : '' }}>{{ $unit->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="filter_status" class="block text-sm font-medium text-gray-700">Status</label>
+                                    <select name="filter_status" id="filter_status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                                        <option value="">Semua Status</option>
+                                        <option value="pending" {{ request('filter_status') == 'pending' ? 'selected' : '' }}>Pending</option>
+                                        <option value="approved_by_supervisor" {{ request('filter_status') == 'approved_by_supervisor' ? 'selected' : '' }}>Approved by Supervisor</option>
+                                    </select>
+                                </div>
+                                <div class="flex items-end">
+                                    <button type="submit" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700">Filter</button>
+                                    <a href="{{ route('leaves.index') }}" class="ml-2 inline-flex items-center px-4 py-2 bg-gray-200 border border-transparent rounded-md font-semibold text-xs text-gray-800 uppercase tracking-widest hover:bg-gray-300">Reset</a>
+                                </div>
+                            </div>
+                        </form>
+
                         <div class="overflow-x-auto">
                             <table class="min-w-full divide-y divide-gray-200">
                                 <thead class="bg-gray-50">

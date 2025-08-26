@@ -6,14 +6,19 @@ use App\Models\LeaveRequest;
 use App\Models\LeaveBalance;
 use App\Models\LeaveType;
 use App\Models\User;
+use App\Models\Unit;
+use App\Notifications\LeaveRequestForwarded;
+use App\Notifications\LeaveRequestStatusUpdated;
+use App\Notifications\LeaveRequestSubmitted;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class LeaveController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $user = Auth::user();
 
@@ -23,15 +28,30 @@ class LeaveController extends Controller
             ->orderBy('start_date', 'desc')
             ->get();
 
-        // Get leave requests awaiting the user's approval
-        $approvalRequests = LeaveRequest::where('current_approver_id', $user->id)
+        // Get leave requests for the manager's entire hierarchy
+        $subordinateIds = $user->getAllSubordinateIds();
+        $approvalRequestsQuery = LeaveRequest::whereIn('user_id', $subordinateIds)
             ->where('status', '!=', 'approved')
             ->where('status', '!=', 'rejected')
-            ->with('user', 'leaveType')
-            ->orderBy('created_at', 'asc')
-            ->get();
+            ->with('user.unit', 'leaveType');
 
-        return view('leaves.index', compact('myRequests', 'approvalRequests'));
+        // Apply filters
+        if ($request->filled('filter_unit')) {
+            $approvalRequestsQuery->whereHas('user', function ($query) use ($request) {
+                $query->where('unit_id', $request->filter_unit);
+            });
+        }
+
+        if ($request->filled('filter_status')) {
+            $approvalRequestsQuery->where('status', $request->filter_status);
+        }
+
+        // Get all units in the hierarchy for the filter dropdown
+        $unitsInHierarchy = $user->unit ? Unit::whereIn('id', $user->unit->getAllSubordinateUnitIds())->get() : collect();
+
+        $approvalRequests = $approvalRequestsQuery->orderBy('created_at', 'asc')->get();
+
+        return view('leaves.index', compact('myRequests', 'approvalRequests', 'unitsInHierarchy'));
     }
 
     public function create()
@@ -117,12 +137,32 @@ class LeaveController extends Controller
             'attachment_path' => $attachmentPath,
         ]);
 
-        // Placeholder for notification
-        // if ($user->atasan) {
-        //     $user->atasan->notify(new \App\Notifications\LeaveRequestSubmitted($leaveRequest));
-        // }
+        // Notify the direct supervisor
+        if ($user->atasan) {
+            $user->atasan->notify(new LeaveRequestSubmitted($leaveRequest));
+        }
 
         return redirect()->route('leaves.index')->with('success', 'Permintaan cuti berhasil diajukan.');
+    }
+
+    public function downloadAttachment(LeaveRequest $leaveRequest)
+    {
+        $user = Auth::user();
+
+        // Authorization: User must be the owner OR a manager of the owner.
+        $isOwner = $leaveRequest->user_id === $user->id;
+        $subordinateIds = $user->getAllSubordinateIds();
+        $isManager = in_array($leaveRequest->user_id, $subordinateIds);
+
+        if (!$isOwner && !$isManager) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        if (!$leaveRequest->attachment_path || !Storage::disk('private')->exists($leaveRequest->attachment_path)) {
+            abort(404, 'File not found.');
+        }
+
+        return Storage::disk('private')->download($leaveRequest->attachment_path);
     }
 
     public function approve(LeaveRequest $leaveRequest)
@@ -142,7 +182,10 @@ class LeaveController extends Controller
                 $leaveRequest->status = 'approved_by_supervisor';
                 $leaveRequest->current_approver_id = $nextApprover->id;
                 $leaveRequest->save();
-                // Placeholder for notification to next approver
+
+                // Notify the next approver
+                $nextApprover->notify(new LeaveRequestForwarded($leaveRequest));
+
                 return back()->with('success', 'Permintaan cuti telah disetujui dan diteruskan ke pejabat berwenang.');
             }
         }
@@ -176,7 +219,9 @@ class LeaveController extends Controller
             }
         });
 
-        // Placeholder for notification to user
+        // Notify the applicant of the final approval
+        $leaveRequest->user->notify(new LeaveRequestStatusUpdated($leaveRequest));
+
         return back()->with('success', 'Permintaan cuti telah disetujui sepenuhnya.');
     }
 
@@ -195,7 +240,9 @@ class LeaveController extends Controller
         $leaveRequest->current_approver_id = null;
         $leaveRequest->save();
 
-        // Placeholder for notification to user
+        // Notify the applicant of the rejection
+        $leaveRequest->user->notify(new LeaveRequestStatusUpdated($leaveRequest));
+
         return back()->with('success', 'Permintaan cuti telah ditolak.');
     }
 }
