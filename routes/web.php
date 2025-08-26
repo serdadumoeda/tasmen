@@ -209,6 +209,10 @@ Route::middleware(['auth', 'superadmin'])->prefix('admin')->name('admin.')->grou
     Route::get('/users/{user}/impersonate', [UserController::class, 'impersonate'])->name('users.impersonate');
     Route::get('/users/impersonate/leave', [UserController::class, 'leaveImpersonate'])->name('users.impersonate.leave');
 
+    // Manual Leave Balance Management
+    Route::get('/users/{user}/leave-balance/edit', [UserController::class, 'editLeaveBalance'])->name('users.leave-balance.edit');
+    Route::put('/users/{user}/leave-balance', [UserController::class, 'updateLeaveBalance'])->name('users.leave-balance.update');
+
     // Activity Log Route
     Route::get('/activities', [\App\Http\Controllers\ActivityController::class, 'index'])->name('activities.index');
 
@@ -219,7 +223,9 @@ Route::middleware(['auth', 'superadmin'])->prefix('admin')->name('admin.')->grou
     Route::post('api_keys/{client}/tokens', [ApiKeyController::class, 'generateToken'])->name('api_keys.tokens.store');
     Route::delete('api_keys/{client}/tokens/{tokenId}', [ApiKeyController::class, 'revokeToken'])->name('api_keys.tokens.destroy');
     Route::patch('api_keys/{client}/status', [ApiKeyController::class, 'update'])->name('api_keys.status.update');
+});
 
+Route::middleware(['auth', 'can.manage.leave.settings'])->prefix('admin')->name('admin.')->group(function () {
     // Cuti Bersama Management
     Route::resource('cuti-bersama', CutiBersamaController::class)->parameters(['cuti-bersama' => 'cutiBersama']);
 });
