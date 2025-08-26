@@ -16,7 +16,7 @@ class LeaveDurationService
      * @param string|Carbon $endDate
      * @return int
      */
-    public function calculate($startDate, $endDate): int
+    public static function calculate($startDate, $endDate): int
     {
         $startDate = Carbon::parse($startDate);
         $endDate = Carbon::parse($endDate);

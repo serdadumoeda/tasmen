@@ -17,6 +17,7 @@ use App\Models\Unit; // Pastikan ini diimpor
 use App\Models\Project;
 use App\Models\Jabatan;
 use App\Scopes\HierarchicalScope;
+use App\Services\LeaveDurationService;
 
 class User extends Authenticatable
 {
@@ -452,31 +453,29 @@ class User extends Authenticatable
      */
     public function getEffectiveWorkingHours(\Carbon\Carbon $startDate, \Carbon\Carbon $endDate): float
     {
-        $workdays = $startDate->diffInWeekdays($endDate) + 1;
         $hoursPerDay = 7.5; // Based on 37.5 hours / 5 days
 
+        // Calculate total possible workdays in the period using the service
+        $totalWorkdaysInPeriod = LeaveDurationService::calculate($startDate, $endDate);
+
+        // Find approved leave requests that overlap with the period
         $approvedLeaveDays = $this->leaveRequests()
             ->where('status', 'approved')
             ->where(function ($query) use ($startDate, $endDate) {
-                $query->whereBetween('start_date', [$startDate, $endDate])
-                      ->orWhereBetween('end_date', [$startDate, $endDate])
-                      ->orWhere(function ($q) use ($startDate, $endDate) {
-                          $q->where('start_date', '<', $startDate)
-                            ->where('end_date', '>', $endDate);
-                      });
+                $query->where('start_date', '<=', $endDate)
+                      ->where('end_date', '>=', $startDate);
             })
             ->get()
             ->sum(function ($leave) use ($startDate, $endDate) {
-                $leaveStart = Carbon::parse($leave->start_date);
-                $leaveEnd = Carbon::parse($leave->end_date);
                 // Clamp the leave period to the query's date range
-                $effectiveStart = $leaveStart->max($startDate);
-                $effectiveEnd = $leaveEnd->min($endDate);
-                // Calculate weekdays within the effective leave period
-                return $effectiveStart->diffInWeekdays($effectiveEnd) + 1;
+                $effectiveStart = Carbon::parse($leave->start_date)->max($startDate);
+                $effectiveEnd = Carbon::parse($leave->end_date)->min($endDate);
+
+                // Calculate the actual workdays for the overlapping leave period using the service
+                return LeaveDurationService::calculate($effectiveStart, $effectiveEnd);
             });
 
-        $netWorkdays = $workdays - $approvedLeaveDays;
+        $netWorkdays = $totalWorkdaysInPeriod - $approvedLeaveDays;
 
         return max(0, $netWorkdays * $hoursPerDay);
     }
