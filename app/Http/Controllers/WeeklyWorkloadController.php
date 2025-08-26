@@ -46,7 +46,8 @@ class WeeklyWorkloadController extends Controller
         $teamMembers = $subordinatesQuery->paginate(20)->withQueryString();
     
         // 7. Hitung beban kerja untuk setiap anggota tim yang ditampilkan
-        $workloadData = $teamMembers->map(function ($member) {
+        $standardHours = 37.5; // Standard weekly hours
+        $workloadData = $teamMembers->map(function ($member) use ($standardHours) {
             $today = Carbon::now();
             $startOfWeek = $today->copy()->startOfWeek();
             $endOfWeek = $today->copy()->endOfWeek();
@@ -83,6 +84,7 @@ class WeeklyWorkloadController extends Controller
             return [
                 'user' => $member,
                 'assigned_hours' => round($totalWeeklyHours, 1),
+                'effective_hours' => $effectiveWeeklyHours,
                 'workload_percentage' => round($workloadPercentage)
             ];
         });
@@ -91,6 +93,7 @@ class WeeklyWorkloadController extends Controller
         return view('weekly_workload.index', [
             'workloadData' => $workloadData, // Gunakan data yang sudah dihitung
             'teamMembers' => $teamMembers, // Kirim juga data paginasi untuk link
+            'standardHours' => $standardHours,
             'search' => $search
         ]);
     }
