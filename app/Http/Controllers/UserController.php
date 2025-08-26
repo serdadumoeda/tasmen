@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Unit;
+use App\Models\LeaveBalance;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
@@ -587,4 +588,35 @@ class UserController extends Controller
         return redirect()->route('users.archived')->with('success', 'Pengguna telah dihapus secara permanen.');
     }
 
+    public function editLeaveBalance(User $user)
+    {
+        $this->authorize('update', $user); // Reuse existing authorization
+
+        $balance = LeaveBalance::firstOrCreate(
+            ['user_id' => $user->id, 'year' => now()->year],
+            ['total_days' => 12, 'carried_over_days' => 0] // Defaults for new users
+        );
+
+        return view('admin.users.leave_balance', compact('user', 'balance'));
+    }
+
+    public function updateLeaveBalance(Request $request, User $user)
+    {
+        $this->authorize('update', $user); // Reuse existing authorization
+
+        $validated = $request->validate([
+            'carried_over_days' => 'required|integer|min:0',
+        ]);
+
+        $balance = LeaveBalance::firstOrCreate(
+            ['user_id' => $user->id, 'year' => now()->year],
+            ['total_days' => 12] // Defaults for new users
+        );
+
+        $balance->update([
+            'carried_over_days' => $validated['carried_over_days'],
+        ]);
+
+        return redirect()->route('admin.users.leave-balance.edit', $user)->with('success', 'Sisa cuti tahun lalu berhasil diperbarui.');
+    }
 }

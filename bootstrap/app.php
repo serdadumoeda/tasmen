@@ -21,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'superadmin' => \App\Http\Middleware\CheckSuperadmin::class,
+            'can.manage.leave.settings' => \App\Http\Middleware\CheckCanManageLeaveSettings::class,
             'auth.apikey' => \App\Http\Middleware\AuthenticateApiClient::class,
             'log.api' => \App\Http\Middleware\LogApiActivity::class,
         ]);
