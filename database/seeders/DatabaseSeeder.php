@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             OrganizationalDataSeeder::class,
             LeaveTypesSeeder::class,
+            LeaveRequestSeeder::class,
             ProjectSeeder::class,
             TaskSeeder::class,
             TimeLogSeeder::class,
