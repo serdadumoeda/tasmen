@@ -279,6 +279,11 @@ class User extends Authenticatable
         return in_array($this->role, [self::ROLE_MENTERI, self::ROLE_SUPERADMIN, self::ROLE_ESELON_I, self::ROLE_ESELON_II, self::ROLE_KOORDINATOR]);
     }
 
+    public function canManageLeaveSettings(): bool
+    {
+        return $this->isSuperAdmin() || ($this->jabatan && $this->jabatan->can_manage_users);
+    }
+
     public function isSuperAdmin(): bool
     {
         return $this->role === self::ROLE_SUPERADMIN;

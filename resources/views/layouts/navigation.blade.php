@@ -119,6 +119,10 @@ if (count($words) >= 2) {
                                 </x-slot>
                                 <x-slot name="content">
                                     <div class="rounded-xl shadow-2xl py-1 bg-white ring-1 ring-black ring-opacity-10">
+                                        @if(Auth::user()->canManageLeaveSettings())
+                                            <x-dropdown-link :href="route('admin.cuti-bersama.index')" :active="request()->routeIs('admin.cuti-bersama.*')">Manajemen Cuti Bersama</x-dropdown-link>
+                                            <div class="border-t border-gray-200"></div>
+                                        @endif
                                         <x-dropdown-link :href="route('admin.api_keys.index')" :active="request()->routeIs('admin.api_keys.index')">Manajemen Integrasi</x-dropdown-link>
                                         <x-dropdown-link :href="route('admin.api_keys.query_helper')" :active="request()->routeIs('admin.api_keys.query_helper')">API Query Helper</x-dropdown-link>
                                         <div class="border-t border-gray-200"></div>
