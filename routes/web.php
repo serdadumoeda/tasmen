@@ -171,6 +171,7 @@ Route::middleware(['auth'])->group(function () {
     // Leave Management Module Routes
     Route::group(['prefix' => 'leaves', 'as' => 'leaves.'], function () {
         Route::get('/', [\App\Http\Controllers\LeaveController::class, 'index'])->name('index');
+        Route::get('/calendar', [\App\Http\Controllers\LeaveController::class, 'calendar'])->name('calendar');
         Route::get('/create', [\App\Http\Controllers\LeaveController::class, 'create'])->name('create');
         Route::post('/', [\App\Http\Controllers\LeaveController::class, 'store'])->name('store');
         Route::get('/{leaveRequest}', [\App\Http\Controllers\LeaveController::class, 'show'])->name('show');
@@ -185,6 +186,7 @@ Route::middleware(['auth'])->group(function () {
 });
 
 use App\Http\Controllers\Admin\ApiKeyController;
+use App\Http\Controllers\Admin\CutiBersamaController;
 use App\Http\Controllers\Api\UnitApiController;
 use App\Http\Controllers\UnitController;
 
@@ -217,6 +219,9 @@ Route::middleware(['auth', 'superadmin'])->prefix('admin')->name('admin.')->grou
     Route::post('api_keys/{client}/tokens', [ApiKeyController::class, 'generateToken'])->name('api_keys.tokens.store');
     Route::delete('api_keys/{client}/tokens/{tokenId}', [ApiKeyController::class, 'revokeToken'])->name('api_keys.tokens.destroy');
     Route::patch('api_keys/{client}/status', [ApiKeyController::class, 'update'])->name('api_keys.status.update');
+
+    // Cuti Bersama Management
+    Route::resource('cuti-bersama', CutiBersamaController::class)->parameters(['cuti-bersama' => 'cutiBersama']);
 });
 
 Route::get('/api/units/{unit}/vacant-jabatans', [UnitController::class, 'getVacantJabatans'])->name('api.units.vacant-jabatans')->middleware('auth');

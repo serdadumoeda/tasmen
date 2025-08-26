@@ -4,9 +4,14 @@
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 {{ __('Manajemen Cuti') }}
             </h2>
-            <a href="{{ route('leaves.create') }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700">
-                <i class="fas fa-plus-circle mr-2"></i> {{ __('Ajukan Cuti Baru') }}
-            </a>
+            <div class="flex items-center space-x-2">
+                <a href="{{ route('leaves.calendar') }}" class="inline-flex items-center px-4 py-2 bg-gray-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700">
+                    <i class="fas fa-calendar-alt mr-2"></i> {{ __('Lihat Kalender') }}
+                </a>
+                <a href="{{ route('leaves.create') }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700">
+                    <i class="fas fa-plus-circle mr-2"></i> {{ __('Ajukan Cuti Baru') }}
+                </a>
+            </div>
         </div>
     </x-slot>
 
@@ -81,7 +86,31 @@
             <!-- My Leave Requests -->
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
                 <div class="p-6 bg-white border-b border-gray-200">
-                    <h3 class="text-lg font-bold text-gray-800 mb-4">{{ __('Riwayat Pengajuan Cuti Saya') }}</h3>
+                    <h3 class="text-lg font-bold text-gray-800 mb-2">{{ __('Riwayat Pengajuan Cuti Saya') }}</h3>
+
+                    <!-- Leave Balance Summary -->
+                    <div class="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <h4 class="font-semibold text-md text-gray-700 mb-3">Ringkasan Cuti Tahunan {{ $annualLeaveBalance->year }}</h4>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                            <div>
+                                <p class="text-sm text-gray-500">Sisa Cuti Tahun Lalu</p>
+                                <p class="text-2xl font-bold text-gray-800">{{ $annualLeaveBalance->carried_over_days }}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500">Hak Cuti Tahun Ini</p>
+                                <p class="text-2xl font-bold text-gray-800">{{ $annualLeaveBalance->total_days }}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500">Cuti Telah Diambil</p>
+                                <p class="text-2xl font-bold text-red-600">{{ $annualLeaveBalance->days_taken }}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500">Total Sisa Cuti</p>
+                                <p class="text-2xl font-bold text-green-600">{{ $annualLeaveBalance->carried_over_days + $annualLeaveBalance->total_days - $annualLeaveBalance->days_taken }}</p>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
