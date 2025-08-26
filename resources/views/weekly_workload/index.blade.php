@@ -43,21 +43,16 @@
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-100"> {{-- Divider lebih halus --}}
-                                @forelse ($teamMembers as $member)
+                                @forelse ($workloadData as $data)
                                 @php
-                                    // Lakukan kalkulasi persentase di sini, karena data sudah di-eager load
-                                    $assignedHours = $member->total_assigned_hours ?? 0;
-                                    $workloadPercentage = ($standardHours > 0)
-                                        ? ($assignedHours / $standardHours) * 100
-                                        : 0;
-                                    $workloadPercentage = round($workloadPercentage);
+                                    $workloadPercentage = $data['workload_percentage'];
                                 @endphp
                                 <tr class="hover:bg-gray-50 transition-colors duration-150">
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800 flex items-center">
-                                        <i class="fas fa-user-tag mr-2 text-gray-500"></i> {{ $member->name }}
+                                        <i class="fas fa-user-tag mr-2 text-gray-500"></i> {{ $data['user']->name }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                                        <span class="font-semibold">{{ number_format($assignedHours, 1) }}</span> jam
+                                        <span class="font-semibold">{{ number_format($data['assigned_hours'], 1) }}</span> jam
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="flex items-center">
