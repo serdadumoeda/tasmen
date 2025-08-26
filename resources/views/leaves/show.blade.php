@@ -28,7 +28,7 @@
                         </div>
                         @if($leaveRequest->attachment_path)
                         <div class="md:col-span-2">
-                             <p><span class="font-semibold">Lampiran:</span> <a href="#" class="text-indigo-600 hover:underline">Lihat Lampiran</a></p>
+                             <p><span class="font-semibold">Lampiran:</span> <a href="{{ route('leaves.attachment', $leaveRequest) }}" class="text-indigo-600 hover:underline" target="_blank">Lihat Lampiran</a></p>
                         </div>
                         @endif
                     </div>
