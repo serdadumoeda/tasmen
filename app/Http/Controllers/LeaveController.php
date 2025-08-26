@@ -10,6 +10,7 @@ use App\Models\Unit;
 use App\Notifications\LeaveRequestForwarded;
 use App\Notifications\LeaveRequestStatusUpdated;
 use App\Notifications\LeaveRequestSubmitted;
+use App\Services\LeaveDurationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
@@ -136,7 +137,10 @@ class LeaveController extends Controller
         $leaveType = LeaveType::find($validated['leave_type_id']);
         $startDate = Carbon::parse($validated['start_date']);
         $endDate = Carbon::parse($validated['end_date']);
-        $duration = $startDate->diffInDaysFiltered(fn(Carbon $date) => !$date->isWeekend(), $endDate) + 1;
+
+        // Use the new service to calculate the duration accurately
+        $durationService = new LeaveDurationService();
+        $duration = $durationService->calculate($startDate, $endDate);
 
         // For annual leave, check balance
         if ($leaveType->name === 'Cuti Tahunan') {
