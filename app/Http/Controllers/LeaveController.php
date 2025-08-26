@@ -51,7 +51,39 @@ class LeaveController extends Controller
 
         $approvalRequests = $approvalRequestsQuery->orderBy('created_at', 'asc')->get();
 
-        return view('leaves.index', compact('myRequests', 'approvalRequests', 'unitsInHierarchy'));
+        // Get the user's annual leave balance for the summary
+        $annualLeaveBalance = LeaveBalance::firstOrCreate(
+            ['user_id' => $user->id, 'year' => now()->year],
+            ['total_days' => 12, 'carried_over_days' => 0] // Defaults for new users
+        );
+
+        return view('leaves.index', compact('myRequests', 'approvalRequests', 'unitsInHierarchy', 'annualLeaveBalance'));
+    }
+
+    public function calendar()
+    {
+        $user = Auth::user();
+        $teamIds = $user->getAllSubordinateIds();
+        $teamIds[] = $user->id; // Include the manager themselves in the calendar
+
+        $leaves = LeaveRequest::whereIn('user_id', $teamIds)
+            ->where('status', 'approved')
+            ->with('user')
+            ->get();
+
+        $events = $leaves->map(function ($leave) {
+            // FullCalendar's end date is exclusive, so add a day.
+            $endDate = $leave->end_date->addDay()->format('Y-m-d');
+
+            return [
+                'title' => $leave->user->name,
+                'start' => $leave->start_date->format('Y-m-d'),
+                'end' => $endDate,
+                'allDay' => true,
+            ];
+        });
+
+        return view('leaves.calendar', ['events' => $events->toJson()]);
     }
 
     public function create()
