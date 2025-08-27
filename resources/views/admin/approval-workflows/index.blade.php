@@ -11,7 +11,7 @@
                 <div class="p-6 bg-white border-b border-gray-200">
                     <div class="flex justify-between items-center mb-6">
                         <h1 class="text-xl font-bold text-gray-800">Daftar Alur Persetujuan</h1>
-                        <a href="#" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700">
+                        <a href="{{ route('admin.approval-workflows.create') }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700">
                             <i class="fas fa-plus-circle mr-2"></i> Tambah Alur Kerja Baru
                         </a>
                     </div>
