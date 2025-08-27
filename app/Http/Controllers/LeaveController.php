@@ -32,11 +32,11 @@ class LeaveController extends Controller
             ->orderBy('start_date', 'desc')
             ->get();
 
-        // Get leave requests for the manager's entire hierarchy
-        $subordinateIds = $user->getAllSubordinateIds();
+        // Get leave requests for the manager's direct subordinates
+        $subordinateIds = $user->bawahan()->pluck('id');
+
         $approvalRequestsQuery = LeaveRequest::whereIn('user_id', $subordinateIds)
-            ->where('status', '!=', 'approved')
-            ->where('status', '!=', 'rejected')
+            ->whereIn('status', ['pending', 'approved_by_supervisor'])
             ->with('user.unit', 'leaveType');
 
         // Apply filters
@@ -50,8 +50,8 @@ class LeaveController extends Controller
             $approvalRequestsQuery->where('status', $request->filter_status);
         }
 
-        // Get all units in the hierarchy for the filter dropdown
-        $unitsInHierarchy = $user->unit ? Unit::whereIn('id', $user->unit->getAllSubordinateUnitIds())->get() : collect();
+        // Get all units of the direct subordinates for the filter dropdown
+        $unitsInHierarchy = Unit::whereIn('id', $user->bawahan()->select('unit_id')->distinct())->get();
 
         $approvalRequests = $approvalRequestsQuery->orderBy('created_at', 'asc')->get();
 
