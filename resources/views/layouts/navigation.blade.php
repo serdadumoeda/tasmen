@@ -37,7 +37,7 @@ if (count($words) >= 2) {
                                     {{ (request()->routeIs(['global.dashboard', 'adhoc-tasks.*', 'special-assignments.*', 'projects.show', 'projects.create.*'])) && !request()->routeIs('executive.summary')
                                         ? 'border-yellow-300 text-white bg-green-700/50'
                                         : 'border-transparent text-white hover:text-yellow-300 hover:border-yellow-300/75 focus:outline-none focus:text-white focus:border-yellow-300/75' }}">
-                                    <div><i class="fas fa-briefcase mr-2"></i>Menu Kerja</div>
+                                    <div><i class="fas fa-briefcase mr-2"></i>Kerja</div>
                                     <div class="ms-1"><svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg></div>
                                 </button>
                             </x-slot>
@@ -56,7 +56,7 @@ if (count($words) >= 2) {
                     <x-nav-link :href="route('leaves.index')" :active="request()->routeIs('leaves.*')" class="text-white hover:text-yellow-300 transition duration-150 ease-in-out">
                         <div class="flex items-center">
                             <i class="fas fa-calendar-alt mr-2"></i>
-                            <span>Manajemen Cuti</span>
+                            <span>Cuti</span>
                         </div>
                     </x-nav-link>
 
@@ -92,7 +92,7 @@ if (count($words) >= 2) {
                                         {{ request()->routeIs(['users.*', 'admin.units.*', 'resource-pool.*', 'peminjaman-requests.*']) && !request()->routeIs('admin.api_keys.*', 'admin.activities.index')
                                             ? 'border-yellow-300 text-white bg-green-700/50'
                                             : 'border-transparent text-white hover:text-yellow-300 hover:border-yellow-300/75 focus:outline-none focus:text-white focus:border-yellow-300/75' }}">
-                                        <div><i class="fas fa-users-cog mr-2"></i>Manajemen Tim</div>
+                                        <div><i class="fas fa-users-cog mr-2"></i>Tim</div>
                                         <div class="ms-1"><svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg></div>
                                     </button>
                                 </x-slot>
@@ -120,7 +120,7 @@ if (count($words) >= 2) {
                                         {{ request()->routeIs(['admin.api_keys.*', 'admin.activities.index'])
                                             ? 'border-yellow-300 text-white bg-green-700/50'
                                             : 'border-transparent text-white hover:text-yellow-300 hover:border-yellow-300/75 focus:outline-none focus:text-white focus:border-yellow-300/75' }}">
-                                        <div><i class="fas fa-cogs mr-2"></i>Pengaturan Sistem</div>
+                                        <div><i class="fas fa-cogs mr-2"></i>Pengaturan</div>
                                         <div class="ms-1"><svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg></div>
                                     </button>
                                 </x-slot>
