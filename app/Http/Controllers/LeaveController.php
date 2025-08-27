@@ -16,9 +16,12 @@ use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class LeaveController extends Controller
 {
+    use AuthorizesRequests;
+
     public function index(Request $request)
     {
         $user = Auth::user();
