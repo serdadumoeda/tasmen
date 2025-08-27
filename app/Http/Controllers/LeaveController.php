@@ -10,6 +10,7 @@ use App\Models\Unit;
 use App\Notifications\LeaveRequestForwarded;
 use App\Notifications\LeaveRequestStatusUpdated;
 use App\Notifications\LeaveRequestSubmitted;
+use App\Services\LeaveApprovalService;
 use App\Services\LeaveDurationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -204,7 +205,7 @@ class LeaveController extends Controller
         return Storage::disk('private')->download($leaveRequest->attachment_path);
     }
 
-    public function approve(LeaveRequest $leaveRequest)
+    public function approve(LeaveRequest $leaveRequest, LeaveApprovalService $approvalService)
     {
         $approver = Auth::user();
 
@@ -212,56 +213,50 @@ class LeaveController extends Controller
             return back()->with('error', 'Anda tidak memiliki wewenang untuk menyetujui permintaan ini.');
         }
 
-        // Level 1 Approval (Direct Supervisor)
-        if ($leaveRequest->status === 'pending') {
-            $nextApprover = $approver->atasan; // The supervisor's supervisor
+        // Delegate the logic to the service
+        $nextState = $approvalService->processApproval($leaveRequest, $approver);
 
-            // If there is a next-level approver, forward it to them.
-            if ($nextApprover) {
-                $leaveRequest->status = 'approved_by_supervisor';
-                $leaveRequest->current_approver_id = $nextApprover->id;
+        // Update the request based on the service's decision
+        $leaveRequest->status = $nextState['status'];
+        $leaveRequest->current_approver_id = $nextState['next_approver_id'];
+
+        // Handle final approval logic (database transaction and notification)
+        if ($nextState['status'] === 'approved') {
+            DB::transaction(function () use ($leaveRequest) {
                 $leaveRequest->save();
 
-                // Notify the next approver
-                $nextApprover->notify(new LeaveRequestForwarded($leaveRequest));
+                // Update leave balance only for 'Cuti Tahunan'
+                if ($leaveRequest->leaveType->name === 'Cuti Tahunan') {
+                    $balance = LeaveBalance::firstOrCreate(
+                        ['user_id' => $leaveRequest->user_id, 'year' => $leaveRequest->start_date->year],
+                        ['total_days' => 12, 'carried_over_days' => 0]
+                    );
 
-                return back()->with('success', 'Permintaan cuti telah disetujui dan diteruskan ke pejabat berwenang.');
-            }
-        }
+                    $daysToDeduct = $leaveRequest->duration_days;
+                    $deductedFromCarryOver = min($balance->carried_over_days, $daysToDeduct);
+                    $balance->carried_over_days -= $deductedFromCarryOver;
+                    $daysToDeduct -= $deductedFromCarryOver;
 
-        // Final Approval (either by Level 1 if no Level 2, or by Level 2)
-        DB::transaction(function () use ($leaveRequest) {
-            $leaveRequest->status = 'approved';
-            $leaveRequest->current_approver_id = null;
-            $leaveRequest->save();
-
-            // Update leave balance only for 'Cuti Tahunan'
-            if ($leaveRequest->leaveType->name === 'Cuti Tahunan') {
-                $balance = LeaveBalance::firstOrCreate(
-                    ['user_id' => $leaveRequest->user_id, 'year' => $leaveRequest->start_date->year],
-                    ['total_days' => 12, 'carried_over_days' => 0] // Ensure defaults are set
-                );
-
-                $daysToDeduct = $leaveRequest->duration_days;
-
-                // Deduct from carried over days first
-                $deductedFromCarryOver = min($balance->carried_over_days, $daysToDeduct);
-                $balance->carried_over_days -= $deductedFromCarryOver;
-                $daysToDeduct -= $deductedFromCarryOver;
-
-                // Deduct the rest from the current year's balance
-                if ($daysToDeduct > 0) {
-                    $balance->days_taken += $daysToDeduct;
+                    if ($daysToDeduct > 0) {
+                        $balance->days_taken += $daysToDeduct;
+                    }
+                    $balance->save();
                 }
+            });
 
-                $balance->save();
+            // Notify the applicant of the final approval
+            $leaveRequest->user->notify(new LeaveRequestStatusUpdated($leaveRequest));
+            return back()->with('success', 'Permintaan cuti telah disetujui sepenuhnya.');
+
+        } else {
+            // This is a forwarded approval
+            $leaveRequest->save();
+            $nextApprover = User::find($nextState['next_approver_id']);
+            if ($nextApprover) {
+                $nextApprover->notify(new LeaveRequestForwarded($leaveRequest));
             }
-        });
-
-        // Notify the applicant of the final approval
-        $leaveRequest->user->notify(new LeaveRequestStatusUpdated($leaveRequest));
-
-        return back()->with('success', 'Permintaan cuti telah disetujui sepenuhnya.');
+            return back()->with('success', 'Permintaan cuti telah disetujui dan diteruskan ke pejabat berwenang.');
+        }
     }
 
     public function reject(Request $request, LeaveRequest $leaveRequest)
