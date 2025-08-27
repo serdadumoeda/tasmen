@@ -175,6 +175,7 @@ class LeaveController extends Controller
             'status' => 'pending',
             'current_approver_id' => $user->atasan_id,
             'attachment_path' => $attachmentPath,
+            'last_approved_step' => 0,
         ]);
 
         // Notify the direct supervisor
@@ -219,6 +220,7 @@ class LeaveController extends Controller
         // Update the request based on the service's decision
         $leaveRequest->status = $nextState['status'];
         $leaveRequest->current_approver_id = $nextState['next_approver_id'];
+        $leaveRequest->last_approved_step = $nextState['last_approved_step'];
 
         // Handle final approval logic (database transaction and notification)
         if ($nextState['status'] === 'approved') {
