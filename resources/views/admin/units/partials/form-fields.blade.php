@@ -48,4 +48,22 @@
         @error('kepala_unit_id') <p class="text-sm text-red-600 mt-2">{{ $message }}</p> @enderror
     </div>
     @endif
+
+    @if(isset($workflows))
+    <div class="md:col-span-2">
+        <label for="approval_workflow_id" class="block font-semibold text-sm text-gray-700 mb-1">
+            <i class="fas fa-sitemap mr-2 text-gray-500"></i> Alur Persetujuan Cuti (Opsional)
+        </label>
+        <select name="approval_workflow_id" id="approval_workflow_id" class="mt-1 block w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150">
+            <option value="">-- Gunakan Alur Default --</option>
+            @foreach($workflows as $workflow)
+                <option value="{{ $workflow->id }}" @selected(old('approval_workflow_id', $unit->approval_workflow_id ?? '') == $workflow->id)>
+                    {{ $workflow->name }}
+                </option>
+            @endforeach
+        </select>
+        <p class="mt-1 text-xs text-gray-500">Pilih alur persetujuan cuti khusus untuk unit ini. Jika dikosongkan, akan mengikuti alur standar.</p>
+        @error('approval_workflow_id') <p class="text-sm text-red-600 mt-2">{{ $message }}</p> @enderror
+    </div>
+    @endif
 </div>

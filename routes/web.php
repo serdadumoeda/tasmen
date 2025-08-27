@@ -187,6 +187,7 @@ Route::middleware(['auth'])->group(function () {
 
 use App\Http\Controllers\Admin\ApiKeyController;
 use App\Http\Controllers\Admin\CutiBersamaController;
+use App\Http\Controllers\Admin\ApprovalWorkflowController;
 use App\Http\Controllers\Api\UnitApiController;
 use App\Http\Controllers\UnitController;
 
@@ -228,6 +229,10 @@ Route::middleware(['auth', 'superadmin'])->prefix('admin')->name('admin.')->grou
 Route::middleware(['auth', 'can.manage.leave.settings'])->prefix('admin')->name('admin.')->group(function () {
     // Cuti Bersama Management
     Route::resource('cuti-bersama', CutiBersamaController::class)->parameters(['cuti-bersama' => 'cutiBersama']);
+    // Approval Workflow Management
+    Route::resource('approval-workflows', ApprovalWorkflowController::class);
+    Route::post('approval-workflows/{approvalWorkflow}/steps', [ApprovalWorkflowController::class, 'addStep'])->name('approval-workflows.steps.store');
+    Route::delete('approval-workflows/{approvalWorkflow}/steps/{step}', [ApprovalWorkflowController::class, 'destroyStep'])->name('approval-workflows.steps.destroy');
 });
 
 Route::get('/api/units/{unit}/vacant-jabatans', [UnitController::class, 'getVacantJabatans'])->name('api.units.vacant-jabatans')->middleware('auth');

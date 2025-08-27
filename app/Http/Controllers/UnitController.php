@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Unit;
+use App\Models\ApprovalWorkflow;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -68,10 +69,11 @@ class UnitController extends Controller
     {
         $this->authorize('update', $unit);
         $units = Unit::where('id', '!=', $unit->id)->orderBy('name')->get();
-        $unit->load('jabatans.user', 'users');
+        $unit->load('jabatans.user', 'users', 'approvalWorkflow');
         $usersInUnit = $unit->users()->orderBy('name')->get();
+        $workflows = ApprovalWorkflow::orderBy('name')->get();
 
-        return view('admin.units.edit', compact('unit', 'units', 'usersInUnit'));
+        return view('admin.units.edit', compact('unit', 'units', 'usersInUnit', 'workflows'));
     }
 
     public function update(Request $request, Unit $unit)
@@ -83,6 +85,7 @@ class UnitController extends Controller
             'parent_unit_id' => 'nullable|exists:units,id',
             'kepala_unit_id' => ['nullable', 'exists:users,id'],
             'type' => ['required', Rule::in(['Struktural', 'Fungsional'])],
+            'approval_workflow_id' => ['nullable', 'exists:approval_workflows,id'],
         ]);
 
         // Additional check to ensure the selected head is actually a member of the unit.

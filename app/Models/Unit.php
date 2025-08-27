@@ -85,6 +85,11 @@ class Unit extends Model
     {
         return $this->hasMany(User::class);
     }
+
+    public function approvalWorkflow(): BelongsTo
+    {
+        return $this->belongsTo(ApprovalWorkflow::class);
+    }
     
     public function getAllSubordinateUnitIds(): array
     {
