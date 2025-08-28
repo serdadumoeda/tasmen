@@ -111,6 +111,34 @@
                         </div>
                     </div>
 
+                    <!-- Filters for My Requests -->
+                    <form action="{{ route('leaves.index') }}" method="GET" class="mb-6 p-4 bg-gray-50 rounded-lg">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label for="my_leave_type" class="block text-sm font-medium text-gray-700">Jenis Cuti</label>
+                                <select name="my_leave_type" id="my_leave_type" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                                    <option value="">Semua Jenis</option>
+                                    @foreach($leaveTypes as $type)
+                                        <option value="{{ $type->id }}" {{ request('my_leave_type') == $type->id ? 'selected' : '' }}>{{ $type->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div>
+                                <label for="my_status" class="block text-sm font-medium text-gray-700">Status</label>
+                                <select name="my_status" id="my_status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                                    <option value="">Semua Status</option>
+                                    @foreach($allStatuses as $status)
+                                        <option value="{{ $status }}" {{ request('my_status') == $status ? 'selected' : '' }}>{{ ucfirst(str_replace('_', ' ', $status)) }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="flex items-end">
+                                <button type="submit" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700">Filter Riwayat</button>
+                                <a href="{{ route('leaves.index') }}" class="ml-2 inline-flex items-center px-4 py-2 bg-gray-200 border border-transparent rounded-md font-semibold text-xs text-gray-800 uppercase tracking-widest hover:bg-gray-300">Reset</a>
+                            </div>
+                        </div>
+                    </form>
+
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
@@ -120,6 +148,7 @@
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Durasi</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Penyetuju Berikutnya</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
@@ -137,10 +166,15 @@
                                             </span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">{{ $request->approver->name ?? '-' }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <a href="{{ route('leaves.show', $request) }}" class="text-indigo-600 hover:text-indigo-900 font-semibold">
+                                                Lihat Detail
+                                            </a>
+                                        </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="5" class="text-center py-8 text-gray-500">Anda belum pernah mengajukan cuti.</td>
+                                        <td colspan="6" class="text-center py-8 text-gray-500">Anda belum pernah mengajukan cuti.</td>
                                     </tr>
                                 @endforelse
                             </tbody>
