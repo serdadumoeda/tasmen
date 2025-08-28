@@ -27,11 +27,20 @@ class LeaveController extends Controller
     {
         $user = Auth::user();
 
-        // Get the user's own leave requests
-        $myRequests = LeaveRequest::where('user_id', $user->id)
+        // Get the user's own leave requests with filters
+        $myRequestsQuery = LeaveRequest::where('user_id', $user->id)
             ->with('leaveType', 'approver')
-            ->orderBy('start_date', 'desc')
-            ->get();
+            ->orderBy('created_at', 'desc');
+
+        if ($request->filled('my_status')) {
+            $myRequestsQuery->where('status', $request->my_status);
+        }
+
+        if ($request->filled('my_leave_type')) {
+            $myRequestsQuery->where('leave_type_id', $request->my_leave_type);
+        }
+
+        $myRequests = $myRequestsQuery->get();
 
         // Get leave requests for the manager's direct subordinates
         $subordinateIds = $user->bawahan()->pluck('id');
@@ -62,7 +71,12 @@ class LeaveController extends Controller
             ['total_days' => 12, 'carried_over_days' => 0] // Defaults for new users
         );
 
-        return view('leaves.index', compact('myRequests', 'approvalRequests', 'unitsInHierarchy', 'annualLeaveBalance'));
+        // Data for filters
+        $leaveTypes = LeaveType::orderBy('name')->get();
+        $allStatuses = ['pending', 'approved_by_supervisor', 'approved', 'rejected'];
+
+
+        return view('leaves.index', compact('myRequests', 'approvalRequests', 'unitsInHierarchy', 'annualLeaveBalance', 'leaveTypes', 'allStatuses'));
     }
 
     public function calendar()
@@ -208,6 +222,7 @@ class LeaveController extends Controller
 
     public function approve(LeaveRequest $leaveRequest, LeaveApprovalService $approvalService)
     {
+        $leaveRequest->load('leaveType'); // Eager-load to prevent issues in the transaction
         $approver = Auth::user();
 
         if ($leaveRequest->current_approver_id !== $approver->id) {
