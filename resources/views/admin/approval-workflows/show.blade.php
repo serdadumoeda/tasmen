@@ -30,7 +30,7 @@
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
-                                @forelse ($approvalWorkflow->steps as $step)
+                                @forelse ($workflow->steps as $step)
                                     <tr>
                                         <td class="px-6 py-4 whitespace-nowrap">{{ $step->step }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap">{{ $step->approver_role }}</td>
@@ -42,7 +42,7 @@
                                             @endif
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <form action="{{ route('admin.approval-workflows.steps.destroy', ['approvalWorkflow' => $approvalWorkflow, 'step' => $step]) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus langkah ini?');">
+                                            <form action="{{ route('admin.approval-workflows.steps.destroy', ['approvalWorkflow' => $workflow, 'step' => $step]) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus langkah ini?');">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" class="text-red-600 hover:text-red-900">Hapus</button>
@@ -66,12 +66,12 @@
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
                 <div class="p-6 bg-white border-b border-gray-200">
                     <h3 class="text-lg font-bold text-gray-800 mb-4">Tambah Langkah Baru</h3>
-                    <form action="{{ route('admin.approval-workflows.steps.store', $approvalWorkflow) }}" method="POST">
+                    <form action="{{ route('admin.approval-workflows.steps.store', $workflow) }}" method="POST">
                         @csrf
                         <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
                             <div>
                                 <label for="step" class="block text-sm font-medium text-gray-700">Langkah Ke-</label>
-                                <input type="number" name="step" id="step" value="{{ ($approvalWorkflow->steps->max('step') ?? 0) + 1 }}" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                                <input type="number" name="step" id="step" value="{{ ($workflow->steps->max('step') ?? 0) + 1 }}" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
                             </div>
                             <div>
                                 <label for="approver_role" class="block text-sm font-medium text-gray-700">Peran Approver</label>

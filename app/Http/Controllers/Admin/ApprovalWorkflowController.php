@@ -36,14 +36,16 @@ class ApprovalWorkflowController extends Controller
 
     public function show(ApprovalWorkflow $approvalWorkflow)
     {
-        $approvalWorkflow->load('steps');
+        $workflow = $approvalWorkflow;
+        $workflow->load('steps');
         $roles = User::ROLES; // Get all possible roles
-        return view('admin.approval-workflows.show', compact('approvalWorkflow', 'roles'));
+        return view('admin.approval-workflows.show', compact('workflow', 'roles'));
     }
 
     public function edit(ApprovalWorkflow $approvalWorkflow)
     {
-        return view('admin.approval-workflows.edit', compact('approvalWorkflow'));
+        $workflow = $approvalWorkflow;
+        return view('admin.approval-workflows.edit', compact('workflow'));
     }
 
     public function update(Request $request, ApprovalWorkflow $approvalWorkflow)
