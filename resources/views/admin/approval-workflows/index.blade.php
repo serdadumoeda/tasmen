@@ -30,12 +30,22 @@
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
-                                {{-- Logic to loop through workflows will be added here --}}
-                                <tr>
-                                    <td colspan="3" class="text-center py-8 text-gray-500">
-                                        Belum ada alur kerja yang dibuat.
-                                    </td>
-                                </tr>
+                                @forelse ($workflows as $workflow)
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{{ $workflow->name }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-gray-500">{{ $workflow->description }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <a href="{{ route('admin.approval-workflows.show', $workflow) }}" class="text-indigo-600 hover:text-indigo-900">Lihat Detail</a>
+                                            <a href="{{ route('admin.approval-workflows.edit', $workflow) }}" class="text-yellow-600 hover:text-yellow-900 ml-4">Edit</a>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="3" class="text-center py-8 text-gray-500">
+                                            Belum ada alur kerja yang dibuat.
+                                        </td>
+                                    </tr>
+                                @endforelse
                             </tbody>
                         </table>
                     </div>
