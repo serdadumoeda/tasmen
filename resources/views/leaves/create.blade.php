@@ -31,11 +31,11 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
                             <div>
                                 <label for="start_date" class="block font-medium text-sm text-gray-700">{{ __('Tanggal Mulai') }}</label>
-                                <input type="date" name="start_date" id="start_date" class="block mt-1 w-full rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required>
+                                <input type="text" name="start_date" id="start_date" class="date-picker block mt-1 w-full rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required placeholder="Pilih tanggal...">
                             </div>
                             <div>
                                 <label for="end_date" class="block font-medium text-sm text-gray-700">{{ __('Tanggal Selesai') }}</label>
-                                <input type="date" name="end_date" id="end_date" class="block mt-1 w-full rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required>
+                                <input type="text" name="end_date" id="end_date" class="date-picker block mt-1 w-full rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required placeholder="Pilih tanggal...">
                             </div>
                         </div>
 
@@ -76,4 +76,23 @@
             </div>
         </div>
     </div>
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        flatpickr('.date-picker', {
+            dateFormat: "Y-m-d",
+            disable: [
+                function(date) {
+                    // return true to disable
+                    return (date.getDay() === 0 || date.getDay() === 6);
+                }
+            ],
+            locale: {
+                "firstDayOfWeek": 1 // start week on Monday
+            }
+        });
+    });
+</script>
+@endpush
 </x-app-layout>
