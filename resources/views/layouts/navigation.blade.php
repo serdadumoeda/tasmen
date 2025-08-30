@@ -103,7 +103,7 @@ if (count($words) >= 2) {
                                         @endif
                                         <x-dropdown-link :href="route('users.index')" :active="request()->routeIs('users.*')">Manajemen Pengguna</x-dropdown-link>
                                         <div class="border-t border-gray-200"></div>
-                                        <x-dropdown-link :href="route('peminjaman-requests.my-requests')" :active="request()->routeIs('peminjaman-requests.*')">Peminjaman Anggota</x-dropdown-link>
+                                        <x-dropdown-link :href="route('peminjaman-requests.my-requests')" :active="request()->routeIs('peminjaman-requests.*')">Penugasan Anggota</x-dropdown-link>
                                         <x-dropdown-link :href="route('resource-pool.index')" :active="request()->routeIs('resource-pool.index')">Resource Pool</x-dropdown-link>
                                     </div>
                                 </x-slot>
@@ -248,18 +248,18 @@ if (count($words) >= 2) {
             </div>
 
             <div class="text-gray-700 text-base leading-relaxed mb-4">
-                Aplikasi ini adalah sebuah platform manajemen proyek dan tugas yang dirancang untuk membantu tim mengelola alur kerja, melacak progres, dan meningkatkan kolaborasi secara efisien.
+                Aplikasi ini adalah sebuah platform manajemen kegiatan dan tugas yang dirancang untuk membantu tim mengelola alur kerja, melacak progres, dan meningkatkan kolaborasi secara efisien.
             </div>
             
             <div class="mt-4 pt-4 border-t border-gray-200">
                 <h4 class="font-bold text-lg text-gray-800 mb-3 flex items-center">
-                    <i class="fas fa-users-line mr-2 text-blue-600"></i> Tim Proyek Web
+                    <i class="fas fa-users-line mr-2 text-blue-600"></i> Tim Kegiatan Web
                 </h4>
                 <div class="overflow-x-auto">
                     <table class="min-w-full text-sm text-gray-700">
                         <tbody>
                      <tr class="hover:bg-gray-50 transition-colors duration-100">
-                            <td class="py-2 px-1 font-semibold text-gray-600">Project Manager</td>
+                            <td class="py-2 px-1 font-semibold text-gray-600">Kegiatan Manager</td>
                             <td class="py-2 px-1">:</td>
                             <td class="py-2 px-1">Abdul Harist Habibullah</td>
                         </tr>

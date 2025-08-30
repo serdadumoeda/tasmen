@@ -57,14 +57,14 @@
             </div>
         </td>
 
-        {{-- MODIFIKASI: Kolom Tugas Proyek sekarang menampilkan jumlah tugas aktif (Proyek + Ad-Hoc) --}}
+        {{-- MODIFIKASI: Kolom Tugas Kegiatan sekarang menampilkan jumlah tugas aktif (Kegiatan + Ad-Hoc) --}}
         <td class="px-6 py-4 whitespace-nowrap text-center text-sm">
             <span class="px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-blue-100 text-blue-800 shadow-sm"> {{-- Badge modern --}}
                 <i class="fas fa-list-check mr-1"></i> {{ $activeTasksCount }}
             </span>
         </td>
         
-        {{-- Kolom Utilisasi Proyek (Jam) --}}
+        {{-- Kolom Utilisasi Kegiatan (Jam) --}}
         <td class="px-6 py-4 whitespace-nowrap text-center">
             <div class="w-full bg-gray-200 rounded-full h-4 shadow-inner"> {{-- Tinggi progress bar lebih besar, shadow-inner --}}
                 <div class="{{ $utilization > 100 ? 'bg-red-500' : ($utilization > 85 ? 'bg-yellow-500' : 'bg-green-500') }} h-4 rounded-full shadow-md" style="width: {{ min($utilization, 100) }}%"></div> {{-- Shadow pada progress bar --}}

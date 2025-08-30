@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Status & Persetujuan Peminjaman') }}
+            {{ __('Status & Persetujuan Penugasan') }}
         </h2>
     </x-slot>
 
@@ -33,7 +33,7 @@
                                         <i class="fas fa-user-friends text-blue-600 text-2xl mr-4"></i>
                                         <div>
                                             <p class="text-base font-semibold text-gray-800">
-                                                <span class="text-indigo-700">{{ $request->requester?->name ?? '[Pengguna Dihapus]' }}</span> meminta untuk meminjam
+                                                <span class="text-indigo-700">{{ $request->requester?->name ?? '[Pengguna Dihapus]' }}</span> meminta untuk menugaskan
                                                 <span class="text-purple-700">{{ $request->requestedUser?->name ?? '[Pengguna Dihapus]' }}</span>
                                             </p>
                                             <p class="text-sm text-gray-600 mt-1 flex items-center">
@@ -74,7 +74,7 @@
                             @else
                                 <div class="border border-red-300 bg-red-100 p-4 rounded-lg text-sm text-red-800 shadow-md flex items-center">
                                     <i class="fas fa-exclamation-circle mr-3 text-red-500"></i>
-                                    Permintaan dengan ID #{{ $request->id }} tidak dapat ditampilkan karena data proyek atau pengguna terkait telah dihapus.
+                                    Permintaan dengan ID #{{ $request->id }} tidak dapat ditampilkan karena data kegiatan atau pengguna terkait telah dihapus.
                                 </div>
                             @endif
                         @empty
@@ -94,7 +94,7 @@
                     <h3 class="text-xl font-bold text-gray-800 mb-3 flex items-center">
                         <i class="fas fa-history mr-2 text-gray-600"></i> Riwayat Persetujuan Saya
                     </h3>
-                    <p class="text-sm text-gray-600 mb-6">Daftar keputusan yang telah Anda buat terhadap permintaan peminjaman.</p>
+                    <p class="text-sm text-gray-600 mb-6">Daftar keputusan yang telah Anda buat terhadap permintaan penugasan.</p>
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-100"> {{-- Header tabel lebih menonjol --}}
@@ -156,7 +156,7 @@
                     <h3 class="text-xl font-bold text-gray-800 mb-3 flex items-center">
                         <i class="fas fa-paper-plane mr-2 text-blue-600"></i> Riwayat Permintaan Saya
                     </h3>
-                    <p class="text-sm text-gray-600 mb-6">Daftar permintaan yang telah Anda ajukan untuk meminjam anggota.</p>
+                    <p class="text-sm text-gray-600 mb-6">Daftar permintaan yang telah Anda ajukan untuk menugaskan anggota.</p>
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
                              <thead class="bg-gray-100">

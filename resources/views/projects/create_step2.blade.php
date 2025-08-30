@@ -225,7 +225,7 @@
                 function sendBorrowRequest(memberId, memberName, tomSelectInstance) {
                     let projectId = '{{ $project->id }}'; // Project ID is available in this context
 
-                    let message = prompt(`Anda akan mengirim permintaan untuk meminjam "${memberName}".\nTambahkan pesan untuk atasan mereka (opsional):`);
+                    let message = prompt(`Anda akan mengirim permintaan untuk menugaskan "${memberName}".\nTambahkan pesan untuk atasan mereka (opsional):`);
                     
                     if (message === null) {
                         return;

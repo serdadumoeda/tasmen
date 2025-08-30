@@ -18,16 +18,16 @@ class TaskAssigned extends Notification
 
     public function toArray(object $notifiable): array
     {
-        // MODIFIKASI: Logika cerdas untuk menangani tugas proyek & ad-hoc
+        // MODIFIKASI: Logika cerdas untuk menangani tugas kegiatan & ad-hoc
 
-        // Jika tugas ini memiliki project_id (tugas proyek)
+        // Jika tugas ini memiliki project_id (tugas kegiatan)
         if ($this->task->project_id) {
             return [
                 'task_id' => $this->task->id,
                 'task_title' => $this->task->title,
                 'project_id' => $this->task->project->id,
                 'project_name' => $this->task->project->name,
-                'message' => "Anda ditugaskan tugas baru: '{$this->task->title}' dalam proyek '{$this->task->project->name}'",
+                'message' => "Anda ditugaskan tugas baru: '{$this->task->title}' dalam kegiatan '{$this->task->project->name}'",
                 'url' => route('projects.show', $this->task->project_id),
             ];
         }
@@ -36,8 +36,8 @@ class TaskAssigned extends Notification
         return [
             'task_id' => $this->task->id,
             'task_title' => $this->task->title,
-            'project_id' => null, // Tidak ada proyek
-            'project_name' => null, // Tidak ada proyek
+            'project_id' => null, // Tidak ada kegiatan
+            'project_name' => null, // Tidak ada kegiatan
             'message' => "Anda mendapat tugas harian baru: '{$this->task->title}'",
             // Arahkan ke halaman detail tugas, yang akan dialihkan ke halaman daftar tugas ad-hoc
             'url' => route('tasks.edit', $this->task->id), 

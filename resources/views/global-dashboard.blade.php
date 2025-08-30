@@ -97,7 +97,7 @@
                         </form>
                     </div>
 
-                    <!-- Daftar Proyek -->
+                    <!-- Daftar Kegiatan -->
                     @forelse ($allProjects as $project)
                         @php
                             // Kalkulasi ini bisa dipindahkan ke model jika sering digunakan
@@ -163,7 +163,7 @@
                                     <p class="text-sm text-gray-700">
                                         <span class="font-bold text-gray-800">{{ optional($activity->user)->name ?? 'Sistem' }}</span>
                                         @switch($activity->description)
-                                            @case('created_project') membuat proyek baru @break
+                                            @case('created_project') membuat kegiatan baru @break
                                             @case('created_task') membuat tugas baru @break
                                             @case('updated_task') memperbarui sebuah tugas @break
                                             @case('created_user') mendaftarkan pengguna baru @break

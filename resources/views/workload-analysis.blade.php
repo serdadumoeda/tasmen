@@ -14,7 +14,7 @@
                     </h3>
                     <p class="text-base text-gray-700 mb-6 flex items-center"> {{-- Menyesuaikan ukuran teks dan ikon --}}
                         <i class="fas fa-info-circle mr-3 text-blue-500 fa-lg"></i>
-                        Analisis ini menggabungkan total jam dari tugas proyek aktif dengan jumlah penugasan non-proyek (SK) yang sedang berjalan. Utilisasi mingguan dihitung berdasarkan perbandingan alokasi jam kerja proyek terhadap kapasitas standar 40 jam/minggu.
+                        Analisis ini menggabungkan total jam dari tugas kegiatan aktif dengan jumlah penugasan non-kegiatan (SK) yang sedang berjalan. Utilisasi mingguan dihitung berdasarkan perbandingan alokasi jam kerja kegiatan terhadap kapasitas standar 40 jam/minggu.
                     </p>
 
                     <div class="overflow-x-auto border border-gray-200 rounded-lg shadow-sm"> {{-- Border pada tabel, rounded-lg, shadow-sm --}}
@@ -28,7 +28,7 @@
                                         <i class="fas fa-tasks mr-2"></i> Tugas Aktif
                                     </th>
                                     <th scope="col" class="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                        <i class="fas fa-chart-line mr-2"></i> Utilisasi Proyek (Jam)
+                                        <i class="fas fa-chart-line mr-2"></i> Utilisasi Kegiatan (Jam)
                                     </th>
                                     <th scope="col" class="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
                                         <i class="fas fa-file-signature mr-2"></i> Beban SK Aktif

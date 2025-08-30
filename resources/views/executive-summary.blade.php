@@ -13,7 +13,7 @@
 
             {{-- Bagian KPI Utama --}}
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                {{-- KPI: Proyek Aktif --}}
+                {{-- KPI: Kegiatan Aktif --}}
                 <div class="bg-white p-6 rounded-xl shadow-xl hover:shadow-2xl text-center transform hover:-translate-y-1 transition-all duration-300 ease-in-out border-b-4 border-indigo-500"> {{-- Meningkatkan shadow --}}
                     <div class="text-indigo-600 mb-3 drop-shadow-md">
                         <i class="fas fa-folder-open fa-4x"></i>
@@ -58,7 +58,7 @@
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {{-- Kolom Kiri: Daftar Proyek & Alokasi Anggaran --}}
+                {{-- Kolom Kiri: Daftar Kegiatan & Alokasi Anggaran --}}
                 <div class="lg:col-span-2 space-y-6">
                     {{-- Daftar Portofolio Kegiatan --}}
                     <div class="bg-white p-6 rounded-xl shadow-xl hover:shadow-2xl transition-shadow duration-300" x-data="{ open: true }">

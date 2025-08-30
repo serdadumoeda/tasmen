@@ -39,7 +39,7 @@
                 <i class="bi bi-file-earmark-text text-4xl text-teal-600 mb-3"></i>
                 {{-- Note: $projects is a paginator instance, so count() gives items on the current page. Use total() for all items. --}}
                 <h3 class="text-3xl font-bold">{{ $projects->total() }}</h3>
-                <p class="text-gray-500">Proyek</p>
+                <p class="text-gray-500">Kegiatan</p>
             </div>
             <div class="bg-white p-6 rounded-xl shadow hover:shadow-lg transition duration-300 text-center">
                 <i class="bi bi-person text-4xl text-teal-600 mb-3"></i>
@@ -83,7 +83,7 @@
                     </a>
                 @empty
                     <div class="bg-white p-6 rounded-xl shadow text-center">
-                        <p class="text-gray-500">Anda belum memiliki proyek. Silakan buat yang baru!</p>
+                        <p class="text-gray-500">Anda belum memiliki kegiatan. Silakan buat yang baru!</p>
                     </div>
                 @endforelse
 

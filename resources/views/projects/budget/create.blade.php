@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            Tambah Item Anggaran untuk Proyek: {{ $project->name }}
+            Tambah Item Anggaran untuk Kegiatan: {{ $project->name }}
         </h2>
     </x-slot>
     <div class="py-12">

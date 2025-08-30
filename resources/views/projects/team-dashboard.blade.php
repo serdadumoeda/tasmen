@@ -160,14 +160,14 @@
 
                          {{-- Empty State --}}
                          <div x-show="!isLoading && memberTasks.length === 0">
-                            <p class="text-center text-gray-500 p-4">Tidak ada tugas yang ditugaskan untuk anggota ini dalam proyek ini.</p>
+                            <p class="text-center text-gray-500 p-4">Tidak ada tugas yang ditugaskan untuk anggota ini dalam kegiatan ini.</p>
                         </div>
                     </div>
                 </div>
                 @empty
                 <div class="bg-white p-8 rounded-xl shadow-xl text-center">
-                    <p class="text-gray-500 text-lg">Tidak ada anggota tim dalam proyek ini.</p>
-                    <p class="text-gray-400 text-sm mt-2">Pastikan anggota tim telah ditambahkan pada detail proyek.</p>
+                    <p class="text-gray-500 text-lg">Tidak ada anggota tim dalam kegiatan ini.</p>
+                    <p class="text-gray-400 text-sm mt-2">Pastikan anggota tim telah ditambahkan pada detail kegiatan.</p>
                 </div>
                 @endforelse
             </div>

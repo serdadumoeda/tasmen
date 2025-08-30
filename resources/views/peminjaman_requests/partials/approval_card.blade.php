@@ -7,7 +7,7 @@
                 <span class="text-purple-700">{{ $request->requestedUser?->name ?? '[Pengguna Dihapus]' }}</span>
             </p>
             <p class="text-sm text-gray-600 mt-1 flex items-center">
-                <i class="fas fa-folder-open mr-2 text-gray-500"></i> Untuk proyek: <span class="font-medium text-gray-800">{{ $request->project?->name ?? '[Proyek Dihapus]' }}</span>
+                <i class="fas fa-folder-open mr-2 text-gray-500"></i> Untuk kegiatan: <span class="font-medium text-gray-800">{{ $request->project?->name ?? '[Kegiatan Dihapus]' }}</span>
             </p>
             <p class="text-xs text-gray-500 mt-1 flex items-center">
                 <i class="fas fa-clock mr-2 text-gray-400"></i> Diajukan: {{ $request->created_at->diffForHumans() }}

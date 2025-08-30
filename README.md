@@ -1,18 +1,18 @@
-# Tasmen - Aplikasi Manajemen Tugas & Proyek
+# Tasmen - Aplikasi Manajemen Tugas & Kegiatan
 
-Aplikasi web untuk manajemen tugas, proyek, dan sumber daya internal. Dibangun menggunakan Laravel Framework.
+Aplikasi web untuk manajemen tugas, kegiatan, dan sumber daya internal. Dibangun menggunakan Laravel Framework.
 
 ## Fitur Utama
 
-- **Manajemen Proyek**: Buat, kelola, dan lacak progres proyek.
+- **Manajemen Kegiatan**: Buat, kelola, dan lacak progres kegiatan.
 - **Manajemen Tugas & Sub-tugas**: Atur tugas dan sub-tugas dengan detail, tenggat waktu, dan penanggung jawab.
 - **Pelacakan Waktu**: Catat waktu yang dihabiskan untuk setiap tugas.
-- **Manajemen Anggaran**: Alokasikan dan lacak realisasi anggaran untuk setiap proyek.
+- **Manajemen Anggaran**: Alokasikan dan lacak realisasi anggaran untuk setiap kegiatan.
 - **Analisis Beban Kerja**: Pantau dan analisis beban kerja tim untuk distribusi yang lebih baik.
 - **Resource Pool**: Kelola dan pinjam sumber daya (pegawai) antar unit kerja.
 - **Notifikasi**: Pengingat dan pemberitahuan otomatis untuk tugas, komentar, dan pembaruan penting lainnya.
 - **Hierarki Pengguna**: Struktur pengguna berjenjang (Manajer, Staff) dengan hak akses yang berbeda.
-- **Laporan**: Hasilkan laporan ringkasan proyek dan kinerja.
+- **Laporan**: Hasilkan laporan ringkasan kegiatan dan kinerja.
 
 ## Teknologi yang Digunakan
 
@@ -23,7 +23,7 @@ Aplikasi web untuk manajemen tugas, proyek, dan sumber daya internal. Dibangun m
 
 ## Panduan Instalasi
 
-Berikut adalah langkah-langkah untuk menginstal dan menjalankan proyek ini di lingkungan pengembangan lokal.
+Berikut adalah langkah-langkah untuk menginstal dan menjalankan kegiatan ini di lingkungan pengembangan lokal.
 
 ### Prasyarat
 
