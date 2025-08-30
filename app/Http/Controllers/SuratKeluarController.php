@@ -152,4 +152,23 @@ class SuratKeluarController extends Controller
 
         return redirect()->route('surat-keluar.show', $surat)->with('success', 'Surat berhasil disetujui dan PDF telah digenerate.');
     }
+
+    public function destroy(Surat $surat)
+    {
+        $this->authorize('delete', $surat);
+
+        // Hapus file PDF final jika ada
+        if ($surat->final_pdf_path) {
+            Storage::disk('public')->delete($surat->final_pdf_path);
+        }
+
+        // Hapus file lampiran (jika surat keluar di-upload)
+        foreach ($surat->lampiran as $lampiran) {
+            Storage::disk('public')->delete($lampiran->path_file);
+        }
+
+        $surat->delete();
+
+        return redirect()->route('surat-keluar.index')->with('success', 'Surat keluar berhasil dihapus.');
+    }
 }

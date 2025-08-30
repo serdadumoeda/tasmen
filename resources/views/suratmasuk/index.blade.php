@@ -45,6 +45,13 @@
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                             <a href="{{ route('surat-masuk.show', $surat) }}" class="text-indigo-600 hover:text-indigo-900">Detail & Disposisi</a>
+                                            @can('delete', $surat)
+                                                <form action="{{ route('surat-masuk.destroy', $surat) }}" method="POST" class="inline-block ml-4" onsubmit="return confirm('Apakah Anda yakin ingin menghapus surat ini secara permanen?');">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="text-red-600 hover:text-red-900">Hapus</button>
+                                                </form>
+                                            @endcan
                                         </td>
                                     </tr>
                                 @empty
