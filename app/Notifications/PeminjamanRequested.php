@@ -27,11 +27,11 @@ class PeminjamanRequested extends Notification
         // Menggunakan operator null-safe untuk keamanan
         $requesterName = $this->peminjamanRequest->requester?->name ?? '[Peminta Dihapus]';
         $requestedUserName = $this->peminjamanRequest->requestedUser?->name ?? '[Anggota Dihapus]';
-        $projectName = $this->peminjamanRequest->project?->name ?? '[Proyek Dihapus]';
+        $projectName = $this->peminjamanRequest->project?->name ?? '[Kegiatan Dihapus]';
 
         return [
             'peminjaman_request_id' => $this->peminjamanRequest->id,
-            'message' => "{$requesterName} meminta izin untuk meminjam {$requestedUserName} untuk proyek '{$projectName}'.",
+            'message' => "{$requesterName} meminta izin untuk menugaskan {$requestedUserName} untuk kegiatan '{$projectName}'.",
             'url' => route('peminjaman-requests.my-requests'),
         ];
     }

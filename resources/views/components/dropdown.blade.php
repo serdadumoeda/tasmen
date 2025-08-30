@@ -16,7 +16,7 @@ $width = match ($width) {
 
 <div class="relative" x-data="{ open: false }" @click.outside="open = false" @close.stop="open = false">
     <div @click="open = ! open">
-        {{-- Ini adalah tombol pemicu dropdown (misal: "Proyek Saya") --}}
+        {{-- Ini adalah tombol pemicu dropdown (misal: "Kegiatan Saya") --}}
         {{ $trigger }}
     </div>
 

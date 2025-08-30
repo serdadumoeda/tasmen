@@ -80,7 +80,7 @@
                             <code class="font-mono">?filter[nama_field]=nilai_filter</code>
                         </div>
                         <p class="mt-4 text-gray-700 leading-relaxed font-semibold">
-                            Contoh - Mengambil semua proyek dengan status 'completed':
+                            Contoh - Mengambil semua kegiatan dengan status 'completed':
                         </p>
                         <div class="mt-2 p-3 bg-gray-100 border rounded-md text-sm">
                             <code class="font-mono">{{ url('/api/v1/projects?filter[status]=completed') }}</code>

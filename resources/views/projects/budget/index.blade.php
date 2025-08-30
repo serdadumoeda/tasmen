@@ -5,7 +5,7 @@
                 <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                     Anggaran & Realisasi
                 </h2>
-                <p class="text-sm text-gray-500">Proyek: {{ $project->name }}</p>
+                <p class="text-sm text-gray-500">Kegiatan: {{ $project->name }}</p>
             </div>
             @can('update', $project)
             <a href="{{ route('projects.budget-items.create', $project) }}" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-semibold text-xs uppercase shadow-sm">
@@ -33,7 +33,7 @@
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                     </svg>
-                    Kembali ke Detail Proyek
+                    Kembali ke Detail Kegiatan
                 </a>
             </div>
 
@@ -146,7 +146,7 @@
                         </div>
                     @empty
                         <div class="text-center text-gray-500 py-10">
-                            <p>Belum ada item anggaran untuk proyek ini.</p>
+                            <p>Belum ada item anggaran untuk kegiatan ini.</p>
                             @can('update', $project)
                             <a href="{{ route('projects.budget-items.create', $project) }}" class="mt-4 inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-semibold text-xs uppercase">Mulai Tambah Item Anggaran</a>
                             @endcan

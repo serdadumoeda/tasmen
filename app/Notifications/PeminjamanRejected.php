@@ -23,11 +23,11 @@ class PeminjamanRejected extends Notification
     public function toArray(object $notifiable): array
     {
         $requestedUserName = $this->peminjamanRequest->requestedUser?->name ?? '[Anggota Dihapus]';
-        $projectName = $this->peminjamanRequest->project?->name ?? '[Proyek Dihapus]';
+        $projectName = $this->peminjamanRequest->project?->name ?? '[Kegiatan Dihapus]';
 
         return [
             'peminjaman_request_id' => $this->peminjamanRequest->id,
-            'message' => "Permintaan Anda untuk meminjam {$requestedUserName} untuk proyek '{$projectName}' ditolak.",
+            'message' => "Permintaan Anda untuk menugaskan {$requestedUserName} untuk kegiatan '{$projectName}' ditolak.",
             'url' => route('peminjaman-requests.my-requests'),
         ];
     }

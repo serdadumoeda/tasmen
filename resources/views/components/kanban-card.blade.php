@@ -18,7 +18,7 @@
     } elseif ($isTask) {
         $title = $task->title;
         // Pastikan $task->project adalah instance model Project yang dimuat (eager loading di controller)
-        // atau relasi proyek akan di-load secara lazy di sini.
+        // atau relasi kegiatan akan di-load secara lazy di sini.
         $url = route('projects.show', $task->project) . '#task-' . $task->id; 
         $progress = $task->progress;
         $assignees = $task->assignees;

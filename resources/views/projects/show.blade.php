@@ -207,7 +207,7 @@
                                             <canvas id="taskStatusChart"></canvas>
                                         </div>
                                     </div>
-                                    <div class="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300"> {{-- Container tim proyek lebih menonjol --}}
+                                    <div class="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300"> {{-- Container tim kegiatan lebih menonjol --}}
                                         <h3 class="text-lg font-bold mb-3 text-gray-800 flex items-center"><i class="fas fa-people-group mr-2 text-teal-600"></i> Tim Kegiatan</h3>
                                         <ul class="space-y-2">
                                             <li class="flex items-center space-x-2 text-gray-700">
@@ -224,9 +224,9 @@
                                         </ul>
                                     </div>
 
-                                    {{-- --- AWAL PENAMBAHAN BAGIAN RIWAYAT PEMINJAMAN --- --}}
-                                    <div class="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300"> {{-- Container riwayat peminjaman lebih menonjol --}}
-                                        <h3 class="text-lg font-bold mb-3 text-gray-800 flex items-center"><i class="fas fa-handshake-angle mr-2 text-purple-600"></i> Riwayat Permintaan Peminjaman</h3>
+                                    {{-- --- AWAL PENAMBAHAN BAGIAN RIWAYAT PENUGASAN --- --}}
+                                    <div class="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300"> {{-- Container riwayat penugasan lebih menonjol --}}
+                                        <h3 class="text-lg font-bold mb-3 text-gray-800 flex items-center"><i class="fas fa-handshake-angle mr-2 text-purple-600"></i> Riwayat Permintaan Penugasan</h3>
                                         <div class="space-y-4">
                                             @forelse($loanRequests as $request)
                                                 <div class="border-l-4 rounded-r-lg p-4 shadow-sm transition-all duration-200 ease-in-out 
@@ -254,15 +254,15 @@
                                                     </div>
                                                 </div>
                                             @empty
-                                                <p class="text-sm text-gray-500 p-4 text-center bg-gray-50 rounded-lg">Tidak ada riwayat permintaan peminjaman untuk kegiatan ini.</p>
+                                                <p class="text-sm text-gray-500 p-4 text-center bg-gray-50 rounded-lg">Tidak ada riwayat permintaan penugasan untuk kegiatan ini.</p>
                                             @endforelse
                                         </div>
                                     </div>
-                                    {{-- --- AKHIR PENAMBAHAN BAGIAN RIWAYAT PEMINJAMAN --- --}}
+                                    {{-- --- AKHIR PENAMBAHAN BAGIAN RIWAYAT PENUGASAN --- --}}
 
                                 </div>
                                 <div class="space-y-6">
-                                    <div class="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300"> {{-- Container detail proyek lebih menonjol --}}
+                                    <div class="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300"> {{-- Container detail kegiatan lebih menonjol --}}
                                         <h3 class="text-lg font-bold mb-3 text-gray-800 flex items-center"><i class="fas fa-info-circle mr-2 text-blue-600"></i> Detail Kegiatan</h3>
                                         <p class="text-gray-700 text-sm leading-relaxed mb-4">{{ $project->description }}</p>
                                         <div class="text-sm grid grid-cols-2 gap-y-3 text-gray-600 border-t pt-4"> {{-- Grid untuk detail, border-top --}}

@@ -167,7 +167,7 @@
                         <i class="fas fa-tasks text-indigo-600 mr-2"></i> ${info.event.title}
                     </h4>
                     <div class="space-y-1.5 text-gray-700 text-sm mt-3">
-                        <p class="flex items-center"><strong class="font-semibold text-gray-600 w-28 flex-shrink-0">Proyek:</strong> <span class="font-medium text-gray-800">${info.event.extendedProps.project_name}</span></p>
+                        <p class="flex items-center"><strong class="font-semibold text-gray-600 w-28 flex-shrink-0">Kegiatan:</strong> <span class="font-medium text-gray-800">${info.event.extendedProps.project_name}</span></p>
                         <p class="flex items-center"><strong class="font-semibold text-gray-600 w-28 flex-shrink-0">Assignees:</strong> <span class="font-medium text-gray-800">${info.event.extendedProps.assignees}</span></p>
                         <p class="flex items-center"><strong class="font-semibold text-gray-600 w-28 flex-shrink-0">Deadline:</strong> <span class="font-medium text-gray-800">${moment(info.event.start).format('DD MMM YYYY')}</span></p>
                         <p class="flex items-center ${statusColor}"><strong class="font-semibold text-gray-600 w-28 flex-shrink-0">Status:</strong> ${statusIcon} <span class="font-medium">${info.event.extendedProps.status.replace(/_/g, ' ').toUpperCase()}</span></p>

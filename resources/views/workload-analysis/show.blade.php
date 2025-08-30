@@ -16,7 +16,7 @@
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                     <div class="bg-blue-50 p-4 rounded-lg shadow">
-                        <h3 class="text-lg font-semibold text-blue-800">Total Jam Proyek</h3>
+                        <h3 class="text-lg font-semibold text-blue-800">Total Jam Kegiatan</h3>
                         <p class="text-3xl font-bold text-blue-900">{{ $user->total_project_hours }} Jam</p>
                     </div>
                     <div class="bg-green-50 p-4 rounded-lg shadow">
@@ -54,11 +54,11 @@
                     @endif
                 </div>
 
-                <!-- Tugas Kegiatan/Proyek -->
+                <!-- Tugas Kegiatan -->
                 <div class="mb-8">
-                    <h3 class="text-2xl font-semibold text-gray-800 border-b-2 border-gray-200 pb-2 mb-4"><i class="fas fa-folder-open mr-3 text-blue-500"></i>Tugas Kegiatan/Proyek</h3>
+                    <h3 class="text-2xl font-semibold text-gray-800 border-b-2 border-gray-200 pb-2 mb-4"><i class="fas fa-folder-open mr-3 text-blue-500"></i>Tugas Kegiatan</h3>
                     @if($projectTasks->isEmpty())
-                        <p class="text-gray-500 italic">Tidak ada tugas proyek yang ditugaskan.</p>
+                        <p class="text-gray-500 italic">Tidak ada tugas kegiatan yang ditugaskan.</p>
                     @else
                         <div class="space-y-6">
                             @foreach($projectTasks as $projectName => $tasks)

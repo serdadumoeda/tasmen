@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Persetujuan Peminjaman Anggota') }}
+            {{ __('Persetujuan Penugasan Anggota') }}
         </h2>
     </x-slot>
 
@@ -12,7 +12,7 @@
                     <h3 class="text-xl font-bold text-gray-800 mb-3 flex items-center">
                         <i class="fas fa-handshake-angle mr-2 text-indigo-600"></i> Permintaan Tertunda
                     </h3>
-                    <p class="text-sm text-gray-600 mb-6">Berikut adalah daftar permintaan dari unit lain untuk meminjam anggota tim Anda.</p>
+                    <p class="text-sm text-gray-600 mb-6">Berikut adalah daftar permintaan dari unit lain untuk menugaskan anggota tim Anda.</p>
 
                     @if (session('success'))
                         <div class="mb-6 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg relative shadow-md" role="alert"> {{-- Styling alert konsisten --}}
@@ -31,7 +31,7 @@
                                         <i class="fas fa-user-friends text-blue-600 text-2xl mr-4"></i>
                                         <div>
                                             <p class="text-base font-semibold text-gray-800">
-                                                <span class="text-indigo-700">{{ $request->requester?->name ?? '[Pengguna Dihapus]' }}</span> meminta untuk meminjam
+                                                <span class="text-indigo-700">{{ $request->requester?->name ?? '[Pengguna Dihapus]' }}</span> meminta untuk menugaskan
                                                 <span class="text-purple-700">{{ $request->requestedUser?->name ?? '[Pengguna Dihapus]' }}</span>
                                             </p>
                                             <p class="text-sm text-gray-600 mt-1 flex items-center">
@@ -73,7 +73,7 @@
                                 {{-- Tampilkan pesan ini jika ada data permintaan yang relasinya rusak --}}
                                 <div class="border border-red-300 bg-red-100 p-4 rounded-lg text-sm text-red-800 shadow-md flex items-center">
                                     <i class="fas fa-exclamation-circle mr-3 text-red-500"></i>
-                                    Permintaan dengan ID #{{ $request->id }} tidak dapat ditampilkan karena data proyek atau pengguna terkait telah dihapus.
+                                    Permintaan dengan ID #{{ $request->id }} tidak dapat ditampilkan karena data kegiatan atau pengguna terkait telah dihapus.
                                 </div>
                             @endif
                         @empty
