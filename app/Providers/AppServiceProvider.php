@@ -36,7 +36,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->register(\SimpleSoftwareIO\QrCode\QrCodeServiceProvider::class);
     }
 
     /**
@@ -44,6 +44,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        $loader = \Illuminate\Foundation\AliasLoader::getInstance();
+        $loader->alias('QrCode', \SimpleSoftwareIO\QrCode\Facades\QrCode::class);
+
         Gate::before(function ($user, $ability) {
             if ($user->role === 'Superadmin') {
                 return true;
