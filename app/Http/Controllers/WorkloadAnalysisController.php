@@ -68,4 +68,25 @@ class WorkloadAnalysisController extends Controller
 
         return back()->with('success', "Penilaian perilaku kerja untuk {$user->name} berhasil diperbarui.");
     }
+
+    public function show(User $user)
+    {
+        $this->authorize('view', $user);
+
+        $user->load(
+            'tasks.project',
+            'specialAssignments',
+            'projects'
+        );
+
+        $adhocTasks = $user->tasks()->whereNull('project_id')->get();
+        $projectTasks = $user->tasks()->whereNotNull('project_id')->get()->groupBy('project.name');
+
+        return view('workload-analysis.show', [
+            'user' => $user,
+            'adhocTasks' => $adhocTasks,
+            'projectTasks' => $projectTasks,
+            'specialAssignments' => $user->specialAssignments,
+        ]);
+    }
 }

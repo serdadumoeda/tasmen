@@ -59,18 +59,40 @@
                                     @endphp
                                     <tr id="user-row-{{ $user->id }}" class="hover:bg-gray-50 transition-colors duration-150 {{ $highlightClass }}"> {{-- ID unik untuk baris --}}
                                         <td class="px-4 py-4 whitespace-nowrap">
-                                            <div class="text-sm font-medium text-gray-900 flex items-center"><i class="fas fa-user mr-2 text-gray-500"></i> {{ $user->name }}</div>
+                                            <a href="{{ route('workload.analysis.show', $user) }}" class="text-sm font-medium text-indigo-600 hover:text-indigo-900 hover:underline">
+                                                <div class="flex items-center"><i class="fas fa-user mr-2 text-gray-500"></i> {{ $user->name }}</div>
+                                            </a>
                                             <div class="text-xs text-gray-500 ml-5">{{ $user->role }}</div>
                                         </td>
                                         <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
                                             @php
-                                                $totalHours = $user->total_project_hours + $user->total_ad_hoc_hours;
+                                                $internalHours = $user->internal_tasks_hours;
+                                                $externalHours = $user->external_tasks_hours;
+                                                $totalHours = $internalHours + $externalHours;
+                                                $internalPercent = $totalHours > 0 ? ($internalHours / $totalHours) * 100 : 0;
+                                                $externalPercent = $totalHours > 0 ? ($externalHours / $totalHours) * 100 : 0;
                                             @endphp
-                                            <ul class="space-y-1"> {{-- Spasi antar list item --}}
-                                                <li class="flex items-center"><i class="fas fa-hourglass-start mr-2 text-blue-500"></i> <strong>Total: {{ $totalHours }} Jam</strong></li>
-                                                <li class="flex items-center text-gray-600"><i class="fas fa-folder-open mr-2 text-gray-400"></i> Kegiatan: {{ $user->total_project_hours }} Jam</li>
-                                                <li class="flex items-center text-gray-600"><i class="fas fa-clipboard-list mr-2 text-gray-400"></i> Harian: {{ $user->total_ad_hoc_hours }} Jam</li>
-                                                <li class="flex items-center text-gray-600"><i class="fas fa-file-signature mr-2 text-gray-400"></i> SK Aktif: {{ $user->active_sk_count }}</li>
+                                            <div class="flex items-center mb-2">
+                                                <i class="fas fa-hourglass-start mr-2 text-blue-500"></i>
+                                                <strong class="text-base">Total: {{ $totalHours }} Jam</strong>
+                                            </div>
+                                            <div class="w-full bg-gray-200 rounded-full h-4 mb-2 overflow-hidden shadow-inner">
+                                                <div class="bg-blue-600 h-4 text-xs font-medium text-blue-100 text-center p-0.5 leading-none" style="width: {{ $internalPercent }}%" title="Tugas Dalam Unit ({{ round($internalPercent) }}%)"></div>
+                                                <div class="bg-yellow-500 h-4 text-xs font-medium text-yellow-100 text-center p-0.5 leading-none" style="width: {{ $externalPercent }}%" title="Tugas Luar Unit ({{ round($externalPercent) }}%)"></div>
+                                            </div>
+                                            <ul class="space-y-1 text-xs">
+                                                <li class="flex items-center justify-between">
+                                                    <span><i class="fas fa-building-user mr-2 text-blue-600"></i>Tugas Dalam Unit</span>
+                                                    <strong>{{ $internalHours }} Jam ({{ round($internalPercent) }}%)</strong>
+                                                </li>
+                                                <li class="flex items-center justify-between">
+                                                    <span><i class="fas fa-people-arrows mr-2 text-yellow-500"></i>Tugas Luar Unit (Bantuan)</span>
+                                                    <strong>{{ $externalHours }} Jam ({{ round($externalPercent) }}%)</strong>
+                                                </li>
+                                                <li class="flex items-center justify-between pt-1 mt-1 border-t">
+                                                    <span><i class="fas fa-file-signature mr-2 text-gray-500"></i>SK Aktif</span>
+                                                    <strong>{{ $user->active_sk_count }}</strong>
+                                                </li>
                                             </ul>
                                         </td>
                                         <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-700">

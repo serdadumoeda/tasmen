@@ -99,6 +99,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/api/users/search', [App\Http\Controllers\UserController::class, 'search'])->name('api.users.search');
 
     Route::get('/workload-analysis', [WorkloadAnalysisController::class, 'index'])->name('workload.analysis');
+    Route::get('/workload-analysis/{user}', [WorkloadAnalysisController::class, 'show'])->name('workload.analysis.show');
     Route::patch('/workload-analysis/{user}/update-behavior', [WorkloadAnalysisController::class, 'updateBehavior'])->name('workload.updateBehavior');
 
     Route::prefix('tasks/{task}/time-log')->name('timelogs.')->group(function () {
