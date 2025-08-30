@@ -174,9 +174,9 @@
         <x-auth-session-status class="mb-4" :status="session('status')" />
 
         <div class="input-group">
-          <input type="email" name="email" placeholder="Email" :value="old('email')" required autofocus>
+          <input type="text" name="identity" placeholder="Email atau NIP" :value="old('identity')" required autofocus>
           <i class="fas fa-user"></i>
-          <x-input-error :messages="$errors->get('email')" class="mt-2" />
+          <x-input-error :messages="$errors->get('identity')" class="mt-2" />
         </div>
         <div class="input-group">
           <input type="password" name="password" placeholder="Password" required autocomplete="current-password">
