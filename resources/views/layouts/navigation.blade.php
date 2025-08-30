@@ -45,6 +45,9 @@ if (count($words) >= 2) {
                                 <div class="rounded-xl shadow-2xl py-1 bg-white ring-1 ring-black ring-opacity-10">
                                     <x-dropdown-link :href="route('global.dashboard')" :active="request()->routeIs('global.dashboard')">Daftar Kegiatan</x-dropdown-link>
                                     <div class="border-t border-gray-200"></div>
+                                    <x-dropdown-link :href="route('surat-masuk.index')" :active="request()->routeIs('surat-masuk.*')">Surat Masuk</x-dropdown-link>
+                                    <x-dropdown-link :href="route('surat-keluar.index')" :active="request()->routeIs('surat-keluar.*')">Surat Keluar</x-dropdown-link>
+                                    <div class="border-t border-gray-200"></div>
                                     <x-dropdown-link :href="route('adhoc-tasks.index')" :active="request()->routeIs('adhoc-tasks.*')">Tugas Harian</x-dropdown-link>
                                     <x-dropdown-link :href="route('special-assignments.index')" :active="request()->routeIs('special-assignments.*')">SK Penugasan</x-dropdown-link>
                                 </div>
@@ -126,6 +129,8 @@ if (count($words) >= 2) {
                                 </x-slot>
                                 <x-slot name="content">
                                     <div class="rounded-xl shadow-2xl py-1 bg-white ring-1 ring-black ring-opacity-10">
+                                        <x-dropdown-link :href="route('templatesurat.index')" :active="request()->routeIs('templatesurat.*')">Manajemen Template Surat</x-dropdown-link>
+                                        <div class="border-t border-gray-200"></div>
                                         @if(Auth::user()->canManageLeaveSettings())
                                             <x-dropdown-link :href="route('admin.approval-workflows.index')" :active="request()->routeIs('admin.approval-workflows.*')">Manajemen Alur Persetujuan</x-dropdown-link>
                                             <x-dropdown-link :href="route('admin.cuti-bersama.index')" :active="request()->routeIs('admin.cuti-bersama.*')">Manajemen Cuti Bersama</x-dropdown-link>

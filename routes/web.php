@@ -196,6 +196,10 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/{surat}', [\App\Http\Controllers\SuratKeluarController::class, 'show'])->name('show');
         Route::post('/{surat}/approve', [\App\Http\Controllers\SuratKeluarController::class, 'approve'])->name('approve');
     });
+
+    // Routes for Incoming Letters & Dispositions
+    Route::resource('surat-masuk', \App\Http\Controllers\SuratMasukController::class)->only(['index', 'create', 'store', 'show']);
+    Route::post('/surat-masuk/{surat}/disposisi', [\App\Http\Controllers\DisposisiController::class, 'store'])->name('disposisi.store');
 });
 
 use App\Http\Controllers\Admin\ApiKeyController;
