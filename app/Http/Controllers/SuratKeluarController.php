@@ -21,6 +21,11 @@ class SuratKeluarController extends Controller
 
     public function create(Request $request)
     {
+        return view('suratkeluar.pilih-metode');
+    }
+
+    public function createFromTemplate(Request $request)
+    {
         // Jika ada parameter template_id, tampilkan langkah 2 (form pembuatan)
         if ($request->has('template_id')) {
             $template = TemplateSurat::findOrFail($request->template_id);
@@ -32,26 +37,66 @@ class SuratKeluarController extends Controller
         return view('suratkeluar.create-step1', compact('templates'));
     }
 
+    public function createUpload()
+    {
+        return view('suratkeluar.create-upload');
+    }
+
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'perihal' => 'required|string|max:255',
-            'tanggal_surat' => 'required|date',
-            'template_id' => 'required|exists:template_surat,id',
-            'placeholders' => 'nullable|array',
-            'konten_final' => 'required|string',
-        ]);
+        if ($request->input('submission_type') === 'upload') {
+            // Logic for uploaded file
+            $validated = $request->validate([
+                'perihal' => 'required|string|max:255',
+                'nomor_surat' => 'nullable|string|max:255|unique:surat,nomor_surat',
+                'tanggal_surat' => 'required|date',
+                'lampiran' => 'required|file|mimes:pdf|max:5120', // Max 5MB, PDF only
+            ]);
 
-        $surat = Surat::create([
-            'perihal' => $validated['perihal'],
-            'tanggal_surat' => $validated['tanggal_surat'],
-            'jenis' => 'keluar',
-            'status' => 'draft',
-            'pembuat_id' => Auth::id(),
-            'konten' => $validated['konten_final'],
-        ]);
+            $surat = Surat::create([
+                'perihal' => $validated['perihal'],
+                'nomor_surat' => $validated['nomor_surat'],
+                'tanggal_surat' => $validated['tanggal_surat'],
+                'jenis' => 'keluar',
+                'status' => 'draft', // Or maybe 'diarsipkan' directly, user decision
+                'pembuat_id' => Auth::id(),
+            ]);
 
-        return redirect()->route('surat-keluar.show', $surat)->with('success', 'Draf surat berhasil disimpan.');
+            if ($request->hasFile('lampiran')) {
+                $file = $request->file('lampiran');
+                $path = $file->store('lampiran-surat', 'public');
+
+                LampiranSurat::create([
+                    'surat_id' => $surat->id,
+                    'nama_file' => $file->getClientOriginalName(),
+                    'path_file' => $path,
+                    'tipe_file' => $file->getClientMimeType(),
+                    'ukuran_file' => $file->getSize(),
+                ]);
+            }
+            return redirect()->route('surat-keluar.show', $surat)->with('success', 'Surat keluar berhasil diunggah dan diarsipkan.');
+
+        } else {
+            // Logic for template-based letter
+            $validated = $request->validate([
+                'perihal' => 'required|string|max:255',
+                'tanggal_surat' => 'required|date',
+                'template_id' => 'required|exists:template_surat,id',
+                'placeholders' => 'nullable|array',
+                'konten_final' => 'required|string',
+            ]);
+
+            $surat = Surat::create([
+                'perihal' => $validated['perihal'],
+                'tanggal_surat' => $validated['tanggal_surat'],
+                'jenis' => 'keluar',
+                'status' => 'draft',
+                'pembuat_id' => Auth::id(),
+                'konten' => $validated['konten_final'],
+            ]);
+
+            return redirect()->route('surat-keluar.show', $surat)->with('success', 'Draf surat berhasil disimpan.');
+        }
     }
 
     public function show(Surat $surat)
@@ -60,6 +105,8 @@ class SuratKeluarController extends Controller
         if ($surat->jenis !== 'keluar') {
             abort(404);
         }
+
+        $surat->load('pembuat', 'penyetuju', 'lampiran');
 
         return view('suratkeluar.show', compact('surat'));
     }
