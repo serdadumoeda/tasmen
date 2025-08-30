@@ -15,7 +15,8 @@ class SuratKeluarController extends Controller
 {
     public function index()
     {
-        // Placeholder
+        $suratKeluar = Surat::where('jenis', 'keluar')->latest()->paginate(15);
+        return view('suratkeluar.index', compact('suratKeluar'));
     }
 
     public function create(Request $request)
