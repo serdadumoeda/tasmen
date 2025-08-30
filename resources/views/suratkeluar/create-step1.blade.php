@@ -14,7 +14,7 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         @forelse ($templates as $template)
-                            <a href="{{ route('surat-keluar.create', ['template_id' => $template->id]) }}" class="block p-6 bg-white border border-gray-200 rounded-lg shadow-md hover:shadow-xl hover:border-indigo-500 transition-all duration-300 transform hover:-translate-y-1">
+                            <a href="{{ route('surat-keluar.create.from-template', ['template_id' => $template->id]) }}" class="block p-6 bg-white border border-gray-200 rounded-lg shadow-md hover:shadow-xl hover:border-indigo-500 transition-all duration-300 transform hover:-translate-y-1">
                                 <h4 class="font-bold text-lg text-indigo-700">{{ $template->judul }}</h4>
                                 <p class="text-sm text-gray-600 mt-2">{{ $template->deskripsi }}</p>
                             </a>
