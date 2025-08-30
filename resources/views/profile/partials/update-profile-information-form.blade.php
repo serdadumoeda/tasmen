@@ -45,6 +45,21 @@
             @endif
         </div>
 
+        <div>
+            <label for="signature_image" class="block font-semibold text-sm text-gray-700 mb-1">
+                <i class="fas fa-signature mr-2 text-gray-500"></i> {{ __('Gambar Tanda Tangan') }}
+            </label>
+            @if ($user->signature_image_path)
+                <div class="mt-2 mb-2">
+                    <img src="{{ Storage::url($user->signature_image_path) }}" alt="Tanda Tangan" class="h-20 w-auto border p-1 rounded-md shadow-sm">
+                    <p class="text-xs text-gray-500 mt-1">Tanda tangan saat ini. Unggah file baru untuk mengganti.</p>
+                </div>
+            @endif
+            <input id="signature_image" name="signature_image" type="file" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" accept="image/png"/>
+            <p class="text-xs text-gray-500 mt-1">Hanya file PNG yang diizinkan. Maksimal 1MB.</p>
+            @error('signature_image') <p class="text-sm text-red-600 mt-2">{{ $message }}</p> @enderror
+        </div>
+
         <div class="flex items-center gap-4 mt-8 pt-6 border-t border-gray-200"> {{-- Menyesuaikan margin, padding, border --}}
             <button type="submit" class="inline-flex items-center px-5 py-2.5 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150 shadow-md hover:shadow-lg transform hover:scale-105"> {{-- Styling tombol Save konsisten --}}
                 <i class="fas fa-save mr-2"></i> {{ __('Simpan') }}

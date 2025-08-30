@@ -184,6 +184,18 @@ Route::middleware(['auth'])->group(function () {
     // Routes for completing user profile
     Route::get('/profile/complete', [CompleteProfileController::class, 'create'])->name('profile.complete.create');
     Route::post('/profile/complete', [CompleteProfileController::class, 'store'])->name('profile.complete.store');
+
+    // Routes for Letter Templates
+    Route::resource('templatesurat', \App\Http\Controllers\TemplateSuratController::class)->except(['show']);
+
+    // Routes for Outgoing Letters
+    Route::prefix('surat-keluar')->name('surat-keluar.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\SuratKeluarController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\SuratKeluarController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\SuratKeluarController::class, 'store'])->name('store');
+        Route::get('/{surat}', [\App\Http\Controllers\SuratKeluarController::class, 'show'])->name('show');
+        Route::post('/{surat}/approve', [\App\Http\Controllers\SuratKeluarController::class, 'approve'])->name('approve');
+    });
 });
 
 use App\Http\Controllers\Admin\ApiKeyController;
@@ -193,6 +205,9 @@ use App\Http\Controllers\Api\UnitApiController;
 use App\Http\Controllers\UnitController;
 
 require __DIR__.'/auth.php';
+
+// Public route for letter verification
+Route::get('/surat/verify/{id}', [\App\Http\Controllers\SuratVerificationController::class, 'verify'])->name('surat.verify');
 
 // API routes for units, accessible without authentication
 Route::get('/api/units/eselon-i', [UnitApiController::class, 'getEselonIUnits']);
