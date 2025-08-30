@@ -46,7 +46,7 @@
         @include('partials.about-us-modal') 
 
         <footer class="w-full text-center py-4 bg-gray-100 border-t border-gray-200 text-gray-500 text-sm">
-            &copy; Pusat Data dan Teknologi Informasi Ketenagakerjaan <span class="font-bold text-indigo-700"> - oleh Arif Budi Setiawan - 2025</span>
+            &copy; Pusat Data dan Teknologi Informasi Ketenagakerjaan - oleh Arif Budi Setiawan <span class="font-bold text-indigo-700">2025</span>
         </footer>
     </div>
 
