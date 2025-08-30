@@ -87,6 +87,7 @@ class User extends Authenticatable
         'work_result_rating',
         'performance_predicate',
         'performance_data_updated_at',
+        'signature_image_path',
     ];
 
     protected $hidden = [
