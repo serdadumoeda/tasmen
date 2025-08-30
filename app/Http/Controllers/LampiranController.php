@@ -5,9 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\LampiranSurat;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class LampiranController extends Controller
 {
+    use AuthorizesRequests;
+
     public function show(LampiranSurat $lampiranSurat)
     {
         $this->authorize('view', $lampiranSurat);
