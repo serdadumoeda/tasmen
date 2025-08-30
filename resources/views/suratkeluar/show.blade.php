@@ -25,9 +25,23 @@
                 {{-- Kolom utama untuk konten surat --}}
                 <div class="lg:col-span-2 bg-white overflow-hidden shadow-xl sm:rounded-lg">
                     <div class="p-6 sm:p-8">
-                        <div class="prose max-w-none">
-                            {!! $surat->konten !!}
-                        </div>
+                        @if ($surat->konten)
+                            <div class="prose max-w-none">
+                                {!! $surat->konten !!}
+                            </div>
+                        @elseif ($surat->lampiran->isNotEmpty())
+                             @php $lampiran = $surat->lampiran->first(); @endphp
+                            <h3 class="text-lg font-bold text-gray-800 mb-4">Lampiran Surat</h3>
+                            @if (Str::contains($lampiran->tipe_file, 'pdf'))
+                                <iframe src="{{ Storage::url($lampiran->path_file) }}" class="w-full h-screen rounded-lg border"></iframe>
+                            @else
+                                <a href="{{ Storage::url($lampiran->path_file) }}" target="_blank" class="text-indigo-600 hover:underline">
+                                    Lihat Lampiran: {{ $lampiran->nama_file }}
+                                </a>
+                            @endif
+                        @else
+                            <p class="text-gray-500">Tidak ada konten atau lampiran untuk ditampilkan.</p>
+                        @endif
                     </div>
                 </div>
 

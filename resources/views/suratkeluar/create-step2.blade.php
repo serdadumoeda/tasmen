@@ -12,6 +12,7 @@
                     <form action="{{ route('surat-keluar.store') }}" method="POST">
                         @csrf
                         <input type="hidden" name="template_id" value="{{ $template->id }}">
+                        <input type="hidden" name="submission_type" value="template">
 
                         <div class="space-y-6">
                             <div>
