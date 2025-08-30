@@ -11,9 +11,12 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Barryvdh\DomPDF\Facade\Pdf;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class SuratKeluarController extends Controller
 {
+    use AuthorizesRequests;
+
     public function index()
     {
         $suratKeluar = Surat::where('jenis', 'keluar')->latest()->paginate(15);
