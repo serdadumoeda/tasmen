@@ -44,7 +44,7 @@
         </div>
     </div>
     @push('scripts')
-        <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
+        <script src="https://cdn.tiny.cloud/1/{{ config('services.tinymce.api_key', 'no-api-key') }}/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
         <script>
             tinymce.init({
                 selector: 'textarea#konten',
