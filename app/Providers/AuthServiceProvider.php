@@ -13,6 +13,8 @@ use App\Policies\ProjectPolicy;
 use App\Policies\SpecialAssignmentPolicy;
 use App\Models\LampiranSurat;
 use App\Policies\LampiranSuratPolicy;
+use App\Models\Surat;
+use App\Policies\SuratPolicy;
 use App\Policies\TaskPolicy;
 use App\Policies\UnitPolicy;
 use App\Policies\UserPolicy;
@@ -34,6 +36,7 @@ class AuthServiceProvider extends ServiceProvider
         PeminjamanRequest::class => PeminjamanRequestPolicy::class,
         SpecialAssignment::class => SpecialAssignmentPolicy::class,
         LampiranSurat::class => LampiranSuratPolicy::class,
+        Surat::class => SuratPolicy::class,
     ];
 
     /**

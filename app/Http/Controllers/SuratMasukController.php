@@ -68,4 +68,18 @@ class SuratMasukController extends Controller
 
         return view('suratmasuk.show', compact('surat', 'dispositionUsers'));
     }
+
+    public function destroy(Surat $surat)
+    {
+        $this->authorize('delete', $surat);
+
+        // Hapus file lampiran dari storage
+        foreach ($surat->lampiran as $lampiran) {
+            Storage::disk('public')->delete($lampiran->path_file);
+        }
+
+        $surat->delete();
+
+        return redirect()->route('surat-masuk.index')->with('success', 'Surat masuk berhasil dihapus.');
+    }
 }

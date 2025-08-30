@@ -196,11 +196,12 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/create/upload', [\App\Http\Controllers\SuratKeluarController::class, 'createUpload'])->name('create.upload');
         Route::post('/', [\App\Http\Controllers\SuratKeluarController::class, 'store'])->name('store');
         Route::get('/{surat}', [\App\Http\Controllers\SuratKeluarController::class, 'show'])->name('show');
+        Route::delete('/{surat}', [\App\Http\Controllers\SuratKeluarController::class, 'destroy'])->name('destroy');
         Route::post('/{surat}/approve', [\App\Http\Controllers\SuratKeluarController::class, 'approve'])->name('approve');
     });
 
     // Routes for Incoming Letters & Dispositions
-    Route::resource('surat-masuk', \App\Http\Controllers\SuratMasukController::class)->only(['index', 'create', 'store', 'show']);
+    Route::resource('surat-masuk', \App\Http\Controllers\SuratMasukController::class)->only(['index', 'create', 'store', 'show', 'destroy']);
     Route::post('/surat-masuk/{surat}/disposisi', [\App\Http\Controllers\DisposisiController::class, 'store'])->name('disposisi.store');
 
     // Route for viewing attachments securely
