@@ -202,6 +202,9 @@ Route::middleware(['auth'])->group(function () {
     // Routes for Incoming Letters & Dispositions
     Route::resource('surat-masuk', \App\Http\Controllers\SuratMasukController::class)->only(['index', 'create', 'store', 'show']);
     Route::post('/surat-masuk/{surat}/disposisi', [\App\Http\Controllers\DisposisiController::class, 'store'])->name('disposisi.store');
+
+    // Route for viewing attachments securely
+    Route::get('/lampiran/{lampiranSurat}', [\App\Http\Controllers\LampiranController::class, 'show'])->name('lampiran.show');
 });
 
 use App\Http\Controllers\Admin\ApiKeyController;

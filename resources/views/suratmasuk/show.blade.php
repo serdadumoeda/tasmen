@@ -23,11 +23,11 @@
                             @php $lampiran = $surat->lampiran->first(); @endphp
                             <h3 class="text-lg font-bold text-gray-800 mb-4">Lampiran Surat</h3>
                             @if (Str::contains($lampiran->tipe_file, 'pdf'))
-                                <iframe src="{{ Storage::url($lampiran->path_file) }}" class="w-full h-screen rounded-lg border"></iframe>
+                                <iframe src="{{ route('lampiran.show', $lampiran) }}" class="w-full h-screen rounded-lg border"></iframe>
                             @elseif (Str::contains($lampiran->tipe_file, 'image'))
-                                <img src="{{ Storage::url($lampiran->path_file) }}" alt="Lampiran" class="w-full h-auto rounded-lg border">
+                                <img src="{{ route('lampiran.show', $lampiran) }}" alt="Lampiran" class="w-full h-auto rounded-lg border">
                             @else
-                                <a href="{{ Storage::url($lampiran->path_file) }}" target="_blank" class="text-indigo-600 hover:underline">
+                                <a href="{{ route('lampiran.show', $lampiran) }}" target="_blank" class="text-indigo-600 hover:underline">
                                     Lihat Lampiran: {{ $lampiran->nama_file }}
                                 </a>
                             @endif
