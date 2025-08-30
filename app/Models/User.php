@@ -377,6 +377,31 @@ class User extends Authenticatable
         return $this->specialAssignments()->where('status', 'disetujui')->count();
     }
 
+    public function getInternalTasksHoursAttribute()
+    {
+        // Tugas internal adalah semua tugas ad-hoc (tanpa proyek) ditambah tugas proyek
+        // di mana pemimpin proyek berasal dari unit yang sama dengan pengguna.
+        $adHocHours = $this->total_ad_hoc_hours;
+
+        $internalProjectHours = $this->tasks()
+            ->whereHas('project.leader', function ($query) {
+                $query->where('unit_id', $this->unit_id);
+            })
+            ->sum('estimated_hours');
+
+        return $adHocHours + $internalProjectHours;
+    }
+
+    public function getExternalTasksHoursAttribute()
+    {
+        // Tugas eksternal adalah tugas proyek di mana pemimpin proyek BUKAN dari unit yang sama.
+        return $this->tasks()
+            ->whereHas('project.leader', function ($query) {
+                $query->where('unit_id', '!=', $this->unit_id);
+            })
+            ->sum('estimated_hours');
+    }
+
     /**
      * Get the valid supervisor roles for a given subordinate role.
      * This centralizes the business logic for organizational hierarchy.
