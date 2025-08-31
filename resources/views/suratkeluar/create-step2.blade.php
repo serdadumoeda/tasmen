@@ -56,7 +56,7 @@
     @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const templateContent = `{!! $template->konten !!}`;
+            const templateContent = @json($template->konten);
             const placeholderContainer = document.getElementById('placeholder-inputs');
             const noPlaceholderMessage = document.getElementById('no-placeholder-message');
             const finalContentTextarea = document.getElementById('konten_final');
