@@ -8,6 +8,7 @@ use App\Notifications\TaskAssigned;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Surat;
 
 class AdHocTaskController extends Controller
 {
@@ -111,6 +112,27 @@ class AdHocTaskController extends Controller
         ]);
     }
 
+    public function createFromSurat(Surat $surat)
+    {
+        $user = Auth::user();
+        $assignableUsers = collect();
+
+        // Logic to get assignable users is the same as in create()
+        if ($user->canManageUsers()) {
+            $subordinateIds = $user->getAllSubordinateIds();
+            $subordinateIds[] = $user->id;
+            $assignableUsers = User::whereIn('id', $subordinateIds)->orderBy('name')->get();
+        } else {
+            $assignableUsers->push($user);
+        }
+
+        return view('adhoc-tasks.create', [
+            'task' => new Task(),
+            'assignableUsers' => $assignableUsers,
+            'sourceSurat' => $surat
+        ]);
+    }
+
     /**
      * Menyimpan tugas ad-hoc baru ke database.
      */
@@ -126,6 +148,7 @@ class AdHocTaskController extends Controller
             'estimated_hours' => 'required|numeric|min:0.1',
             'priority' => ['nullable', \Illuminate\Validation\Rule::in(Task::PRIORITIES)],
             'file_upload' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx,xls,xlsx|max:2048',
+            'surat_id' => 'nullable|exists:surat,id',
         ]);
         
         $assigneeIds = [];
@@ -136,14 +159,14 @@ class AdHocTaskController extends Controller
             $assigneeIds[] = $user->id;
         }
 
-        // Menggunakan fill untuk keamanan dan kemudahan, dan menambahkan default
-        $task = new Task();
-        $task->fill($validated);
-        $task->status = 'pending';
-        $task->progress = 0;
-        $task->priority = $request->input('priority', 'medium'); // Set default priority
-        $task->project_id = null; // Menandakan ini tugas ad-hoc
-        $task->save();
+        // Build the data array for Task creation
+        $taskData = $validated;
+        $taskData['status'] = 'pending';
+        $taskData['progress'] = 0;
+        $taskData['priority'] = $request->input('priority', 'medium');
+        $taskData['project_id'] = null; // Explicitly an ad-hoc task
+
+        $task = Task::create($taskData);
         
         $redirect = redirect()->route('adhoc-tasks.index');
 

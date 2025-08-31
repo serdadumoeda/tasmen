@@ -5,11 +5,11 @@
         </h2>
     </x-slot>
 
-    <div class="py-12 bg-gray-50"> {{-- Latar belakang konsisten --}}
+    <div class="py-12 bg-gray-50">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-8">
 
             {{-- Bagian Persetujuan Tertunda --}}
-            <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg"> {{-- Shadow dan rounded-lg konsisten --}}
+            <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
                 <div class="p-6 text-gray-900">
                     <h3 class="text-xl font-bold text-gray-800 mb-3 flex items-center">
                         <i class="fas fa-inbox mr-2 text-orange-600"></i> Persetujuan untuk Tim Saya
@@ -25,7 +25,7 @@
                         </div>
                     @endif
 
-                    <div class="space-y-6"> {{-- Spasi antar kartu --}}
+                    <div class="space-y-6">
                         @forelse ($myPendingApprovals as $request)
                             @if ($request->requester && $request->requestedUser && $request->project)
                                 <div class="border border-gray-200 p-6 rounded-xl shadow-md bg-white hover:shadow-lg transition-all duration-200 ease-in-out transform hover:scale-[1.005]">
@@ -97,7 +97,7 @@
                     <p class="text-sm text-gray-600 mb-6">Daftar keputusan yang telah Anda buat terhadap permintaan penugasan.</p>
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-100"> {{-- Header tabel lebih menonjol --}}
+                            <thead class="bg-gray-100">
                                 <tr>
                                     <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Peminta</th>
                                     <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Anggota Diminta</th>
@@ -106,9 +106,9 @@
                                     <th class="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Aksi</th>
                                 </tr>
                             </thead>
-                            <tbody class="bg-white divide-y divide-gray-100"> {{-- Divider lebih halus --}}
+                            <tbody class="bg-white divide-y divide-gray-100">
                                 @forelse ($approvalHistory as $request)
-                                    <tr class="hover:bg-gray-50 transition-colors duration-150"> {{-- Hover effect pada baris --}}
+                                    <tr class="hover:bg-gray-50 transition-colors duration-150">
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 flex items-center">
                                             <i class="fas fa-user-tag mr-2 text-gray-400"></i> {{ $request->requester?->name }}
                                         </td>
@@ -129,13 +129,29 @@
                                             @endif
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-center">
-                                            <form action="{{ route('peminjaman-requests.destroy', $request) }}" method="POST" onsubmit="return confirm('Anda yakin ingin menghapus riwayat ini secara permanen?');">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="p-2 rounded-full text-gray-500 hover:bg-red-100 hover:text-red-600 transition-colors duration-200" title="Hapus Riwayat">
-                                                    <i class="fas fa-trash-can"></i>
-                                                </button>
-                                            </form>
+                                            <div class="flex justify-center items-center space-x-2">
+                                                @if($request->status == 'approved')
+                                                    @if($request->surat)
+                                                        <a href="{{ route('surat-keluar.show', $request->surat) }}" class="inline-flex items-center px-2.5 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50">
+                                                            Lihat Surat
+                                                        </a>
+                                                    @else
+                                                        <form action="{{ route('surat-keluar.createFromPeminjaman', $request) }}" method="POST">
+                                                            @csrf
+                                                            <button type="submit" class="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-blue-600 hover:bg-blue-700">
+                                                                Buat Surat
+                                                            </button>
+                                                        </form>
+                                                    @endif
+                                                @endif
+                                                <form action="{{ route('peminjaman-requests.destroy', $request) }}" method="POST" onsubmit="return confirm('Anda yakin ingin menghapus riwayat ini secara permanen?');">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="p-2 rounded-full text-gray-500 hover:bg-red-100 hover:text-red-600 transition-colors duration-200" title="Hapus Riwayat">
+                                                        <i class="fas fa-trash-can"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
                                         </td>
                                     </tr>
                                 @empty
@@ -144,7 +160,7 @@
                             </tbody>
                         </table>
                     </div>
-                    <div class="mt-6"> {{-- Margin atas paginasi --}}
+                    <div class="mt-6">
                         {{ $approvalHistory->links() }}
                     </div>
                 </div>
@@ -193,13 +209,29 @@
                                             @endif
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-center">
-                                            <form action="{{ route('peminjaman-requests.destroy', $request) }}" method="POST" onsubmit="return confirm('Anda yakin ingin menghapus riwayat ini secara permanen?');">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="p-2 rounded-full text-gray-500 hover:bg-red-100 hover:text-red-600 transition-colors duration-200" title="Hapus Riwayat">
-                                                    <i class="fas fa-trash-can"></i>
-                                                </button>
-                                            </form>
+                                            <div class="flex justify-center items-center space-x-2">
+                                                @if($request->status == 'approved')
+                                                    @if($request->surat)
+                                                        <a href="{{ route('surat-keluar.show', $request->surat) }}" class="inline-flex items-center px-2.5 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50">
+                                                            Lihat Surat
+                                                        </a>
+                                                    @else
+                                                        <form action="{{ route('surat-keluar.createFromPeminjaman', $request) }}" method="POST">
+                                                            @csrf
+                                                            <button type="submit" class="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-blue-600 hover:bg-blue-700">
+                                                                Buat Surat
+                                                            </button>
+                                                        </form>
+                                                    @endif
+                                                @endif
+                                                <form action="{{ route('peminjaman-requests.destroy', $request) }}" method="POST" onsubmit="return confirm('Anda yakin ingin menghapus riwayat ini secara permanen?');">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="p-2 rounded-full text-gray-500 hover:bg-red-100 hover:text-red-600 transition-colors duration-200" title="Hapus Riwayat">
+                                                        <i class="fas fa-trash-can"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
                                         </td>
                                     </tr>
                                 @empty

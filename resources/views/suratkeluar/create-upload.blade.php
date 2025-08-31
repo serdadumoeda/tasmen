@@ -12,6 +12,12 @@
                     <form action="{{ route('surat-keluar.store') }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         <input type="hidden" name="submission_type" value="upload">
+
+                        @if(isset($suratable_id) && isset($suratable_type))
+                            <input type="hidden" name="suratable_id" value="{{ $suratable_id }}">
+                            <input type="hidden" name="suratable_type" value="{{ $suratable_type }}">
+                        @endif
+
                         <div class="space-y-6">
                             <div>
                                 <label for="perihal" class="block font-semibold text-sm text-gray-700 mb-1">Perihal Surat <span class="text-red-500">*</span></label>
