@@ -61,6 +61,17 @@
                                     <div class="text-sm text-gray-600 mt-1 flex items-center space-x-3">
                                         <span class="inline-flex items-center"><i class="fas fa-hashtag text-gray-400 mr-1"></i> No. SK: {{ $sk->sk_number ?? '-' }}</span>
                                         <span class="inline-flex items-center"><i class="fas fa-user-edit text-gray-400 mr-1"></i> Dibuat oleh: {{ $sk->creator->name ?? 'N/A' }}</span>
+
+                                        @if ($sk->surat)
+                                            <a href="{{ route('surat-keluar.show', $sk->surat) }}" class="text-green-600 hover:text-green-800 hover:underline flex items-center font-medium">
+                                                <i class="fas fa-file-signature mr-1"></i> Status Surat: {{ ucfirst($sk->surat->status) }}
+                                            </a>
+                                        @else
+                                            <span class="inline-flex items-center text-gray-500">
+                                                <i class="fas fa-times-circle mr-1"></i> Surat belum digenerate
+                                            </span>
+                                        @endif
+
                                         @if ($sk->file_path)
                                             <a href="{{ asset('storage/' . $sk->file_path) }}" target="_blank" class="text-blue-600 hover:text-blue-800 hover:underline flex items-center font-medium">
                                                 <i class="fas fa-file-alt mr-1"></i> Lihat File

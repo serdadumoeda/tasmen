@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class Surat extends Model
 {
@@ -22,6 +23,8 @@ class Surat extends Model
         'pembuat_id',
         'penyetuju_id',
         'konten',
+        'suratable_id',
+        'suratable_type',
     ];
 
     protected $casts = [
@@ -46,5 +49,21 @@ class Surat extends Model
     public function lampiran(): HasMany
     {
         return $this->hasMany(LampiranSurat::class, 'surat_id');
+    }
+
+    /**
+     * Get all of the tasks that are assigned this surat.
+     */
+    public function tasks(): HasMany
+    {
+        return $this->hasMany(Task::class);
+    }
+
+    /**
+     * Get the parent suratable model (project, special assignment, etc.).
+     */
+    public function suratable(): MorphTo
+    {
+        return $this->morphTo();
     }
 }

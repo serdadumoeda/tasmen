@@ -132,6 +132,7 @@
                         <nav class="-mb-px flex space-x-8" aria-label="Tabs">
                             <button @click="activeTab = 'tasks'" :class="{ 'border-indigo-500 text-indigo-600': activeTab === 'tasks', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'tasks' }" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200">Daftar Tugas</button>
                             <button @click="activeTab = 'info'" :class="{ 'border-indigo-500 text-indigo-600': activeTab === 'info', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'info' }" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200">Informasi & Aktivitas</button>
+                            <button @click="activeTab = 'surat'" :class="{ 'border-indigo-500 text-indigo-600': activeTab === 'surat', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'surat' }" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200">Persuratan</button>
                             @can('update', $project)
                                 <button @click="activeTab = 'add'" :class="{ 'border-indigo-500 text-indigo-600': activeTab === 'add', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'add' }" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200">Tambah Tugas Baru</button>
                             @endcan
@@ -303,6 +304,30 @@
                                 <div class="space-y-6"> {{-- Spasi lebih besar --}}
                                     @csrf
                                     <div>
+                        </div>
+                        <div x-show="activeTab === 'surat'" x-cloak>
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-lg font-semibold text-gray-700">Dokumen & Surat Terkait Kegiatan</h3>
+                                <a href="{{ route('surat-keluar.create', ['suratable_id' => $project->id, 'suratable_type' => 'Project']) }}" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700">
+                                    <i class="fas fa-plus mr-2"></i> Buat Surat Baru
+                                </a>
+                            </div>
+                            <div class="space-y-4">
+                                @forelse($project->surat as $surat)
+                                    <div class="p-4 border rounded-lg flex justify-between items-center">
+                                        <div>
+                                            <p class="font-semibold text-gray-800">{{ $surat->perihal }}</p>
+                                            <p class="text-sm text-gray-500">No: {{ $surat->nomor_surat ?? 'Belum ada nomor' }} | Status: <span class="font-medium">{{ $surat->status }}</span></p>
+                                        </div>
+                                        <a href="{{ route('surat-keluar.show', $surat) }}" class="text-sm text-indigo-600 hover:underline">Lihat Detail</a>
+                                    </div>
+                                @empty
+                                    <div class="text-center py-8">
+                                        <p class="text-gray-500">Belum ada surat yang dibuat untuk kegiatan ini.</p>
+                                    </div>
+                                @endforelse
+                            </div>
+                        </div>
                                         <label for="add_title" class="block text-sm font-semibold text-gray-700 mb-1">Judul Tugas <span class="text-red-600">*</span></label>
                                         <input type="text" name="title" id="add_title" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" value="{{ old('title') }}" required>
                                     </div>

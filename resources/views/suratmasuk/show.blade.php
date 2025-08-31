@@ -57,6 +57,14 @@
                         </div>
                     </div>
 
+                    {{-- Aksi Lanjutan --}}
+                    <div class="bg-white p-6 rounded-lg shadow-xl">
+                        <h3 class="text-lg font-bold text-gray-800 border-b pb-2 mb-4">Aksi Lanjutan</h3>
+                        <a href="{{ route('adhoc-tasks.createFromSurat', $surat) }}" class="w-full inline-flex justify-center items-center px-4 py-2 bg-green-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-700">
+                            <i class="fas fa-check-square mr-2"></i> Jadikan Tugas
+                        </a>
+                    </div>
+
                     {{-- Form Disposisi --}}
                     <div class="bg-white p-6 rounded-lg shadow-xl">
                         <h3 class="text-lg font-bold text-gray-800 border-b pb-2 mb-4">Buat Disposisi</h3>
@@ -97,6 +105,23 @@
                                 </li>
                             @empty
                                 <li class="text-sm text-gray-500">Belum ada riwayat disposisi.</li>
+                            @endforelse
+                        </ul>
+                    </div>
+
+                    {{-- Tugas Terkait --}}
+                    <div class="bg-white p-6 rounded-lg shadow-xl">
+                        <h3 class="text-lg font-bold text-gray-800 border-b pb-2 mb-4">Tugas Terkait</h3>
+                        <ul class="space-y-3">
+                            @forelse ($surat->tasks as $task)
+                                <li class="text-sm text-gray-700">
+                                    <a href="{{ route('adhoc-tasks.edit', $task) }}" class="text-indigo-600 hover:underline" target="_blank">
+                                        <i class="fas fa-tasks text-gray-400 mr-2"></i>
+                                        {{ $task->title }}
+                                    </a>
+                                </li>
+                            @empty
+                                <li class="text-sm text-gray-500">Belum ada tugas yang dibuat dari surat ini.</li>
                             @endforelse
                         </ul>
                     </div>

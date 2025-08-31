@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
+use App\Models\Surat;
 
 class PeminjamanRequest extends Model
 {
@@ -44,5 +46,12 @@ class PeminjamanRequest extends Model
         // User yang harus menyetujui, melalui kolom 'approver_id'.
         return $this->belongsTo(User::class, 'approver_id', 'id');
     }
-    // --- AKHIR PERBAIKAN FINAL ---
+
+    /**
+     * Get the peminjaman request's letter.
+     */
+    public function surat(): MorphOne
+    {
+        return $this->morphOne(Surat::class, 'suratable');
+    }
 }

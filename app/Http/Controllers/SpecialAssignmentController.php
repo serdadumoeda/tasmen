@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\SpecialAssignment;
 use App\Models\User;
+use App\Models\Surat;
+use App\Models\TemplateSurat;
 use Illuminate\Http\Request;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Storage;
@@ -136,10 +138,41 @@ class SpecialAssignmentController extends Controller
         } else {
             $membersToSync[$user->id] = ['role_in_sk' => 'Pelaksana'];
         }
-
         $sk->members()->sync($membersToSync);
 
-        return redirect()->route('special-assignments.index')->with('success', 'SK Penugasan berhasil dibuat.');
+        $redirect = redirect()->route('special-assignments.index');
+        $flashMessage = ['success' => 'SK Penugasan berhasil dibuat.'];
+
+        // --- Integrasi Pembuatan Surat Keputusan (SK) ---
+        try {
+            $skTemplate = TemplateSurat::where('judul', 'Surat Keputusan Penugasan')->first();
+
+            if ($skTemplate) {
+                $memberNames = $sk->members()->pluck('name')->join(', ');
+                $content = str_replace(
+                    ['{{judul_sk}}', '{{nomor_sk}}', '{{tanggal_mulai}}', '{{tanggal_selesai}}', '{{nama_anggota}}'],
+                    [$sk->title, $sk->sk_number, $sk->start_date->format('d M Y'), $sk->end_date->format('d M Y'), $memberNames],
+                    $skTemplate->konten
+                );
+
+                $sk->surat()->create([
+                    'perihal' => 'Surat Keputusan: ' . $sk->title,
+                    'tanggal_surat' => now(),
+                    'jenis' => 'keluar',
+                    'status' => 'draft',
+                    'pembuat_id' => $user->id,
+                    'konten' => $content,
+                ]);
+                $flashMessage = ['success' => 'SK Penugasan berhasil dibuat dan draf surat keputusan telah digenerate.'];
+            }
+        } catch (\Exception $e) {
+            \Log::error('Gagal membuat surat untuk SK Penugasan: ' . $e->getMessage());
+            // Overwrite the success message with a warning.
+            $flashMessage = ['warning' => 'SK Penugasan berhasil dibuat, namun draf surat gagal digenerate. Silakan cek template surat.'];
+        }
+        // --- End of Integration ---
+
+        return $redirect->with($flashMessage);
     }
 
     /**
@@ -189,6 +222,31 @@ class SpecialAssignmentController extends Controller
             $membersToSync[$member['user_id']] = ['role_in_sk' => $member['role_in_sk']];
         }
         $specialAssignment->members()->sync($membersToSync);
+
+        // --- Integrasi Pembaruan Surat Keputusan (SK) ---
+        try {
+            // Only update the letter if it already exists. Do not create a new one on update.
+            if ($specialAssignment->surat) {
+                $skTemplate = TemplateSurat::where('judul', 'Surat Keputusan Penugasan')->first();
+                if ($skTemplate) {
+                    $memberNames = $specialAssignment->members()->pluck('name')->join(', ');
+                    $content = str_replace(
+                        ['{{judul_sk}}', '{{nomor_sk}}', '{{tanggal_mulai}}', '{{tanggal_selesai}}', '{{nama_anggota}}'],
+                        [$specialAssignment->title, $specialAssignment->sk_number, $specialAssignment->start_date->format('d M Y'), $specialAssignment->end_date->format('d M Y'), $memberNames],
+                        $skTemplate->konten
+                    );
+
+                    $specialAssignment->surat->update([
+                        'perihal' => 'Surat Keputusan: ' . $specialAssignment->title,
+                        'konten' => $content,
+                    ]);
+                }
+            }
+        } catch (\Exception $e) {
+            \Log::error('Gagal memperbarui surat untuk SK Penugasan: ' . $e->getMessage());
+            return redirect()->route('special-assignments.index')->with('warning', 'SK Penugasan berhasil diperbarui, namun draf surat gagal disinkronkan.');
+        }
+        // --- End of Integration ---
 
         return redirect()->route('special-assignments.index')->with('success', 'SK Penugasan berhasil diperbarui.');
     }
