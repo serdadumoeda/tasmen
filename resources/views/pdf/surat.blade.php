@@ -56,7 +56,7 @@
         <div class="footer clearfix">
             <div class="qr-code">
                 {{-- QR code will be injected here as an image --}}
-                <img src="data:image/png;base64, {!! $qrCode !!}" alt="QR Code">
+                <img src="data:image/svg+xml;base64, {!! $qrCode !!}" alt="QR Code">
             </div>
             <div class="signature-section">
                 <p>Hormat kami,</p>
