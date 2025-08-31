@@ -6,9 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class SettingController extends Controller
 {
+    use AuthorizesRequests;
+
     public function index()
     {
         $settings = Setting::pluck('value', 'key')->all();
