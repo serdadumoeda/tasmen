@@ -35,9 +35,9 @@
                             <div>
                                 <label class="block font-semibold text-sm text-gray-700 mb-1">Konten Template (Pratinjau)</label>
                                 <div id="template-content-container" class="prose max-w-none p-4 border border-gray-300 rounded-lg bg-gray-100">
-                                    {!! $template->konten !!}
+                                    {{-- Content will be injected by JavaScript to prevent Blade parsing --}}
                                 </div>
-                                <textarea name="konten_final" id="konten_final" class="hidden">{{ $template->konten }}</textarea>
+                                <textarea name="konten_final" id="konten_final" class="hidden"></textarea>
                             </div>
                         </div>
 
@@ -57,9 +57,14 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const templateContent = @json($template->konten);
+            const previewContainer = document.getElementById('template-content-container');
             const placeholderContainer = document.getElementById('placeholder-inputs');
             const noPlaceholderMessage = document.getElementById('no-placeholder-message');
             const finalContentTextarea = document.getElementById('konten_final');
+
+            // Safely inject content into preview and hidden textarea
+            previewContainer.innerHTML = templateContent;
+            finalContentTextarea.value = templateContent;
 
             // Regex to find placeholders like {{placeholder_name}}
             const placeholderRegex = /\{\{([a-zA-Z0-9_]+)\}\}/g;
