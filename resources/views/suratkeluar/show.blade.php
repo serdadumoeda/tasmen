@@ -78,7 +78,7 @@
                         <div class="bg-white p-6 rounded-lg shadow-xl text-center">
                             <h3 class="text-lg font-bold text-gray-800 mb-2">Dokumen Final</h3>
                             <p class="text-sm text-gray-500 mb-4">Surat telah disetujui dan PDF final telah dibuat.</p>
-                            <a href="{{ Storage::url($surat->final_pdf_path) }}" target="_blank" class="w-full inline-flex justify-center items-center px-4 py-2 bg-green-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-700">
+                            <a href="{{ route('surat-keluar.download', $surat) }}" class="w-full inline-flex justify-center items-center px-4 py-2 bg-green-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-700">
                                 <i class="fas fa-download mr-2"></i> Unduh PDF Final
                             </a>
                         </div>
