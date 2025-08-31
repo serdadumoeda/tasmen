@@ -175,4 +175,15 @@ class SuratKeluarController extends Controller
 
         return redirect()->route('surat-keluar.index')->with('success', 'Surat keluar berhasil dihapus.');
     }
+
+    public function download(Surat $surat)
+    {
+        $this->authorize('download', $surat);
+
+        if (!$surat->final_pdf_path || !Storage::disk('public')->exists($surat->final_pdf_path)) {
+            return back()->with('error', 'File PDF final tidak ditemukan.');
+        }
+
+        return Storage::disk('public')->download($surat->final_pdf_path);
+    }
 }

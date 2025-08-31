@@ -198,6 +198,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/{surat}', [\App\Http\Controllers\SuratKeluarController::class, 'show'])->name('show');
         Route::delete('/{surat}', [\App\Http\Controllers\SuratKeluarController::class, 'destroy'])->name('destroy');
         Route::post('/{surat}/approve', [\App\Http\Controllers\SuratKeluarController::class, 'approve'])->name('approve');
+        Route::get('/{surat}/download', [\App\Http\Controllers\SuratKeluarController::class, 'download'])->name('download');
     });
 
     // Routes for Incoming Letters & Dispositions
