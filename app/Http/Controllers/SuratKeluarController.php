@@ -6,6 +6,7 @@ use App\Models\Surat;
 use App\Models\TemplateSurat;
 use App\Models\User;
 use App\Models\LampiranSurat;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -33,7 +34,8 @@ class SuratKeluarController extends Controller
         // Jika ada parameter template_id, tampilkan langkah 2 (form pembuatan)
         if ($request->has('template_id')) {
             $template = TemplateSurat::findOrFail($request->template_id);
-            return view('suratkeluar.create-step2', compact('template'));
+            $settings = Setting::pluck('value', 'key')->all();
+            return view('suratkeluar.create-step2', compact('template', 'settings'));
         }
 
         // Jika tidak, tampilkan langkah 1 (pemilihan template)
@@ -139,11 +141,15 @@ class SuratKeluarController extends Controller
             $signatureImagePath = storage_path('app/public/' . $penyetuju->signature_image_path);
         }
 
+        // Ambil pengaturan umum
+        $settings = Setting::pluck('value', 'key')->all();
+
         // 3. Generate PDF
         $pdf = Pdf::loadView('pdf.surat', [
             'surat' => $surat,
             'qrCode' => $qrCode,
             'signatureImagePath' => $signatureImagePath,
+            'settings' => $settings,
         ]);
 
         // 4. Simpan PDF ke storage
