@@ -39,6 +39,23 @@
                                 </div>
                                 <textarea name="konten_final" id="konten_final" class="hidden"></textarea>
                             </div>
+
+                            <div class="mt-6 pt-6 border-t border-dashed">
+                                <h3 class="font-semibold text-lg text-gray-800">Pratinjau Blok Penandatangan</h3>
+                                <p class="text-sm text-gray-600 mb-4">Blok ini akan ditambahkan secara otomatis ke bagian bawah surat saat disetujui. Nama penandatangan akan sesuai dengan pejabat yang menyetujui.</p>
+                                <div class="p-4 border border-gray-300 rounded-lg bg-gray-50 text-sm text-gray-800">
+                                    <div class="w-2/5 ml-auto text-center">
+                                        <p>{{ $settings['signer_block_line_1'] ?? '' }}</p>
+                                        <p>{{ $settings['signer_block_line_2'] ?? '' }}</p>
+                                        <div class="h-20 my-2 flex items-center justify-center border-2 border-dashed rounded-md bg-gray-100">
+                                            <span class="text-gray-500 text-xs italic">(Tanda Tangan & QR Code)</span>
+                                        </div>
+                                        <p class="font-bold">[Nama Penandatangan]</p>
+                                        <p>{{ $settings['signer_block_line_3'] ?? '' }}</p>
+                                        <p>{{ $settings['signer_block_line_4'] ?? '' }}</p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="flex items-center justify-end mt-8 pt-6 border-t border-gray-200">

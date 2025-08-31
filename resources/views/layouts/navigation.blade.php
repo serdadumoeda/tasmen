@@ -120,7 +120,7 @@ if (count($words) >= 2) {
                             <x-dropdown align="left" width="60">
                                 <x-slot name="trigger">
                                     <button class="inline-flex items-center h-full px-3 py-2 border-b-2 text-sm font-medium leading-5 transition duration-150 ease-in-out
-                                        {{ request()->routeIs(['admin.api_keys.*', 'admin.activities.index'])
+                                        {{ request()->routeIs(['admin.settings.*', 'admin.api_keys.*', 'admin.activities.index', 'templatesurat.*'])
                                             ? 'border-yellow-300 text-white bg-green-700/50'
                                             : 'border-transparent text-white hover:text-yellow-300 hover:border-yellow-300/75 focus:outline-none focus:text-white focus:border-yellow-300/75' }}">
                                         <div><i class="fas fa-cogs mr-2"></i>Pengaturan</div>
@@ -128,7 +128,9 @@ if (count($words) >= 2) {
                                     </button>
                                 </x-slot>
                                 <x-slot name="content">
-                                    <div class="rounded-xl shadow-2xl py-1 bg-white ring-1 ring-black ring-opacity-10">
+                                     <div class="rounded-xl shadow-2xl py-1 bg-white ring-1 ring-black ring-opacity-10">
+                                        <x-dropdown-link :href="route('admin.settings.index')" :active="request()->routeIs('admin.settings.*')">Pengaturan Umum</x-dropdown-link>
+                                        <div class="border-t border-gray-200"></div>
                                         <x-dropdown-link :href="route('templatesurat.index')" :active="request()->routeIs('templatesurat.*')">Manajemen Template Surat</x-dropdown-link>
                                         <div class="border-t border-gray-200"></div>
                                         @if(Auth::user()->canManageLeaveSettings())
