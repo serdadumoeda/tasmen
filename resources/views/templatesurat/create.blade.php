@@ -83,7 +83,7 @@
                                 // Sanitize placeholder name to be safe (alphanumeric and underscores)
                                 const sanitized = placeholderName.replace(/[^a-zA-Z0-9_]/g, '');
                                 if (sanitized) {
-                                    editor.execCommand('mceInsertContent', false, `{{${sanitized}}}`);
+                                    editor.execCommand('mceInsertContent', false, `@{{${sanitized}}}`);
                                 } else {
                                     alert('Nama placeholder hanya boleh berisi huruf, angka, dan underscore.');
                                 }
