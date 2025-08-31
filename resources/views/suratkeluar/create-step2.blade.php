@@ -66,7 +66,7 @@
             previewContainer.innerHTML = templateContent;
             finalContentTextarea.value = templateContent;
 
-            // Regex to find placeholders like {{placeholder_name}}
+            // Regex to find placeholders like {placeholder_name}
             const placeholderRegex = /\{\{([a-zA-Z0-9_]+)\}\}/g;
             let placeholders = new Set(); // Use a Set to store unique placeholders
             let match;
