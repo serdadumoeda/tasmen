@@ -131,7 +131,8 @@ class SuratKeluarController extends Controller
 
         // 2. Siapkan data untuk PDF
         $verificationUrl = route('surat.verify', ['id' => $surat->id]); // Asumsi ada route verifikasi
-        $qrCode = base64_encode(QrCode::format('png')->size(100)->generate($verificationUrl));
+        // Generate SVG instead of PNG to avoid imagick dependency
+        $qrCode = base64_encode(QrCode::format('svg')->size(100)->generate($verificationUrl));
 
         $signatureImagePath = null;
         if ($request->boolean('with_signature') && $penyetuju->signature_image_path) {
