@@ -2,49 +2,45 @@
 
 namespace App\Services;
 
+use App\Models\Setting;
 use App\Models\User;
 use App\Models\TimeLog;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\ExpressionLanguage\ExpressionLanguage;
 
 class PerformanceCalculatorService
 {
     private array $calculatedIki;
     private array $calculatedNkf;
+    private ExpressionLanguage $expressionLanguage;
+    private array $settings;
 
     public function __construct()
     {
         $this->calculatedIki = [];
         $this->calculatedNkf = [];
+        $this->expressionLanguage = new ExpressionLanguage();
+        // Cache settings for the duration of the service's lifecycle
+        $this->settings = Setting::pluck('value', 'key')->all();
     }
 
-    /**
-     * Menjalankan siklus perhitungan untuk semua pengguna dengan pendekatan bottom-up.
-     */
     public function calculateForAllUsers(): void
     {
         $allUsers = User::with('tasks', 'unit', 'atasan')->get()->keyBy('id');
-        if ($allUsers->isEmpty()) {
-            return;
-        }
+        if ($allUsers->isEmpty()) return;
 
         $this->calculatedIki = [];
         $this->calculatedNkf = [];
 
-        // Langkah 1: Hitung IKI untuk semua pengguna.
         foreach ($allUsers as $user) {
             $this->calculatedIki[$user->id] = $this->calculateIndividualPerformanceIndex($user);
         }
 
-        // Langkah 2: Hitung NKF dengan urutan dari level terendah ke tertinggi.
         $roleOrder = [
-            User::ROLE_STAF,
-            User::ROLE_SUB_KOORDINATOR,
-            User::ROLE_KOORDINATOR,
-            User::ROLE_ESELON_II,
-            User::ROLE_ESELON_I,
-            User::ROLE_MENTERI,
+            User::ROLE_STAF, User::ROLE_SUB_KOORDINATOR, User::ROLE_KOORDINATOR,
+            User::ROLE_ESELON_II, User::ROLE_ESELON_I, User::ROLE_MENTERI,
         ];
 
         foreach ($roleOrder as $role) {
@@ -54,7 +50,6 @@ class PerformanceCalculatorService
             }
         }
 
-        // Langkah 3: Simpan semua hasil ke database.
         foreach ($allUsers as $user) {
             $user->individual_performance_index = $this->calculatedIki[$user->id] ?? 0.0;
             $user->final_performance_value = $this->calculatedNkf[$user->id] ?? 0.0;
@@ -65,52 +60,51 @@ class PerformanceCalculatorService
         }
     }
 
-    /**
-     * Menghitung NKF untuk satu pengguna (non-rekursif).
-     */
     private function calculateFinalPerformanceValue(User $user, Collection $allUsers): float
     {
         $individualScore = $this->calculatedIki[$user->id] ?? 0.0;
 
         if (!$user->isManager()) {
-            return $this->calculatedNkf[$user->id] = $individualScore;
+            $formula = $this->settings['nkf_formula_staf'] ?? 'individual_score';
+            return $this->calculatedNkf[$user->id] = $this->expressionLanguage->evaluate($formula, ['individual_score' => $individualScore]);
         }
 
         $subordinates = $allUsers->where('atasan_id', $user->id);
         if ($subordinates->isEmpty()) {
-            return $this->calculatedNkf[$user->id] = $individualScore;
+            $formula = $this->settings['nkf_formula_staf'] ?? 'individual_score'; // A manager with no subordinates is treated as staff for calculation
+            return $this->calculatedNkf[$user->id] = $this->expressionLanguage->evaluate($formula, ['individual_score' => $individualScore]);
         }
 
         $managerialScore = $subordinates->avg(fn($sub) => $this->calculatedNkf[$sub->id] ?? 1.0);
 
-        $managerialWeights = [
-            User::ROLE_ESELON_I => 0.9, User::ROLE_ESELON_II => 0.8,
-            User::ROLE_KOORDINATOR => 0.7, User::ROLE_SUB_KOORDINATOR => 0.6,
-            User::ROLE_MENTERI => 0.95,
-        ];
-        $weight = $managerialWeights[$user->role] ?? 0.5;
+        // Fetch weight from settings, falling back to a default
+        $weight = (float)($this->settings['managerial_weight_' . strtolower($user->role)] ?? 0.5);
 
-        return $this->calculatedNkf[$user->id] = ($individualScore * (1 - $weight)) + ($managerialScore * $weight);
+        $formula = $this->settings['nkf_formula_pimpinan'] ?? '(individual_score * (1 - weight)) + (managerial_score * weight)';
+
+        $nkf = $this->expressionLanguage->evaluate($formula, [
+            'individual_score' => $individualScore,
+            'managerial_score' => $managerialScore,
+            'weight' => $weight,
+        ]);
+
+        return $this->calculatedNkf[$user->id] = $nkf;
     }
 
     private function getPriorityWeight(string $priority): int
     {
         return match (strtolower($priority)) {
-            'critical' => 4,
-            'high' => 3,
-            'medium' => 2,
-            'low' => 1,
-            default => 2, // Default to medium's weight
+            'critical' => 4, 'high' => 3, 'medium' => 2, 'low' => 1,
+            default => 2,
         };
     }
 
     private function calculateIndividualPerformanceIndex(User $user): float
     {
         $allTasks = $user->tasks;
-        if ($allTasks->isEmpty()) {
-            return 0.0;
-        }
+        if ($allTasks->isEmpty()) return 0.0;
 
+        // Calculate base_score
         $totalWeight = 0;
         $weightedProgressSum = 0;
         foreach ($allTasks as $task) {
@@ -120,24 +114,24 @@ class PerformanceCalculatorService
         }
         $baseScore = ($totalWeight > 0) ? ($weightedProgressSum / $totalWeight) : 0;
 
+        // Calculate efficiency_factor
         $totalEstimatedHours = $allTasks->sum('estimated_hours');
+        $timeLogs = TimeLog::whereIn('task_id', $allTasks->pluck('id'))->where('user_id', $user->id)->whereNotNull('end_time')->get();
+        $totalActualHours = $timeLogs->sum('duration_in_minutes') / 60;
+        $efficiencyFactor = ($totalEstimatedHours > 0 && $totalActualHours > 0) ? ($totalEstimatedHours / $totalActualHours) : 1.0;
 
-        $timeLogs = TimeLog::whereIn('task_id', $allTasks->pluck('id'))
-            ->where('user_id', $user->id)
-            ->whereNotNull('start_time')->whereNotNull('end_time')
-            ->get();
+        // Calculate capped_efficiency_factor from settings
+        $minEfficiency = (float)($this->settings['min_efficiency_factor'] ?? 0.9);
+        $maxEfficiency = (float)($this->settings['max_efficiency_factor'] ?? 1.25);
+        $cappedEfficiencyFactor = max($minEfficiency, min($efficiencyFactor, $maxEfficiency));
 
-        $totalSeconds = $timeLogs->reduce(fn ($carry, $log) => $carry + Carbon::parse($log->end_time)->diffInSeconds(Carbon::parse($log->start_time)), 0);
-        $totalActualHours = $totalSeconds / 3600;
-
-        if ($totalEstimatedHours == 0 || $totalActualHours == 0) {
-            $efficiencyFactor = 1.0;
-        } else {
-            $efficiencyFactor = $totalEstimatedHours / $totalActualHours;
-        }
-
-        $cappedEfficiencyFactor = max(0.9, min($efficiencyFactor, 1.25));
-        $finalIki = $baseScore * $cappedEfficiencyFactor;
+        // Evaluate IKI using the formula from settings
+        $formula = $this->settings['iki_formula'] ?? 'base_score * capped_efficiency_factor';
+        $finalIki = $this->expressionLanguage->evaluate($formula, [
+            'base_score' => $baseScore,
+            'efficiency_factor' => $efficiencyFactor,
+            'capped_efficiency_factor' => $cappedEfficiencyFactor,
+        ]);
 
         return round($finalIki, 3);
     }
@@ -145,8 +139,8 @@ class PerformanceCalculatorService
     private function getWorkResultRating(float $finalScore): string
     {
         if ($finalScore == 0) return 'Tidak Dapat Dinilai';
-        if ($finalScore >= 1.15) return 'Diatas Ekspektasi';
-        if ($finalScore >= 0.90) return 'Sesuai Ekspektasi';
+        if ($finalScore >= (float)($this->settings['rating_threshold_high'] ?? 1.15)) return 'Diatas Ekspektasi';
+        if ($finalScore >= (float)($this->settings['rating_threshold_medium'] ?? 0.90)) return 'Sesuai Ekspektasi';
         return 'Dibawah Ekspektasi';
     }
 
@@ -159,37 +153,21 @@ class PerformanceCalculatorService
         return 'Baik';
     }
 
-    /**
-     * Menghitung ulang skor untuk satu pengguna dan atasannya secara rekursif.
-     * Metode ini dipanggil setelah ada perubahan yang memengaruhi skor, seperti update perilaku kerja.
-     */
     public function calculateForSingleUserAndParents(User $user): void
     {
-        // Dapatkan semua user untuk di-cache, ini kurang efisien tapi konsisten dengan implementasi yang ada
         $allUsers = User::with('tasks', 'unit', 'atasan')->get()->keyBy('id');
-
-        // Inisialisasi cache IKI dan NKF dari data yang ada di DB
         $this->calculatedIki = $allUsers->map(fn($u) => $u->individual_performance_index ?? 0.0)->all();
         $this->calculatedNkf = $allUsers->map(fn($u) => $u->final_performance_value ?? 0.0)->all();
 
-        // Loop dari user saat ini ke atas hirarki
         $currentUser = $user;
         while ($currentUser) {
-            // IKI hanya dihitung ulang untuk user awal yang perilakunya berubah.
-            // IKI atasan tidak terpengaruh oleh perubahan perilaku bawahan.
             if ($currentUser->id === $user->id) {
                 $this->calculatedIki[$currentUser->id] = $this->calculateIndividualPerformanceIndex($currentUser);
             }
-
-            // Hitung ulang NKF karena ini bergantung pada skor bawahan atau IKI diri sendiri.
             $this->calculatedNkf[$currentUser->id] = $this->calculateFinalPerformanceValue($currentUser, $allUsers);
-
-            // Pindah ke atasan untuk iterasi berikutnya
             $currentUser = $allUsers->get($currentUser->atasan_id);
         }
 
-        // Simpan semua hasil yang diperbarui ke database.
-        // Kita hanya perlu menyimpan user yang di-update dan para atasannya.
         $currentUserToSave = $user;
         while ($currentUserToSave) {
             $currentUserToSave->individual_performance_index = $this->calculatedIki[$currentUserToSave->id] ?? 0.0;
@@ -198,7 +176,6 @@ class PerformanceCalculatorService
             $currentUserToSave->performance_predicate = $this->getPerformancePredicate($currentUserToSave->work_result_rating, $currentUserToSave->work_behavior_rating);
             $currentUserToSave->performance_data_updated_at = now();
             $currentUserToSave->save();
-
             $currentUserToSave = $allUsers->get($currentUserToSave->atasan_id);
         }
     }
