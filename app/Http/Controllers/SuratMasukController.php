@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Disposisi;
 use App\Models\Surat;
 use App\Models\LampiranSurat;
+use App\Models\User;
+use App\Notifications\SuratDisposisiNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -30,13 +33,15 @@ class SuratMasukController extends Controller
             'lampiran' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120', // Max 5MB
         ]);
 
+        $user = Auth::user();
+
         $surat = Surat::create([
             'perihal' => $validated['perihal'],
             'nomor_surat' => $validated['nomor_surat'],
             'tanggal_surat' => $validated['tanggal_surat'],
             'jenis' => 'masuk',
             'status' => 'diarsipkan', // Default status for incoming mail
-            'pembuat_id' => Auth::id(),
+            'pembuat_id' => $user->id,
         ]);
 
         if ($request->hasFile('lampiran')) {
@@ -52,7 +57,31 @@ class SuratMasukController extends Controller
             ]);
         }
 
-        return redirect()->route('surat-masuk.index')->with('success', 'Surat masuk berhasil diarsipkan.');
+        // --- AUTOMATIC DISPOSITION ---
+        // Automatically create a disposition to the head of the user's unit.
+        $user->load('unit');
+        if ($user->unit && $user->unit->kepala_unit_id) {
+            $kepalaUnitId = $user->unit->kepala_unit_id;
+
+            $disposisi = Disposisi::create([
+                'surat_id' => $surat->id,
+                'pengirim_id' => $user->id,
+                'penerima_id' => $kepalaUnitId,
+                'instruksi' => 'Mohon arahan dan petunjuk selanjutnya.',
+                'tanggal_disposisi' => now(),
+            ]);
+
+            // Notify the unit head
+            $kepalaUnit = User::find($kepalaUnitId);
+            if ($kepalaUnit) {
+                // Assuming SuratDisposisiNotification exists and accepts a Disposisi object.
+                $kepalaUnit->notify(new SuratDisposisiNotification($disposisi));
+            }
+        }
+        // --- END AUTOMATIC DISPOSITION ---
+
+
+        return redirect()->route('surat-masuk.index')->with('success', 'Surat masuk berhasil diarsipkan dan disposisi otomatis telah dibuat.');
     }
 
     public function show(Surat $surat)

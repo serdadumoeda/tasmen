@@ -7,9 +7,14 @@
                 </h2>
                 <p class="text-sm text-gray-500 mt-1">Perihal: {{ $surat->perihal }}</p>
             </div>
-            <a href="{{ route('surat-keluar.index') }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg font-semibold text-sm text-gray-700 hover:bg-gray-50">
-                <i class="fas fa-arrow-left mr-2"></i> Kembali ke Daftar Surat
-            </a>
+            <div class="flex items-center space-x-2">
+                <a href="{{ route('surat.make-task', $surat) }}" class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg font-semibold text-sm hover:bg-green-700">
+                    <i class="fas fa-tasks mr-2"></i> Jadikan Tugas
+                </a>
+                <a href="{{ route('surat-keluar.index') }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg font-semibold text-sm text-gray-700 hover:bg-gray-50">
+                    <i class="fas fa-arrow-left mr-2"></i> Kembali ke Daftar Surat
+                </a>
+            </div>
         </div>
     </x-slot>
 

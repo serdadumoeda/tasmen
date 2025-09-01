@@ -220,6 +220,9 @@ require __DIR__.'/auth.php';
 // Public route for letter verification
 Route::get('/surat/verify/{id}', [\App\Http\Controllers\SuratVerificationController::class, 'verify'])->name('surat.verify');
 
+// Route to create a task from a letter
+Route::get('/surat/{surat}/make-task', [\App\Http\Controllers\SuratTaskController::class, 'create'])->name('surat.make-task')->middleware('auth');
+
 // API routes for units, accessible without authentication
 Route::get('/api/units/eselon-i', [UnitApiController::class, 'getEselonIUnits']);
 Route::get('/api/units/{parentUnit}/children', [UnitApiController::class, 'getChildUnits']);

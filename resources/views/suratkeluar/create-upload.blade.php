@@ -19,6 +19,19 @@
                                 @error('perihal') <p class="text-sm text-red-600 mt-2">{{ $message }}</p> @enderror
                             </div>
 
+                            <div>
+                                <label for="klasifikasi_id" class="block font-semibold text-sm text-gray-700 mb-1">Klasifikasi Surat <span class="text-red-500">*</span></label>
+                                <select name="klasifikasi_id" id="klasifikasi_id" class="mt-1 block w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500" required>
+                                    <option value="">Pilih Klasifikasi</option>
+                                    @foreach($klasifikasi as $item)
+                                        <option value="{{ $item->id }}" {{ old('klasifikasi_id') == $item->id ? 'selected' : '' }}>
+                                            {{ $item->kode }} - {{ $item->deskripsi }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('klasifikasi_id') <p class="text-sm text-red-600 mt-2">{{ $message }}</p> @enderror
+                            </div>
+
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <label for="nomor_surat" class="block font-semibold text-sm text-gray-700 mb-1">Nomor Surat (Opsional)</label>

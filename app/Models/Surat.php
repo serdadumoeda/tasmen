@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class Surat extends Model
 {
@@ -22,6 +23,9 @@ class Surat extends Model
         'pembuat_id',
         'penyetuju_id',
         'konten',
+        'suratable_id',     // tambahkan ke fillable
+        'suratable_type',   // tambahkan ke fillable
+        'klasifikasi_id',
     ];
 
     protected $casts = [
@@ -46,5 +50,21 @@ class Surat extends Model
     public function lampiran(): HasMany
     {
         return $this->hasMany(LampiranSurat::class, 'surat_id');
+    }
+
+    /**
+     * Polymorphic relation: surat dapat dimiliki oleh Project, SK, Cuti, dll.
+     */
+    public function suratable(): MorphTo
+    {
+        return $this->morphTo();
+    }
+
+    /**
+     * Get the classification for the letter.
+     */
+    public function klasifikasi(): BelongsTo
+    {
+        return $this->belongsTo(KlasifikasiSurat::class, 'klasifikasi_id');
     }
 }
