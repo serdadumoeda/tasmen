@@ -13,29 +13,12 @@ class SuratPolicy
      */
     public function view(User $user, Surat $surat): bool
     {
-        // For outgoing letters, creator and approver can view.
-        if ($surat->jenis === 'keluar') {
-            return $user->id === $surat->pembuat_id || $user->id === $surat->penyetuju_id;
+        // Allow if the user is the creator, approver, or a disposition recipient
+        if ($user->id === $surat->pembuat_id || $user->id === $surat->penyetuju_id) {
+            return true;
         }
 
-        // For incoming letters, creator (archiver) and disposition recipients can view.
-        if ($surat->jenis === 'masuk') {
-            if ($user->id === $surat->pembuat_id) {
-                return true;
-            }
-            return $surat->disposisi()->where('penerima_id', $user->id)->exists();
-        }
-
-        return false;
-    }
-
-    /**
-     * Determine whether the user can approve the model.
-     */
-    public function approve(User $user, Surat $surat): bool
-    {
-        // Only managers and superadmins can approve letters.
-        return $user->canManageUsers() || $user->isSuperAdmin();
+        return $surat->disposisi()->where('penerima_id', $user->id)->exists();
     }
 
     /**

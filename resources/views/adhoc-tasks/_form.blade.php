@@ -5,17 +5,14 @@
 @endif
 
 <div class="space-y-6"> {{-- Mengubah space-y-4 menjadi space-y-6 untuk konsistensi dengan tampilan kartu --}}
-    @if(isset($sourceSurat))
-        <input type="hidden" name="surat_id" value="{{ $sourceSurat->id }}">
-    @endif
     <div>
         <label for="title" class="block font-semibold text-sm text-gray-700 mb-1">Judul Tugas <span class="text-red-500">*</span></label> {{-- Menambahkan font-semibold dan mb-1 --}}
-        <input type="text" name="title" id="title" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" value="{{ old('title', (isset($sourceSurat) ? 'Tindak Lanjut Surat: ' . $sourceSurat->perihal : $task->title) ?? '') }}" required> {{-- Mengubah rounded-md menjadi rounded-lg, menambahkan fokus, dan transisi --}}
+        <input type="text" name="title" id="title" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" value="{{ old('title', $task->title ?? '') }}" required> {{-- Mengubah rounded-md menjadi rounded-lg, menambahkan fokus, dan transisi --}}
     </div>
     
     <div>
         <label for="description" class="block font-semibold text-sm text-gray-700 mb-1">Deskripsi (Opsional)</label> {{-- Menambahkan font-semibold dan mb-1 --}}
-        <textarea name="description" id="description" rows="4" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150">{{ old('description', (isset($sourceSurat) ? "Berdasarkan surat masuk nomor {$sourceSurat->nomor_surat} perihal \"{$sourceSurat->perihal}\"." : $task->description) ?? '') }}</textarea> {{-- Mengubah rounded-md menjadi rounded-lg, menambahkan fokus, dan transisi --}}
+        <textarea name="description" id="description" rows="4" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150">{{ old('description', $task->description ?? '') }}</textarea> {{-- Mengubah rounded-md menjadi rounded-lg, menambahkan fokus, dan transisi --}}
     </div>
 
     @if (Auth::user()->canManageUsers())

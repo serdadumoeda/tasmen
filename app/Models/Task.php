@@ -19,7 +19,6 @@ class Task extends Model
         'deadline',
         'progress',
         'project_id',
-        'surat_id', // Add surat_id to fillable
         'estimated_hours',
         'status',
         'priority',
@@ -36,14 +35,6 @@ class Task extends Model
     public function project()
     {
         return $this->belongsTo(Project::class);
-    }
-
-    /**
-     * Surat (masuk) yang menjadi asal dari tugas ini.
-     */
-    public function surat()
-    {
-        return $this->belongsTo(Surat::class);
     }
 
     public function assignees()

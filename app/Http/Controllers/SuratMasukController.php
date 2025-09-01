@@ -61,8 +61,6 @@ class SuratMasukController extends Controller
             abort(404);
         }
 
-        $this->authorize('view', $surat);
-
         // Ambil bawahan dari user yang sedang login untuk pilihan disposisi
         $dispositionUsers = Auth::user()->bawahan;
 

@@ -71,9 +71,6 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/tasks/{task}', [TaskController::class, 'destroy'])->name('tasks.destroy');
     Route::post('/tasks/{task}/comments', [CommentController::class, 'store'])->name('tasks.comments.store');
 
-    // Route to create a task from an incoming letter
-    Route::get('/surat/{surat}/create-task', [AdHocTaskController::class, 'createFromSurat'])->name('adhoc-tasks.createFromSurat');
-
     Route::post('/tasks/{task}/attachments', [TaskController::class, 'storeAttachment'])->name('tasks.attachments.store');
     Route::get('/attachments/{attachment}', [AttachmentController::class, 'view'])->name('attachments.view');
     Route::delete('/attachments/{attachment}', [AttachmentController::class, 'destroy'])->name('attachments.destroy');
@@ -195,10 +192,6 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('surat-keluar')->name('surat-keluar.')->group(function () {
         Route::get('/', [\App\Http\Controllers\SuratKeluarController::class, 'index'])->name('index');
         Route::get('/create', [\App\Http\Controllers\SuratKeluarController::class, 'create'])->name('create');
-        // Route for one-click generation from Leave Request
-        Route::post('/create-from-leave/{leaveRequest}', [\App\Http\Controllers\SuratKeluarController::class, 'createFromLeave'])->name('createFromLeave');
-        // Route for one-click generation from Peminjaman Request
-        Route::post('/create-from-peminjaman/{peminjamanRequest}', [\App\Http\Controllers\SuratKeluarController::class, 'createFromPeminjaman'])->name('createFromPeminjaman');
         Route::get('/create/from-template', [\App\Http\Controllers\SuratKeluarController::class, 'createFromTemplate'])->name('create.from-template');
         Route::get('/create/upload', [\App\Http\Controllers\SuratKeluarController::class, 'createUpload'])->name('create.upload');
         Route::post('/', [\App\Http\Controllers\SuratKeluarController::class, 'store'])->name('store');

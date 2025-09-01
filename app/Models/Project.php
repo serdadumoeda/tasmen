@@ -131,11 +131,4 @@ class Project extends Model
         return $this->morphToMany(Tag::class, 'taggable');
     }
 
-    /**
-     * Get all of the project's letters.
-     */
-    public function surat()
-    {
-        return $this->morphMany(Surat::class, 'suratable');
-    }
 }

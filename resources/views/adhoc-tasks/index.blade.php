@@ -88,11 +88,6 @@
                                                     <span class="font-medium text-gray-800">{{ $assignee->name }}{{ !$loop->last ? ',' : '' }}</span>
                                                 @endforeach
                                             </span>
-                                            @if($task->surat)
-                                                <a href="{{ route('surat-masuk.show', $task->surat) }}" class="inline-flex items-center text-indigo-600 hover:underline" target="_blank">
-                                                    <i class="fas fa-envelope text-gray-400 mr-1"></i> Lihat Surat Asal
-                                                </a>
-                                            @endif
                                         </div>
                                     </div>
                                     <div class="flex items-center space-x-3 flex-shrink-0"> {{-- Spasi tombol --}}
