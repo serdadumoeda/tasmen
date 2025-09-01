@@ -257,7 +257,11 @@ Route::middleware(['auth', 'superadmin'])->prefix('admin')->name('admin.')->grou
 
     // General Settings
     Route::get('settings', [\App\Http\Controllers\Admin\SettingController::class, 'index'])->name('settings.index');
+    Route::get('settings/formulas', [\App\Http\Controllers\Admin\SettingController::class, 'formulas'])->name('settings.formulas');
     Route::post('settings', [\App\Http\Controllers\Admin\SettingController::class, 'update'])->name('settings.update');
+
+    // API for formula simulation
+    Route::post('api/settings/simulate-formula', [\App\Http\Controllers\Admin\SettingController::class, 'simulate'])->name('settings.simulate');
 
     // Classification Management
     Route::resource('klasifikasi', \App\Http\Controllers\Admin\KlasifikasiSuratController::class)->names('klasifikasi');
