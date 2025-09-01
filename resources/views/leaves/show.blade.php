@@ -58,26 +58,6 @@
                         </div>
                     </div>
                     @endif
-
-                    <div class="mt-8 border-t pt-6">
-                        <h3 class="text-lg font-bold text-gray-800 mb-4">Dokumen Resmi</h3>
-                        @if($leaveRequest->status === 'approved')
-                            @if($leaveRequest->surat)
-                                <a href="{{ route('surat-keluar.show', $leaveRequest->surat) }}" class="inline-flex items-center px-4 py-2 bg-gray-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700">
-                                    <i class="fas fa-eye mr-2"></i> Lihat Surat Izin Cuti
-                                </a>
-                            @else
-                                <form action="{{ route('surat-keluar.createFromLeave', $leaveRequest) }}" method="POST">
-                                    @csrf
-                                    <button type="submit" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700">
-                                        <i class="fas fa-file-alt mr-2"></i> Buat Surat Izin Cuti
-                                    </button>
-                                </form>
-                            @endif
-                        @else
-                            <p class="text-sm text-gray-500">Surat izin cuti dapat dibuat setelah permintaan ini disetujui sepenuhnya.</p>
-                        @endif
-                    </div>
                 </div>
             </div>
         </div>

@@ -5,7 +5,6 @@ namespace App\Models;
 use App\Models\Traits\RecordsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 class SpecialAssignment extends Model
 {
@@ -41,13 +40,5 @@ class SpecialAssignment extends Model
         return $this->belongsToMany(User::class, 'special_assignment_user')
                     ->withPivot('role_in_sk')
                     ->withTimestamps();
-    }
-
-    /**
-     * Get the special assignment's letter.
-     */
-    public function surat(): MorphOne
-    {
-        return $this->morphOne(Surat::class, 'suratable');
     }
 }
