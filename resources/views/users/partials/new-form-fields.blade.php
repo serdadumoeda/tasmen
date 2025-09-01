@@ -120,12 +120,14 @@ function form_textarea($label, $name, $user, $is_required = false) {
             <p class="mt-1 text-xs text-gray-500 ml-6">Menetapkan pengguna ini sebagai kepala dari unit kerja mereka saat ini.</p>
         </div>
 
+        @if ($user->exists)
         <div class="mb-4">
             <a href="{{ route('admin.users.leave-balance.edit', $user) }}" class="inline-flex items-center px-4 py-2 bg-slate-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-slate-700">
                 <i class="fas fa-calculator mr-2"></i> Atur Saldo Cuti
             </a>
             <p class="mt-1 text-xs text-gray-500">Mengatur sisa cuti tahunan dari tahun sebelumnya secara manual.</p>
         </div>
+        @endif
         @endcan
 
         <div class="mb-4">
