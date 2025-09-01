@@ -2,15 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\KlasifikasiSurat;
 use App\Models\Surat;
 use App\Models\TemplateSurat;
 use App\Models\User;
 use App\Models\LampiranSurat;
 use App\Models\Setting;
+use App\Services\NomorSuratService;
+use App\Services\Tte\TteManager;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
-use Barryvdh\DomPDF\Facade\Pdf;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
@@ -31,109 +33,108 @@ class SuratKeluarController extends Controller
 
     public function createFromTemplate(Request $request)
     {
-        // Jika ada parameter template_id, tampilkan langkah 2 (form pembuatan)
+        $klasifikasi = KlasifikasiSurat::orderBy('kode')->get();
+
         if ($request->has('template_id')) {
             $template = TemplateSurat::findOrFail($request->template_id);
             $settings = Setting::pluck('value', 'key')->all();
-            return view('suratkeluar.create-step2', compact('template', 'settings'));
+            return view('suratkeluar.create-step2', compact('template', 'settings', 'klasifikasi'));
         }
 
-        // Jika tidak, tampilkan langkah 1 (pemilihan template)
         $templates = TemplateSurat::all();
         return view('suratkeluar.create-step1', compact('templates'));
     }
 
     public function createUpload()
     {
-        return view('suratkeluar.create-upload');
+        $klasifikasi = KlasifikasiSurat::orderBy('kode')->get();
+        return view('suratkeluar.create-upload', compact('klasifikasi'));
     }
 
-    public function store(Request $request)
+    public function store(Request $request, NomorSuratService $nomorSuratService)
     {
+        // Base validation rules for all submission types
+        $baseRules = [
+            'perihal' => 'required|string|max:255',
+            'tanggal_surat' => 'required|date',
+            'klasifikasi_id' => 'required|exists:klasifikasi_surat,id',
+        ];
+
+        // Type-specific validation rules
+        $specificRules = [];
         if ($request->input('submission_type') === 'upload') {
-            // Logic for uploaded file
-            $validated = $request->validate([
-                'perihal' => 'required|string|max:255',
-                'nomor_surat' => 'nullable|string|max:255|unique:surat,nomor_surat',
-                'tanggal_surat' => 'required|date',
-                'lampiran' => 'required|file|mimes:pdf|max:5120', // Max 5MB, PDF only
-            ]);
-
-            $surat = Surat::create([
-                'perihal' => $validated['perihal'],
-                'nomor_surat' => $validated['nomor_surat'],
-                'tanggal_surat' => $validated['tanggal_surat'],
-                'jenis' => 'keluar',
-                'status' => 'draft', // Or maybe 'diarsipkan' directly, user decision
-                'pembuat_id' => Auth::id(),
-            ]);
-
-            if ($request->hasFile('lampiran')) {
-                $file = $request->file('lampiran');
-                $path = $file->store('lampiran-surat', 'public');
-
-                LampiranSurat::create([
-                    'surat_id' => $surat->id,
-                    'nama_file' => $file->getClientOriginalName(),
-                    'path_file' => $path,
-                    'tipe_file' => $file->getClientMimeType(),
-                    'ukuran_file' => $file->getSize(),
-                ]);
-            }
-            return redirect()->route('surat-keluar.show', $surat)->with('success', 'Surat keluar berhasil diunggah dan diarsipkan.');
-
+            $specificRules = ['lampiran' => 'required|file|mimes:pdf|max:5120'];
         } else {
-            // Logic for template-based letter
-            $validated = $request->validate([
-                'perihal' => 'required|string|max:255',
-                'tanggal_surat' => 'required|date',
+            $specificRules = [
                 'template_id' => 'required|exists:template_surat,id',
                 'placeholders' => 'nullable|array',
                 'konten_final' => 'required|string',
-            ]);
-
-            $surat = Surat::create([
-                'perihal' => $validated['perihal'],
-                'tanggal_surat' => $validated['tanggal_surat'],
-                'jenis' => 'keluar',
-                'status' => 'draft',
-                'pembuat_id' => Auth::id(),
-                'konten' => $validated['konten_final'],
-            ]);
-
-            return redirect()->route('surat-keluar.show', $surat)->with('success', 'Draf surat berhasil disimpan.');
+            ];
         }
+
+        $validated = $request->validate(array_merge($baseRules, $specificRules));
+
+        // --- Automatic Numbering ---
+        $klasifikasi = KlasifikasiSurat::find($validated['klasifikasi_id']);
+        $nomorSurat = $nomorSuratService->generate($klasifikasi, Auth::user());
+        // --- End Automatic Numbering ---
+
+        $suratData = [
+            'perihal' => $validated['perihal'],
+            'tanggal_surat' => $validated['tanggal_surat'],
+            'klasifikasi_id' => $validated['klasifikasi_id'],
+            'nomor_surat' => $nomorSurat,
+            'jenis' => 'keluar',
+            'status' => 'draft',
+            'pembuat_id' => Auth::id(),
+            'konten' => $validated['konten_final'] ?? null,
+        ];
+
+        $surat = Surat::create($suratData);
+
+        if ($request->input('submission_type') === 'upload') {
+            if ($request->hasFile('lampiran')) {
+                $file = $request->file('lampiran');
+                $path = $file->store('lampiran-surat', 'public');
+                // For uploaded letters, the lampiran is the main content.
+                // We'll save it to the final_pdf_path to unify the logic.
+                $surat->final_pdf_path = $path;
+                $surat->save();
+            }
+            $message = 'Surat keluar berhasil diunggah dan diarsipkan dengan nomor ' . $nomorSurat;
+        } else {
+            $message = 'Draf surat berhasil disimpan dengan nomor ' . $nomorSurat;
+        }
+
+        return redirect()->route('surat-keluar.show', $surat)->with('success', $message);
     }
+
 
     public function show(Surat $surat)
     {
-        // Pastikan hanya surat keluar yang bisa diakses melalui controller ini
         if ($surat->jenis !== 'keluar') {
             abort(404);
         }
-
-        $surat->load('pembuat', 'penyetuju', 'lampiran');
-
+        $surat->load('pembuat', 'penyetuju', 'lampiran', 'klasifikasi');
         return view('suratkeluar.show', compact('surat'));
     }
 
-    public function approve(Request $request, Surat $surat)
+    public function approve(Request $request, Surat $surat, TteManager $tteManager)
     {
-        $request->validate([
+        $validated = $request->validate([
             'penyetuju_id' => 'required|exists:users,id',
             'with_signature' => 'nullable|boolean',
         ]);
 
-        // 1. Update status surat
+        // 1. Update status surat & penyetuju
         $surat->status = 'disetujui';
-        $surat->penyetuju_id = $request->penyetuju_id;
+        $surat->penyetuju_id = $validated['penyetuju_id'];
         $surat->save();
 
-        $penyetuju = User::find($request->penyetuju_id);
+        $penyetuju = User::find($validated['penyetuju_id']);
 
         // 2. Siapkan data untuk PDF
-        $verificationUrl = route('surat.verify', ['id' => $surat->id]); // Asumsi ada route verifikasi
-        // Generate SVG instead of PNG to avoid imagick dependency
+        $verificationUrl = route('surat.verify', ['id' => $surat->id]);
         $qrCode = base64_encode(QrCode::format('svg')->size(100)->generate($verificationUrl));
 
         $signatureImagePath = null;
@@ -141,38 +142,40 @@ class SuratKeluarController extends Controller
             $signatureImagePath = storage_path('app/public/' . $penyetuju->signature_image_path);
         }
 
-        // Ambil pengaturan umum
-        $settings = Setting::pluck('value', 'key')->all();
-
-        // 3. Generate PDF
-        $pdf = Pdf::loadView('pdf.surat', [
+        $pdfData = [
             'surat' => $surat,
             'qrCode' => $qrCode,
             'signatureImagePath' => $signatureImagePath,
-            'settings' => $settings,
-        ]);
+            'settings' => Setting::pluck('value', 'key')->all(),
+        ];
 
-        // 4. Simpan PDF ke storage
-        $filename = 'surat-keluar-' . $surat->id . '-' . time() . '.pdf';
-        Storage::disk('public')->put('surat-final/' . $filename, $pdf->output());
+        try {
+            // 3. Panggil TTE Service untuk menandatangani PDF
+            $signedPdfPath = $tteManager->sign($surat, $pdfData);
 
-        // 5. Simpan path PDF ke database
-        $surat->final_pdf_path = 'surat-final/' . $filename;
-        $surat->save();
+            // 4. Simpan path PDF final ke database
+            $surat->final_pdf_path = $signedPdfPath;
+            $surat->save();
 
-        return redirect()->route('surat-keluar.show', $surat)->with('success', 'Surat berhasil disetujui dan PDF telah digenerate.');
+            return redirect()->route('surat-keluar.show', $surat)->with('success', 'Surat berhasil disetujui dan PDF telah ditandatangani.');
+
+        } catch (\Exception $e) {
+            // Jika TTE gagal, kembalikan status surat ke draft dan tampilkan error
+            $surat->status = 'draft';
+            $surat->save();
+
+            return redirect()->route('surat-keluar.show', $surat)->with('error', 'Gagal menandatangani surat: ' . $e->getMessage());
+        }
     }
 
     public function destroy(Surat $surat)
     {
         $this->authorize('delete', $surat);
 
-        // Hapus file PDF final jika ada
         if ($surat->final_pdf_path) {
             Storage::disk('public')->delete($surat->final_pdf_path);
         }
 
-        // Hapus file lampiran (jika surat keluar di-upload)
         foreach ($surat->lampiran as $lampiran) {
             Storage::disk('public')->delete($lampiran->path_file);
         }

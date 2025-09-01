@@ -6,6 +6,7 @@ use App\Scopes\HierarchicalScope;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Traits\RecordsActivity;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
 
 class Project extends Model
@@ -131,4 +132,11 @@ class Project extends Model
         return $this->morphToMany(Tag::class, 'taggable');
     }
 
+    /**
+     * Mendapatkan semua surat yang terkait dengan proyek ini.
+     */
+    public function surat(): MorphMany
+    {
+        return $this->morphMany(Surat::class, 'suratable');
+    }
 }

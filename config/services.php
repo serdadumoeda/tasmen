@@ -39,4 +39,20 @@ return [
         'api_key' => env('TINYMCE_API_KEY'),
     ],
 
+    'tte' => [
+        'driver' => env('TTE_DRIVER', 'local'), // 'local' or 'bsre' etc.
+
+        // Configuration for the BSrE provider
+        'bsre' => [
+            'url' => env('BSRE_API_URL', 'https://api.bsre.go.id/v2/'),
+            'username' => env('BSRE_USERNAME'),
+            'password' => env('BSRE_PASSWORD'),
+        ],
+
+        // Configuration for the dummy/local provider
+        'local' => [
+            'watermark_text' => 'DRAFT (Signed Locally)',
+        ],
+    ],
+
 ];

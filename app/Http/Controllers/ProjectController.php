@@ -131,7 +131,7 @@ class ProjectController extends Controller
         $user = Auth::user();
 
         // Load project relationships, but handle tasks separately for filtering.
-        $project->load(['owner', 'leader', 'members', 'activities.user']);
+        $project->load(['owner', 'leader', 'members', 'activities.user', 'surat']);
 
         // --- Task Query with Filtering, Sorting, and Pagination ---
         $taskQuery = $project->tasks()->with(['assignees', 'comments.user', 'attachments', 'subTasks']);
