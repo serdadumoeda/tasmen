@@ -104,6 +104,7 @@ class UserController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
+            'nik' => ['nullable', 'string', 'digits:16', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'jabatan_id' => ['nullable', Rule::exists('jabatans', 'id')->whereNull('user_id')],
             'is_kepala_unit' => ['nullable', 'boolean'],
@@ -215,6 +216,7 @@ class UserController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
+            'nik' => ['nullable', 'string', 'digits:16', Rule::unique('users', 'nik')->ignore($user->id)],
             'password' => ['nullable', 'confirmed', Rules\Password::defaults()],
             'jabatan_id' => ['nullable', 'exists:jabatans,id'],
             'is_kepala_unit' => ['nullable', 'boolean'],
