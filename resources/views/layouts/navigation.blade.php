@@ -151,7 +151,9 @@ if (count($words) >= 2) {
                                 </x-slot>
                                 <x-slot name="content">
                                      <div class="rounded-xl shadow-2xl py-1 bg-white ring-1 ring-black ring-opacity-10">
-                                        <x-dropdown-link :href="route('admin.settings.index')" :active="request()->routeIs('admin.settings.*')">Pengaturan Umum</x-dropdown-link>
+                                        <x-dropdown-link :href="route('admin.settings.index')" :active="request()->routeIs('admin.settings.index')">Pengaturan Umum</x-dropdown-link>
+                                        <x-dropdown-link :href="route('admin.settings.formulas')" :active="request()->routeIs('admin.settings.formulas')">Pengaturan Rumus</x-dropdown-link>
+                                        <div class="border-t border-gray-200"></div>
                                         @if(Auth::user()->canManageLeaveSettings())
                                             <x-dropdown-link :href="route('admin.approval-workflows.index')" :active="request()->routeIs('admin.approval-workflows.*')">Manajemen Alur Persetujuan</x-dropdown-link>
                                             <x-dropdown-link :href="route('admin.cuti-bersama.index')" :active="request()->routeIs('admin.cuti-bersama.*')">Manajemen Cuti Bersama</x-dropdown-link>
