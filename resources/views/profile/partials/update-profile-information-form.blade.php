@@ -46,6 +46,14 @@
         </div>
 
         <div>
+            <label for="nik" class="block font-semibold text-sm text-gray-700 mb-1">
+                <i class="fas fa-id-card mr-2 text-gray-500"></i> {{ __('NIK') }}
+            </label>
+            <input id="nik" name="nik" type="text" class="mt-1 block w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" value="{{ old('nik', $user->nik) }}" autocomplete="off" />
+            @error('nik') <p class="text-sm text-red-600 mt-2">{{ $message }}</p> @enderror
+        </div>
+
+        <div>
             <label for="signature_image" class="block font-semibold text-sm text-gray-700 mb-1">
                 <i class="fas fa-signature mr-2 text-gray-500"></i> {{ __('Gambar Tanda Tangan') }}
             </label>

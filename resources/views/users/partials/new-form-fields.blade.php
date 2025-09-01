@@ -37,6 +37,7 @@ function form_textarea($label, $name, $user, $is_required = false) {
         <h3 class="text-lg font-medium text-gray-900 border-b pb-2 mb-4">Informasi Pribadi</h3>
         {{ form_input('Nama Lengkap', 'name', $user, 'text', true) }}
         {{ form_input('Email', 'email', $user, 'email', true) }}
+        {{ form_input('NIK', 'nik', $user, 'text', false, 'placeholder="16 digit NIK"') }}
         {{ form_input('NIP', 'nip', $user, 'text', true) }}
         {{ form_input('Tempat Lahir', 'tempat_lahir', $user) }}
         {{ form_input('Tgl. Lahir', 'tgl_lahir', $user, 'text', true, 'placeholder="YYYY-MM-DD"') }}

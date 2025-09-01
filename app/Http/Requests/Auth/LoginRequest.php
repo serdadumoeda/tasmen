@@ -92,7 +92,13 @@ class LoginRequest extends FormRequest
     {
         $identity = $this->input('identity');
 
-        $fieldName = filter_var($identity, FILTER_VALIDATE_EMAIL) ? 'email' : 'nip';
+        if (filter_var($identity, FILTER_VALIDATE_EMAIL)) {
+            $fieldName = 'email';
+        } elseif (is_numeric($identity) && strlen($identity) === 16) {
+            $fieldName = 'nik';
+        } else {
+            $fieldName = 'nip';
+        }
 
         return [
             $fieldName => $identity,
