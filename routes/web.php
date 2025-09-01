@@ -223,6 +223,9 @@ Route::get('/surat/verify/{id}', [\App\Http\Controllers\SuratVerificationControl
 // Route to create a task from a letter
 Route::get('/surat/{surat}/make-task', [\App\Http\Controllers\SuratTaskController::class, 'create'])->name('surat.make-task')->middleware('auth');
 
+// Route for the digital archive
+Route::get('/arsip', [\App\Http\Controllers\ArsipController::class, 'index'])->name('arsip.index')->middleware('auth');
+
 // API routes for units, accessible without authentication
 Route::get('/api/units/eselon-i', [UnitApiController::class, 'getEselonIUnits']);
 Route::get('/api/units/{parentUnit}/children', [UnitApiController::class, 'getChildUnits']);
