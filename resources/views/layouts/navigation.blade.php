@@ -71,7 +71,7 @@ if (count($words) >= 2) {
                                     <div class="border-t border-gray-200"></div>
                                     <x-dropdown-link :href="route('templatesurat.index')" :active="request()->routeIs('templatesurat.*')">Template Surat</x-dropdown-link>
                                     <x-dropdown-link :href="route('admin.klasifikasi.index')" :active="request()->routeIs('admin.klasifikasi.*')">Manajemen Klasifikasi</x-dropdown-link>
-                                    <x-dropdown-link href="#">Arsip Digital</x-dropdown-link> {{-- Placeholder --}}
+                                    <x-dropdown-link :href="route('arsip.index')" :active="request()->routeIs('arsip.index')">Arsip Digital</x-dropdown-link>
                                 </div>
                             </x-slot>
                         </x-dropdown>
