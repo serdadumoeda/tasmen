@@ -45,29 +45,11 @@ if (count($words) >= 2) {
                                 <div class="rounded-xl shadow-2xl py-1 bg-white ring-1 ring-black ring-opacity-10">
                                     <x-dropdown-link :href="route('global.dashboard')" :active="request()->routeIs('global.dashboard')">Daftar Kegiatan</x-dropdown-link>
                                     <div class="border-t border-gray-200"></div>
-                                    <x-dropdown-link :href="route('adhoc-tasks.index')" :active="request()->routeIs('adhoc-tasks.*')">Tugas Harian</x-dropdown-link>
-                                    <x-dropdown-link :href="route('special-assignments.index')" :active="request()->routeIs('special-assignments.*')">SK Penugasan</x-dropdown-link>
-                                </div>
-                            </x-slot>
-                        </x-dropdown>
-                    </div>
-
-                    {{-- Dropdown Menu Persuratan --}}
-                    <div class="hidden sm:flex sm:items-center">
-                        <x-dropdown align="left" width="60">
-                            <x-slot name="trigger">
-                                <button class="inline-flex items-center h-full px-3 py-2 border-b-2 text-sm font-medium leading-5 transition duration-150 ease-in-out
-                                    {{ request()->routeIs(['surat-masuk.*', 'surat-keluar.*'])
-                                        ? 'border-yellow-300 text-white bg-green-700/50'
-                                        : 'border-transparent text-white hover:text-yellow-300 hover:border-yellow-300/75 focus:outline-none focus:text-white focus:border-yellow-300/75' }}">
-                                    <div><i class="fas fa-envelope mr-2"></i>Persuratan</div>
-                                    <div class="ms-1"><svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg></div>
-                                </button>
-                            </x-slot>
-                            <x-slot name="content">
-                                <div class="rounded-xl shadow-2xl py-1 bg-white ring-1 ring-black ring-opacity-10">
                                     <x-dropdown-link :href="route('surat-masuk.index')" :active="request()->routeIs('surat-masuk.*')">Surat Masuk</x-dropdown-link>
                                     <x-dropdown-link :href="route('surat-keluar.index')" :active="request()->routeIs('surat-keluar.*')">Surat Keluar</x-dropdown-link>
+                                    <div class="border-t border-gray-200"></div>
+                                    <x-dropdown-link :href="route('adhoc-tasks.index')" :active="request()->routeIs('adhoc-tasks.*')">Tugas Harian</x-dropdown-link>
+                                    <x-dropdown-link :href="route('special-assignments.index')" :active="request()->routeIs('special-assignments.*')">SK Penugasan</x-dropdown-link>
                                 </div>
                             </x-slot>
                         </x-dropdown>
