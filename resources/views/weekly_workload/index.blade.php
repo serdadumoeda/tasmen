@@ -5,11 +5,11 @@
         </h2>
     </x-slot>
 
-    <div class="py-12 bg-gray-50"> {{-- Latar belakang konsisten --}}
+    <div class="py-12 bg-gray-50">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg"> {{-- Shadow dan rounded-lg konsisten --}}
+            <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
                 <div class="p-6 text-gray-900">
-                    <p class="text-base text-gray-700 mb-6 flex items-center"> {{-- Menyesuaikan ukuran teks dan ikon --}}
+                    <p class="text-base text-gray-700 mb-6 flex items-center">
                         <i class="fas fa-info-circle mr-3 text-blue-500 fa-lg"></i>
                         Halaman ini menganalisis total jam kerja yang ditugaskan kepada setiap anggota tim dibandingkan dengan standar
                         <strong class="text-indigo-600 ml-1">{{ $standardHours }} jam per minggu</strong>.
@@ -29,7 +29,7 @@
 
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-100"> {{-- Header tabel lebih menonjol --}}
+                            <thead class="bg-gray-100">
                                 <tr>
                                     <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider rounded-tl-lg">
                                         <i class="fas fa-user-circle mr-2"></i> Nama Anggota
@@ -42,10 +42,28 @@
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody class="bg-white divide-y divide-gray-100"> {{-- Divider lebih halus --}}
+                            <tbody class="bg-white divide-y divide-gray-100">
                                 @forelse ($workloadData as $data)
                                 @php
-                                    $workloadPercentage = $data['workload_percentage'];
+                                    $workloadRatio = $data['workload_ratio'];
+                                    $workloadPercentage = round($workloadRatio * 100);
+
+                                    $bgColor = 'bg-red-500'; // Overload
+                                    $textColor = 'text-red-700';
+                                    $icon = 'fas fa-exclamation-circle text-red-500';
+                                    $title = 'Beban Berlebih!';
+
+                                    if ($workloadRatio <= $thresholdNormal) {
+                                        $bgColor = 'bg-green-500'; // Normal
+                                        $textColor = 'text-green-700';
+                                        $icon = 'fas fa-check-circle text-green-500';
+                                        $title = 'Beban Kerja Normal';
+                                    } elseif ($workloadRatio <= $thresholdWarning) {
+                                        $bgColor = 'bg-yellow-500'; // Warning
+                                        $textColor = 'text-yellow-700';
+                                        $icon = 'fas fa-info-circle text-yellow-500';
+                                        $title = 'Beban Kerja Penuh';
+                                    }
                                 @endphp
                                 <tr class="hover:bg-gray-50 transition-colors duration-150">
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800 flex items-center">
@@ -56,30 +74,14 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="flex items-center">
-                                            <div class="w-full bg-gray-200 rounded-full h-4 mr-4 shadow-inner"> {{-- Tinggi progress bar lebih besar, shadow-inner --}}
-                                                @php
-                                                    $bgColor = 'bg-blue-500'; // Default
-                                                    if ($workloadPercentage > 100) {
-                                                        $bgColor = 'bg-red-500'; // Overload
-                                                    } elseif ($workloadPercentage > 70) {
-                                                        $bgColor = 'bg-orange-500'; // High but not overload
-                                                    } elseif ($workloadPercentage < 50) {
-                                                        $bgColor = 'bg-green-500'; // Underload
-                                                    }
-                                                @endphp
+                                            <div class="w-full bg-gray-200 rounded-full h-4 mr-4 shadow-inner">
                                                 <div class="{{ $bgColor }} h-4 rounded-full transition-all duration-300 ease-in-out" style="width: {{ min($workloadPercentage, 100) }}%"></div>
                                             </div>
-                                            <span class="font-bold text-sm {{ $workloadPercentage > 100 ? 'text-red-700' : ($workloadPercentage < 70 ? 'text-green-700' : 'text-orange-700') }}">
+                                            <span class="font-bold text-sm {{ $textColor }}">
                                                 {{ $workloadPercentage }}%
                                             </span>
                                             <span class="ml-2 inline-flex items-center">
-                                                @if ($workloadPercentage > 100)
-                                                    <i class="fas fa-exclamation-circle text-red-500" title="Beban Berlebih!"></i>
-                                                @elseif ($workloadPercentage < 70)
-                                                    <i class="fas fa-check-circle text-green-500" title="Beban Kerja Rendah"></i>
-                                                @else
-                                                    <i class="fas fa-info-circle text-blue-500" title="Beban Kerja Normal"></i>
-                                                @endif
+                                                <i class="{{ $icon }}" title="{{ $title }}"></i>
                                             </span>
                                         </div>
                                     </td>

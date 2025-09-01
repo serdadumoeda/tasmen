@@ -77,6 +77,28 @@
                                     <input type="text" id="signer_block_line_4" name="signer_block_line_4" value="{{ old('signer_block_line_4', $settings['signer_block_line_4'] ?? '') }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                                 </div>
                             </div>
+
+                            {{-- Kolom Pengaturan Beban Kerja --}}
+                            <div class="space-y-4 md:col-span-2 border-t pt-8 mt-8">
+                                <h4 class="text-lg font-semibold text-gray-800 border-b pb-2">Pengaturan Beban Kerja</h4>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <div>
+                                        <label for="workload_standard_hours" class="block text-sm font-medium text-gray-700">Standar Jam Kerja Mingguan</label>
+                                        <input type="text" id="workload_standard_hours" name="workload_standard_hours" value="{{ old('workload_standard_hours', $settings['workload_standard_hours'] ?? '37.5') }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                                        <p class="text-xs text-gray-500 mt-1">Gunakan titik sebagai pemisah desimal.</p>
+                                    </div>
+                                    <div>
+                                        <label for="workload_threshold_normal" class="block text-sm font-medium text-gray-700">Batas Atas Zona Hijau (Normal)</label>
+                                        <input type="text" id="workload_threshold_normal" name="workload_threshold_normal" value="{{ old('workload_threshold_normal', $settings['workload_threshold_normal'] ?? '0.75') }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                                        <p class="text-xs text-gray-500 mt-1">Contoh: 0.75 berarti di bawah 75% dianggap normal.</p>
+                                    </div>
+                                    <div>
+                                        <label for="workload_threshold_warning" class="block text-sm font-medium text-gray-700">Batas Atas Zona Kuning (Peringatan)</label>
+                                        <input type="text" id="workload_threshold_warning" name="workload_threshold_warning" value="{{ old('workload_threshold_warning', $settings['workload_threshold_warning'] ?? '1.0') }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                                        <p class="text-xs text-gray-500 mt-1">Contoh: 1.0 berarti antara 75% dan 100% dianggap peringatan.</p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="flex items-center justify-end mt-8 pt-5 border-t border-gray-200">
