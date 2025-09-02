@@ -28,6 +28,7 @@ class PerformanceSettingController extends Controller
             'rating_thresholds.*' => 'numeric|min:0',
             'weekly_workload_thresholds.green' => 'required|numeric|min:0',
             'weekly_workload_thresholds.yellow' => 'required|numeric|gt:weekly_workload_thresholds.green',
+            'abk_effective_hours_per_year' => 'required|integer|min:1',
         ]);
 
         foreach ($validated as $key => $value) {

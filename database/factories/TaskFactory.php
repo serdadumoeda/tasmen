@@ -5,6 +5,8 @@ namespace Database\Factories;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use App\Models\Task;
 use App\Models\Project;
+use App\Models\TaskStatus;
+use App\Models\PriorityLevel;
 
 class TaskFactory extends Factory
 {
@@ -12,8 +14,14 @@ class TaskFactory extends Factory
 
     public function definition(): array
     {
-        $status = $this->faker->randomElement(['pending', 'in_progress', 'completed']);
-        $progress = match($status) {
+        // Fetch IDs from the database once
+        $statusIds = TaskStatus::pluck('id')->toArray();
+        $priorityIds = PriorityLevel::pluck('id')->toArray();
+
+        $statusId = $this->faker->randomElement($statusIds);
+        $status = TaskStatus::find($statusId);
+
+        $progress = match($status->key) {
             'pending' => 0,
             'in_progress' => $this->faker->numberBetween(10, 90),
             'completed' => 100,
@@ -24,13 +32,13 @@ class TaskFactory extends Factory
         return [
             'title' => $this->faker->sentence(4),
             'description' => $this->faker->paragraph,
-            'status' => $status,
+            'task_status_id' => $statusId,
+            'priority_level_id' => $this->faker->randomElement($priorityIds),
             'progress' => $progress,
             'start_date' => $this->faker->dateTimeBetween('-1 week', $deadline),
             'deadline' => $deadline,
             'project_id' => Project::factory(),
             'estimated_hours' => $this->faker->numberBetween(4, 40),
-            'priority' => $this->faker->randomElement(Task::PRIORITIES),
         ];
     }
 }

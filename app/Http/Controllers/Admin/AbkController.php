@@ -18,8 +18,8 @@ class AbkController extends Controller
         Gate::authorize('manage_settings');
         $jobTypes = JobType::with('workloadComponents')->get();
 
-        // Placeholder for effective working hours per year. This should be a configurable setting.
-        $effectiveHoursPerYear = 1500;
+        // Get effective working hours from performance settings, with a sensible default.
+        $effectiveHoursPerYear = (int) \App\Models\PerformanceSetting::get('abk_effective_hours_per_year', 1500);
 
         $results = $jobTypes->map(function ($jobType) use ($effectiveHoursPerYear) {
             $totalHoursNeeded = $jobType->workloadComponents->sum(function ($component) {
