@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
+use App\Enums\RequestStatus;
 use App\Models\PeminjamanRequest;
 use App\Models\User;
 use App\Models\Unit;
@@ -36,7 +37,7 @@ class EscalatePeminjamanRequests extends Command
         Log::info('Scheduler Eskalasi Peminjaman: Memulai pengecekan.');
 
         // Cari semua permintaan yang statusnya 'pending' dan sudah melewati batas waktu (due_date)
-        $overdueRequests = PeminjamanRequest::where('status', 'pending')
+        $overdueRequests = PeminjamanRequest::where('status', RequestStatus::PENDING)
             ->where('due_date', '<', Carbon::now())
             ->get();
 
@@ -71,7 +72,9 @@ class EscalatePeminjamanRequests extends Command
 
             // Cari manajer di unit atasan
             $nextApprover = User::where('unit_id', $parentUnit->id)
-                                ->whereIn('role', [User::ROLE_ESELON_I, User::ROLE_ESELON_II, User::ROLE_KOORDINATOR, User::ROLE_SUB_KOORDINATOR])
+                                ->whereHas('roles', function ($query) {
+                                    $query->whereIn('name', ['Eselon I', 'Eselon II', 'Koordinator', 'Sub Koordinator']);
+                                })
                                 ->first();
 
             if (!$nextApprover) {

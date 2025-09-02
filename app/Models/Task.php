@@ -20,7 +20,7 @@ class Task extends Model
         'progress',
         'project_id',
         'estimated_hours',
-        'status',
+        'task_status_id',
         'priority',
     ];
 
@@ -35,6 +35,14 @@ class Task extends Model
     public function project()
     {
         return $this->belongsTo(Project::class);
+    }
+
+    /**
+     * The status of the task.
+     */
+    public function status()
+    {
+        return $this->belongsTo(TaskStatus::class, 'task_status_id');
     }
 
     public function assignees()
@@ -62,17 +70,6 @@ class Task extends Model
         return $this->hasMany(SubTask::class);
     }
 
-    public function getStatusColorClassAttribute(): string
-    {
-        return match ($this->status) {
-            'pending'     => 'bg-yellow-100 text-yellow-800',
-            'in_progress' => 'bg-blue-100 text-blue-800',
-            'for_review'  => 'bg-orange-100 text-orange-800',
-            'completed'   => 'bg-green-100 text-green-800',
-            default       => 'bg-gray-100 text-gray-800',
-        };
-    }
-
     // Method baru untuk kalkulasi progress
     public function recalculateProgress()
     {
@@ -83,36 +80,14 @@ class Task extends Model
         
         if ($totalSubTasks > 0) {
             // Jika ada sub-tugas, hitung progress berdasarkan jumlah yang selesai.
-            // Logika disederhanakan: where()->count() berfungsi baik pada collection maupun query builder.
             $completedSubTasks = $subTasks->where('is_completed', true)->count();
-
             $this->progress = round(($completedSubTasks / $totalSubTasks) * 100);
-        } else {
-            // Jika tidak ada sub-tugas, progress ditentukan oleh status manual.
-            // Ini untuk tugas sederhana tanpa rincian.
-            if ($this->status === 'completed') {
-                $this->progress = 100;
-            } elseif ($this->status === 'pending') {
-                $this->progress = 0;
-            }
-            // Jika statusnya in_progress tapi tidak punya sub-tugas, progress-nya tidak diubah.
-        }
-
-        // ==========================================================
-        // =============      LOGIKA PERPINDAHAN OTOMATIS      ============
-        // ==========================================================
-        // Logika ini hanya berjalan jika tugas tidak sedang dalam proses review manual.
-        if ($this->status !== 'for_review') {
-            if ($this->progress >= 100) {
-                $this->status = 'completed'; // Jika progress 100%, otomatis pindah ke Selesai.
-            } elseif ($this->progress > 0) {
-                $this->status = 'in_progress'; // Jika progress antara 1-99%, otomatis pindah ke Dikerjakan.
-            } else {
-                $this->status = 'pending'; // Jika progress 0%, kembali ke Menunggu.
-            }
         }
         
-        // Simpan semua perubahan (progress dan status) ke database.
+        // Note: Automatic status change logic is removed from the model.
+        // This responsibility is now handled by controllers or dedicated services
+        // to better respect the application's approval workflow.
+
         $this->save();
     }
 }

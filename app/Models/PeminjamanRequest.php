@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\RequestStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -19,6 +20,11 @@ class PeminjamanRequest extends Model
         'message',
         'rejection_reason',
         'due_date',
+    ];
+
+    protected $casts = [
+        'status' => RequestStatus::class,
+        'due_date' => 'datetime',
     ];
 
     public function project(): BelongsTo

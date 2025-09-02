@@ -105,7 +105,7 @@ class TaskController extends Controller
             'priority_level_id' => 'required|exists:priority_levels,id',
             'assignees' => 'nullable|array',
             'assignees.*' => 'exists:users,id',
-            'file_upload' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx,xls,xlsx|max:2048',
+            'file_upload' => 'nullable|' . config('tasmen.file_uploads.tasks.rules'),
         ]);
 
         $task->fill($validated);
@@ -211,9 +211,9 @@ class TaskController extends Controller
             $task->progress = 100;
         } elseif ($newStatus->key === 'pending') {
             $task->progress = 0;
-        } elseif ($task->progress == 100) {
-            $task->progress = 90;
         }
+        // The arbitrary "90" has been removed. Progress should be recalculated
+        // based on subtasks or other logic, not set to a magic number.
 
         $task->save();
 
@@ -227,7 +227,7 @@ class TaskController extends Controller
         $this->authorize('update', $task);
 
         $validated = $request->validate([
-            'file' => 'required|file|mimes:pdf,jpg,jpeg,png,doc,docx,xls,xlsx|max:2048',
+            'file' => 'required|' . config('tasmen.file_uploads.tasks.rules'),
         ]);
 
         try {
