@@ -49,6 +49,10 @@ class AuthServiceProvider extends ServiceProvider
     {
         $this->registerPolicies();
 
+        Gate::define('manage_settings', function ($user) {
+            return $user->isSuperAdmin();
+        });
+
         Gate::before(function ($user, $ability) {
             // First, check if a Superadmin is impersonating another user.
             // If so, they should retain all their original permissions.

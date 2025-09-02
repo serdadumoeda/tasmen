@@ -22,57 +22,93 @@ class LeaveApprovalService
         $workflow = $this->getWorkflowForUser($applicant);
 
         if (!$workflow) {
-            // Fallback to old logic if no workflow is defined
             return $this->fallbackApprovalLogic($approver);
         }
 
         $currentStepNumber = $leaveRequest->last_approved_step ?? 0;
-        $nextStep = $workflow->steps()->where('step', '>', $currentStepNumber)->orderBy('step')->first();
+        $steps = $workflow->steps()->where('step', '>', $currentStepNumber)->orderBy('step')->get();
 
-        if (!$nextStep || $nextStep->is_final_approval) {
-            return $this->finalApproval($leaveRequest);
+        foreach ($steps as $step) {
+            if ($this->checkCondition($leaveRequest, $step)) {
+                // Condition met, this is our next step
+                if ($step->is_final_approval) {
+                    return $this->finalApproval($leaveRequest);
+                }
+
+                $nextApprover = $this->findNextApprover($applicant, $step->approver_role);
+                if ($nextApprover) {
+                    return $this->forwardTo($nextApprover, $step->step);
+                }
+            }
+            // If condition is not met, the loop continues to the next step
         }
 
-        $nextApprover = $this->findNextApprover($applicant, $nextStep->approver_role);
-
-        if ($nextApprover) {
-            return $this->forwardTo($nextApprover, $nextStep->step);
-        }
-
-        // If no next approver can be found (e.g., top of hierarchy), it's a final approval.
+        // If loop finishes (no more steps or no conditions met), it's a final approval.
         return $this->finalApproval($leaveRequest);
+    }
+
+    /**
+     * Check if the conditions for a workflow step are met.
+     *
+     * @param LeaveRequest $leaveRequest
+     * @param ApprovalWorkflowStep $step
+     * @return boolean
+     */
+    private function checkCondition(LeaveRequest $leaveRequest, ApprovalWorkflowStep $step): bool
+    {
+        // If no condition is set, it's always met.
+        if (is_null($step->condition_type) || is_null($step->condition_value)) {
+            return true;
+        }
+
+        switch ($step->condition_type) {
+            case 'leave_duration_greater_than':
+                $leaveDuration = $leaveRequest->duration_in_days; // Assuming this attribute exists
+                return $leaveDuration > (int)$step->condition_value;
+
+            case 'applicant_role_is':
+                return $leaveRequest->user->role->name === $step->condition_value;
+
+            case 'applicant_role_in':
+                $roles = explode(',', $step->condition_value);
+                return in_array($leaveRequest->user->role->name, $roles);
+
+            // Add other conditions here as needed
+            // case '...':
+
+            default:
+                // Unknown condition type defaults to true to not block the workflow.
+                return true;
+        }
     }
 
     private function getWorkflowForUser(User $user): ?ApprovalWorkflow
     {
-        // Try to find a workflow assigned to the user's unit, otherwise use a default.
-        return $user->unit->approvalWorkflow ?? ApprovalWorkflow::find(1); // Assumes a default workflow with ID 1
+        return $user->unit->approvalWorkflow ?? ApprovalWorkflow::find(1);
     }
 
-    private function findNextApprover(User $applicant, string $requiredRole): ?User
+    private function findNextApprover(User $applicant, string $requiredRoleName): ?User
     {
         $supervisor = $applicant->atasan;
         $depth = 0;
-        $maxDepth = 10; // Failsafe to prevent infinite loops
+        $maxDepth = 10; // Failsafe
 
         while ($supervisor && $depth < $maxDepth) {
-            if ($supervisor->role === $requiredRole) {
+            if ($supervisor->role && $supervisor->role->name === $requiredRoleName) {
                 return $supervisor;
             }
             $supervisor = $supervisor->atasan;
             $depth++;
         }
-
-        return null; // No approver with the required role found in the hierarchy.
+        return null;
     }
 
     private function finalApproval(LeaveRequest $leaveRequest): array
     {
-        // On final approval, we don't need to update the step, just the status.
         return [
             'status' => 'approved',
             'next_approver_id' => null,
-            'last_approved_step' => $leaveRequest->last_approved_step // Keep the last step number
+            'last_approved_step' => $leaveRequest->last_approved_step
         ];
     }
 
@@ -85,12 +121,10 @@ class LeaveApprovalService
         ];
     }
 
-    // The old logic as a fallback.
     private function fallbackApprovalLogic(User $approver): array
     {
         $nextApprover = $approver->atasan;
         if ($nextApprover) {
-            // Note: In fallback mode, we don't have a step number to track.
             return ['status' => 'approved_by_supervisor', 'next_approver_id' => $nextApprover->id, 'last_approved_step' => 0];
         }
         return ['status' => 'approved', 'next_approver_id' => null, 'last_approved_step' => 0];

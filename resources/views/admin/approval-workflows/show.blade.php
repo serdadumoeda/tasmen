@@ -25,6 +25,7 @@
                                 <tr>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Langkah Ke-</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Peran Approver</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kondisi</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Approval Final?</th>
                                     <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
                                 </tr>
@@ -34,6 +35,13 @@
                                     <tr>
                                         <td class="px-6 py-4 whitespace-nowrap">{{ $step->step }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap">{{ $step->approver_role }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            @if($step->condition_type)
+                                                <span class="font-semibold">{{ $step->condition_type }}</span>: {{ $step->condition_value }}
+                                            @else
+                                                -
+                                            @endif
+                                        </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             @if($step->is_final_approval)
                                                 <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Ya</span>
@@ -51,7 +59,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="4" class="text-center py-8 text-gray-500">
+                                        <td colspan="5" class="text-center py-8 text-gray-500">
                                             Belum ada langkah yang ditambahkan.
                                         </td>
                                     </tr>
@@ -68,7 +76,7 @@
                     <h3 class="text-lg font-bold text-gray-800 mb-4">Tambah Langkah Baru</h3>
                     <form action="{{ route('admin.approval-workflows.steps.store', $workflow) }}" method="POST">
                         @csrf
-                        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div>
                                 <label for="step" class="block text-sm font-medium text-gray-700">Langkah Ke-</label>
                                 <input type="number" name="step" id="step" value="{{ ($workflow->steps->max('step') ?? 0) + 1 }}" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
@@ -77,7 +85,7 @@
                                 <label for="approver_role" class="block text-sm font-medium text-gray-700">Peran Approver</label>
                                 <select name="approver_role" id="approver_role" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
                                     @foreach($roles as $role)
-                                        <option value="{{ $role['name'] }}">{{ $role['name'] }}</option>
+                                        <option value="{{ $role->name }}">{{ $role->label }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -87,11 +95,26 @@
                                     <span class="ml-2 text-sm text-gray-600">Jadikan Approval Final</span>
                                 </label>
                             </div>
-                            <div class="flex items-end">
-                                <button type="submit" class="w-full inline-flex justify-center items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700">
-                                    Tambah Langkah
-                                </button>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6 border-t pt-6">
+                             <div>
+                                <label for="condition_type" class="block text-sm font-medium text-gray-700">Tipe Kondisi (Opsional)</label>
+                                <select name="condition_type" id="condition_type" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                                    <option value="">Tanpa Kondisi</option>
+                                    <option value="leave_duration_greater_than">Durasi Cuti > dari (hari)</option>
+                                    <option value="applicant_role_is">Role Pemohon adalah</option>
+                                    <option value="applicant_role_in">Role Pemohon ada diantara</option>
+                                </select>
                             </div>
+                            <div>
+                                <label for="condition_value" class="block text-sm font-medium text-gray-700">Nilai Kondisi (Opsional)</label>
+                                <input type="text" name="condition_value" id="condition_value" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                            </div>
+                        </div>
+                        <div class="flex items-end justify-end mt-6">
+                            <button type="submit" class="w-full md:w-auto inline-flex justify-center items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700">
+                                Tambah Langkah
+                            </button>
                         </div>
                     </form>
                 </div>

@@ -52,7 +52,7 @@ class WeeklyWorkloadController extends Controller
             $startOfWeek = $today->copy()->startOfWeek();
             $endOfWeek = $today->copy()->endOfWeek();
 
-            $effectiveWeeklyHours = $member->getEffectiveWorkingHours($startOfWeek, $endOfWeek);
+            $effectiveWeeklyHours = $member->getEffectiveWorkingHours($startOfWeek, $endOfWeek, $standardHours);
 
             $totalWeeklyHours = $member->tasks->reduce(function ($carry, $task) {
                 $remainingHours = $task->estimated_hours * ((100 - $task->progress) / 100);
