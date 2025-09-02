@@ -4,8 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Task;
 use App\Models\User;
-use App\Models\TaskStatus;
-use App\Models\PriorityLevel;
 use App\Notifications\TaskAssigned;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
@@ -21,25 +19,25 @@ class AdHocTaskController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
-        $query = Task::whereNull('project_id')->with('assignees', 'status', 'priorityLevel')->latest();
+        $query = Task::whereNull('project_id')->with(['assignees', 'status', 'priorityLevel'])->latest();
         $subordinates = collect();
 
-        $userRoleName = $user->role->name ?? '';
-        if ($userRoleName === 'superadmin' || $userRoleName === 'menteri') {
-            $subordinates = User::whereHas('role', fn($q) => $q->where('name', '!=', 'superadmin'))->orderBy('name')->get();
-        }
-        elseif ($user->canManageUsers()) {
-            $subordinateIds = $user->getAllSubordinateIds()->push($user->id);
+        if ($user->canManageUsers()) {
+            $subordinateIds = $user->getAllSubordinateIds();
+            $subordinateIds->push($user->id);
             $subordinates = User::whereIn('id', $subordinateIds)->orderBy('name')->get();
-            $query->whereHas('assignees', fn ($q) => $q->whereIn('user_id', $subordinateIds));
-        }
-        else {
-            $query->whereHas('assignees', fn ($q) => $q->where('user_id', $user->id));
+
+            $query->whereHas('assignees', function ($q) use ($subordinateIds) {
+                $q->whereIn('user_id', $subordinateIds);
+            });
+        } else {
+            $query->whereHas('assignees', function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            });
         }
 
         if ($request->filled('search')) {
-            $search = strtolower($request->input('search'));
-            $query->where(fn ($q) => $q->whereRaw('LOWER(title) LIKE ?', ["%{$search}%"])->orWhereRaw('LOWER(description) LIKE ?', ["%{$search}%"]));
+            $query->where('title', 'like', '%' . $request->input('search') . '%');
         }
 
         if ($user->canManageUsers() && $request->filled('personnel_id')) {
@@ -49,23 +47,23 @@ class AdHocTaskController extends Controller
             }
         }
 
-        if ($request->filled('status_id')) {
-            $query->where('task_status_id', $request->input('status_id'));
+        if ($request->filled('task_status_id')) {
+            $query->where('task_status_id', $request->input('task_status_id'));
         }
 
-        if ($request->filled('priority_id')) {
-            $query->where('priority_level_id', $request->input('priority_id'));
+        if ($request->filled('priority_level_id')) {
+            $query->where('priority_level_id', $request->input('priority_level_id'));
         }
 
         $sortBy = $request->input('sort_by', 'deadline');
         $sortDir = $request->input('sort_dir', 'asc');
         if (in_array($sortBy, ['title', 'deadline', 'created_at'])) {
-             $query->orderBy($sortBy, $sortDir);
+            $query->orderBy($sortBy, $sortDir);
         }
 
         $assignedTasks = $query->paginate(10)->withQueryString();
-        $statuses = TaskStatus::all();
-        $priorities = PriorityLevel::all();
+        $statuses = \App\Models\TaskStatus::all();
+        $priorities = \App\Models\PriorityLevel::all();
 
         return view('adhoc-tasks.index', compact('assignedTasks', 'subordinates', 'statuses', 'priorities'));
     }
@@ -75,25 +73,33 @@ class AdHocTaskController extends Controller
      */
     public function create()
     {
+        $this->authorize('create', Task::class);
         $user = Auth::user();
         $assignableUsers = collect();
 
         if ($user->canManageUsers()) {
-            $subordinateIds = $user->getAllSubordinateIds()->push($user->id);
+            $subordinateIds = $user->getAllSubordinateIds();
+            $subordinateIds[] = $user->id;
             $assignableUsers = User::whereIn('id', $subordinateIds)->orderBy('name')->get();
         } else {
             $assignableUsers->push($user);
         }
         
+        $priorities = \App\Models\PriorityLevel::all();
+
         return view('adhoc-tasks.create', [
             'task' => new Task(),
             'assignableUsers' => $assignableUsers,
-            'priorities' => PriorityLevel::all(),
+            'priorities' => $priorities,
         ]);
     }
 
+    /**
+     * Menyimpan tugas ad-hoc baru ke database.
+     */
     public function store(Request $request)
     {
+        $this->authorize('create', Task::class);
         $user = auth()->user();
         
         $validated = $request->validate([
@@ -102,7 +108,7 @@ class AdHocTaskController extends Controller
             'start_date' => 'nullable|date',
             'deadline' => 'required|date|after_or_equal:start_date',
             'estimated_hours' => 'required|numeric|min:0.1',
-            'priority_level_id' => 'nullable|exists:priority_levels,id',
+            'priority_level_id' => 'required|exists:priority_levels,id',
             'file_upload' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx,xls,xlsx|max:2048',
         ]);
         
@@ -114,15 +120,13 @@ class AdHocTaskController extends Controller
             $assigneeIds[] = $user->id;
         }
 
-        $defaultStatus = TaskStatus::where('key', 'pending')->first();
-        $defaultPriority = PriorityLevel::where('key', 'medium')->first();
+        $defaultStatus = \App\Models\TaskStatus::where('key', 'pending')->firstOrFail();
 
         $task = new Task();
         $task->fill($validated);
         $task->task_status_id = $defaultStatus->id;
         $task->progress = 0;
-        $task->priority_level_id = $request->input('priority_level_id', $defaultPriority->id);
-        $task->project_id = null;
+        $task->project_id = null; // Menandakan ini tugas ad-hoc
         $task->save();
         
         $redirect = redirect()->route('adhoc-tasks.index');
@@ -147,8 +151,9 @@ class AdHocTaskController extends Controller
         $task->assignees()->sync($assigneeIds);
         $usersToNotify = User::find($assigneeIds);
         foreach ($usersToNotify as $recipient) {
-            $recipient->notify(new TaskAssigned($task));
+            $recipient->notify(new \App\Notifications\TaskAssigned($task));
         }
+
        
         return $redirect;
     }

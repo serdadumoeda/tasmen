@@ -15,18 +15,11 @@ class PeminjamanRequest extends Model
         'requester_id',
         'requested_user_id',
         'approver_id',
-        'status_id',
+        'status',
         'message',
         'rejection_reason',
         'due_date',
     ];
-
-    protected $with = ['status'];
-
-    public function status(): BelongsTo
-    {
-        return $this->belongsTo(PeminjamanRequestStatus::class, 'status_id');
-    }
 
     public function project(): BelongsTo
     {

@@ -2,87 +2,45 @@
 namespace App\Notifications;
 
 use App\Models\Task;
-use App\Models\NotificationTemplate;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Messages\MailMessage;
 
-class TaskAssigned extends Notification implements ShouldQueue
+class TaskAssigned extends Notification
 {
     use Queueable;
 
-    protected $template;
-    protected $placeholders;
-
-    public function __construct(public Task $task)
-    {
-        $this->template = NotificationTemplate::where('key', 'task_assigned')->first();
-    }
+    public function __construct(public Task $task) {}
 
     public function via(object $notifiable): array
     {
-        // Return database channel if template exists, otherwise none.
-        return $this->template ? ['database'] : [];
-    }
-
-    private function getPlaceholders(object $notifiable): array
-    {
-        if (!isset($this->placeholders)) {
-            $this->placeholders = [
-                '{{user_name}}' => $notifiable->name,
-                '{{task_title}}' => $this->task->title,
-                '{{project_title}}' => $this->task->project->name ?? 'Tugas Harian',
-            ];
-        }
-        return $this->placeholders;
-    }
-
-    private function replacePlaceholders(string $content, array $placeholders): string
-    {
-        return str_replace(array_keys($placeholders), array_values($placeholders), $content);
+        return ['database'];
     }
 
     public function toArray(object $notifiable): array
     {
-        if (!$this->template) {
-            return []; // Don't send notification if template is missing
+        // MODIFIKASI: Logika cerdas untuk menangani tugas kegiatan & ad-hoc
+
+        // Jika tugas ini memiliki project_id (tugas kegiatan)
+        if ($this->task->project_id) {
+            return [
+                'task_id' => $this->task->id,
+                'task_title' => $this->task->title,
+                'project_id' => $this->task->project->id,
+                'project_name' => $this->task->project->name,
+                'message' => "Anda ditugaskan tugas baru: '{$this->task->title}' dalam kegiatan '{$this->task->project->name}'",
+                'url' => route('projects.show', $this->task->project_id),
+            ];
         }
 
-        $placeholders = $this->getPlaceholders($notifiable);
-        $message = $this->replacePlaceholders($this->template->body, $placeholders);
-
-        $url = $this->task->project_id
-            ? route('projects.show', $this->task->project_id)
-            : route('tasks.edit', $this->task->id);
-
+        // Jika tugas ini TIDAK memiliki project_id (tugas ad-hoc)
         return [
             'task_id' => $this->task->id,
             'task_title' => $this->task->title,
-            'project_id' => $this->task->project_id,
-            'message' => $message,
-            'url' => $url,
+            'project_id' => null, // Tidak ada kegiatan
+            'project_name' => null, // Tidak ada kegiatan
+            'message' => "Anda mendapat tugas harian baru: '{$this->task->title}'",
+            // Arahkan ke halaman detail tugas, yang akan dialihkan ke halaman daftar tugas ad-hoc
+            'url' => route('tasks.edit', $this->task->id),
         ];
-    }
-
-    public function toMail(object $notifiable): MailMessage
-    {
-        if (!$this->template) {
-            // Return a dummy message or handle error
-            return (new MailMessage)->line('Error: Notification template not found.');
-        }
-
-        $placeholders = $this->getPlaceholders($notifiable);
-        $subject = $this->replacePlaceholders($this->template->subject, $placeholders);
-        $body = $this->replacePlaceholders($this->template->body, $placeholders);
-
-        $url = $this->task->project_id
-            ? route('projects.show', $this->task->project_id)
-            : route('tasks.edit', $this->task->id);
-
-        return (new MailMessage)
-                    ->subject($subject)
-                    ->line($body)
-                    ->action('Lihat Tugas', $url);
     }
 }

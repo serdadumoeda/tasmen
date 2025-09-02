@@ -50,19 +50,15 @@
     </div>
     
     <div>
-        <label for="priority" class="block font-semibold text-sm text-gray-700 mb-1">Prioritas</label>
-        @php
-        $priorityLabels = [
-            'low' => 'Rendah',
-            'medium' => 'Sedang',
-            'high' => 'Tinggi',
-            'critical' => 'Kritis',
-        ];
-        @endphp
-        <select name="priority" id="priority" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150">
-            @foreach(App\Models\Task::PRIORITIES as $priorityValue)
-                <option value="{{ $priorityValue }}" @selected(old('priority', $task->priority ?? 'medium') == $priorityValue)>
-                    {{ $priorityLabels[$priorityValue] ?? ucfirst($priorityValue) }}
+        <label for="priority_level_id" class="block font-semibold text-sm text-gray-700 mb-1">Prioritas</label>
+        <select name="priority_level_id" id="priority_level_id" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" required>
+            @php
+                // Find the default 'medium' priority ID if it exists, otherwise fallback to any first level.
+                $defaultPriorityId = $priorities->firstWhere('key', 'medium')?->id ?? $priorities->first()?->id;
+            @endphp
+            @foreach($priorities as $priority)
+                <option value="{{ $priority->id }}" @selected(old('priority_level_id', $task->priority_level_id ?? $defaultPriorityId) == $priority->id)>
+                    {{ $priority->label }}
                 </option>
             @endforeach
         </select>
@@ -86,19 +82,5 @@
             @endforeach
             </ul>
         @endif
-    </div>
-</div>
-
-    {{-- BARU: Menambahkan field untuk upload lampiran --}}
-    <div>
-        <label for="file_upload" class="block font-semibold text-sm text-gray-700 mb-1">Lampiran (Opsional)</label> {{-- Menambahkan font-semibold dan mb-1 --}}
-        <input type="file" name="file_upload" id="file_upload" class="block w-full mt-1 text-sm text-gray-500
-            file:mr-4 file:py-2 file:px-4
-            file:rounded-full file:border-0
-            file:text-sm file:font-semibold
-            file:bg-blue-50 file:text-blue-700
-            hover:file:bg-blue-100 hover:file:shadow-sm
-            focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-150"> {{-- Menambahkan shadow dan fokus pada file input --}}
-        @error('file_upload') <span class="text-sm text-red-600 mt-1">{{ $message }}</span> @enderror
     </div>
 </div>

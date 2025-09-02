@@ -42,19 +42,16 @@ class GlobalDashboardController extends Controller
             $taskQuery->whereIn('project_id', $relevantProjectIds);
         }
 
-        $completedStatusId = \App\Models\TaskStatus::where('key', 'completed')->value('id');
-
         $stats = [
             'total_projects' => (clone $projectQuery)->count(),
             'total_tasks' => (clone $taskQuery)->count(),
-            'completed_tasks' => (clone $taskQuery)->where('task_status_id', $completedStatusId)->count(),
+            'completed_tasks' => (clone $taskQuery)->where('status', 'completed')->count(),
         ];
 
         if (!$currentUser->isStaff()) {
-            $pendingStatusId = \App\Models\PeminjamanRequestStatus::where('key', 'pending')->value('id');
             $stats['total_users'] = (clone $userQuery)->count();
             $stats['active_users'] = (clone $userQuery)->where('status', 'active')->count();
-            $stats['pending_requests'] = PeminjamanRequest::where('status_id', $pendingStatusId)
+            $stats['pending_requests'] = PeminjamanRequest::where('status', 'pending')
                                         ->whereIn('approver_id', (clone $userQuery)->pluck('id'))
                                         ->count();
         }

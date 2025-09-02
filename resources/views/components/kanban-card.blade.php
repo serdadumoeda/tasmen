@@ -22,7 +22,7 @@
         $url = route('projects.show', $task->project) . '#task-' . $task->id; 
         $progress = $task->progress;
         $assignees = $task->assignees;
-        $statusColorClass = match($task->priority) {
+        $priorityColorClass = match($task->priorityLevel?->key) {
             'critical' => 'border-l-purple-600',
             'high' => 'border-l-red-500',
             'medium' => 'border-l-yellow-500',
@@ -32,7 +32,7 @@
     }
 @endphp
 
-<div class="bg-white rounded-lg shadow-md border-l-4 {{ $statusColorClass }} overflow-hidden transition-all hover:shadow-xl">
+<div class="bg-white rounded-lg shadow-md border-l-4 {{ $priorityColorClass }} overflow-hidden transition-all hover:shadow-xl">
     <a href="{{ $url }}" class="block p-4">
         <div class="flex justify-between items-start mb-3">
             <h4 class="font-bold text-gray-800 pr-2">{{ $title }}</h4>

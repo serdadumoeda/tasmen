@@ -257,6 +257,7 @@ Route::middleware(['auth', 'superadmin'])->prefix('admin')->name('admin.')->grou
 
     // General Settings
     Route::get('settings', [\App\Http\Controllers\Admin\SettingController::class, 'index'])->name('settings.index');
+    Route::get('settings/formulas', [\App\Http\Controllers\Admin\SettingController::class, 'formulas'])->name('settings.formulas');
     Route::post('settings', [\App\Http\Controllers\Admin\SettingController::class, 'update'])->name('settings.update');
 
     // API for formula simulation
@@ -264,26 +265,6 @@ Route::middleware(['auth', 'superadmin'])->prefix('admin')->name('admin.')->grou
 
     // Classification Management
     Route::resource('klasifikasi', \App\Http\Controllers\Admin\KlasifikasiSuratController::class)->names('klasifikasi');
-
-    // Task Status Management
-    Route::resource('task-statuses', \App\Http\Controllers\Admin\TaskStatusController::class);
-
-    // Priority Level Management
-    Route::resource('priority-levels', \App\Http\Controllers\Admin\PriorityLevelController::class);
-
-    // Role Management
-    Route::resource('roles', \App\Http\Controllers\Admin\RoleController::class);
-
-    // Notification Templates Management
-    Route::resource('notification-templates', \App\Http\Controllers\Admin\NotificationTemplateController::class)->only(['index', 'edit', 'update']);
-
-    // ABK Management
-    Route::prefix('abk')->name('abk.')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Admin\AbkController::class, 'index'])->name('index');
-        Route::post('/job-types', [\App\Http\Controllers\Admin\AbkController::class, 'storeJobType'])->name('job-types.store');
-        Route::get('/job-types/{jobType}', [\App\Http\Controllers\Admin\AbkController::class, 'show'])->name('show');
-        Route::post('/job-types/{jobType}/components', [\App\Http\Controllers\Admin\AbkController::class, 'storeWorkloadComponent'])->name('components.store');
-    });
 
     Route::post('api_keys/{client}/tokens', [ApiKeyController::class, 'generateToken'])->name('api_keys.tokens.store');
     Route::delete('api_keys/{client}/tokens/{tokenId}', [ApiKeyController::class, 'revokeToken'])->name('api_keys.tokens.destroy');
@@ -301,12 +282,3 @@ Route::middleware(['auth', 'can.manage.leave.settings'])->prefix('admin')->name(
 
 Route::get('/api/units/{unit}/vacant-jabatans', [UnitController::class, 'getVacantJabatans'])->name('api.units.vacant-jabatans')->middleware('auth');
 Route::get('/api/units/{unit}/users', [UserController::class, 'getUsersByUnitFromModel'])->name('api.units.users')->middleware('auth');
-
-Route::middleware(['web', 'auth'])->group(function () {
-    Route::prefix('admin/performance-settings')
-         ->as('admin.performance_settings.')
-         ->group(function () {
-             Route::get('/', [\App\Http\Controllers\PerformanceSettingController::class, 'index'])->name('index');
-             Route::post('/', [\App\Http\Controllers\PerformanceSettingController::class, 'update'])->name('update');
-         });
-});

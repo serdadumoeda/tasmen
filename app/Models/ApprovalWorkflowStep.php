@@ -15,9 +15,6 @@ class ApprovalWorkflowStep extends Model
         'step',
         'approver_role',
         'is_final_approval',
-        'condition_type',
-        'condition_value',
-        'action',
     ];
 
     protected $casts = [

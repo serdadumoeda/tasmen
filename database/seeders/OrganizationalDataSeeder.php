@@ -60,16 +60,13 @@ class OrganizationalDataSeeder extends Seeder
         }
         
         // Create a default Super Admin user
-        $superAdminRole = \App\Models\Role::where('name', 'superadmin')->first();
-        if ($superAdminRole) {
-            User::create([
-                'name' => 'Super Admin',
-                'email' => 'admin@example.com',
-                'password' => \Illuminate\Support\Facades\Hash::make('password'),
-                'role_id' => $superAdminRole->id,
-                'status' => 'active',
-            ]);
-        }
+        User::create([
+            'name' => 'Super Admin',
+            'email' => 'admin@example.com',
+            'password' => \Illuminate\Support\Facades\Hash::make('password'),
+            'role' => User::ROLE_SUPERADMIN,
+            'status' => 'active',
+        ]);
         $this->command->info('Default Super Admin created.');
 
         $this->command->info('--- Organizational Data Seeding Finished ---');

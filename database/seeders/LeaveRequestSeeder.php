@@ -19,13 +19,7 @@ class LeaveRequestSeeder extends Seeder
     {
         $this->command->info('Seeding dummy leave requests...');
 
-        $stafRole = \App\Models\Role::where('name', 'staf')->first();
-        if (!$stafRole) {
-            $this->command->warn('Staf role not found. Skipping leave request seeding.');
-            return;
-        }
-
-        $users = User::where('role_id', $stafRole->id)->whereNotNull('atasan_id')->get();
+        $users = User::where('role', User::ROLE_STAF)->whereNotNull('atasan_id')->get();
         if ($users->isEmpty()) {
             $this->command->warn('No staff users with supervisors found. Skipping leave request seeding.');
             return;

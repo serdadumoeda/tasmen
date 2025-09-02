@@ -20,6 +20,13 @@ class SettingController extends Controller
         return view('admin.settings.index', compact('settings'));
     }
 
+    public function formulas()
+    {
+        $this->authorize('manage_settings');
+        $settings = Setting::pluck('value', 'key')->all();
+        return view('admin.settings.formulas', compact('settings'));
+    }
+
     public function update(Request $request, ExpressionLanguage $expressionLanguage)
     {
         $this->authorize('manage_settings');
