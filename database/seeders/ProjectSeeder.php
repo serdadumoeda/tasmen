@@ -11,7 +11,9 @@ class ProjectSeeder extends Seeder
     public function run(): void
     {
         // Ambil semua user yang bisa jadi pimpinan/pemilik proyek
-        $potential_leaders = User::whereIn('role', [User::ROLE_ESELON_I, User::ROLE_ESELON_II, User::ROLE_KOORDINATOR])->get();
+        $potential_leaders = User::whereHas('roles', function ($query) {
+            $query->whereIn('name', ['Eselon I', 'Eselon II', 'Koordinator']);
+        })->get();
         $all_users = User::all();
 
         if ($potential_leaders->isEmpty()) {
