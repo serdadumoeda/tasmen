@@ -7,6 +7,8 @@ use App\Models\Project;
 use App\Models\Task;
 use App\Models\User;
 use App\Models\PeminjamanRequest;
+use App\Models\TaskStatus;
+use App\Models\PriorityLevel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
@@ -43,10 +45,11 @@ class ProjectController extends Controller
         // --- Dashboard Stats ---
         // These stats are global for the entire system for now.
         // This could be scoped to the user in the future if needed.
+        $completedStatus = TaskStatus::where('key', 'completed')->first();
         $stats = [
             'users' => User::count(),
             'tasks' => Task::count(),
-            'tasks_completed' => Task::where('status', 'completed')->count(),
+            'tasks_completed' => $completedStatus ? Task::where('task_status_id', $completedStatus->id)->count() : 0,
         ];
 
         // --- Recent Activity Feed ---
@@ -147,13 +150,13 @@ class ProjectController extends Controller
         }
 
         // Filter by status
-        if ($request->filled('task_status')) {
-            $taskQuery->where('status', $request->input('task_status'));
+        if ($request->filled('task_status_id')) {
+            $taskQuery->where('task_status_id', $request->input('task_status_id'));
         }
 
         // Filter by priority
-        if ($request->filled('task_priority')) {
-            $taskQuery->where('priority', $request->input('task_priority'));
+        if ($request->filled('task_priority_id')) {
+            $taskQuery->where('priority_level_id', $request->input('task_priority_id'));
         }
 
         // Filter by assignee
@@ -164,7 +167,7 @@ class ProjectController extends Controller
         // Sorting
         $sortBy = $request->input('sort_by', 'created_at');
         $sortDir = $request->input('sort_dir', 'desc');
-        if (in_array($sortBy, ['title', 'status', 'priority', 'deadline', 'created_at'])) {
+        if (in_array($sortBy, ['title', 'deadline', 'created_at'])) {
             $taskQuery->orderBy($sortBy, $sortDir);
         }
 
@@ -180,8 +183,8 @@ class ProjectController extends Controller
         $projectMembers = $project->members->sortBy('name');
 
         // Stats should be calculated on all tasks of the project, not just the paginated/filtered ones.
-        $allTasks = $project->tasks()->get();
-        $taskStatuses = $allTasks->countBy('status');
+        $allTasks = $project->tasks()->with('status')->get();
+        $taskStatuses = $allTasks->countBy(fn($task) => $task->status->key ?? 'unknown');
         $stats = [
             'total' => $allTasks->count(),
             'pending' => $taskStatuses->get('pending', 0),
@@ -189,7 +192,10 @@ class ProjectController extends Controller
             'completed' => $taskStatuses->get('completed', 0),
         ];
 
-        return view('projects.show', compact('project', 'tasks', 'projectMembers', 'stats', 'loanRequests'));
+        $statuses = TaskStatus::all();
+        $priorities = PriorityLevel::all();
+
+        return view('projects.show', compact('project', 'tasks', 'projectMembers', 'stats', 'loanRequests', 'statuses', 'priorities'));
     }
 
 
@@ -217,7 +223,7 @@ class ProjectController extends Controller
             ->get()
             ->keyBy('requested_user_id');
         
-        $taskStatuses = $project->tasks->countBy('status');
+        $taskStatuses = $project->tasks->countBy(fn($task) => $task->status->key ?? 'unknown');
         $stats = [
             'total' => $project->tasks->count(),
             'pending' => $taskStatuses->get('pending', 0),
@@ -372,58 +378,35 @@ class ProjectController extends Controller
     public function teamDashboard(Project $project)
     {
         $this->authorize('viewTeamDashboard', $project);
-        // Eager load all necessary relationships to prevent N+1 queries
-        $project->load(['members', 'tasks.assignees', 'tasks.timeLogs']);
+        $project->load(['members', 'tasks.assignees', 'tasks.timeLogs', 'tasks.status', 'tasks.priorityLevel']);
+        $priorities = PriorityLevel::all();
+        $statuses = TaskStatus::all();
 
-        $teamSummary = collect();
-        foreach ($project->members as $member) {
-            $memberTasks = $project->tasks->filter(function ($task) use ($member) {
-                return $task->assignees->contains($member);
-            });
-
-            if ($memberTasks->isEmpty()) {
-                // Add member with zero stats if they have no tasks
-                $teamSummary->push([
-                    'member_id' => $member->id,
-                    'member_name' => $member->name,
-                    'total_tasks' => 0,
-                    'pending_tasks' => 0,
-                    'inprogress_tasks' => 0,
-                    'completed_tasks' => 0,
-                    'overdue_tasks' => 0,
-                    'total_estimated_hours' => 0,
-                    'total_logged_hours' => 0,
-                    'weighted_average_progress' => 0,
-                    'priority_counts' => collect(\App\Models\Task::PRIORITIES)->mapWithKeys(fn($p) => [$p => 0]),
-                ]);
-                continue;
-            }
+        $teamSummary = $project->members->map(function ($member) use ($project, $priorities, $statuses) {
+            $memberTasks = $project->tasks->filter(fn ($task) => $task->assignees->contains($member));
+            if ($memberTasks->isEmpty()) return null;
 
             $totalEstimatedHours = $memberTasks->sum('estimated_hours');
-            $totalLoggedMinutes = $memberTasks->flatMap->timeLogs->sum('duration_in_minutes');
+            $weightedProgressSum = $memberTasks->reduce(fn ($carry, $task) => $carry + ($task->progress * $task->estimated_hours), 0);
+            $weightedAverageProgress = ($totalEstimatedHours > 0) ? round($weightedProgressSum / $totalEstimatedHours) : round($memberTasks->avg('progress'));
 
-            $weightedProgressSum = $memberTasks->reduce(function ($carry, $task) {
-                return $carry + ($task->progress * $task->estimated_hours);
-            }, 0);
+            $priorityCounts = $priorities->mapWithKeys(fn($p) => [$p->key => 0])->merge($memberTasks->countBy(fn($task) => $task->priorityLevel->key ?? 'unknown'));
+            $statusCounts = $statuses->mapWithKeys(fn($s) => [$s->key => 0])->merge($memberTasks->countBy(fn($task) => $task->status->key ?? 'unknown'));
 
-            $weightedAverageProgress = ($totalEstimatedHours > 0)
-                ? round($weightedProgressSum / $totalEstimatedHours)
-                : round($memberTasks->avg('progress')); // Fallback to simple average if no hours estimated
-
-            $teamSummary->push([
-                'member_id' => $member->id,
-                'member_name' => $member->name,
+            return [
+                'member_id' => $member->id, 'member_name' => $member->name,
                 'total_tasks' => $memberTasks->count(),
-                'pending_tasks' => $memberTasks->where('status', 'pending')->count(),
-                'inprogress_tasks' => $memberTasks->where('status', 'in_progress')->count(),
-                'completed_tasks' => $memberTasks->where('status', 'completed')->count(),
-                'overdue_tasks' => $memberTasks->where('deadline', '<', now())->where('status', '!=', 'completed')->count(),
+                'pending_tasks' => $statusCounts->get('pending', 0),
+                'inprogress_tasks' => $statusCounts->get('in_progress', 0),
+                'completed_tasks' => $statusCounts->get('completed', 0),
+                'overdue_tasks' => $memberTasks->where('deadline', '<', now())->filter(fn($task) => $task->status->key !== 'completed')->count(),
                 'total_estimated_hours' => round($totalEstimatedHours, 1),
-                'total_logged_hours' => round($totalLoggedMinutes / 60, 1),
+                'total_logged_hours' => round($memberTasks->flatMap->timeLogs->sum('duration_in_minutes') / 60, 1),
                 'weighted_average_progress' => $weightedAverageProgress,
-                'priority_counts' => $memberTasks->countBy('priority'),
-            ]);
-        }
+                'priority_counts' => $priorityCounts,
+            ];
+        })->filter();
+
         return view('projects.team-dashboard', compact('project', 'teamSummary'));
     }
 
@@ -448,11 +431,9 @@ class ProjectController extends Controller
 
     public function downloadReport(Project $project)
     {
-        if (!auth()->user()->isTopLevelManager()) {
-            abort(403);
-        }
-        $project->load('leader', 'members', 'tasks.assignees', 'tasks.timeLogs');
-        $taskStatuses = $project->tasks->countBy('status');
+        if (!auth()->user()->isTopLevelManager()) abort(403);
+        $project->load('leader', 'members', 'tasks.assignees', 'tasks.timeLogs', 'tasks.status');
+        $taskStatuses = $project->tasks->countBy(fn($task) => $task->status->key ?? 'unknown');
         $stats = [
             'total' => $project->tasks->count(),
             'pending' => $taskStatuses->get('pending', 0),
@@ -460,31 +441,17 @@ class ProjectController extends Controller
             'completed' => $taskStatuses->get('completed', 0),
         ];
         $totalMinutesLogged = $project->tasks->flatMap->timeLogs->sum('duration_in_minutes');
-        $totalHoursLogged = floor($totalMinutesLogged / 60);
-        $remainingMinutes = $totalMinutesLogged % 60;
-        $data = [
-            'project' => $project,
-            'stats' => $stats,
-            'totalLoggedTime' => "{$totalHoursLogged} jam {$remainingMinutes} menit",
-        ];
-        $pdf = Pdf::loadView('reports.project-summary', $data);
-        return $pdf->download('laporan-proyek-' . $project->name . '-' . now()->format('Y-m-d') . '.pdf');
+        $data = ['project' => $project, 'stats' => $stats, 'totalLoggedTime' => floor($totalMinutesLogged / 60) . " jam " . ($totalMinutesLogged % 60) . " menit"];
+        return Pdf::loadView('reports.project-summary', $data)->download('laporan-proyek-' . $project->name . '-' . now()->format('Y-m-d') . '.pdf');
     }
 
     public function showKanban(Project $project)
     {
         $this->authorize('view', $project);
-    
-        $tasks = $project->tasks()->with(['assignees', 'comments', 'subTasks'])->get();
-    
-        $groupedTasks = $tasks->groupBy('status')->union([
-            'pending'     => collect(),
-            'in_progress' => collect(),
-            'for_review'  => collect(),
-            'completed'   => collect(),
-        ]);
-    
-        return view('projects.kanban', compact('project', 'groupedTasks'));
+        $tasks = $project->tasks()->with(['assignees', 'comments', 'subTasks', 'status'])->get();
+        $statuses = TaskStatus::all();
+        $groupedTasks = $statuses->mapWithKeys(fn($status) => [$status->key => collect()])->merge($tasks->groupBy(fn($task) => $task->status->key ?? 'unknown'));
+        return view('projects.kanban', compact('project', 'groupedTasks', 'statuses'));
     }
 
     public function showCalendar(Project $project)
@@ -496,55 +463,38 @@ class ProjectController extends Controller
     public function tasksJson(Project $project)
     {
         $this->authorize('view', $project);
-
-        $tasks = $project->tasks()
-            ->whereNotNull('deadline')
-            ->with('assignees')
-            ->get(['id', 'title', 'start_date', 'deadline', 'status', 'project_id', 'priority']);
+        $tasks = $project->tasks()->whereNotNull('deadline')->with('assignees', 'status', 'priorityLevel')->get();
 
         $events = $tasks->map(function ($task) use ($project) {
             $color = '#3b82f6'; // Default blue
-            switch ($task->priority) {
-                case 'high': $color = '#ef4444'; break; // red-500
-                case 'critical': $color = '#8b5cf6'; break; // violet-500
-                case 'medium': $color = '#f97316'; break; // orange-500
-                case 'low': $color = '#22c55e'; break; // green-500
+            if ($task->priorityLevel) {
+                $color = match ($task->priorityLevel->key) {
+                    'high' => '#ef4444', 'critical' => '#8b5cf6', 'medium' => '#f97316', 'low' => '#22c55e',
+                    default => $color,
+                };
             }
-            if ($task->status === 'completed') {
-                $color = '#6b7280'; // gray-500
+            if ($task->status && $task->status->key === 'completed') {
+                $color = '#6b7280';
             }
-
-            $assigneeNames = $task->assignees->pluck('name')->join(', ');
 
             return [
-                'id' => $task->id,
-                'title' => $task->title,
+                'id' => $task->id, 'title' => $task->title,
                 'start' => $task->start_date ? $task->start_date->format('Y-m-d') : $task->deadline->format('Y-m-d'),
-                'end' => $task->deadline->addDay()->format('Y-m-d'), // Add a day to make the end date inclusive
+                'end' => $task->deadline->addDay()->format('Y-m-d'),
                 'url'   => route('projects.show', $project->id) . '#task-' . $task->id,
-                'color' => $color,
-                'borderColor' => $color,
+                'color' => $color, 'borderColor' => $color,
                 'extendedProps' => [
                     'project_name' => $project->name,
-                    'assignees' => $assigneeNames ?: 'Belum ditugaskan',
-                    'status' => ucfirst(str_replace('_', ' ', $task->status)),
-                    'priority' => ucfirst($task->priority),
+                    'assignees' => $task->assignees->pluck('name')->join(', ') ?: 'Belum ditugaskan',
+                    'status' => $task->status->label ?? 'N/A',
+                    'priority' => $task->priorityLevel->label ?? 'N/A',
                 ]
             ];
         });
 
-        // Add the project duration as a background event
         if ($project->start_date && $project->end_date) {
-            $events->prepend([
-                'id' => 'project_duration',
-                'title' => 'Durasi Proyek',
-                'start' => $project->start_date->format('Y-m-d'),
-                'end' => $project->end_date->addDay()->format('Y-m-d'),
-                'display' => 'background',
-                'color' => '#eef2ff' // indigo-50
-            ]);
+            $events->prepend(['id' => 'project_duration', 'title' => 'Durasi Proyek', 'start' => $project->start_date->format('Y-m-d'), 'end' => $project->end_date->addDay()->format('Y-m-d'), 'display' => 'background', 'color' => '#eef2ff']);
         }
-
         return response()->json($events);
     }
 }

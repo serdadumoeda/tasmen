@@ -122,6 +122,22 @@
             </div>
         </div>
 
+        {{-- Pengaturan ABK --}}
+        <div class="bg-white shadow rounded p-4">
+            <h2 class="text-xl font-semibold mb-2">Pengaturan Analisis Beban Kerja (ABK)</h2>
+            <p class="text-sm text-gray-600 mb-4">Parameter yang digunakan dalam perhitungan modul ABK.</p>
+            <div>
+                <label class="block font-medium" for="abk_effective_hours_per_year">Jam Kerja Efektif per Tahun</label>
+                <input type="number" step="1" min="1"
+                       name="abk_effective_hours_per_year" id="abk_effective_hours_per_year"
+                       value="{{ old('abk_effective_hours_per_year', $settings['abk_effective_hours_per_year'] ?? 1500) }}"
+                       class="mt-1 block w-full border-gray-300 rounded" />
+                @error('abk_effective_hours_per_year')
+                  <p class="text-red-600 text-sm">{{ $message }}</p>
+                @enderror
+            </div>
+        </div>
+
         <div class="flex justify-end">
             <button type="submit"
                     class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
