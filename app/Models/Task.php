@@ -20,9 +20,6 @@ class Task extends Model
         'estimated_hours',
         'task_status_id',
         'priority_level_id',
-        // Keep old columns for data migration, they will be dropped later
-        'status',
-        'priority',
     ];
 
     protected $casts = [
