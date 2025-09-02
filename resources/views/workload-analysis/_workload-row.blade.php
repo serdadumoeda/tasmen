@@ -5,7 +5,10 @@
     
     // Kita masih perlu melakukan query ini di sini karena kita ingin menampilkan jumlah tugas spesifik di baris ini.
     // Controller hanya menyediakan total jam, bukan jumlah tugas.
-    $activeTasksCount = $user->tasks()->whereIn('status', ['pending', 'in_progress'])->count();
+    $activeStatusKeys = ['pending', 'in_progress'];
+    $activeTasksCount = $user->tasks()->whereHas('status', function($q) use ($activeStatusKeys) {
+        $q->whereIn('key', $activeStatusKeys);
+    })->count();
 
     $weeklyCapacity = 40; // Kapasitas kerja standar per minggu
     $utilization = ($weeklyCapacity > 0) ? round(($totalAssignedHours / $weeklyCapacity) * 100) : 0;
@@ -51,7 +54,7 @@
                     <i class="fas fa-user-circle mr-2 text-gray-500"></i> {{-- Icon user --}}
                     <div>
                         <div class="text-sm font-medium text-gray-900">{{ $user->name }}</div>
-                        <div class="text-xs text-gray-500">{{ $user->role }}</div>
+                        <div class="text-xs text-gray-500">{{ $user->role->label ?? 'N/A' }}</div>
                     </div>
                 </div>
             </div>
