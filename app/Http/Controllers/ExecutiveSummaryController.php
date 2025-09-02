@@ -169,12 +169,14 @@ class ExecutiveSummaryController extends Controller
             $labels[] = $date->format('M Y');
             
             // --- Kalkulasi Progres ---
+            $completedStatusId = \App\Models\TaskStatus::where('key', 'completed')->value('id');
+
             $totalTasks = Task::whereIn('project_id', $projectIds)
                               ->where('created_at', '<=', $date)
                               ->count();
                               
             $completedTasks = Task::whereIn('project_id', $projectIds)
-                                  ->where('status', 'completed')
+                                  ->where('task_status_id', $completedStatusId)
                                   ->where('updated_at', '<=', $date)
                                   ->count();
 
