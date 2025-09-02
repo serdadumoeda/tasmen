@@ -30,20 +30,20 @@
                             </div>
 
                             <div>
-                                <label for="status" class="sr-only">Status</label>
-                                <select name="status" id="status" class="block w-full rounded-lg border-gray-300 shadow-sm text-sm">
+                                <label for="status_id" class="sr-only">Status</label>
+                                <select name="status_id" id="status_id" class="block w-full rounded-lg border-gray-300 shadow-sm text-sm">
                                     <option value="">Semua Status</option>
-                                    <option value="pending" @selected(request('status') == 'pending')>Menunggu</option>
-                                    <option value="in_progress" @selected(request('status') == 'in_progress')>Dikerjakan</option>
-                                    <option value="completed" @selected(request('status') == 'completed')>Selesai</option>
+                                    @foreach($statuses as $status)
+                                        <option value="{{ $status->id }}" @selected(request('status_id') == $status->id)>{{ $status->label }}</option>
+                                    @endforeach
                                 </select>
                             </div>
                             <div>
-                                <label for="priority" class="sr-only">Prioritas</label>
-                                <select name="priority" id="priority" class="block w-full rounded-lg border-gray-300 shadow-sm text-sm">
+                                <label for="priority_id" class="sr-only">Prioritas</label>
+                                <select name="priority_id" id="priority_id" class="block w-full rounded-lg border-gray-300 shadow-sm text-sm">
                                     <option value="">Semua Prioritas</option>
-                                    @foreach(\App\Models\Task::PRIORITIES as $priority)
-                                        <option value="{{ $priority }}" @selected(request('priority') == $priority)>{{ ucfirst($priority) }}</option>
+                                    @foreach($priorities as $priority)
+                                        <option value="{{ $priority->id }}" @selected(request('priority_id') == $priority->id)>{{ $priority->label }}</option>
                                     @endforeach
                                 </select>
                             </div>
