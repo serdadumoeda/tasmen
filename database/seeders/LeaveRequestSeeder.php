@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\RequestStatus;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\User;
@@ -19,7 +20,10 @@ class LeaveRequestSeeder extends Seeder
     {
         $this->command->info('Seeding dummy leave requests...');
 
-        $users = User::where('role', User::ROLE_STAF)->whereNotNull('atasan_id')->get();
+        $users = User::whereHas('roles', function ($query) {
+            $query->where('name', 'Staf');
+        })->whereNotNull('atasan_id')->get();
+
         if ($users->isEmpty()) {
             $this->command->warn('No staff users with supervisors found. Skipping leave request seeding.');
             return;
@@ -31,7 +35,7 @@ class LeaveRequestSeeder extends Seeder
             return;
         }
 
-        $statuses = ['pending', 'approved', 'rejected', 'approved_by_supervisor'];
+        $statuses = [RequestStatus::PENDING, RequestStatus::APPROVED, RequestStatus::REJECTED, RequestStatus::APPROVED_BY_SUPERVISOR];
 
         for ($i = 0; $i < 30; $i++) {
             $user = $users->random();
@@ -52,10 +56,10 @@ class LeaveRequestSeeder extends Seeder
             $approverId = null;
             $rejectionReason = null;
 
-            if ($status !== 'pending') {
+            if ($status !== RequestStatus::PENDING) {
                 $approverId = $user->atasan_id;
             }
-            if ($status === 'rejected') {
+            if ($status === RequestStatus::REJECTED) {
                 $rejectionReason = 'Alasan penolakan otomatis dari seeder.';
             }
 
@@ -68,7 +72,7 @@ class LeaveRequestSeeder extends Seeder
                 'reason' => 'Permintaan cuti otomatis dari seeder.',
                 'address_during_leave' => 'Jl. Seeder No. ' . ($i + 1),
                 'status' => $status,
-                'current_approver_id' => ($status === 'pending' || $status === 'approved_by_supervisor') ? $user->atasan_id : null,
+                'current_approver_id' => ($status === RequestStatus::PENDING || $status === RequestStatus::APPROVED_BY_SUPERVISOR) ? $user->atasan_id : null,
                 'rejection_reason' => $rejectionReason,
             ]);
         }
