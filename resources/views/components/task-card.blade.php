@@ -18,9 +18,9 @@
             </p>
         </div>
         <div class="flex items-center space-x-2 flex-shrink-0">
-            <span class="badge-status text-xs font-semibold px-3 py-1 rounded-full {{ $task->status_color_class }}">{{ \Illuminate\Support\Str::title(str_replace('_', ' ', $task->status)) }}</span>
+            <span class="badge-status text-xs font-semibold px-3 py-1 rounded-full {{ $task->status->color_class ?? 'bg-gray-100 text-gray-800' }}">{{ $task->status->label ?? 'N/A' }}</span>
             @can('update', $task)
-                @if ($task->status !== 'completed')
+                @if ($task->status->key !== 'completed')
                     <button @click.prevent="quickComplete({{ $task->id }})" title="Tandai Selesai" class="inline-flex items-center justify-center h-6 w-6 text-xs font-semibold text-green-800 bg-green-100 rounded-full hover:bg-green-200 transition-colors">
                         <i class="fas fa-check"></i>
                     </button>
@@ -42,7 +42,7 @@
         <div class="flex justify-between mb-1 items-center">
             <span class="text-base font-medium text-blue-700">Progress</span>
             <div>
-                @if($task->status === 'for_review')
+                @if($task->status->key === 'for_review')
                     <span class="px-2 py-1 text-xs font-semibold text-orange-800 bg-orange-200 rounded-full">Menunggu Review</span>
                 @endif
                 <span class="text-sm font-medium text-blue-700 ml-2">{{ $task->progress }}%</span>
