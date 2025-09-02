@@ -42,10 +42,12 @@ class GlobalDashboardController extends Controller
             $taskQuery->whereIn('project_id', $relevantProjectIds);
         }
 
+        $completedStatusId = \App\Models\TaskStatus::where('key', 'completed')->value('id');
+
         $stats = [
             'total_projects' => (clone $projectQuery)->count(),
             'total_tasks' => (clone $taskQuery)->count(),
-            'completed_tasks' => (clone $taskQuery)->where('status', 'completed')->count(),
+            'completed_tasks' => (clone $taskQuery)->where('task_status_id', $completedStatusId)->count(),
         ];
 
         if (!$currentUser->isStaff()) {

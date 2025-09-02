@@ -30,7 +30,8 @@ class Project extends Model
         if ($totalTasks === 0) {
             return 0;
         }
-        $completedTasks = $this->tasks->where('status', 'completed')->count();
+        // Ensure tasks relationship has loaded the status relationship to use 'status.key'
+        $completedTasks = $this->tasks->where('status.key', 'completed')->count();
         return round(($completedTasks / $totalTasks) * 100);
     }
 

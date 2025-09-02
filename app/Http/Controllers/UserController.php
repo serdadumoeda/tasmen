@@ -420,9 +420,10 @@ class UserController extends Controller
             })
             ->count();
 
+        $completedStatusId = \App\Models\TaskStatus::where('key', 'completed')->value('id');
         $activeAdhocTasksCount = $user->tasks()
                                      ->whereNull('project_id')
-                                     ->where('status', '!=', 'completed')
+                                     ->where('task_status_id', '!=', $completedStatusId)
                                      ->count();
         
         $activeSkCount = $user->getActiveSkCountAttribute();

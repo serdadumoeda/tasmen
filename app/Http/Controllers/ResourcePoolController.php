@@ -19,13 +19,15 @@ class ResourcePoolController extends Controller
 
         $workloadData = $teamMembers->map(function ($member) {
             // Hitung total jam dari tugas yang belum selesai
+            $completedStatusId = \App\Models\TaskStatus::where('key', 'completed')->value('id');
             $totalAssignedHours = $member->tasks()
-                ->where('status', '!=', 'completed')
+                ->where('task_status_id', '!=', $completedStatusId)
                 ->sum('estimated_hours');
 
             // Hitung persentase beban kerja
-            $workloadPercentage = (WeeklyWorkloadController::STANDARD_WEEKLY_HOURS > 0)
-                ? ($totalAssignedHours / WeeklyWorkloadController::STANDARD_WEEKLY_HOURS) * 100
+            $standardWeeklyHours = (float) \App\Models\PerformanceSetting::get('weekly_workload_thresholds.yellow', 37.5);
+            $workloadPercentage = ($standardWeeklyHours > 0)
+                ? ($totalAssignedHours / $standardWeeklyHours) * 100
                 : 0;
 
             return [

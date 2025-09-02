@@ -107,10 +107,10 @@ class InsightService
     {
         return $users->filter(function ($user) {
             // Perhitungan weeklyHours sekarang seharusnya bekerja dengan benar
-            $weeklyHours = $user->tasks->where('status', '!=', 'completed')->sum('estimated_hours') / 4;
+            $weeklyHours = $user->tasks->where('status.key', '!=', 'completed')->sum('estimated_hours') / 4;
             return $weeklyHours > 45 && in_array($user->work_result_rating, ['Dibawah Ekspektasi', 'Butuh Perbaikan', 'Sangat Kurang']);
         })->map(function ($user) {
-            $weeklyHours = $user->tasks->where('status', '!=', 'completed')->sum('estimated_hours') / 4;
+            $weeklyHours = $user->tasks->where('status.key', '!=', 'completed')->sum('estimated_hours') / 4;
             return [
                 'severity' => 'Peringatan',
                 'severity_score' => 3,
