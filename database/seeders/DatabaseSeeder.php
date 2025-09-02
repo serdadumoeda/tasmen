@@ -18,7 +18,8 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             OrganizationalDataSeeder::class,
             LeaveTypesSeeder::class,
-            TaskStatusSeeder::class, // <-- Add this seeder
+            TaskStatusSeeder::class,
+            PriorityLevelSeeder::class,
             LeaveRequestSeeder::class,
             ProjectSeeder::class,
             TaskSeeder::class,

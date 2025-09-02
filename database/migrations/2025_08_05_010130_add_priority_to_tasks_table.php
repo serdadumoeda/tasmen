@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('tasks', function (Blueprint $table) {
-            $table->string('priority')->default('medium')->after('status');
+            $table->foreignId('priority_level_id')->nullable()->after('task_status_id')->constrained('priority_levels');
         });
     }
 
@@ -22,7 +22,10 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('tasks', function (Blueprint $table) {
-            $table->dropColumn('priority');
+            if (Schema::hasColumn('tasks', 'priority_level_id')) {
+                $table->dropForeign(['priority_level_id']);
+                $table->dropColumn('priority_level_id');
+            }
         });
     }
 };

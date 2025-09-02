@@ -21,7 +21,7 @@ class Task extends Model
         'project_id',
         'estimated_hours',
         'task_status_id',
-        'priority',
+        'priority_level_id',
     ];
 
     protected $casts = [
@@ -43,6 +43,11 @@ class Task extends Model
     public function status()
     {
         return $this->belongsTo(TaskStatus::class, 'task_status_id');
+    }
+
+    public function priorityLevel()
+    {
+        return $this->belongsTo(PriorityLevel::class);
     }
 
     public function assignees()
