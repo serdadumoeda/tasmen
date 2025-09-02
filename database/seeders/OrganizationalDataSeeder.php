@@ -6,6 +6,7 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use App\Services\OrganizationalDataImporterService;
+use App\Models\Role;
 use App\Models\User;
 use App\Models\Unit;
 use App\Models\Jabatan;
@@ -60,14 +61,19 @@ class OrganizationalDataSeeder extends Seeder
         }
         
         // Create a default Super Admin user
-        User::create([
-            'name' => 'Super Admin',
-            'email' => 'admin@example.com',
-            'password' => \Illuminate\Support\Facades\Hash::make('password'),
-            'role' => User::ROLE_SUPERADMIN,
-            'status' => 'active',
-        ]);
-        $this->command->info('Default Super Admin created.');
+        $superAdminRole = Role::where('name', 'Superadmin')->first();
+        if ($superAdminRole) {
+            $admin = User::create([
+                'name' => 'Super Admin',
+                'email' => 'admin@example.com',
+                'password' => \Illuminate\Support\Facades\Hash::make('password'),
+                'status' => 'active',
+            ]);
+            $admin->roles()->attach($superAdminRole);
+            $this->command->info('Default Super Admin created.');
+        } else {
+            $this->command->warn('Superadmin role not found. Skipping Super Admin creation.');
+        }
 
         $this->command->info('--- Organizational Data Seeding Finished ---');
     }
