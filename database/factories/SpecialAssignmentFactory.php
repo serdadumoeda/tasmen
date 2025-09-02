@@ -25,7 +25,12 @@ class SpecialAssignmentFactory extends Factory
         return [
             'title' => 'SK ' . $this->faker->sentence(3),
             'description' => $this->faker->realText(200),
-            'assignor_id' => User::whereIn('role', [User::ROLE_ESELON_I, User::ROLE_ESELON_II, User::ROLE_KOORDINATOR])->get()->random()->id,
+            'assignor_id' => function () {
+                $manager_roles = ['eselon_i', 'eselon_ii', 'koordinator'];
+                return User::whereHas('role', function ($query) use ($manager_roles) {
+                    $query->whereIn('name', $manager_roles);
+                })->get()->random()->id;
+            },
             'start_date' => $this->faker->dateTimeBetween('-1 month', '+1 month'),
             'end_date' => $this->faker->dateTimeBetween('+2 months', '+6 months'),
             'status' => $this->faker->randomElement(['diajukan', 'disetujui', 'ditolak', 'selesai']),

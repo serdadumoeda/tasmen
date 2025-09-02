@@ -12,7 +12,7 @@ class UserPolicy
      */
     public function before(User $user, string $ability): bool|null
     {
-        if ($user->role === User::ROLE_SUPERADMIN) {
+        if ($user->isSuperAdmin()) {
             return true;
         }
         return null;
@@ -109,7 +109,7 @@ class UserPolicy
     public function rateBehavior(User $manager, User $subordinate): bool
     {
         // Aturan 1: Eselon I bisa menilai Eselon II yang unitnya berada langsung di bawahnya.
-        if ($manager->role === User::ROLE_ESELON_I && $subordinate->role === User::ROLE_ESELON_II) {
+        if ($manager->role->name === 'eselon_i' && $subordinate->role->name === 'eselon_ii') {
             // Memastikan unit subordinate tidak null dan memiliki parent_unit_id
             if ($subordinate->unit && $subordinate->unit->parent_unit_id === $manager->unit_id) {
                 return true;
@@ -117,7 +117,7 @@ class UserPolicy
         }
 
         // Aturan 2: Eselon II bisa menilai SEMUA di bawah hierarki unitnya.
-        if ($manager->role === User::ROLE_ESELON_II) {
+        if ($manager->role->name === 'eselon_ii') {
             return $subordinate->isSubordinateOf($manager);
         }
 

@@ -34,12 +34,14 @@ class RegisteredUserController extends Controller
      */
     public function store(RegisterRequest $request): RedirectResponse
     {
+        $stafRole = \App\Models\Role::where('name', 'staf')->first();
+
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'nip' => $request->nip,
             'password' => Hash::make($request->password),
-            'role' => User::ROLE_STAF, // Assign a default role
+            'role_id' => $stafRole->id, // Assign a default role
             'unit_id' => null, // No unit assigned on registration
             'status' => User::STATUS_ACTIVE,
         ]);

@@ -18,7 +18,9 @@ class AdHocTaskSeeder extends Seeder
     public function run(): void
     {
         $faker = Faker::create('id_ID');
-        $users = User::where('role', '!=', User::ROLE_SUPERADMIN)->get();
+        $users = User::whereHas('role', function ($query) {
+            $query->where('name', '!=', 'superadmin');
+        })->get();
 
         if ($users->isEmpty()) {
             $this->command->info('No users found to assign ad-hoc tasks.');

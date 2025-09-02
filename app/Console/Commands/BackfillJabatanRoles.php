@@ -75,16 +75,16 @@ class BackfillJabatanRoles extends Command
     private function getRoleFromDepth(int $depth, string $jabatanType): string
     {
         if ($jabatanType === 'fungsional') {
-            return User::ROLE_STAF;
+            return 'staf';
         }
 
         return match ($depth) {
-            0 => User::ROLE_MENTERI,
-            1 => User::ROLE_ESELON_I,
-            2 => User::ROLE_ESELON_II,
-            3 => User::ROLE_KOORDINATOR,
-            4 => User::ROLE_SUB_KOORDINATOR,
-            default => User::ROLE_STAF,
+            0 => 'menteri',
+            1 => 'eselon_i',
+            2 => 'eselon_ii',
+            3 => 'koordinator',
+            4 => 'sub_koordinator',
+            default => 'staf',
         };
     }
 }
