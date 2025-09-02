@@ -62,7 +62,7 @@
                                             <a href="{{ route('workload.analysis.show', $user) }}" class="text-sm font-medium text-indigo-600 hover:text-indigo-900 hover:underline">
                                                 <div class="flex items-center"><i class="fas fa-user mr-2 text-gray-500"></i> {{ $user->name }}</div>
                                             </a>
-                                            <div class="text-xs text-gray-500 ml-5">{{ $user->role }}</div>
+                                            <div class="text-xs text-gray-500 ml-5">{{ $user->role->label ?? 'N/A' }}</div>
                                         </td>
                                         <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
                                             @php
