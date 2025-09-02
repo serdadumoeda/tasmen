@@ -16,6 +16,7 @@ use Laravel\Sanctum\HasApiTokens;
 use App\Models\Unit; // Pastikan ini diimpor
 use App\Models\Project;
 use App\Models\Jabatan;
+use App\Models\Role;
 use App\Scopes\HierarchicalScope;
 use App\Services\LeaveDurationService;
 
@@ -27,27 +28,6 @@ class User extends Authenticatable
     // Cache for subordinate unit IDs to prevent N+1 issues in policies.
     public ?\Illuminate\Support\Collection $subordinateUnitIdsCache = null;
 
-    public const ROLE_MENTERI = 'Menteri';
-    public const ROLE_SUPERADMIN = 'Superadmin';
-    public const ROLE_ESELON_I = 'Eselon I';
-    public const ROLE_ESELON_II = 'Eselon II';
-    public const ROLE_ESELON_III = 'Eselon III';
-    public const ROLE_ESELON_IV = 'Eselon IV';
-    public const ROLE_KOORDINATOR = 'Koordinator';
-    public const ROLE_SUB_KOORDINATOR = 'Sub Koordinator';
-    public const ROLE_STAF = 'Staf';
-
-    public const ROLES = [
-        ['name' => self::ROLE_MENTERI],
-        ['name' => self::ROLE_SUPERADMIN],
-        ['name' => self::ROLE_ESELON_I],
-        ['name' => self::ROLE_ESELON_II],
-        ['name' => self::ROLE_ESELON_III],
-        ['name' => self::ROLE_ESELON_IV],
-        ['name' => self::ROLE_KOORDINATOR],
-        ['name' => self::ROLE_SUB_KOORDINATOR],
-        ['name' => self::ROLE_STAF],
-    ];
 
     public const STATUS_ACTIVE = 'active';
     public const STATUS_SUSPENDED = 'suspended';
@@ -57,7 +37,7 @@ class User extends Authenticatable
         'email',
         'nik',
         'password',
-        'role',
+        'role_id',
         'atasan_id',
         'unit_id',
         'status',
@@ -102,7 +82,15 @@ class User extends Authenticatable
         'performance_data_updated_at' => 'datetime',
     ];
 
+    // Eager load role relationship
+    protected $with = ['role'];
+
     // --- RELASI ---
+
+    public function role(): BelongsTo
+    {
+        return $this->belongsTo(Role::class);
+    }
 
     public function atasan(): BelongsTo
     {
@@ -263,12 +251,14 @@ class User extends Authenticatable
 
     public function canCreateProjects(): bool
     {
-        return in_array($this->role, [self::ROLE_MENTERI, self::ROLE_SUPERADMIN, self::ROLE_ESELON_I, self::ROLE_ESELON_II, self::ROLE_KOORDINATOR]);
+        if (!$this->role) return false;
+        return in_array($this->role->name, ['menteri', 'superadmin', 'eselon_i', 'eselon_ii', 'koordinator']);
     }
 
     public function isTopLevelManager(): bool
     {
-        return in_array($this->role, [self::ROLE_MENTERI, self::ROLE_SUPERADMIN, self::ROLE_ESELON_I, self::ROLE_ESELON_II]);
+        if (!$this->role) return false;
+        return in_array($this->role->name, ['menteri', 'superadmin', 'eselon_i', 'eselon_ii']);
     }
 
     public function canManageUsers(): bool
@@ -278,8 +268,8 @@ class User extends Authenticatable
             return true;
         }
 
-        // Default role-based check
-        return in_array($this->role, [self::ROLE_MENTERI, self::ROLE_SUPERADMIN, self::ROLE_ESELON_I, self::ROLE_ESELON_II, self::ROLE_KOORDINATOR]);
+        if (!$this->role) return false;
+        return in_array($this->role->name, ['menteri', 'superadmin', 'eselon_i', 'eselon_ii', 'koordinator']);
     }
 
     public function canManageLeaveSettings(): bool
@@ -289,7 +279,7 @@ class User extends Authenticatable
 
     public function isSuperAdmin(): bool
     {
-        return $this->role === self::ROLE_SUPERADMIN;
+        return $this->role && $this->role->name === 'superadmin';
     }
 
     public function isNotSuperAdmin(): bool
@@ -299,17 +289,13 @@ class User extends Authenticatable
 
     public function isStaff(): bool
     {
-        return $this->role === self::ROLE_STAF;
+        return $this->role && $this->role->name === 'staf';
     }
 
     public function isManager(): bool
     {
-        $isStructuralManager = in_array($this->role, [
-            self::ROLE_MENTERI,
-            self::ROLE_ESELON_I,
-            self::ROLE_ESELON_II,
-            self::ROLE_KOORDINATOR,
-            self::ROLE_SUB_KOORDINATOR
+        $isStructuralManager = $this->role && in_array($this->role->name, [
+            'menteri', 'eselon_i', 'eselon_ii', 'koordinator', 'sub_koordinator'
         ]);
 
         // To prevent infinite recursion with HierarchicalScope, we query without it.
@@ -411,16 +397,16 @@ class User extends Authenticatable
      * @param string $subordinateRole
      * @return array|null
      */
-    public static function getValidSupervisorRolesFor(string $subordinateRole): ?array
+    public static function getValidSupervisorRolesFor(string $subordinateRoleName): ?array
     {
         $validParentRolesMap = [
-            self::ROLE_ESELON_II => [self::ROLE_ESELON_I],
-            self::ROLE_KOORDINATOR => [self::ROLE_ESELON_II],
-            self::ROLE_SUB_KOORDINATOR => [self::ROLE_KOORDINATOR],
-            self::ROLE_STAF => [self::ROLE_KOORDINATOR, self::ROLE_SUB_KOORDINATOR],
+            'eselon_ii' => ['eselon_i'],
+            'koordinator' => ['eselon_ii'],
+            'sub_koordinator' => ['koordinator'],
+            'staf' => ['koordinator', 'sub_koordinator'],
         ];
 
-        return $validParentRolesMap[$subordinateRole] ?? null;
+        return $validParentRolesMap[$subordinateRoleName] ?? null;
     }
 
     public function leaveRequests() { return $this->hasMany(LeaveRequest::class); }
@@ -433,41 +419,42 @@ class User extends Authenticatable
     public static function recalculateAndSaveRole(User $user): void
     {
         if (!$user->unit) {
-            $user->role = self::ROLE_STAF;
+            $stafRole = Role::where('name', 'staf')->first();
+            if ($stafRole) $user->role_id = $stafRole->id;
             $user->save();
             return;
         }
 
         $isHeadOfUnit = $user->unit->kepala_unit_id === $user->id;
+        $newRoleName = 'staf';
 
         if ($isHeadOfUnit) {
-            $newRole = self::calculateRoleFromUnit($user->unit);
-        } else {
-            $newRole = self::ROLE_STAF;
+            $newRoleName = self::calculateRoleNameFromUnit($user->unit);
         }
 
-        if ($user->role !== $newRole) {
-            $user->role = $newRole;
+        $newRole = Role::where('name', $newRoleName)->first();
+        if ($newRole && $user->role_id !== $newRole->id) {
+            $user->role_id = $newRole->id;
             $user->save();
         }
     }
 
     /**
-     * Calculate the structural role based on the unit's depth in the hierarchy.
+     * Calculate the structural role name based on the unit's depth in the hierarchy.
      */
-    private static function calculateRoleFromUnit(Unit $unit): string
+    private static function calculateRoleNameFromUnit(Unit $unit): string
     {
         $depth = $unit->ancestors()->count();
         $isStruktural = $unit->type === 'Struktural';
 
         return match (true) {
-            $depth === 1 => self::ROLE_ESELON_I,
-            $depth === 2 => self::ROLE_ESELON_II,
-            $depth === 3 && $isStruktural => self::ROLE_ESELON_III,
-            $depth === 3 && !$isStruktural => self::ROLE_KOORDINATOR,
-            $depth === 4 && $isStruktural => self::ROLE_ESELON_IV,
-            $depth === 4 && !$isStruktural => self::ROLE_SUB_KOORDINATOR,
-            default => self::ROLE_STAF,
+            $depth === 1 => 'eselon_i',
+            $depth === 2 => 'eselon_ii',
+            $depth === 3 && $isStruktural => 'eselon_iii',
+            $depth === 3 && !$isStruktural => 'koordinator',
+            $depth === 4 && $isStruktural => 'eselon_iv',
+            $depth === 4 && !$isStruktural => 'sub_koordinator',
+            default => 'staf',
         };
     }
 
@@ -478,9 +465,9 @@ class User extends Authenticatable
      * @param \Carbon\Carbon $endDate
      * @return float
      */
-    public function getEffectiveWorkingHours(\Carbon\Carbon $startDate, \Carbon\Carbon $endDate): float
+    public function getEffectiveWorkingHours(\Carbon\Carbon $startDate, \Carbon\Carbon $endDate, float $standardWeeklyHours = 37.5): float
     {
-        $hoursPerDay = 7.5; // Based on 37.5 hours / 5 days
+        $hoursPerDay = $standardWeeklyHours / 5;
 
         // Calculate total possible workdays in the period using the service
         $totalWorkdaysInPeriod = LeaveDurationService::calculate($startDate, $endDate);
