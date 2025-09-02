@@ -27,28 +27,6 @@ class User extends Authenticatable
     // Cache for subordinate unit IDs to prevent N+1 issues in policies.
     public ?\Illuminate\Support\Collection $subordinateUnitIdsCache = null;
 
-    public const ROLE_MENTERI = 'Menteri';
-    public const ROLE_SUPERADMIN = 'Superadmin';
-    public const ROLE_ESELON_I = 'Eselon I';
-    public const ROLE_ESELON_II = 'Eselon II';
-    public const ROLE_ESELON_III = 'Eselon III';
-    public const ROLE_ESELON_IV = 'Eselon IV';
-    public const ROLE_KOORDINATOR = 'Koordinator';
-    public const ROLE_SUB_KOORDINATOR = 'Sub Koordinator';
-    public const ROLE_STAF = 'Staf';
-
-    public const ROLES = [
-        ['name' => self::ROLE_MENTERI],
-        ['name' => self::ROLE_SUPERADMIN],
-        ['name' => self::ROLE_ESELON_I],
-        ['name' => self::ROLE_ESELON_II],
-        ['name' => self::ROLE_ESELON_III],
-        ['name' => self::ROLE_ESELON_IV],
-        ['name' => self::ROLE_KOORDINATOR],
-        ['name' => self::ROLE_SUB_KOORDINATOR],
-        ['name' => self::ROLE_STAF],
-    ];
-
     public const STATUS_ACTIVE = 'active';
     public const STATUS_SUSPENDED = 'suspended';
 
@@ -57,7 +35,6 @@ class User extends Authenticatable
         'email',
         'nik',
         'password',
-        'role',
         'atasan_id',
         'unit_id',
         'status',
@@ -168,8 +145,10 @@ class User extends Authenticatable
         return $this->hasMany(Project::class, 'leader_id');
     }
 
-
-
+    public function roles(): BelongsToMany
+    {
+        return $this->belongsToMany(Role::class);
+    }
 
     // --- QUERY SCOPES ---
 
@@ -205,6 +184,25 @@ class User extends Authenticatable
 
 
     // --- FUNGSI BANTUAN & HAK AKSES ---
+
+    public function hasRole(string|array $roleNames): bool
+    {
+        // Eager load roles if they haven't been loaded yet.
+        if (!$this->relationLoaded('roles')) {
+            $this->load('roles');
+        }
+
+        if (is_string($roleNames)) {
+            return $this->roles->contains('name', $roleNames);
+        }
+
+        foreach ($roleNames as $roleName) {
+            if ($this->roles->contains('name', $roleName)) {
+                return true;
+            }
+        }
+        return false;
+    }
     
     public function isSubordinateOf(User $manager): bool
     {
@@ -263,12 +261,12 @@ class User extends Authenticatable
 
     public function canCreateProjects(): bool
     {
-        return in_array($this->role, [self::ROLE_MENTERI, self::ROLE_SUPERADMIN, self::ROLE_ESELON_I, self::ROLE_ESELON_II, self::ROLE_KOORDINATOR]);
+        return $this->hasRole(['Menteri', 'Superadmin', 'Eselon I', 'Eselon II', 'Koordinator']);
     }
 
     public function isTopLevelManager(): bool
     {
-        return in_array($this->role, [self::ROLE_MENTERI, self::ROLE_SUPERADMIN, self::ROLE_ESELON_I, self::ROLE_ESELON_II]);
+        return $this->hasRole(['Menteri', 'Superadmin', 'Eselon I', 'Eselon II']);
     }
 
     public function canManageUsers(): bool
@@ -279,7 +277,7 @@ class User extends Authenticatable
         }
 
         // Default role-based check
-        return in_array($this->role, [self::ROLE_MENTERI, self::ROLE_SUPERADMIN, self::ROLE_ESELON_I, self::ROLE_ESELON_II, self::ROLE_KOORDINATOR]);
+        return $this->hasRole(['Menteri', 'Superadmin', 'Eselon I', 'Eselon II', 'Koordinator']);
     }
 
     public function canManageLeaveSettings(): bool
@@ -289,7 +287,7 @@ class User extends Authenticatable
 
     public function isSuperAdmin(): bool
     {
-        return $this->role === self::ROLE_SUPERADMIN;
+        return $this->hasRole('Superadmin');
     }
 
     public function isNotSuperAdmin(): bool
@@ -299,18 +297,12 @@ class User extends Authenticatable
 
     public function isStaff(): bool
     {
-        return $this->role === self::ROLE_STAF;
+        return $this->hasRole('Staf');
     }
 
     public function isManager(): bool
     {
-        $isStructuralManager = in_array($this->role, [
-            self::ROLE_MENTERI,
-            self::ROLE_ESELON_I,
-            self::ROLE_ESELON_II,
-            self::ROLE_KOORDINATOR,
-            self::ROLE_SUB_KOORDINATOR
-        ]);
+        $isStructuralManager = $this->hasRole(['Menteri', 'Eselon I', 'Eselon II', 'Koordinator', 'Sub Koordinator']);
 
         // To prevent infinite recursion with HierarchicalScope, we query without it.
         // The ledProjects() relationship is on the Project model, which has the scope.
@@ -413,11 +405,13 @@ class User extends Authenticatable
      */
     public static function getValidSupervisorRolesFor(string $subordinateRole): ?array
     {
+        // This logic may need to be updated to use Role levels instead of names
+        // For now, we keep it as is, but acknowledge it's a candidate for further refactoring.
         $validParentRolesMap = [
-            self::ROLE_ESELON_II => [self::ROLE_ESELON_I],
-            self::ROLE_KOORDINATOR => [self::ROLE_ESELON_II],
-            self::ROLE_SUB_KOORDINATOR => [self::ROLE_KOORDINATOR],
-            self::ROLE_STAF => [self::ROLE_KOORDINATOR, self::ROLE_SUB_KOORDINATOR],
+            'Eselon II' => ['Eselon I'],
+            'Koordinator' => ['Eselon II'],
+            'Sub Koordinator' => ['Koordinator'],
+            'Staf' => ['Koordinator', 'Sub Koordinator'],
         ];
 
         return $validParentRolesMap[$subordinateRole] ?? null;
@@ -427,48 +421,40 @@ class User extends Authenticatable
     public function leaveBalances() { return $this->hasMany(LeaveBalance::class); }
 
     /**
-     * Recalculate and save the user's role based on their unit leadership status.
-     * This is the new single source of truth for determining a user's structural role.
+     * Sync the user's role based on their unit leadership status.
      */
-    public static function recalculateAndSaveRole(User $user): void
+    public static function syncRoleFromUnit(User $user): void
     {
         if (!$user->unit) {
-            $user->role = self::ROLE_STAF;
-            $user->save();
+            $stafRole = Role::where('name', 'Staf')->first();
+            if ($stafRole) {
+                $user->roles()->sync([$stafRole->id]);
+            }
             return;
         }
 
         $isHeadOfUnit = $user->unit->kepala_unit_id === $user->id;
+        $newRoleName = 'Staf'; // Default role
 
         if ($isHeadOfUnit) {
-            $newRole = self::calculateRoleFromUnit($user->unit);
-        } else {
-            $newRole = self::ROLE_STAF;
+            $depth = $user->unit->ancestors()->count();
+            $isStruktural = $user->unit->type === 'Struktural';
+
+            $newRoleName = match (true) {
+                $depth === 1 => 'Eselon I',
+                $depth === 2 => 'Eselon II',
+                $depth === 3 && $isStruktural => 'Eselon III',
+                $depth === 3 && !$isStruktural => 'Koordinator',
+                $depth === 4 && $isStruktural => 'Eselon IV',
+                $depth === 4 && !$isStruktural => 'Sub Koordinator',
+                default => 'Staf',
+            };
         }
 
-        if ($user->role !== $newRole) {
-            $user->role = $newRole;
-            $user->save();
+        $newRole = Role::where('name', $newRoleName)->first();
+        if ($newRole) {
+            $user->roles()->sync([$newRole->id]);
         }
-    }
-
-    /**
-     * Calculate the structural role based on the unit's depth in the hierarchy.
-     */
-    private static function calculateRoleFromUnit(Unit $unit): string
-    {
-        $depth = $unit->ancestors()->count();
-        $isStruktural = $unit->type === 'Struktural';
-
-        return match (true) {
-            $depth === 1 => self::ROLE_ESELON_I,
-            $depth === 2 => self::ROLE_ESELON_II,
-            $depth === 3 && $isStruktural => self::ROLE_ESELON_III,
-            $depth === 3 && !$isStruktural => self::ROLE_KOORDINATOR,
-            $depth === 4 && $isStruktural => self::ROLE_ESELON_IV,
-            $depth === 4 && !$isStruktural => self::ROLE_SUB_KOORDINATOR,
-            default => self::ROLE_STAF,
-        };
     }
 
     /**

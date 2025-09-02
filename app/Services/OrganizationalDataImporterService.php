@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Role;
 use App\Models\User;
 use App\Models\Unit;
 use App\Models\Jabatan;
@@ -14,6 +15,7 @@ class OrganizationalDataImporterService
 {
     private $unitCache = [];
     private $userCache = [];
+    private $roleCache = [];
     private $command;
 
     public function __construct($command = null)
@@ -68,21 +70,27 @@ class OrganizationalDataImporterService
 
         // 2. Determine Role
         $role = $this->determineRole($item, $unit);
+        if (!$role) {
+            $this->logError('Could not determine a valid role for NIP: ' . $item->NIP);
+            return;
+        }
 
-        // 3. Prepare User Data
-        $userData = $this->prepareUserData($item, $unit->id, $role);
+        // 3. Prepare User Data (role is no longer passed here)
+        $userData = $this->prepareUserData($item, $unit->id);
 
         // 4. Update or Create User
         $user = User::updateOrCreate(
             ['nip' => $item->NIP],
             $userData
         );
+        // Sync the user's role
+        $user->roles()->sync([$role->id]);
 
         // 5. Get or Create Jabatan and link to User
-        $this->getOrCreateJabatan($item, $unit->id, $user->id, $role);
+        $this->getOrCreateJabatan($item, $unit->id, $user->id, $role->name);
 
         // 6. If user is a structural head, update the unit
-        if ($this->isStructuralHead($role)) {
+        if ($this->isStructuralHead($user)) {
             $unit->kepala_unit_id = $user->id;
             $unit->save();
         }
@@ -117,35 +125,40 @@ class OrganizationalDataImporterService
         return $lastUnit;
     }
 
-    private function determineRole(object $item, Unit $unit): string
+    private function determineRole(object $item, Unit $unit): ?Role
     {
-        // Priority 1: Use the explicit "Eselon" field if it's a structural one.
-        if (!empty($item->Eselon)) {
-            $role = match ($item->Eselon) {
-                '1-A' => User::ROLE_ESELON_I,
-                '2-A' => User::ROLE_ESELON_II,
-                '3-A' => User::ROLE_KOORDINATOR,
-                '4-A' => User::ROLE_SUB_KOORDINATOR,
-                default => null, // Not a recognized structural eselon, so we'll ignore it.
-            };
-            if ($role) {
-                return $role;
-            }
+        if (empty($this->roleCache)) {
+            $this->roleCache = Role::all()->keyBy('name');
         }
 
-        // Priority 2: Infer the role from the depth of the unit for functional staff
-        // or structural staff without a clear Eselon mapping.
-        $depth = $unit->ancestors()->count();
-        return match ($depth) {
-            1 => User::ROLE_ESELON_I,
-            2 => User::ROLE_ESELON_II,
-            3 => User::ROLE_KOORDINATOR,
-            4 => User::ROLE_SUB_KOORDINATOR,
-            default => User::ROLE_STAF,
-        };
+        $roleName = null;
+        // Priority 1: Use the explicit "Eselon" field if it's a structural one.
+        if (!empty($item->Eselon)) {
+            $roleName = match ($item->Eselon) {
+                '1-A' => 'Eselon I',
+                '2-A' => 'Eselon II',
+                '3-A' => 'Koordinator',
+                '4-A' => 'Sub Koordinator',
+                default => null,
+            };
+        }
+
+        // Priority 2: If no structural role, infer from unit depth.
+        if (!$roleName) {
+            $depth = $unit->ancestors()->count();
+            $roleName = match ($depth) {
+                1 => 'Eselon I',
+                2 => 'Eselon II',
+                3 => 'Koordinator',
+                4 => 'Sub Koordinator',
+                default => 'Staf',
+            };
+        }
+
+        return $this->roleCache[$roleName] ?? null;
     }
 
-    private function prepareUserData(object $item, int $unitId, string $role): array
+    private function prepareUserData(object $item, int $unitId): array
     {
         $baseEmail = strtolower(str_replace(' ', '.', preg_replace('/[^a-zA-Z0-9\s]/', '', $item->Nama))) . '@example.com';
         $email = $baseEmail;
@@ -159,7 +172,6 @@ class OrganizationalDataImporterService
             'name' => $item->Nama,
             'email' => $item->email ?? $email,
             'unit_id' => $unitId,
-            'role' => $role,
             'status' => 'active',
             'tempat_lahir' => $item->{'Tempat Lahir'},
             'alamat' => $item->Alamat,
@@ -246,15 +258,10 @@ class OrganizationalDataImporterService
         ]);
     }
 
-    private function isStructuralHead(string $role): bool
+    private function isStructuralHead(User $user): bool
     {
-        return in_array($role, [
-            User::ROLE_MENTERI,
-            User::ROLE_ESELON_I,
-            User::ROLE_ESELON_II,
-            User::ROLE_KOORDINATOR,
-            User::ROLE_SUB_KOORDINATOR
-        ]);
+        // This check is now delegated to the User model's hasRole method.
+        return $user->hasRole(['Menteri', 'Eselon I', 'Eselon II', 'Koordinator', 'Sub Koordinator']);
     }
 
     private function updateSupervisorForAllUsers(): void

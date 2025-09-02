@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\RequestStatus;
 use App\Models\LeaveRequest;
 use App\Models\LeaveBalance;
 use App\Models\LeaveType;
@@ -46,7 +47,7 @@ class LeaveController extends Controller
         $subordinateIds = $user->bawahan()->pluck('id');
 
         $approvalRequestsQuery = LeaveRequest::whereIn('user_id', $subordinateIds)
-            ->whereIn('status', ['pending', 'approved_by_supervisor'])
+            ->whereIn('status', [RequestStatus::PENDING->value, RequestStatus::APPROVED_BY_SUPERVISOR->value])
             ->with('user.unit', 'leaveType');
 
         // Apply filters
@@ -115,10 +116,10 @@ class LeaveController extends Controller
             ->where('year', $currentYear)
             ->first();
 
-        // If no balance record exists for the current year, create one based on Cuti Tahunan default
+        // If no balance record exists for the current year, create one based on the annual leave type default
         if (!$annualLeaveBalance) {
-            $annualLeaveType = LeaveType::where('name', 'Cuti Tahunan')->first();
-            $defaultDays = $annualLeaveType->default_days ?? 12;
+            $annualLeaveType = LeaveType::where('is_annual', true)->first();
+            $defaultDays = $annualLeaveType->default_days ?? 12; // Fallback just in case
             $annualLeaveBalance = LeaveBalance::create([
                 'user_id' => $user->id,
                 'year' => $currentYear,
@@ -148,7 +149,7 @@ class LeaveController extends Controller
             'reason' => 'required|string|max:1000',
             'address_during_leave' => 'nullable|string|max:255',
             'contact_during_leave' => 'nullable|string|max:255',
-            'attachment' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
+            'attachment' => 'nullable|' . config('tasmen.file_uploads.leaves.rules'),
         ]);
 
         $user = Auth::user();
@@ -161,7 +162,7 @@ class LeaveController extends Controller
         $duration = $durationService->calculate($startDate, $endDate);
 
         // For annual leave, check balance
-        if ($leaveType->name === 'Cuti Tahunan') {
+        if ($leaveType->is_annual) {
             $balance = LeaveBalance::where('user_id', $user->id)->where('year', $startDate->year)->first();
             $remainingCarriedOver = $balance ? $balance->carried_over_days : 0;
             $remainingAnnual = $balance ? ($balance->total_days - $balance->days_taken) : 0;
@@ -186,7 +187,7 @@ class LeaveController extends Controller
             'reason' => $validated['reason'],
             'address_during_leave' => $validated['address_during_leave'],
             'contact_during_leave' => $validated['contact_during_leave'],
-            'status' => 'pending',
+            'status' => RequestStatus::PENDING,
             'current_approver_id' => $user->atasan_id,
             'attachment_path' => $attachmentPath,
             'last_approved_step' => 0,
@@ -233,20 +234,21 @@ class LeaveController extends Controller
         $nextState = $approvalService->processApproval($leaveRequest, $approver);
 
         // Update the request based on the service's decision
-        $leaveRequest->status = $nextState['status'];
+        $leaveRequest->status = RequestStatus::from($nextState['status']);
         $leaveRequest->current_approver_id = $nextState['next_approver_id'];
         $leaveRequest->last_approved_step = $nextState['last_approved_step'];
 
         // Handle final approval logic (database transaction and notification)
-        if ($nextState['status'] === 'approved') {
+        if ($leaveRequest->status === RequestStatus::APPROVED) {
             DB::transaction(function () use ($leaveRequest) {
                 $leaveRequest->save();
 
-                // Update leave balance only for 'Cuti Tahunan'
-                if ($leaveRequest->leaveType->name === 'Cuti Tahunan') {
+                // Update leave balance only for annual leave
+                if ($leaveRequest->leaveType->is_annual) {
+                    $defaultDays = $leaveRequest->leaveType->default_days ?? 12;
                     $balance = LeaveBalance::firstOrCreate(
                         ['user_id' => $leaveRequest->user_id, 'year' => $leaveRequest->start_date->year],
-                        ['total_days' => 12, 'carried_over_days' => 0]
+                        ['total_days' => $defaultDays, 'carried_over_days' => 0]
                     );
 
                     $daysToDeduct = $leaveRequest->duration_days;
@@ -286,7 +288,7 @@ class LeaveController extends Controller
 
         $validated = $request->validate(['rejection_reason' => 'required|string|max:1000']);
 
-        $leaveRequest->status = 'rejected';
+        $leaveRequest->status = RequestStatus::REJECTED;
         $leaveRequest->rejection_reason = $validated['rejection_reason'];
         $leaveRequest->current_approver_id = null;
         $leaveRequest->save();

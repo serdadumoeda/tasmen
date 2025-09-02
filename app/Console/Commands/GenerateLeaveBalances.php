@@ -34,9 +34,9 @@ class GenerateLeaveBalances extends Command
         $currentYear = now()->year;
         $previousYear = $currentYear - 1;
 
-        $annualLeaveType = LeaveType::where('name', 'Cuti Tahunan')->first();
+        $annualLeaveType = LeaveType::where('is_annual', true)->first();
         if (!$annualLeaveType) {
-            $this->error('"Cuti Tahunan" leave type not found. Please seed the leave types first.');
+            $this->error('Annual leave type not found. Please ensure one leave type is marked as annual.');
             return 1;
         }
         $defaultAnnualLeave = $annualLeaveType->default_days ?? 12;

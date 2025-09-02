@@ -38,15 +38,20 @@ class PerformanceCalculatorService
             $this->calculatedIki[$user->id] = $this->calculateIndividualPerformanceIndex($user);
         }
 
+        $allUsers->load('roles'); // Eager load roles for all users
+
         $roleOrder = [
-            User::ROLE_STAF, User::ROLE_SUB_KOORDINATOR, User::ROLE_KOORDINATOR,
-            User::ROLE_ESELON_II, User::ROLE_ESELON_I, User::ROLE_MENTERI,
+            'Staf', 'Sub Koordinator', 'Koordinator',
+            'Eselon IV', 'Eselon III', 'Eselon II', 'Eselon I', 'Menteri',
         ];
 
-        foreach ($roleOrder as $role) {
-            $usersInRole = $allUsers->where('role', $role);
+        foreach ($roleOrder as $roleName) {
+            $usersInRole = $allUsers->filter(fn($user) => $user->hasRole($roleName));
             foreach ($usersInRole as $user) {
-                $this->calculateFinalPerformanceValue($user, $allUsers);
+                // Ensure we don't recalculate if already done (e.g. Koordinator and Eselon III are same level)
+                if (!isset($this->calculatedNkf[$user->id])) {
+                    $this->calculateFinalPerformanceValue($user, $allUsers);
+                }
             }
         }
 
@@ -78,7 +83,9 @@ class PerformanceCalculatorService
         $managerialScore = $subordinates->avg(fn($sub) => $this->calculatedNkf[$sub->id] ?? 1.0);
 
         // Fetch weight from settings, falling back to a default
-        $weight = (float)($this->settings['managerial_weight_' . strtolower($user->role)] ?? 0.5);
+        $primaryRole = $user->roles->sortBy('level')->first();
+        $roleKey = $primaryRole ? strtolower($primaryRole->name) : 'default';
+        $weight = (float)($this->settings['managerial_weight_' . $roleKey] ?? 0.5);
 
         $formula = $this->settings['nkf_formula_pimpinan'] ?? '(individual_score * (1 - weight)) + (managerial_score * weight)';
 

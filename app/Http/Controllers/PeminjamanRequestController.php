@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\RequestStatus;
 use App\Models\PeminjamanRequest;
 use App\Models\Project;
 use App\Models\User;
@@ -34,7 +35,7 @@ class PeminjamanRequestController extends Controller
 
         // 1. Ambil permintaan yang perlu disetujui (tidak perlu pagination)
         $myPendingApprovals = PeminjamanRequest::where('approver_id', $userId)
-            ->where('status', 'pending')
+            ->where('status', RequestStatus::PENDING)
             ->with(['project' => fn($query) => $query->withoutGlobalScope(HierarchicalScope::class), 'requester', 'requestedUser'])
             ->latest()
             ->get();
@@ -43,14 +44,14 @@ class PeminjamanRequestController extends Controller
         $mySentRequests = PeminjamanRequest::where('requester_id', $userId)
             ->with(['project', 'requestedUser', 'approver'])
             ->latest()
-            ->paginate(5, ['*'], 'sent_page'); // 5 item per halaman, nama paginator: sent_page
+            ->paginate(config('tasmen.pagination.loan_requests', 5), ['*'], 'sent_page');
 
         // 3. Ambil riwayat persetujuan yang TELAH SAYA PROSES (dengan pagination)
         $approvalHistory = PeminjamanRequest::where('approver_id', $userId)
-            ->whereIn('status', ['approved', 'rejected']) // Hanya yang sudah disetujui/ditolak
+            ->whereIn('status', [RequestStatus::APPROVED->value, RequestStatus::REJECTED->value]) // Hanya yang sudah disetujui/ditolak
             ->with(['project', 'requester', 'requestedUser'])
             ->latest()
-            ->paginate(5, ['*'], 'history_page'); // 5 item per halaman, nama paginator: history_page
+            ->paginate(config('tasmen.pagination.loan_requests', 5), ['*'], 'history_page');
 
         return view('peminjaman_requests.my_requests', compact(
             'myPendingApprovals',
@@ -96,7 +97,7 @@ class PeminjamanRequestController extends Controller
         $peminjamanRequest = PeminjamanRequest::create($request->all() + [
             'requester_id' => Auth::id(),
             'approver_id' => $approver->id,
-            'due_date' => now()->addWeekdays(3)
+            'due_date' => now()->addWeekdays(config('tasmen.loan_request_due_days', 3))
         ]);
 
         Notification::send($approver, new PeminjamanRequested($peminjamanRequest));
@@ -106,8 +107,7 @@ class PeminjamanRequestController extends Controller
     
     private function findCoordinator(User $user): ?User
     {
-        // PERBAIKAN: Menggunakan hierarki Unit, bukan hierarki User->parent yang sudah tidak ada.
-        // Eager load relasi untuk menghindari N+1 query.
+        // PERBAIKAN: Menggunakan hierarki Unit dan relasi Role yang baru.
         $user->load('unit.parentUnit.parentUnit'); // Load beberapa level ke atas.
 
         $currentUnit = $user->unit;
@@ -115,8 +115,20 @@ class PeminjamanRequestController extends Controller
         while ($currentUnit) {
             // Cari approver (Koordinator atau Eselon II) di unit saat ini.
             $approver = User::where('unit_id', $currentUnit->id)
-                ->whereIn('role', [User::ROLE_KOORDINATOR, User::ROLE_ESELON_II])
-                ->orderByRaw("CASE role WHEN ? THEN 1 WHEN ? THEN 2 ELSE 3 END", [User::ROLE_KOORDINATOR, User::ROLE_ESELON_II])
+                ->whereHas('roles', function ($query) {
+                    $query->whereIn('name', ['Koordinator', 'Eselon II']);
+                })
+                ->with('roles') // Eager load roles to use in orderBy
+                ->get()
+                ->sortBy(function ($user) {
+                    if ($user->hasRole('Koordinator')) {
+                        return 1;
+                    }
+                    if ($user->hasRole('Eselon II')) {
+                        return 2;
+                    }
+                    return 3;
+                })
                 ->first();
 
             if ($approver) {
@@ -138,7 +150,7 @@ class PeminjamanRequestController extends Controller
         try {
             $project = Project::withoutGlobalScope(HierarchicalScope::class)->findOrFail($peminjamanRequest->project_id);
             $project->members()->syncWithoutDetaching([$peminjamanRequest->requested_user_id]);
-            $peminjamanRequest->update(['status' => 'approved']);
+            $peminjamanRequest->update(['status' => RequestStatus::APPROVED]);
 
             if ($peminjamanRequest->requester) {
                 Notification::send($peminjamanRequest->requester, new PeminjamanApproved($peminjamanRequest));
@@ -156,7 +168,7 @@ class PeminjamanRequestController extends Controller
 
         $request->validate(['rejection_reason' => 'required|string|max:1000']);
 
-        $peminjamanRequest->update($request->only('rejection_reason') + ['status' => 'rejected']);
+        $peminjamanRequest->update($request->only('rejection_reason') + ['status' => RequestStatus::REJECTED]);
 
         if ($peminjamanRequest->requester) {
             Notification::send($peminjamanRequest->requester, new PeminjamanRejected($peminjamanRequest));
