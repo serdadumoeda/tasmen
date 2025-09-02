@@ -13,15 +13,16 @@ return new class extends Migration
             $table->id();
             $table->string('key')->unique();
             $table->string('label');
+            $table->string('color_class')->default('bg-gray-100 text-gray-800');
             $table->timestamps();
         });
 
         DB::table('task_statuses')->insert([
-            ['key' => 'pending', 'label' => 'Pending', 'created_at' => now(), 'updated_at' => now()],
-            ['key' => 'in_progress', 'label' => 'In Progress', 'created_at' => now(), 'updated_at' => now()],
-            ['key' => 'for_review', 'label' => 'For Review', 'created_at' => now(), 'updated_at' => now()],
-            ['key' => 'completed', 'label' => 'Completed', 'created_at' => now(), 'updated_at' => now()],
-            ['key' => 'cancelled', 'label' => 'Cancelled', 'created_at' => now(), 'updated_at' => now()],
+            ['key' => 'pending', 'label' => 'Pending', 'color_class' => 'bg-yellow-100 text-yellow-800', 'created_at' => now(), 'updated_at' => now()],
+            ['key' => 'in_progress', 'label' => 'In Progress', 'color_class' => 'bg-blue-100 text-blue-800', 'created_at' => now(), 'updated_at' => now()],
+            ['key' => 'for_review', 'label' => 'For Review', 'color_class' => 'bg-orange-100 text-orange-800', 'created_at' => now(), 'updated_at' => now()],
+            ['key' => 'completed', 'label' => 'Completed', 'color_class' => 'bg-green-100 text-green-800', 'created_at' => now(), 'updated_at' => now()],
+            ['key' => 'cancelled', 'label' => 'Cancelled', 'color_class' => 'bg-gray-100 text-gray-800', 'created_at' => now(), 'updated_at' => now()],
         ]);
     }
 
