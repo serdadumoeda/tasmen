@@ -27,7 +27,7 @@ class WeeklyWorkloadController extends Controller
         }
     
         // 3. Query dasar untuk bawahan
-        if ($manager->isSuperAdmin()) {
+        if ($manager->role === User::ROLE_SUPERADMIN) {
             $subordinatesQuery = User::where('id', '!=', $manager->id);
         } else {
             $subordinatesQuery = User::teamMembers($manager);
@@ -40,9 +40,7 @@ class WeeklyWorkloadController extends Controller
         
         // 5. Eager load tugas
         $subordinatesQuery->with(['tasks' => function ($query) {
-            $query->whereHas('status', function ($q) {
-                $q->where('key', '!=', 'completed');
-            })->whereNotNull('deadline');
+            $query->where('status', '!=', 'completed')->whereNotNull('deadline');
         }]);
     
         // 6. Paginasi
@@ -54,7 +52,7 @@ class WeeklyWorkloadController extends Controller
             $startOfWeek = $today->copy()->startOfWeek();
             $endOfWeek = $today->copy()->endOfWeek();
 
-            $effectiveWeeklyHours = $member->getEffectiveWorkingHours($startOfWeek, $endOfWeek, $standardHours);
+            $effectiveWeeklyHours = $member->getEffectiveWorkingHours($startOfWeek, $endOfWeek);
 
             $totalWeeklyHours = $member->tasks->reduce(function ($carry, $task) {
                 $remainingHours = $task->estimated_hours * ((100 - $task->progress) / 100);

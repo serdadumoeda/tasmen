@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\PeminjamanRequest;
 use App\Models\Project;
 use App\Models\User;
-use App\Models\PeminjamanRequestStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -30,30 +29,35 @@ class PeminjamanRequestController extends Controller
     public function myRequests()
     {
         $userId = Auth::id();
-        $statuses = PeminjamanRequestStatus::pluck('id', 'key');
 
+        // --- AWAL PERBAIKAN ---
+
+        // 1. Ambil permintaan yang perlu disetujui (tidak perlu pagination)
         $myPendingApprovals = PeminjamanRequest::where('approver_id', $userId)
-            ->where('status_id', $statuses['pending'])
+            ->where('status', 'pending')
             ->with(['project' => fn($query) => $query->withoutGlobalScope(HierarchicalScope::class), 'requester', 'requestedUser'])
             ->latest()
             ->get();
 
+        // 2. Ambil riwayat permintaan yang SAYA ajukan (dengan pagination)
         $mySentRequests = PeminjamanRequest::where('requester_id', $userId)
             ->with(['project', 'requestedUser', 'approver'])
             ->latest()
-            ->paginate(5, ['*'], 'sent_page');
+            ->paginate(5, ['*'], 'sent_page'); // 5 item per halaman, nama paginator: sent_page
 
+        // 3. Ambil riwayat persetujuan yang TELAH SAYA PROSES (dengan pagination)
         $approvalHistory = PeminjamanRequest::where('approver_id', $userId)
-            ->whereIn('status_id', [$statuses['approved'], $statuses['rejected']])
+            ->whereIn('status', ['approved', 'rejected']) // Hanya yang sudah disetujui/ditolak
             ->with(['project', 'requester', 'requestedUser'])
             ->latest()
-            ->paginate(5, ['*'], 'history_page');
+            ->paginate(5, ['*'], 'history_page'); // 5 item per halaman, nama paginator: history_page
 
         return view('peminjaman_requests.my_requests', compact(
             'myPendingApprovals',
             'mySentRequests',
             'approvalHistory'
         ));
+        // --- AKHIR PERBAIKAN ---
     }
 
     /**
@@ -89,13 +93,10 @@ class PeminjamanRequestController extends Controller
             return response()->json(['success' => false, 'message' => 'Koordinator untuk anggota ini tidak dapat ditemukan.'], 422);
         }
 
-        $pendingStatus = PeminjamanRequestStatus::where('key', 'pending')->first();
-
         $peminjamanRequest = PeminjamanRequest::create($request->all() + [
             'requester_id' => Auth::id(),
             'approver_id' => $approver->id,
-            'due_date' => now()->addWeekdays(3),
-            'status_id' => $pendingStatus->id,
+            'due_date' => now()->addWeekdays(3)
         ]);
 
         Notification::send($approver, new PeminjamanRequested($peminjamanRequest));
@@ -113,16 +114,9 @@ class PeminjamanRequestController extends Controller
 
         while ($currentUnit) {
             // Cari approver (Koordinator atau Eselon II) di unit saat ini.
-            $approver_roles = ['koordinator', 'eselon_ii'];
             $approver = User::where('unit_id', $currentUnit->id)
-                ->whereHas('role', function ($q) use ($approver_roles) {
-                    $q->whereIn('name', $approver_roles);
-                })
-                ->with('role') // Eager load role to access its properties
-                ->get()
-                ->sortBy(function($user) use ($approver_roles) {
-                    return array_search($user->role->name, $approver_roles);
-                })
+                ->whereIn('role', [User::ROLE_KOORDINATOR, User::ROLE_ESELON_II])
+                ->orderByRaw("CASE role WHEN ? THEN 1 WHEN ? THEN 2 ELSE 3 END", [User::ROLE_KOORDINATOR, User::ROLE_ESELON_II])
                 ->first();
 
             if ($approver) {
@@ -140,16 +134,16 @@ class PeminjamanRequestController extends Controller
     public function approve(PeminjamanRequest $peminjamanRequest)
     {
         $this->authorize('approve', $peminjamanRequest);
-        $approvedStatus = PeminjamanRequestStatus::where('key', 'approved')->first();
 
         try {
             $project = Project::withoutGlobalScope(HierarchicalScope::class)->findOrFail($peminjamanRequest->project_id);
             $project->members()->syncWithoutDetaching([$peminjamanRequest->requested_user_id]);
-            if($approvedStatus) $peminjamanRequest->update(['status_id' => $approvedStatus->id]);
+            $peminjamanRequest->update(['status' => 'approved']);
 
             if ($peminjamanRequest->requester) {
                 Notification::send($peminjamanRequest->requester, new PeminjamanApproved($peminjamanRequest));
             }
+
             return redirect()->route('peminjaman-requests.my-requests')->with('success', 'Permintaan telah disetujui.');
         } catch (ModelNotFoundException $e) {
             return redirect()->route('peminjaman-requests.my-requests')->with('error', 'Gagal menyetujui: Proyek terkait tidak ditemukan.');
@@ -159,16 +153,15 @@ class PeminjamanRequestController extends Controller
     public function reject(Request $request, PeminjamanRequest $peminjamanRequest)
     {
         $this->authorize('reject', $peminjamanRequest);
-        $request->validate(['rejection_reason' => 'required|string|max:1000']);
-        $rejectedStatus = PeminjamanRequestStatus::where('key', 'rejected')->first();
 
-        if($rejectedStatus) {
-            $peminjamanRequest->update($request->only('rejection_reason') + ['status_id' => $rejectedStatus->id]);
-        }
+        $request->validate(['rejection_reason' => 'required|string|max:1000']);
+
+        $peminjamanRequest->update($request->only('rejection_reason') + ['status' => 'rejected']);
 
         if ($peminjamanRequest->requester) {
             Notification::send($peminjamanRequest->requester, new PeminjamanRejected($peminjamanRequest));
         }
+
         return redirect()->route('peminjaman-requests.my-requests')->with('success', 'Permintaan telah ditolak.');
     }
 }

@@ -34,7 +34,7 @@ class TimeLogSeeder extends Seeder
             }
 
             // Jangan buat log untuk tugas yang belum dimulai
-            if (!$task->status || $task->status->key === 'pending' || $task->progress === 0) {
+            if ($task->status === 'pending' || $task->progress === 0) {
                 continue;
             }
 

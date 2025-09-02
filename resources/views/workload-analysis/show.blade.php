@@ -38,15 +38,13 @@
                         <div class="space-y-4">
                             @foreach($adhocTasks as $task)
                                 <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                                    <p class="font-semibold text-gray-900">{{ $task->name }}</p>
+                                    <p class="font-semibold text-gray-900">{{ $task->title }}</p>
                                     <p class="text-sm text-gray-600">{{ $task->description }}</p>
                                     <div class="flex justify-between items-center mt-2 text-xs text-gray-500">
                                         <span><i class="fas fa-hourglass-half mr-1"></i> Estimasi: {{ $task->estimated_hours }} jam</span>
-                                        <span class="px-2 py-1 text-white rounded-full
-                                            @if($task->status == 'Selesai') bg-green-500
-                                            @elseif($task->status == 'Dalam Pengerjaan') bg-blue-500
-                                            @else bg-gray-400 @endif
-                                        ">{{ $task->status }}</span>
+                                        <span class="px-2 py-1 text-white rounded-full {{ $task->status->color_class ?? 'bg-gray-400' }}">
+                                            {{ $task->status->label ?? 'N/A' }}
+                                        </span>
                                     </div>
                                 </div>
                             @endforeach
@@ -67,14 +65,12 @@
                                     <div class="space-y-3">
                                         @foreach($tasks as $task)
                                             <div class="bg-gray-50 p-3 rounded-md">
-                                                <p class="font-semibold text-gray-800">{{ $task->name }}</p>
+                                                <p class="font-semibold text-gray-800">{{ $task->title }}</p>
                                                 <div class="flex justify-between items-center mt-2 text-xs text-gray-500">
                                                     <span><i class="fas fa-hourglass-half mr-1"></i> Estimasi: {{ $task->estimated_hours }} jam</span>
-                                                    <span class="px-2 py-1 text-white rounded-full
-                                                        @if($task->status == 'Selesai') bg-green-500
-                                                        @elseif($task->status == 'Dalam Pengerjaan') bg-blue-500
-                                                        @else bg-gray-400 @endif
-                                                    ">{{ $task->status }}</span>
+                                                    <span class="px-2 py-1 text-white rounded-full {{ $task->status->color_class ?? 'bg-gray-400' }}">
+                                                        {{ $task->status->label ?? 'N/A' }}
+                                                    </span>
                                                 </div>
                                             </div>
                                         @endforeach

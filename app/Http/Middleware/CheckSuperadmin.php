@@ -23,7 +23,7 @@ class CheckSuperadmin
         }
 
         // If user is not logged in OR their role is not superadmin
-        if (!auth()->check() || !auth()->user()->isSuperAdmin()) {
+        if (!auth()->check() || auth()->user()->role !== User::ROLE_SUPERADMIN) {
             abort(403, 'ANDA TIDAK MEMILIKI HAK AKSES.');
         }
 

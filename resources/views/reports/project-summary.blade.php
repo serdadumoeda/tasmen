@@ -214,7 +214,7 @@
                 </thead>
                 <tbody>
                     @foreach($project->tasks as $task)
-                        <tr class="status-{{ $task->status }}">
+                        <tr class="status-{{ $task->status->key ?? '' }}">
                             <td>{{ $loop->iteration }}</td>
                             <td>{{ $task->title }}</td>
                             <td>
@@ -226,8 +226,8 @@
                             </td>
                             <td>{{ \Carbon\Carbon::parse($task->deadline)->format('d M Y') }}</td>
                             <td>
-                                <span class="status-badge status-{{ $task->status }}">
-                                    {{ str_replace('_', ' ', Str::title($task->status)) }}
+                                <span class="status-badge status-{{ $task->status->key ?? '' }}">
+                                    {{ $task->status->label ?? 'N/A' }}
                                 </span>
                             </td>
                             <td>{{ $task->progress }}%</td>

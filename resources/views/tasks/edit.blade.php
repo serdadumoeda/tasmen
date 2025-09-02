@@ -46,7 +46,7 @@
 
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('app.edit_task') }}: <span class="font-bold text-indigo-600">{{ $task->title }}</span>
+            {{ __('Edit Tugas: ') }} <span class="font-bold text-indigo-600">{{ $task->title }}</span>
         </h2>
     </x-slot>
 
@@ -55,6 +55,7 @@
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg"> {{-- Shadow dan rounded-lg konsisten --}}
                 <div class="p-6 text-gray-900">
                     
+                    {{-- Blok Persetujuan untuk Pimpinan (jika ada) --}}
                     @if ($task->project && $task->status->key === 'for_review' && Gate::allows('approve', $task))
                         <div class="mb-6 p-5 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 rounded-lg shadow-md flex items-start">
                             <i class="fas fa-exclamation-triangle text-yellow-500 text-2xl mr-4 mt-1"></i>
@@ -98,29 +99,31 @@
                                 </div>
                             @endif
 
+                            {{-- Judul --}}
                             <div class="mb-6">
                                 <label for="title" class="block font-semibold text-sm text-gray-700 mb-1">
-                                    <i class="fas fa-heading mr-2 text-gray-500"></i> {{ __('app.task_title') }} <span class="text-red-500">*</span>
+                                    <i class="fas fa-heading mr-2 text-gray-500"></i> Judul Tugas <span class="text-red-500">*</span>
                                 </label>
                                 <input type="text" name="title" id="title" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" value="{{ old('title', $task->title) }}" required>
                             </div>
                             
+                            {{-- Deskripsi --}}
                             <div class="mb-6">
                                 <label for="description" class="block font-semibold text-sm text-gray-700 mb-1">
-                                    <i class="fas fa-align-left mr-2 text-gray-500"></i> {{ __('app.task_description') }} (Opsional)
+                                    <i class="fas fa-align-left mr-2 text-gray-500"></i> Deskripsi (Opsional)
                                 </label>
                                 <textarea name="description" id="description" rows="4" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150">{{ old('description', $task->description) }}</textarea>
                             </div>
 
                             <div class="mb-6 relative z-20">
                                 <label for="assignees" class="block font-semibold text-sm text-gray-700 mb-1">
-                                    <i class="fas fa-users-line mr-2 text-gray-500"></i> {{ __('app.assign_to') }} <span class="text-red-500">*</span>
+                                    <i class="fas fa-users-line mr-2 text-gray-500"></i> Ditugaskan Kepada <span class="text-red-500">*</span>
                                 </label>
                                 @if (auth()->user()->can('update', $task) && !auth()->user()->isStaff())
                                     <select name="assignees[]" id="assignees" class="block mt-1 w-full tom-select-multiple" multiple required placeholder="Pilih Anggota Tim...">
-                                        @foreach ($projectMembers as $member)
+                                        @foreach ($assignableUsers as $member)
                                             <option value="{{ $member->id }}" @selected(in_array($member->id, old('assignees', $task->assignees->pluck('id')->toArray())))>
-                                                {{ $member->name }} ({{ $member->role->label ?? '' }})
+                                                {{ $member->name }}
                                             </option>
                                         @endforeach
                                     </select>
@@ -128,7 +131,7 @@
                                     <div class="mt-1 p-3 bg-gray-100 border border-gray-300 rounded-lg shadow-sm text-gray-800 font-medium">
                                         <i class="fas fa-user-check mr-2 text-gray-500"></i>
                                         @foreach($task->assignees as $assignee)
-                                            {{ $assignee->name }} ({{ $assignee->role->label ?? '' }}){{ !$loop->last ? ', ' : '' }}
+                                            {{ $assignee->name }}{{ !$loop->last ? ', ' : '' }}
                                         @endforeach
                                     </div>
                                     @foreach($task->assignees as $assignee)
@@ -140,19 +143,19 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                                 <div>
                                     <label for="start_date" class="block font-semibold text-sm text-gray-700 mb-1">
-                                        <i class="fas fa-calendar-day mr-2 text-gray-500"></i> {{ __('app.start_date') }}
+                                        <i class="fas fa-calendar-day mr-2 text-gray-500"></i> Tanggal Mulai
                                     </label>
                                     <input type="date" name="start_date" id="start_date" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" value="{{ old('start_date', optional($task->start_date)->format('Y-m-d')) }}">
                                 </div>
                                 <div>
                                     <label for="deadline" class="block font-semibold text-sm text-gray-700 mb-1">
-                                        <i class="fas fa-calendar-alt mr-2 text-gray-500"></i> {{ __('app.deadline') }} <span class="text-red-500">*</span>
+                                        <i class="fas fa-calendar-alt mr-2 text-gray-500"></i> Deadline <span class="text-red-500">*</span>
                                     </label>
                                     <input type="date" name="deadline" id="deadline" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" value="{{ old('deadline', optional($task->deadline)->format('Y-m-d')) }}" required>
                                 </div>
                                 <div>
                                     <label for="estimated_hours" class="block font-semibold text-sm text-gray-700 mb-1">
-                                        <i class="fas fa-hourglass-half mr-2 text-gray-500"></i> {{ __('app.estimated_hours') }} (Opsional)
+                                        <i class="fas fa-hourglass-half mr-2 text-gray-500"></i> Estimasi Jam (Opsional)
                                     </label>
                                     <input type="number" step="0.5" name="estimated_hours" id="estimated_hours" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" value="{{ old('estimated_hours', $task->estimated_hours) }}" placeholder="Contoh: 2.5">
                                 </div>
@@ -160,7 +163,7 @@
                             
                             <div class="mb-6">
                                 <label for="task_status_id" class="block text-sm font-semibold text-gray-700 mb-1">
-                                    <i class="fas fa-flag-checkered mr-2 text-gray-500"></i> {{ __('app.status') }} <span class="text-red-500">*</span>
+                                    <i class="fas fa-flag-checkered mr-2 text-gray-500"></i> Status <span class="text-red-500">*</span>
                                 </label>
                                 <select name="task_status_id" id="task_status_id" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" required>
                                     @foreach($statuses as $status)
@@ -173,7 +176,7 @@
 
                             <div class="mb-6">
                                 <label for="priority_level_id" class="block text-sm font-semibold text-gray-700 mb-1">
-                                    <i class="fas fa-flag mr-2 text-gray-500"></i> {{ __('app.priority') }} <span class="text-red-500">*</span>
+                                    <i class="fas fa-flag mr-2 text-gray-500"></i> Prioritas <span class="text-red-500">*</span>
                                 </label>
                                 <select name="priority_level_id" id="priority_level_id" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" required>
                                     @foreach($priorities as $priority)
@@ -193,7 +196,7 @@
 
                             <div class="mb-6">
                                 <label for="file_upload" class="block text-sm font-semibold text-gray-700 mb-1">
-                                    <i class="fas fa-paperclip mr-2 text-gray-500"></i> {{ __('app.new_attachment') }} (Opsional)
+                                    <i class="fas fa-paperclip mr-2 text-gray-500"></i> Unggah Lampiran Baru (Opsional)
                                 </label>
                                 <input type="file" name="file_upload" id="file_upload" class="block w-full text-sm text-gray-500 
                                     file:mr-4 file:py-2 file:px-4 
@@ -207,10 +210,10 @@
                         </fieldset>
 
                         @if($task->status->key !== 'for_review' || auth()->user()->can('approve', $task))
-                            <div class="flex items-center justify-between mt-8 pt-6 border-t border-gray-200">
+                            <div class="flex items-center justify-between mt-8 pt-6 border-t border-gray-200"> {{-- Border dan padding atas --}}
                                 @if ($task->project_id)
                                     <a href="{{ route('projects.show', $task->project) }}" class="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 font-medium transition-colors duration-200">
-                                        <i class="fas fa-arrow-left mr-2"></i> Kembali ke {{ __('app.project') }}
+                                        <i class="fas fa-arrow-left mr-2"></i> Kembali ke Kegiatan
                                     </a>
                                 @else
                                     <a href="{{ route('adhoc-tasks.index') }}" class="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 font-medium transition-colors duration-200">
@@ -218,23 +221,24 @@
                                     </a>
                                 @endif
                                 <button type="submit" class="inline-flex items-center px-5 py-2.5 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150 shadow-md hover:shadow-lg transform hover:scale-105">
-                                    <i class="fas fa-save mr-2"></i> {{ __('app.save_changes') }}
+                                    <i class="fas fa-save mr-2"></i> Simpan Perubahan
                                 </button>
                             </div>
                         @endif
                     </form>
                     
-                    <div class="mt-8 pt-6 border-t border-gray-200">
+                    <div class="mt-8 pt-6 border-t border-gray-200"> {{-- Border dan padding atas --}}
                         <h3 class="font-bold text-lg text-gray-800 mb-4 flex items-center">
                             <i class="fas fa-file-lines mr-2 text-blue-600"></i> Daftar Lampiran
                         </h3>
-                        <ul class="mt-4 space-y-3">
+                        <ul class="mt-4 space-y-3"> {{-- Spasi lebih besar --}}
                             @forelse ($task->attachments as $attachment)
-                                <li class="flex justify-between items-center text-sm p-3 bg-gray-50 rounded-lg shadow-sm group hover:bg-gray-100 transition-colors duration-150">
+                                <li class="flex justify-between items-center text-sm p-3 bg-gray-50 rounded-lg shadow-sm group hover:bg-gray-100 transition-colors duration-150"> {{-- Styling list item lampiran --}}
                                     <a href="{{ route('attachments.view', $attachment) }}" target="_blank" class="text-indigo-600 hover:underline truncate flex items-center font-medium">
                                         <i class="fas fa-file-alt mr-2 text-gray-500"></i> {{ $attachment->filename }}
                                     </a>
                                     
+                                    {{-- Tombol Hapus Lampiran --}}
                                     @can('update', $task)
                                         <form action="{{ route('attachments.destroy', $attachment) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus file ini? Aksi ini tidak dapat dibatalkan.');">
                                             @csrf
@@ -262,6 +266,7 @@
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Inisialisasi TomSelect untuk elemen dengan kelas 'tom-select-multiple'
             const selectElement = document.getElementById('assignees');
             if (selectElement && selectElement.classList.contains('tom-select-multiple')) {
                 new TomSelect(selectElement, {
@@ -269,9 +274,12 @@
                     create: false,
                     maxItems: null,
                     placeholder: 'Pilih Anggota Tim',
+                    // Pastikan nilai awal dipilih dengan benar
                     items: @json(old('assignees', $task->assignees->pluck('id')->toArray()))
                 });
             }
+
+            // Script untuk progress bar
             const progressInput = document.getElementById('progress');
             const progressValueSpan = document.getElementById('progress-value');
             if (progressInput && progressValueSpan) {
@@ -279,6 +287,21 @@
                     progressValueSpan.innerText = this.value;
                 });
             }
+
+            // Client-side validation for file size
+            const form = document.querySelector('form');
+            const fileInput = document.getElementById('file_upload');
+            const maxFileSize = 2 * 1024 * 1024; // 2MB
+
+            form.addEventListener('submit', function(event) {
+                if (fileInput.files.length > 0) {
+                    const file = fileInput.files[0];
+                    if (file.size > maxFileSize) {
+                        event.preventDefault();
+                        alert('Ukuran file tidak boleh melebihi 2MB.');
+                    }
+                }
+            });
         });
     </script>
     @endpush

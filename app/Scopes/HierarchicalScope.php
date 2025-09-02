@@ -18,7 +18,7 @@ class HierarchicalScope implements Scope
         $user = auth()->user();
 
         // Jika tidak ada pengguna yang login atau superadmin, jangan lakukan apa-apa.
-        if (!$user || $user->isSuperAdmin()) {
+        if (!$user || $user->role === User::ROLE_SUPERADMIN) {
             return;
         }
 

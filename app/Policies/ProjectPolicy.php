@@ -24,7 +24,7 @@ class ProjectPolicy
     public function view(User $user, Project $project): bool
     {
         // Superadmin bisa melihat semua
-        if ($user->isSuperAdmin()) {
+        if ($user->role === User::ROLE_SUPERADMIN) {
             return true;
         }
 
@@ -56,7 +56,7 @@ class ProjectPolicy
     public function update(User $user, Project $project): bool
     {
         // Superadmin bisa update
-        if ($user->isSuperAdmin()) {
+        if ($user->role === User::ROLE_SUPERADMIN) {
             return true;
         }
 
@@ -80,7 +80,7 @@ class ProjectPolicy
     public function delete(User $user, Project $project): bool
     {
         // Hanya superadmin atau pemilik yang bisa hapus
-        return $user->isSuperAdmin() || $project->owner_id === $user->id;
+        return $user->role === User::ROLE_SUPERADMIN || $project->owner_id === $user->id;
     }
 
     public function viewTeamDashboard(User $user, Project $project): bool

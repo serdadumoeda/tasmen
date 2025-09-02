@@ -38,7 +38,7 @@ class ApprovalWorkflowController extends Controller
     {
         $workflow = $approvalWorkflow;
         $workflow->load('steps');
-        $roles = \App\Models\Role::orderBy('label')->get(); // Get all possible roles from the new model
+        $roles = User::ROLES; // Get all possible roles
         return view('admin.approval-workflows.show', compact('workflow', 'roles'));
     }
 
@@ -76,20 +76,14 @@ class ApprovalWorkflowController extends Controller
     {
         $validated = $request->validate([
             'step' => ['required', 'integer', 'min:1', Rule::unique('approval_workflow_steps')->where('approval_workflow_id', $approvalWorkflow->id)],
-            'approver_role' => ['required', 'string', Rule::exists('roles', 'name')],
+            'approver_role' => ['required', 'string', Rule::in(array_column(User::ROLES, 'name'))],
             'is_final_approval' => ['nullable', 'boolean'],
-            'condition_type' => ['nullable', 'string', Rule::in(['leave_duration_greater_than', 'applicant_role_is', 'applicant_role_in'])],
-            'condition_value' => 'nullable|string|max:255',
-            'action' => ['nullable', 'string', Rule::in(['approve', 'reject'])],
         ]);
 
         $approvalWorkflow->steps()->create([
             'step' => $validated['step'],
             'approver_role' => $validated['approver_role'],
             'is_final_approval' => $request->has('is_final_approval'),
-            'condition_type' => $validated['condition_type'],
-            'condition_value' => $validated['condition_value'],
-            'action' => $validated['action'] ?? 'approve',
         ]);
 
         return redirect()->route('admin.approval-workflows.show', $approvalWorkflow)->with('success', 'Langkah persetujuan berhasil ditambahkan.');

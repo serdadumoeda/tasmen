@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Models\User;
 use App\Models\Unit;
 use App\Models\Jabatan;
-use App\Models\Role;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -15,14 +14,11 @@ class OrganizationalDataImporterService
 {
     private $unitCache = [];
     private $userCache = [];
-    private $roleCache = [];
     private $command;
 
     public function __construct($command = null)
     {
         $this->command = $command;
-        // Cache roles on construction
-        $this->roleCache = Role::pluck('id', 'name')->toArray();
     }
 
     public function processData(array $data): void
@@ -32,6 +28,7 @@ class OrganizationalDataImporterService
             $this->command->getOutput()->progressStart(count($data));
         }
 
+        // Cache existing users to avoid re-hashing passwords on updates.
         $this->userCache = User::pluck('id', 'nip')->toArray();
         $this->unitCache = Unit::pluck('id', 'name')->toArray();
 
@@ -49,6 +46,8 @@ class OrganizationalDataImporterService
             }
         }
         
+        // After all units and users are created, we can safely update supervisors
+        // without worrying about a recursive loop during the creation process.
         $this->updateSupervisorForAllUsers();
         Unit::rebuildPaths();
 
@@ -60,27 +59,30 @@ class OrganizationalDataImporterService
 
     private function processItem(object $item): void
     {
+        // 1. Get or Create Unit
         $unit = $this->getOrCreateUnit($item);
         if (!$unit) {
             $this->logInfo('Skipping item due to missing unit information for NIP: ' . $item->NIP);
             return;
         }
 
-        $roleName = $this->determineRoleName($item, $unit);
-        $roleId = $this->roleCache[$roleName] ?? null;
+        // 2. Determine Role
+        $role = $this->determineRole($item, $unit);
 
-        if (!$roleId) {
-            $this->logError("Could not find role ID for role name '{$roleName}'. Skipping user.");
-            return;
-        }
+        // 3. Prepare User Data
+        $userData = $this->prepareUserData($item, $unit->id, $role);
 
-        $userData = $this->prepareUserData($item, $unit->id, $roleId);
+        // 4. Update or Create User
+        $user = User::updateOrCreate(
+            ['nip' => $item->NIP],
+            $userData
+        );
 
-        $user = User::updateOrCreate(['nip' => $item->NIP], $userData);
+        // 5. Get or Create Jabatan and link to User
+        $this->getOrCreateJabatan($item, $unit->id, $user->id, $role);
 
-        $this->getOrCreateJabatan($item, $unit->id, $user->id);
-
-        if ($this->isStructuralHead($roleName)) {
+        // 6. If user is a structural head, update the unit
+        if ($this->isStructuralHead($role)) {
             $unit->kepala_unit_id = $user->id;
             $unit->save();
         }
@@ -92,6 +94,7 @@ class OrganizationalDataImporterService
             'Unit Kerja Eselon I', 'Unit Kerja Eselon II',
             'Unit Kerja Koordinator', 'Unit Kerja Sub Koordinator'
         ];
+
         $parentUnitId = null;
         $lastUnit = null;
 
@@ -114,32 +117,35 @@ class OrganizationalDataImporterService
         return $lastUnit;
     }
 
-    private function determineRoleName(object $item, Unit $unit): string
+    private function determineRole(object $item, Unit $unit): string
     {
+        // Priority 1: Use the explicit "Eselon" field if it's a structural one.
         if (!empty($item->Eselon)) {
-            $roleName = match ($item->Eselon) {
-                '1-A' => 'eselon_i',
-                '2-A' => 'eselon_ii',
-                '3-A' => 'koordinator',
-                '4-A' => 'sub_koordinator',
-                default => null,
+            $role = match ($item->Eselon) {
+                '1-A' => User::ROLE_ESELON_I,
+                '2-A' => User::ROLE_ESELON_II,
+                '3-A' => User::ROLE_KOORDINATOR,
+                '4-A' => User::ROLE_SUB_KOORDINATOR,
+                default => null, // Not a recognized structural eselon, so we'll ignore it.
             };
-            if ($roleName) {
-                return $roleName;
+            if ($role) {
+                return $role;
             }
         }
 
+        // Priority 2: Infer the role from the depth of the unit for functional staff
+        // or structural staff without a clear Eselon mapping.
         $depth = $unit->ancestors()->count();
         return match ($depth) {
-            1 => 'eselon_i',
-            2 => 'eselon_ii',
-            3 => 'koordinator',
-            4 => 'sub_koordinator',
-            default => 'staf',
+            1 => User::ROLE_ESELON_I,
+            2 => User::ROLE_ESELON_II,
+            3 => User::ROLE_KOORDINATOR,
+            4 => User::ROLE_SUB_KOORDINATOR,
+            default => User::ROLE_STAF,
         };
     }
 
-    private function prepareUserData(object $item, int $unitId, int $roleId): array
+    private function prepareUserData(object $item, int $unitId, string $role): array
     {
         $baseEmail = strtolower(str_replace(' ', '.', preg_replace('/[^a-zA-Z0-9\s]/', '', $item->Nama))) . '@example.com';
         $email = $baseEmail;
@@ -153,7 +159,7 @@ class OrganizationalDataImporterService
             'name' => $item->Nama,
             'email' => $item->email ?? $email,
             'unit_id' => $unitId,
-            'role_id' => $roleId,
+            'role' => $role,
             'status' => 'active',
             'tempat_lahir' => $item->{'Tempat Lahir'},
             'alamat' => $item->Alamat,
@@ -171,10 +177,12 @@ class OrganizationalDataImporterService
             'jenis_jabatan' => $item->{'Jenis Jabatan'},
         ];
 
+        // Add password only if creating a new user
         if (!isset($this->userCache[$item->NIP])) {
             $data['password'] = Hash::make('password');
         }
 
+        // Convert date formats
         $dateFields = [
             'tgl_lahir' => 'Tgl. Lahir',
             'tmt_eselon' => 'TMT ESELON',
@@ -196,24 +204,29 @@ class OrganizationalDataImporterService
         return $data;
     }
 
-    private function getOrCreateJabatan(object $item, int $unitId, int $userId): Jabatan
+    private function getOrCreateJabatan(object $item, int $unitId, int $userId, string $role): Jabatan
     {
         $jabatanName = $item->Jabatan;
         if (empty($jabatanName)) {
             $this->logError("Skipping Jabatan creation for User ID: {$userId} due to empty Jabatan name.");
+            // Create a default placeholder Jabatan to avoid crashes downstream
             return Jabatan::firstOrCreate(
                 ['user_id' => $userId],
                 ['name' => 'Jabatan Belum Diatur', 'unit_id' => $unitId]
             );
         }
 
+        // First, check if this specific user is already in a Jabatan with this name/unit.
         $existingJabatan = Jabatan::where('name', 'like', $jabatanName)
                                 ->where('unit_id', $unitId)
                                 ->where('user_id', $userId)
                                 ->first();
 
-        if ($existingJabatan) return $existingJabatan;
+        if ($existingJabatan) {
+            return $existingJabatan;
+        }
 
+        // The user is not in this Jabatan. Let's see if there's a vacant one.
         $vacantJabatan = Jabatan::where('name', 'like', $jabatanName)
                                ->where('unit_id', $unitId)
                                ->whereNull('user_id')
@@ -225,6 +238,7 @@ class OrganizationalDataImporterService
             return $vacantJabatan;
         }
 
+        // No vacant slots found. We must create a new Jabatan slot for this user.
         return Jabatan::create([
             'name'      => $jabatanName,
             'unit_id'   => $unitId,
@@ -232,16 +246,21 @@ class OrganizationalDataImporterService
         ]);
     }
 
-    private function isStructuralHead(string $roleName): bool
+    private function isStructuralHead(string $role): bool
     {
-        return in_array($roleName, [
-            'menteri', 'eselon_i', 'eselon_ii', 'koordinator', 'sub_koordinator'
+        return in_array($role, [
+            User::ROLE_MENTERI,
+            User::ROLE_ESELON_I,
+            User::ROLE_ESELON_II,
+            User::ROLE_KOORDINATOR,
+            User::ROLE_SUB_KOORDINATOR
         ]);
     }
 
     private function updateSupervisorForAllUsers(): void
     {
         $this->logInfo('Updating supervisor relationships...');
+        // Eager load units to reduce queries and find all unit heads first.
         $users = User::with('unit.parentUnit')->get();
         $unitHeads = Unit::whereNotNull('kepala_unit_id')->pluck('kepala_unit_id', 'id')->toArray();
         $updates = [];
@@ -250,9 +269,13 @@ class OrganizationalDataImporterService
             if (!$user->unit) continue;
 
             $supervisorId = null;
+
+            // Find the head of the user's own unit
             if (isset($unitHeads[$user->unit->id]) && $unitHeads[$user->unit->id] !== $user->id) {
+                // If there is a head of this unit, and it's not the user themselves, that's the supervisor.
                 $supervisorId = $unitHeads[$user->unit->id];
             } elseif ($user->unit->parentUnit && isset($unitHeads[$user->unit->parentUnit->id])) {
+                // Otherwise, the supervisor is the head of the parent unit.
                 $supervisorId = $unitHeads[$user->unit->parentUnit->id];
             }
 

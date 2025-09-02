@@ -30,20 +30,20 @@
                             </div>
 
                             <div>
-                                <label for="status_id" class="sr-only">Status</label>
-                                <select name="status_id" id="status_id" class="block w-full rounded-lg border-gray-300 shadow-sm text-sm">
+                                <label for="task_status_id" class="sr-only">Status</label>
+                                <select name="task_status_id" id="task_status_id" class="block w-full rounded-lg border-gray-300 shadow-sm text-sm">
                                     <option value="">Semua Status</option>
                                     @foreach($statuses as $status)
-                                        <option value="{{ $status->id }}" @selected(request('status_id') == $status->id)>{{ $status->label }}</option>
+                                        <option value="{{ $status->id }}" @selected(request('task_status_id') == $status->id)>{{ $status->label }}</option>
                                     @endforeach
                                 </select>
                             </div>
                             <div>
-                                <label for="priority_id" class="sr-only">Prioritas</label>
-                                <select name="priority_id" id="priority_id" class="block w-full rounded-lg border-gray-300 shadow-sm text-sm">
+                                <label for="priority_level_id" class="sr-only">Prioritas</label>
+                                <select name="priority_level_id" id="priority_level_id" class="block w-full rounded-lg border-gray-300 shadow-sm text-sm">
                                     <option value="">Semua Prioritas</option>
                                     @foreach($priorities as $priority)
-                                        <option value="{{ $priority->id }}" @selected(request('priority_id') == $priority->id)>{{ $priority->label }}</option>
+                                        <option value="{{ $priority->id }}" @selected(request('priority_level_id') == $priority->id)>{{ $priority->label }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -65,8 +65,7 @@
                                 <label for="sort_by" class="text-sm font-medium text-gray-700">Urutkan:</label>
                                 <select name="sort_by" id="sort_by" class="rounded-lg border-gray-300 shadow-sm text-sm" onchange="this.form.submit()">
                                     <option value="deadline" @selected(request('sort_by', 'deadline') == 'deadline')>Deadline</option>
-                                    <option value="priority" @selected(request('sort_by') == 'priority')>Prioritas</option>
-                                    <option value="created_at" @selected(request('sort_by') == 'created_at')>Tanggal Dibuat</option>
+                                    <option value="created_at" @selected(request('sort_by', 'created_at') == 'created_at')>Tanggal Dibuat</option>
                                 </select>
                             </div>
                             <a href="{{ route('adhoc-tasks.index') }}" class="w-full sm:w-auto text-center px-4 py-2 bg-gray-600 text-white rounded-lg text-xs hover:bg-gray-700">Reset</a>

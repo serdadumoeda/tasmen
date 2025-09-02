@@ -114,7 +114,7 @@
                             <dl class="space-y-2">
                                 <div class="flex justify-between">
                                     <dt class="font-semibold text-sm text-gray-600">Role:</dt>
-                                    <dd class="text-sm text-gray-900"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">{{ $user->role->label ?? 'N/A' }}</span></dd>
+                                    <dd class="text-sm text-gray-900"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">{{ $user->role }}</span></dd>
                                 </div>
                                 <div class="flex flex-col">
                                     <dt class="font-semibold text-sm text-gray-600 mb-1">Unit Kerja:</dt>

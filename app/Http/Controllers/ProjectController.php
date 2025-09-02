@@ -7,8 +7,6 @@ use App\Models\Project;
 use App\Models\Task;
 use App\Models\User;
 use App\Models\PeminjamanRequest;
-use App\Models\TaskStatus;
-use App\Models\PriorityLevel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
@@ -23,11 +21,9 @@ class ProjectController extends Controller
     
     public function index(Request $request)
     {
-        // The HierarchicalScope is automatically applied.
         $query = Project::with(['owner', 'leader', 'members', 'tasks'])
             ->withSum('budgetItems', 'total_cost');
 
-        // 1. Search functionality
         if ($request->filled('search')) {
             $searchTerm = $request->input('search');
             $query->where(function ($q) use ($searchTerm) {
@@ -36,30 +32,17 @@ class ProjectController extends Controller
             });
         }
 
-        // Note: Filtering by the dynamic 'status' attribute is complex as it's calculated in the model.
-        // This would require a significant refactor to implement efficiently.
-        // For now, we are only implementing search.
-
         $projects = $query->latest()->paginate(15)->appends($request->query());
 
-        // --- Dashboard Stats ---
-        // These stats are global for the entire system for now.
-        // This could be scoped to the user in the future if needed.
-        $completedStatus = TaskStatus::where('key', 'completed')->first();
+        $completedStatus = \App\Models\TaskStatus::where('key', 'completed')->first();
         $stats = [
             'users' => User::count(),
             'tasks' => Task::count(),
             'tasks_completed' => $completedStatus ? Task::where('task_status_id', $completedStatus->id)->count() : 0,
         ];
 
-        // --- Recent Activity Feed ---
-        // Fetches the 5 most recent activities across all projects.
-        $activities = Activity::with('user', 'subject')
-            ->latest()
-            ->take(5)
-            ->get();
+        $activities = Activity::with('user', 'subject')->latest()->take(5)->get();
 
-        // Pass all data to the dashboard view.
         return view('dashboard', compact('projects', 'stats', 'activities'));
     }
 
@@ -133,56 +116,45 @@ class ProjectController extends Controller
         $this->authorize('view', $project);
         $user = Auth::user();
 
-        // Load project relationships, but handle tasks separately for filtering.
         $project->load(['owner', 'leader', 'members', 'activities.user', 'surat']);
 
-        // --- Task Query with Filtering, Sorting, and Pagination ---
-        $taskQuery = $project->tasks()->with(['assignees', 'comments.user', 'attachments', 'subTasks']);
+        $taskQuery = $project->tasks()->with(['assignees', 'comments.user', 'attachments', 'subTasks', 'status', 'priorityLevel']);
 
-        // Base visibility for staff
         if ($user->isStaff()) {
             $taskQuery->whereHas('assignees', fn($q) => $q->where('user_id', $user->id));
         }
 
-        // Search by title
         if ($request->filled('task_search')) {
             $taskQuery->where('title', 'like', '%' . $request->input('task_search') . '%');
         }
 
-        // Filter by status
         if ($request->filled('task_status_id')) {
             $taskQuery->where('task_status_id', $request->input('task_status_id'));
         }
 
-        // Filter by priority
         if ($request->filled('task_priority_id')) {
             $taskQuery->where('priority_level_id', $request->input('task_priority_id'));
         }
 
-        // Filter by assignee
         if ($request->filled('task_assignee')) {
             $taskQuery->whereHas('assignees', fn($q) => $q->where('user_id', $request->input('task_assignee')));
         }
 
-        // Sorting
         $sortBy = $request->input('sort_by', 'created_at');
         $sortDir = $request->input('sort_dir', 'desc');
         if (in_array($sortBy, ['title', 'deadline', 'created_at'])) {
             $taskQuery->orderBy($sortBy, $sortDir);
         }
 
-        // Paginate the filtered and sorted tasks
         $tasks = $taskQuery->paginate(10, ['*'], 'tasksPage')->appends($request->query());
         
-        // --- Other Data ---
         $loanRequests = PeminjamanRequest::where('project_id', $project->id)
-                            ->with(['requester', 'requestedUser', 'approver'])
+                            ->with(['requester', 'requestedUser', 'approver', 'status'])
                             ->latest()
                             ->get();
         
         $projectMembers = $project->members->sortBy('name');
 
-        // Stats should be calculated on all tasks of the project, not just the paginated/filtered ones.
         $allTasks = $project->tasks()->with('status')->get();
         $taskStatuses = $allTasks->countBy(fn($task) => $task->status->key ?? 'unknown');
         $stats = [
@@ -192,8 +164,8 @@ class ProjectController extends Controller
             'completed' => $taskStatuses->get('completed', 0),
         ];
 
-        $statuses = TaskStatus::all();
-        $priorities = PriorityLevel::all();
+        $statuses = \App\Models\TaskStatus::all();
+        $priorities = \App\Models\PriorityLevel::all();
 
         return view('projects.show', compact('project', 'tasks', 'projectMembers', 'stats', 'loanRequests', 'statuses', 'priorities'));
     }
@@ -203,23 +175,19 @@ class ProjectController extends Controller
     {
         $this->authorize('update', $project);
 
-        // PERBAIKAN: Eager load relasi untuk menghindari N+1 query
-        $project->load('owner', 'members', 'tasks');
+        $project->load('owner', 'members', 'tasks.status');
         
         $currentMembers = $project->members;
         $referenceUser = $project->owner ?? auth()->user();
 
-        // Ambil ID bawahan sebagai Collection untuk kemudahan pengecekan di view
         $subordinateIds = collect($referenceUser->getAllSubordinateIds());
         $subordinateIds->push($referenceUser->id);
         
         $subordinates = User::whereIn('id', $subordinateIds)->get();
         $potentialMembers = $currentMembers->merge($subordinates)->unique('id')->sortBy('name');
 
-        // Ambil semua permintaan peminjaman untuk proyek ini.
-        // `keyBy` digunakan agar kita bisa mencari status dengan mudah berdasarkan ID user di view.
         $loanRequests = PeminjamanRequest::where('project_id', $project->id)
-            ->latest() // Ambil yang terbaru jika ada permintaan ganda
+            ->latest()
             ->get()
             ->keyBy('requested_user_id');
         
@@ -231,7 +199,6 @@ class ProjectController extends Controller
             'completed' => $taskStatuses->get('completed', 0),
         ];
         
-        // Kirim data baru ($loanRequests dan $subordinateIds) ke view
         return view('projects.edit', compact('project', 'potentialMembers', 'stats', 'loanRequests', 'subordinateIds'));
     }
     
@@ -272,7 +239,6 @@ class ProjectController extends Controller
         $project->members()->sync($memberIds->unique());
     }
 
-    // ... (Sisa method tidak perlu diubah) ...
     public function destroy(Project $project)
     {
         $this->authorize('delete', $project);
@@ -294,23 +260,20 @@ class ProjectController extends Controller
 
         $startDate = \Carbon\Carbon::parse($project->start_date);
         $endDate = \Carbon\Carbon::parse($project->end_date);
-        $period = \Carbon\CarbonPeriod::create($startDate, $endDate)->toArray(); // Convert to array once
+        $period = \Carbon\CarbonPeriod::create($startDate, $endDate)->toArray();
 
         $labels = array_map(fn($date) => $date->format('d M'), $period);
         $dateStrings = array_map(fn($date) => $date->format('Y-m-d'), $period);
 
-        // --- Rencana (Planned) ---
         $plannedDailyHours = array_fill_keys($dateStrings, 0);
         $tasks = $project->tasks()->whereNotNull('deadline')->where('estimated_hours', '>', 0)->get();
         $totalHours = $tasks->sum('estimated_hours');
 
         foreach ($tasks as $task) {
-            // Gunakan start_date tugas jika ada, jika tidak, gunakan tanggal mulai proyek
             $taskStart = $task->start_date ? \Carbon\Carbon::parse($task->start_date) : $startDate;
             $taskEnd = \Carbon\Carbon::parse($task->deadline);
-            // Pastikan tanggal mulai tidak setelah tanggal selesai
             if ($taskStart->gt($taskEnd)) {
-                continue; // Lewati tugas dengan data tanggal yang tidak valid
+                continue;
             }
             $taskDurationDays = $taskStart->diffInDays($taskEnd) + 1;
 
@@ -318,8 +281,6 @@ class ProjectController extends Controller
                 $hoursPerDay = $task->estimated_hours / $taskDurationDays;
                 for ($date = $taskStart->copy(); $date->lte($taskEnd); $date->addDay()) {
                     $currentDateStr = $date->format('Y-m-d');
-                    // Directly check if the date key exists in our planned hours array.
-                    // This is the most robust way to prevent the "Undefined array key" error.
                     if (isset($plannedDailyHours[$currentDateStr])) {
                        $plannedDailyHours[$currentDateStr] += $hoursPerDay;
                     }
@@ -334,7 +295,6 @@ class ProjectController extends Controller
             $plannedCumulative[] = round($cumulative, 2);
         }
 
-        // --- Aktual (Actual) ---
         $allTimeLogs = DB::table('time_logs')
             ->join('tasks', 'time_logs.task_id', '=', 'tasks.id')
             ->where('tasks.project_id', $project->id)
@@ -358,7 +318,6 @@ class ProjectController extends Controller
             $actualCumulative[] = round($cumulative, 2);
         }
 
-        // Normalize to percentage if totalHours is not zero
         if ($totalHours > 0) {
             $plannedCumulative = array_map(fn($val) => round(($val / $totalHours) * 100, 2), $plannedCumulative);
             $actualCumulative = array_map(fn($val) => round(($val / $totalHours) * 100, 2), $actualCumulative);
@@ -379,8 +338,8 @@ class ProjectController extends Controller
     {
         $this->authorize('viewTeamDashboard', $project);
         $project->load(['members', 'tasks.assignees', 'tasks.timeLogs', 'tasks.status', 'tasks.priorityLevel']);
-        $priorities = PriorityLevel::all();
-        $statuses = TaskStatus::all();
+        $priorities = \App\Models\PriorityLevel::all();
+        $statuses = \App\Models\TaskStatus::all();
 
         $teamSummary = $project->members->map(function ($member) use ($project, $priorities, $statuses) {
             $memberTasks = $project->tasks->filter(fn ($task) => $task->assignees->contains($member));
@@ -392,6 +351,7 @@ class ProjectController extends Controller
 
             $priorityCounts = $priorities->mapWithKeys(fn($p) => [$p->key => 0])->merge($memberTasks->countBy(fn($task) => $task->priorityLevel->key ?? 'unknown'));
             $statusCounts = $statuses->mapWithKeys(fn($s) => [$s->key => 0])->merge($memberTasks->countBy(fn($task) => $task->status->key ?? 'unknown'));
+            $completedStatusKey = $statuses->firstWhere('key', 'completed')->key;
 
             return [
                 'member_id' => $member->id, 'member_name' => $member->name,
@@ -399,7 +359,7 @@ class ProjectController extends Controller
                 'pending_tasks' => $statusCounts->get('pending', 0),
                 'inprogress_tasks' => $statusCounts->get('in_progress', 0),
                 'completed_tasks' => $statusCounts->get('completed', 0),
-                'overdue_tasks' => $memberTasks->where('deadline', '<', now())->filter(fn($task) => $task->status->key !== 'completed')->count(),
+                'overdue_tasks' => $memberTasks->where('deadline', '<', now())->filter(fn($task) => $task->status->key !== $completedStatusKey)->count(),
                 'total_estimated_hours' => round($totalEstimatedHours, 1),
                 'total_logged_hours' => round($memberTasks->flatMap->timeLogs->sum('duration_in_minutes') / 60, 1),
                 'weighted_average_progress' => $weightedAverageProgress,
@@ -414,24 +374,24 @@ class ProjectController extends Controller
     {
         $this->authorize('view', $project);
 
-        // Ensure the requested user is actually a member of this project
         if (!$project->members->contains($user)) {
             return response()->json(['error' => 'User not found in this project.'], 404);
         }
 
         $tasks = $user->tasks()
             ->where('project_id', $project->id)
-            ->with('subTasks') // Eager load subtasks
+            ->with('subTasks')
             ->orderBy('deadline', 'asc')
             ->get();
 
-        // We return a JSON response that can be fetched with JavaScript.
         return response()->json($tasks);
     }
 
     public function downloadReport(Project $project)
     {
-        if (!auth()->user()->isTopLevelManager()) abort(403);
+        if (!auth()->user()->isTopLevelManager()) {
+            abort(403);
+        }
         $project->load('leader', 'members', 'tasks.assignees', 'tasks.timeLogs', 'tasks.status');
         $taskStatuses = $project->tasks->countBy(fn($task) => $task->status->key ?? 'unknown');
         $stats = [
@@ -441,16 +401,27 @@ class ProjectController extends Controller
             'completed' => $taskStatuses->get('completed', 0),
         ];
         $totalMinutesLogged = $project->tasks->flatMap->timeLogs->sum('duration_in_minutes');
-        $data = ['project' => $project, 'stats' => $stats, 'totalLoggedTime' => floor($totalMinutesLogged / 60) . " jam " . ($totalMinutesLogged % 60) . " menit"];
-        return Pdf::loadView('reports.project-summary', $data)->download('laporan-proyek-' . $project->name . '-' . now()->format('Y-m-d') . '.pdf');
+        $totalHoursLogged = floor($totalMinutesLogged / 60);
+        $remainingMinutes = $totalMinutesLogged % 60;
+        $data = [
+            'project' => $project,
+            'stats' => $stats,
+            'totalLoggedTime' => "{$totalHoursLogged} jam {$remainingMinutes} menit",
+        ];
+        $pdf = Pdf::loadView('reports.project-summary', $data);
+        return $pdf->download('laporan-proyek-' . $project->name . '-' . now()->format('Y-m-d') . '.pdf');
     }
 
     public function showKanban(Project $project)
     {
         $this->authorize('view', $project);
+
         $tasks = $project->tasks()->with(['assignees', 'comments', 'subTasks', 'status'])->get();
-        $statuses = TaskStatus::all();
-        $groupedTasks = $statuses->mapWithKeys(fn($status) => [$status->key => collect()])->merge($tasks->groupBy(fn($task) => $task->status->key ?? 'unknown'));
+        $statuses = \App\Models\TaskStatus::all();
+
+        $groupedTasks = $statuses->mapWithKeys(fn($status) => [$status->key => collect()])
+                                  ->merge($tasks->groupBy(fn($task) => $task->status->key ?? 'unknown'));
+
         return view('projects.kanban', compact('project', 'groupedTasks', 'statuses'));
     }
 
@@ -463,7 +434,11 @@ class ProjectController extends Controller
     public function tasksJson(Project $project)
     {
         $this->authorize('view', $project);
-        $tasks = $project->tasks()->whereNotNull('deadline')->with('assignees', 'status', 'priorityLevel')->get();
+
+        $tasks = $project->tasks()
+            ->whereNotNull('deadline')
+            ->with('assignees', 'status', 'priorityLevel')
+            ->get();
 
         $events = $tasks->map(function ($task) use ($project) {
             $color = '#3b82f6'; // Default blue
@@ -478,11 +453,13 @@ class ProjectController extends Controller
             }
 
             return [
-                'id' => $task->id, 'title' => $task->title,
+                'id' => $task->id,
+                'title' => $task->title,
                 'start' => $task->start_date ? $task->start_date->format('Y-m-d') : $task->deadline->format('Y-m-d'),
                 'end' => $task->deadline->addDay()->format('Y-m-d'),
                 'url'   => route('projects.show', $project->id) . '#task-' . $task->id,
-                'color' => $color, 'borderColor' => $color,
+                'color' => $color,
+                'borderColor' => $color,
                 'extendedProps' => [
                     'project_name' => $project->name,
                     'assignees' => $task->assignees->pluck('name')->join(', ') ?: 'Belum ditugaskan',
@@ -493,8 +470,16 @@ class ProjectController extends Controller
         });
 
         if ($project->start_date && $project->end_date) {
-            $events->prepend(['id' => 'project_duration', 'title' => 'Durasi Proyek', 'start' => $project->start_date->format('Y-m-d'), 'end' => $project->end_date->addDay()->format('Y-m-d'), 'display' => 'background', 'color' => '#eef2ff']);
+            $events->prepend([
+                'id' => 'project_duration',
+                'title' => 'Durasi Proyek',
+                'start' => $project->start_date->format('Y-m-d'),
+                'end' => $project->end_date->addDay()->format('Y-m-d'),
+                'display' => 'background',
+                'color' => '#eef2ff'
+            ]);
         }
+
         return response()->json($events);
     }
 }

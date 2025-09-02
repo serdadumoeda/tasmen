@@ -56,7 +56,7 @@
     {{-- Tombol Aksi Persetujuan --}}
     <div class="mt-4 flex justify-end">
         @can('approve', $task)
-            @if($task->status === 'for_review')
+            @if($task->status->key === 'for_review')
                 <form action="{{ route('tasks.approve', $task) }}" method="POST" class="inline-block">
                     @csrf
                     <button type="submit" class="px-4 py-2 bg-green-500 text-white text-sm font-bold rounded-lg hover:bg-green-600 shadow">Setujui & Selesaikan</button>

@@ -28,7 +28,7 @@ class UserController extends Controller
 
         if (!$loggedInUser->isSuperAdmin()) {
             $query->inUnitAndSubordinatesOf($loggedInUser)
-                  ->whereHas('role', fn($q) => $q->where('name', '!=', 'superadmin'));
+                  ->where('role', '!=', User::ROLE_SUPERADMIN);
         }
 
         $query->orderBy('name');
@@ -145,15 +145,18 @@ class UserController extends Controller
             $userData['unit_id'] = $unit->id;
         }
 
-        // Role will be calculated automatically. We will set a temporary role_id.
-        $stafRole = \App\Models\Role::where('name', 'staf')->first();
-        $userData['role_id'] = $stafRole->id;
+        // Role will be calculated automatically, but we can set a temporary one.
+        $userData['role'] = User::ROLE_STAF;
 
         if ($request->filled('atasan_id')) {
             $atasan = User::find($request->atasan_id);
-            // Validation for supervisor role is complex now, better handled by recalculateAndSaveRole
-            // or a dedicated service. We'll skip this check here as it's less reliable
-            // without knowing the definitive final role. The recalculation logic is the source of truth.
+            $validSupervisorRoles = User::getValidSupervisorRolesFor($userData['role']);
+
+            if ($validSupervisorRoles !== null) {
+                if (!$atasan || !in_array($atasan->role, $validSupervisorRoles)) {
+                    return back()->withInput()->with('error', 'Atasan yang dipilih memiliki peran yang tidak sesuai dengan hierarki yang diizinkan.');
+                }
+            }
         }
         
         foreach(['tgl_lahir', 'tmt_eselon', 'tmt_cpns', 'tmt_pns'] as $dateField) {
@@ -274,7 +277,7 @@ class UserController extends Controller
         }
 
         $oldUnit = $user->unit;
-        $oldRole = $user->role; // Keep this for comparison after update
+        $oldRole = $user->role;
         $pindahUnit = $user->unit_id !== $newJabatan->unit_id;
 
         $newUnit = $newJabatan->unit;
@@ -282,10 +285,10 @@ class UserController extends Controller
         if ($request->filled('atasan_id')) {
             $atasan = User::find($request->atasan_id);
             // We use the user's current role for validation, as it's the most stable state before the update.
-            $validSupervisorRoles = User::getValidSupervisorRolesFor($user->role->name);
+            $validSupervisorRoles = User::getValidSupervisorRolesFor($user->role);
 
             if ($validSupervisorRoles !== null) {
-                if (!$atasan || !$atasan->role || !in_array($atasan->role->name, $validSupervisorRoles)) {
+                if (!$atasan || !in_array($atasan->role, $validSupervisorRoles)) {
                     return back()->withInput()->with('error', 'Atasan yang dipilih memiliki peran yang tidak sesuai dengan hierarki yang diizinkan.');
                 }
             }
@@ -346,7 +349,7 @@ class UserController extends Controller
             User::recalculateAndSaveRole($user);
         });
         
-        $roleChanged = $oldRole->id !== $user->role->id;
+        $roleChanged = $oldRole !== $user->role;
         $redirect = redirect()->route('users.index');
 
         if ($pindahUnit) {
@@ -356,7 +359,7 @@ class UserController extends Controller
         }
 
         if ($roleChanged && !$pindahUnit) {
-             $redirect->with('warning', "Role pengguna telah diperbarui dari '{$oldRole->label}' menjadi '{$user->role->label}'.");
+             $redirect->with('warning', "Role pengguna telah diperbarui dari '{$oldRole}' menjadi '{$user->role}'.");
         }
 
         return $redirect;
@@ -420,10 +423,9 @@ class UserController extends Controller
             })
             ->count();
 
-        $completedStatusId = \App\Models\TaskStatus::where('key', 'completed')->value('id');
         $activeAdhocTasksCount = $user->tasks()
                                      ->whereNull('project_id')
-                                     ->where('task_status_id', '!=', $completedStatusId)
+                                     ->where('status', '!=', 'completed')
                                      ->count();
         
         $activeSkCount = $user->getActiveSkCountAttribute();
