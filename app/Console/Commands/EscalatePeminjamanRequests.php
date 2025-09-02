@@ -70,8 +70,11 @@ class EscalatePeminjamanRequests extends Command
             }
 
             // Cari manajer di unit atasan
+            $manager_roles = ['eselon_i', 'eselon_ii', 'koordinator', 'sub_koordinator'];
             $nextApprover = User::where('unit_id', $parentUnit->id)
-                                ->whereIn('role', [User::ROLE_ESELON_I, User::ROLE_ESELON_II, User::ROLE_KOORDINATOR, User::ROLE_SUB_KOORDINATOR])
+                                ->whereHas('role', function ($q) use ($manager_roles) {
+                                    $q->whereIn('name', $manager_roles);
+                                })
                                 ->first();
 
             if (!$nextApprover) {

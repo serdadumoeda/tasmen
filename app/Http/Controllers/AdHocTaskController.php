@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Task;
 use App\Models\User;
+use App\Models\TaskStatus;
+use App\Models\PriorityLevel;
 use App\Notifications\TaskAssigned;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
@@ -19,72 +21,53 @@ class AdHocTaskController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
-        $query = Task::whereNull('project_id')->with('assignees')->latest();
+        $query = Task::whereNull('project_id')->with('assignees', 'status', 'priorityLevel')->latest();
         $subordinates = collect();
 
-        // PERBAIKAN: Logika otorisasi sesuai permintaan baru
-        // Superadmin dan Menteri bisa melihat semua tugas harian
-        if ($user->role === User::ROLE_SUPERADMIN || $user->role === User::ROLE_MENTERI) {
-            // Tidak perlu filter query, ambil semua bawahan untuk dropdown filter
-            $subordinates = User::where('id', '!=', $user->id)->orderBy('name')->get();
+        $userRoleName = $user->role->name ?? '';
+        if ($userRoleName === 'superadmin' || $userRoleName === 'menteri') {
+            $subordinates = User::whereHas('role', fn($q) => $q->where('name', '!=', 'superadmin'))->orderBy('name')->get();
         }
-        // Manajer lain (Eselon I, II, Koordinator) melihat tugas dalam hierarkinya
         elseif ($user->canManageUsers()) {
-            $subordinateIds = $user->getAllSubordinateIds();
-            $subordinateIds->push($user->id); // Termasuk tugas diri sendiri
+            $subordinateIds = $user->getAllSubordinateIds()->push($user->id);
             $subordinates = User::whereIn('id', $subordinateIds)->orderBy('name')->get();
-
-            $query->whereHas('assignees', function ($q) use ($subordinateIds) {
-                $q->whereIn('user_id', $subordinateIds);
-            });
+            $query->whereHas('assignees', fn ($q) => $q->whereIn('user_id', $subordinateIds));
         }
-        // Staf hanya melihat tugasnya sendiri
         else {
-            $query->whereHas('assignees', function ($q) use ($user) {
-                $q->where('user_id', $user->id);
-            });
+            $query->whereHas('assignees', fn ($q) => $q->where('user_id', $user->id));
         }
 
-        // Terapkan filter pencarian jika ada
         if ($request->filled('search')) {
             $search = strtolower($request->input('search'));
-            $query->where(function ($q) use ($search) {
-                $q->whereRaw('LOWER(title) LIKE ?', ["%{$search}%"])
-                  ->orWhereRaw('LOWER(description) LIKE ?', ["%{$search}%"]);
-            });
+            $query->where(fn ($q) => $q->whereRaw('LOWER(title) LIKE ?', ["%{$search}%"])->orWhereRaw('LOWER(description) LIKE ?', ["%{$search}%"]));
         }
 
-        // Terapkan filter personel jika ada (hanya untuk manajer)
         if ($user->canManageUsers() && $request->filled('personnel_id')) {
             $personnelId = $request->personnel_id;
-            // Pastikan manajer tidak memfilter ID di luar hirarkinya
             if ($subordinates->pluck('id')->contains($personnelId)) {
-                $query->whereHas('assignees', function ($q) use ($personnelId) {
-                    $q->where('user_id', $personnelId);
-                });
+                $query->whereHas('assignees', fn ($q) => $q->where('user_id', $personnelId));
             }
         }
 
-        // Filter by status
-        if ($request->filled('status')) {
-            $query->where('status', $request->input('status'));
+        if ($request->filled('status_id')) {
+            $query->where('task_status_id', $request->input('status_id'));
         }
 
-        // Filter by priority
-        if ($request->filled('priority')) {
-            $query->where('priority', $request->input('priority'));
+        if ($request->filled('priority_id')) {
+            $query->where('priority_level_id', $request->input('priority_id'));
         }
 
-        // Sorting
         $sortBy = $request->input('sort_by', 'deadline');
         $sortDir = $request->input('sort_dir', 'asc');
-        if (in_array($sortBy, ['title', 'status', 'priority', 'deadline', 'created_at'])) {
-            $query->orderBy($sortBy, $sortDir);
+        if (in_array($sortBy, ['title', 'deadline', 'created_at'])) {
+             $query->orderBy($sortBy, $sortDir);
         }
 
         $assignedTasks = $query->paginate(10)->withQueryString();
+        $statuses = TaskStatus::all();
+        $priorities = PriorityLevel::all();
 
-        return view('adhoc-tasks.index', compact('assignedTasks', 'subordinates'));
+        return view('adhoc-tasks.index', compact('assignedTasks', 'subordinates', 'statuses', 'priorities'));
     }
 
     /**
@@ -95,25 +78,20 @@ class AdHocTaskController extends Controller
         $user = Auth::user();
         $assignableUsers = collect();
 
-        // Jika manajer, bisa menugaskan ke diri sendiri dan bawahan
         if ($user->canManageUsers()) {
-            $subordinateIds = $user->getAllSubordinateIds();
-            $subordinateIds[] = $user->id; 
+            $subordinateIds = $user->getAllSubordinateIds()->push($user->id);
             $assignableUsers = User::whereIn('id', $subordinateIds)->orderBy('name')->get();
         } else {
-            // Jika staf, list hanya berisi diri sendiri (meskipun tidak ditampilkan di form)
             $assignableUsers->push($user);
         }
         
         return view('adhoc-tasks.create', [
             'task' => new Task(),
-            'assignableUsers' => $assignableUsers
+            'assignableUsers' => $assignableUsers,
+            'priorities' => PriorityLevel::all(),
         ]);
     }
 
-    /**
-     * Menyimpan tugas ad-hoc baru ke database.
-     */
     public function store(Request $request)
     {
         $user = auth()->user();
@@ -124,7 +102,7 @@ class AdHocTaskController extends Controller
             'start_date' => 'nullable|date',
             'deadline' => 'required|date|after_or_equal:start_date',
             'estimated_hours' => 'required|numeric|min:0.1',
-            'priority' => ['nullable', \Illuminate\Validation\Rule::in(Task::PRIORITIES)],
+            'priority_level_id' => 'nullable|exists:priority_levels,id',
             'file_upload' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx,xls,xlsx|max:2048',
         ]);
         
@@ -136,13 +114,15 @@ class AdHocTaskController extends Controller
             $assigneeIds[] = $user->id;
         }
 
-        // Menggunakan fill untuk keamanan dan kemudahan, dan menambahkan default
+        $defaultStatus = TaskStatus::where('key', 'pending')->first();
+        $defaultPriority = PriorityLevel::where('key', 'medium')->first();
+
         $task = new Task();
         $task->fill($validated);
-        $task->status = 'pending';
+        $task->task_status_id = $defaultStatus->id;
         $task->progress = 0;
-        $task->priority = $request->input('priority', 'medium'); // Set default priority
-        $task->project_id = null; // Menandakan ini tugas ad-hoc
+        $task->priority_level_id = $request->input('priority_level_id', $defaultPriority->id);
+        $task->project_id = null;
         $task->save();
         
         $redirect = redirect()->route('adhoc-tasks.index');
@@ -167,9 +147,8 @@ class AdHocTaskController extends Controller
         $task->assignees()->sync($assigneeIds);
         $usersToNotify = User::find($assigneeIds);
         foreach ($usersToNotify as $recipient) {
-            $recipient->notify(new \App\Notifications\TaskAssigned($task));
+            $recipient->notify(new TaskAssigned($task));
         }
-
        
         return $redirect;
     }

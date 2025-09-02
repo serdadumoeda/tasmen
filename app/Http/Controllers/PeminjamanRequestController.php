@@ -114,9 +114,16 @@ class PeminjamanRequestController extends Controller
 
         while ($currentUnit) {
             // Cari approver (Koordinator atau Eselon II) di unit saat ini.
+            $approver_roles = ['koordinator', 'eselon_ii'];
             $approver = User::where('unit_id', $currentUnit->id)
-                ->whereIn('role', [User::ROLE_KOORDINATOR, User::ROLE_ESELON_II])
-                ->orderByRaw("CASE role WHEN ? THEN 1 WHEN ? THEN 2 ELSE 3 END", [User::ROLE_KOORDINATOR, User::ROLE_ESELON_II])
+                ->whereHas('role', function ($q) use ($approver_roles) {
+                    $q->whereIn('name', $approver_roles);
+                })
+                ->with('role') // Eager load role to access its properties
+                ->get()
+                ->sortBy(function($user) use ($approver_roles) {
+                    return array_search($user->role->name, $approver_roles);
+                })
                 ->first();
 
             if ($approver) {
