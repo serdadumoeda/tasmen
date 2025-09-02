@@ -51,9 +51,10 @@ class GlobalDashboardController extends Controller
         ];
 
         if (!$currentUser->isStaff()) {
+            $pendingStatusId = \App\Models\PeminjamanRequestStatus::where('key', 'pending')->value('id');
             $stats['total_users'] = (clone $userQuery)->count();
             $stats['active_users'] = (clone $userQuery)->where('status', 'active')->count();
-            $stats['pending_requests'] = PeminjamanRequest::where('status', 'pending')
+            $stats['pending_requests'] = PeminjamanRequest::where('status_id', $pendingStatusId)
                                         ->whereIn('approver_id', (clone $userQuery)->pluck('id'))
                                         ->count();
         }
