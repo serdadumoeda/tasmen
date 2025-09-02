@@ -100,21 +100,21 @@
 
                             <div class="mb-6">
                                 <label for="title" class="block font-semibold text-sm text-gray-700 mb-1">
-                                    <i class="fas fa-heading mr-2 text-gray-500"></i> {{ __('Judul ' . __('app.task')) }} <span class="text-red-500">*</span>
+                                    <i class="fas fa-heading mr-2 text-gray-500"></i> {{ __('app.task_title') }} <span class="text-red-500">*</span>
                                 </label>
                                 <input type="text" name="title" id="title" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" value="{{ old('title', $task->title) }}" required>
                             </div>
                             
                             <div class="mb-6">
                                 <label for="description" class="block font-semibold text-sm text-gray-700 mb-1">
-                                    <i class="fas fa-align-left mr-2 text-gray-500"></i> {{ __('app.description') }} (Opsional)
+                                    <i class="fas fa-align-left mr-2 text-gray-500"></i> {{ __('app.task_description') }} (Opsional)
                                 </label>
                                 <textarea name="description" id="description" rows="4" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150">{{ old('description', $task->description) }}</textarea>
                             </div>
 
                             <div class="mb-6 relative z-20">
                                 <label for="assignees" class="block font-semibold text-sm text-gray-700 mb-1">
-                                    <i class="fas fa-users-line mr-2 text-gray-500"></i> Ditugaskan Kepada <span class="text-red-500">*</span>
+                                    <i class="fas fa-users-line mr-2 text-gray-500"></i> {{ __('app.assign_to') }} <span class="text-red-500">*</span>
                                 </label>
                                 @if (auth()->user()->can('update', $task) && !auth()->user()->isStaff())
                                     <select name="assignees[]" id="assignees" class="block mt-1 w-full tom-select-multiple" multiple required placeholder="Pilih Anggota Tim...">
@@ -140,7 +140,7 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                                 <div>
                                     <label for="start_date" class="block font-semibold text-sm text-gray-700 mb-1">
-                                        <i class="fas fa-calendar-day mr-2 text-gray-500"></i> Tanggal Mulai
+                                        <i class="fas fa-calendar-day mr-2 text-gray-500"></i> {{ __('app.start_date') }}
                                     </label>
                                     <input type="date" name="start_date" id="start_date" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" value="{{ old('start_date', optional($task->start_date)->format('Y-m-d')) }}">
                                 </div>
@@ -152,7 +152,7 @@
                                 </div>
                                 <div>
                                     <label for="estimated_hours" class="block font-semibold text-sm text-gray-700 mb-1">
-                                        <i class="fas fa-hourglass-half mr-2 text-gray-500"></i> Estimasi Jam (Opsional)
+                                        <i class="fas fa-hourglass-half mr-2 text-gray-500"></i> {{ __('app.estimated_hours') }} (Opsional)
                                     </label>
                                     <input type="number" step="0.5" name="estimated_hours" id="estimated_hours" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" value="{{ old('estimated_hours', $task->estimated_hours) }}" placeholder="Contoh: 2.5">
                                 </div>
@@ -193,7 +193,7 @@
 
                             <div class="mb-6">
                                 <label for="file_upload" class="block text-sm font-semibold text-gray-700 mb-1">
-                                    <i class="fas fa-paperclip mr-2 text-gray-500"></i> Unggah Lampiran Baru (Opsional)
+                                    <i class="fas fa-paperclip mr-2 text-gray-500"></i> {{ __('app.new_attachment') }} (Opsional)
                                 </label>
                                 <input type="file" name="file_upload" id="file_upload" class="block w-full text-sm text-gray-500 
                                     file:mr-4 file:py-2 file:px-4 
@@ -218,7 +218,7 @@
                                     </a>
                                 @endif
                                 <button type="submit" class="inline-flex items-center px-5 py-2.5 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150 shadow-md hover:shadow-lg transform hover:scale-105">
-                                    <i class="fas fa-save mr-2"></i> {{ __('app.save') }} Perubahan
+                                    <i class="fas fa-save mr-2"></i> {{ __('app.save_changes') }}
                                 </button>
                             </div>
                         @endif
@@ -262,7 +262,6 @@
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Inisialisasi TomSelect untuk elemen dengan kelas 'tom-select-multiple'
             const selectElement = document.getElementById('assignees');
             if (selectElement && selectElement.classList.contains('tom-select-multiple')) {
                 new TomSelect(selectElement, {
@@ -270,12 +269,9 @@
                     create: false,
                     maxItems: null,
                     placeholder: 'Pilih Anggota Tim',
-                    // Pastikan nilai awal dipilih dengan benar
                     items: @json(old('assignees', $task->assignees->pluck('id')->toArray()))
                 });
             }
-
-            // Script untuk progress bar
             const progressInput = document.getElementById('progress');
             const progressValueSpan = document.getElementById('progress-value');
             if (progressInput && progressValueSpan) {
@@ -283,21 +279,6 @@
                     progressValueSpan.innerText = this.value;
                 });
             }
-
-            // Client-side validation for file size
-            const form = document.querySelector('form');
-            const fileInput = document.getElementById('file_upload');
-            const maxFileSize = 2 * 1024 * 1024; // 2MB
-
-            form.addEventListener('submit', function(event) {
-                if (fileInput.files.length > 0) {
-                    const file = fileInput.files[0];
-                    if (file.size > maxFileSize) {
-                        event.preventDefault();
-                        alert('Ukuran file tidak boleh melebihi 2MB.');
-                    }
-                }
-            });
         });
     </script>
     @endpush
