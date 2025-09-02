@@ -150,21 +150,20 @@
                                             <input type="text" name="task_search" id="task_search" placeholder="Cari judul tugas..." value="{{ request('task_search') }}" class="block w-full rounded-md border-gray-300 shadow-sm text-sm">
                                         </div>
                                         <div>
-                                            <label for="task_status" class="sr-only">Status</label>
-                                            <select name="task_status" id="task_status" class="block w-full rounded-md border-gray-300 shadow-sm text-sm">
+                                            <label for="task_status_id" class="sr-only">Status</label>
+                                            <select name="task_status_id" id="task_status_id" class="block w-full rounded-md border-gray-300 shadow-sm text-sm">
                                                 <option value="">Semua Status</option>
-                                                <option value="pending" @selected(request('task_status') == 'pending')>Menunggu</option>
-                                                <option value="in_progress" @selected(request('task_status') == 'in_progress')>Dikerjakan</option>
-                                                <option value="for_review" @selected(request('task_status') == 'for_review')>Direview</option>
-                                                <option value="completed" @selected(request('task_status') == 'completed')>Selesai</option>
+                                                @foreach($statuses as $status)
+                                                    <option value="{{ $status->id }}" @selected(request('task_status_id') == $status->id)>{{ $status->label }}</option>
+                                                @endforeach
                                             </select>
                                         </div>
                                         <div>
-                                            <label for="task_priority" class="sr-only">Prioritas</label>
-                                            <select name="task_priority" id="task_priority" class="block w-full rounded-md border-gray-300 shadow-sm text-sm">
+                                            <label for="task_priority_id" class="sr-only">Prioritas</label>
+                                            <select name="task_priority_id" id="task_priority_id" class="block w-full rounded-md border-gray-300 shadow-sm text-sm">
                                                 <option value="">Semua Prioritas</option>
-                                                @foreach(\App\Models\Task::PRIORITIES as $priority)
-                                                    <option value="{{ $priority }}" @selected(request('task_priority') == $priority)>{{ ucfirst($priority) }}</option>
+                                                @foreach($priorities as $priority)
+                                                    <option value="{{ $priority->id }}" @selected(request('task_priority_id') == $priority->id)>{{ $priority->label }}</option>
                                                 @endforeach
                                             </select>
                                         </div>
