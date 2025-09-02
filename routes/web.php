@@ -302,14 +302,11 @@ Route::middleware(['auth', 'can.manage.leave.settings'])->prefix('admin')->name(
 Route::get('/api/units/{unit}/vacant-jabatans', [UnitController::class, 'getVacantJabatans'])->name('api.units.vacant-jabatans')->middleware('auth');
 Route::get('/api/units/{unit}/users', [UserController::class, 'getUsersByUnitFromModel'])->name('api.units.users')->middleware('auth');
 
-use App\Http\Controllers\PerformanceSettingController;
-use Illuminate\Support\Facades\Route;
-
 Route::middleware(['web', 'auth'])->group(function () {
     Route::prefix('admin/performance-settings')
          ->as('admin.performance_settings.')
          ->group(function () {
-             Route::get('/', [PerformanceSettingController::class, 'index'])->name('index');
-             Route::post('/', [PerformanceSettingController::class, 'update'])->name('update');
+             Route::get('/', [\App\Http\Controllers\PerformanceSettingController::class, 'index'])->name('index');
+             Route::post('/', [\App\Http\Controllers\PerformanceSettingController::class, 'update'])->name('update');
          });
 });
