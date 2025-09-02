@@ -19,8 +19,14 @@ return [
     'add' => 'Tambah',
     'new' => 'Baru',
 
-    // Specific phrases
+    // Specific phrases for forms
     'edit_task' => 'Edit Tugas',
-    'new_task' => 'Tugas Baru',
+    'task_title' => 'Judul Tugas',
+    'task_description' => 'Deskripsi Tugas',
+    'assign_to' => 'Ditugaskan Kepada',
+    'start_date' => 'Tanggal Mulai',
+    'estimated_hours' => 'Estimasi Jam',
+    'new_attachment' => 'Unggah Lampiran Baru',
+    'save_changes' => 'Simpan Perubahan',
 
 ];
