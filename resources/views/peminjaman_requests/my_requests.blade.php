@@ -102,6 +102,7 @@
                                     <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Peminta</th>
                                     <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Anggota Diminta</th>
                                     <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Kegiatan</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Dokumen</th>
                                     <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Status & Alasan</th>
                                     <th class="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Aksi</th>
                                 </tr>
@@ -117,6 +118,16 @@
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 flex items-center">
                                             <i class="fas fa-folder mr-2 text-gray-400"></i> {{ $request->project?->name ?? '[Kegiatan Dihapus]' }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            @if($request->surat)
+                                                <a href="{{ route('surat-keluar.show', $request->surat) }}" class="text-indigo-600 hover:underline" title="Lihat Surat Permohonan">
+                                                    <i class="fas fa-file-alt mr-1"></i>
+                                                    {{ $request->surat->status == 'draft' ? 'Draf' : 'Final' }}
+                                                </a>
+                                            @else
+                                                -
+                                            @endif
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             @if ($request->status == 'approved')
@@ -164,6 +175,7 @@
                                     <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Anggota Diminta</th>
                                     <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Kegiatan</th>
                                     <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Approver</th>
+                                     <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Dokumen</th>
                                     <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Status & Alasan</th>
                                     <th class="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Aksi</th>
                                 </tr>
@@ -179,6 +191,16 @@
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 flex items-center">
                                             <i class="fas fa-user-shield mr-2 text-gray-400"></i> {{ $request->approver?->name }}
+                                        </td>
+                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            @if($request->surat)
+                                                <a href="{{ route('surat-keluar.show', $request->surat) }}" class="text-indigo-600 hover:underline" title="Lihat Surat Permohonan">
+                                                    <i class="fas fa-file-alt mr-1"></i>
+                                                    {{ $request->surat->status == 'draft' ? 'Draf' : 'Final' }}
+                                                </a>
+                                            @else
+                                                -
+                                            @endif
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                              @if ($request->status == 'pending')
