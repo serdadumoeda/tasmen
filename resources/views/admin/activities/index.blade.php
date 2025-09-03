@@ -34,7 +34,27 @@
                                             {{ $activity->user->name ?? 'Sistem' }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            {{ $activity->description }}
+                                            @php
+                                                $descriptionParts = explode('_', $activity->description);
+                                                $action = ucfirst($descriptionParts[0]);
+                                                $subject = ucfirst($descriptionParts[1] ?? '');
+
+                                                $translations = [
+                                                    'Created' => 'Membuat',
+                                                    'Updated' => 'Memperbarui',
+                                                    'Deleted' => 'Menghapus',
+                                                    'Approved' => 'Menyetujui',
+                                                    'Rejected' => 'Menolak',
+                                                    'Disposisi' => 'Disposisi',
+                                                    'Leaverequest' => 'Permintaan Cuti',
+                                                    'Suratkeluar' => 'Surat Keluar',
+                                                ];
+
+                                                $translatedAction = $translations[$action] ?? $action;
+                                                $translatedSubject = $translations[$subject] ?? $subject;
+
+                                                echo "$translatedAction $translatedSubject";
+                                            @endphp
                                         </td>
                                         <td class="px-6 py-4 text-sm text-gray-500">
                                             @if ($activity->before || $activity->after)

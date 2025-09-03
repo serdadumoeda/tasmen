@@ -157,6 +157,8 @@ class SuratKeluarController extends Controller
             $surat->final_pdf_path = $signedPdfPath;
             $surat->save();
 
+            $surat->recordActivity('approved_suratkeluar');
+
             return redirect()->route('surat-keluar.show', $surat)->with('success', 'Surat berhasil disetujui dan PDF telah ditandatangani.');
 
         } catch (\Exception $e) {

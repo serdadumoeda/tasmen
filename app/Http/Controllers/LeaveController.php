@@ -279,6 +279,9 @@ class LeaveController extends Controller
             // Notify the applicant of the final approval
             $leaveRequest->user->notify(new LeaveRequestStatusUpdated($leaveRequest));
 
+            // Record the specific activity
+            $leaveRequest->recordActivity('approved_leaverequest');
+
             $successMessage = 'Permintaan cuti telah disetujui sepenuhnya. ' . $suratGenerationError;
             return back()->with('success', trim($successMessage));
 
@@ -310,6 +313,9 @@ class LeaveController extends Controller
 
         // Notify the applicant of the rejection
         $leaveRequest->user->notify(new LeaveRequestStatusUpdated($leaveRequest));
+
+        // Record the specific activity
+        $leaveRequest->recordActivity('rejected_leaverequest');
 
         return back()->with('success', 'Permintaan cuti telah ditolak.');
     }
