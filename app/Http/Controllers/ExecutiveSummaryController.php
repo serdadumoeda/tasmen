@@ -174,7 +174,9 @@ class ExecutiveSummaryController extends Controller
                               ->count();
                               
             $completedTasks = Task::whereIn('project_id', $projectIds)
-                                  ->where('status', 'completed')
+                                  ->whereHas('status', function ($query) {
+                                      $query->where('key', 'completed');
+                                  })
                                   ->where('updated_at', '<=', $date)
                                   ->count();
 
