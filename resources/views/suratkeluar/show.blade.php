@@ -79,6 +79,22 @@
                         </div>
                     </div>
 
+                    @php
+                        $isEligibleForAssignment = $surat->status === 'disetujui' &&
+                                                 $surat->suratable_id === null &&
+                                                 (Str::contains($surat->perihal, ['Penugasan', 'Perintah'], true));
+                    @endphp
+
+                    @if ($isEligibleForAssignment)
+                        <div class="bg-white p-6 rounded-lg shadow-xl">
+                            <h3 class="text-lg font-bold text-gray-800 border-b pb-2 mb-4">Aksi Lanjutan</h3>
+                            <a href="{{ route('surat-keluar.create-assignment', $surat) }}" class="w-full inline-flex justify-center items-center px-4 py-2 bg-purple-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-purple-700">
+                                <i class="fas fa-plus-circle mr-2"></i> Buatkan Penugasan Khusus
+                            </a>
+                            <p class="text-xs text-center text-gray-500 mt-2">Buat entitas penugasan khusus berdasarkan SK ini.</p>
+                        </div>
+                    @endif
+
                     @if ($surat->status === 'disetujui' && $surat->final_pdf_path)
                         <div class="bg-white p-6 rounded-lg shadow-xl text-center">
                             <h3 class="text-lg font-bold text-gray-800 mb-2">Dokumen Final</h3>

@@ -195,4 +195,25 @@ class SuratKeluarController extends Controller
 
         return Storage::disk('public')->download($surat->final_pdf_path);
     }
+
+    /**
+     * Redirect to the special assignment creation form with pre-filled data.
+     *
+     * @param Surat $surat
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function createAssignment(Surat $surat)
+    {
+        $this->authorize('create', \App\Models\SpecialAssignment::class);
+
+        // Check if the letter is eligible to be converted into an assignment
+        if ($surat->status !== 'disetujui' || $surat->suratable_id !== null) {
+            return back()->with('error', 'Surat ini tidak dapat dijadikan penugasan khusus atau sudah terhubung dengan entitas lain.');
+        }
+
+        return redirect()->route('special-assignments.create')
+            ->with('surat_id', $surat->id)
+            ->with('prefill_title', $surat->perihal)
+            ->with('prefill_description', "Dibuat berdasarkan surat nomor " . $surat->nomor_surat . " perihal " . $surat->perihal . ".");
+    }
 }
