@@ -22,8 +22,15 @@ class PerformanceCalculatorService
         $this->calculatedIki = [];
         $this->calculatedNkf = [];
         $this->expressionLanguage = new ExpressionLanguage();
-        // Cache settings for the duration of the service's lifecycle
-        $this->settings = Setting::pluck('value', 'key')->all();
+        $this->settings = []; // Initialize as empty, load lazily
+    }
+
+    private function getSettings(): array
+    {
+        if (empty($this->settings)) {
+            $this->settings = Setting::pluck('value', 'key')->all();
+        }
+        return $this->settings;
     }
 
     public function calculateForAllUsers(): void
@@ -67,16 +74,17 @@ class PerformanceCalculatorService
 
     private function calculateFinalPerformanceValue(User $user, Collection $allUsers): float
     {
+        $settings = $this->getSettings();
         $individualScore = $this->calculatedIki[$user->id] ?? 0.0;
 
         if (!$user->isManager()) {
-            $formula = $this->settings['nkf_formula_staf'] ?? 'individual_score';
+            $formula = $settings['nkf_formula_staf'] ?? 'individual_score';
             return $this->calculatedNkf[$user->id] = $this->expressionLanguage->evaluate($formula, ['individual_score' => $individualScore]);
         }
 
         $subordinates = $allUsers->where('atasan_id', $user->id);
         if ($subordinates->isEmpty()) {
-            $formula = $this->settings['nkf_formula_staf'] ?? 'individual_score'; // A manager with no subordinates is treated as staff for calculation
+            $formula = $settings['nkf_formula_staf'] ?? 'individual_score'; // A manager with no subordinates is treated as staff for calculation
             return $this->calculatedNkf[$user->id] = $this->expressionLanguage->evaluate($formula, ['individual_score' => $individualScore]);
         }
 
@@ -85,9 +93,9 @@ class PerformanceCalculatorService
         // Fetch weight from settings, falling back to a default
         $primaryRole = $user->roles->sortBy('level')->first();
         $roleKey = $primaryRole ? strtolower($primaryRole->name) : 'default';
-        $weight = (float)($this->settings['managerial_weight_' . $roleKey] ?? 0.5);
+        $weight = (float)($settings['managerial_weight_' . $roleKey] ?? 0.5);
 
-        $formula = $this->settings['nkf_formula_pimpinan'] ?? '(individual_score * (1 - weight)) + (managerial_score * weight)';
+        $formula = $settings['nkf_formula_pimpinan'] ?? '(individual_score * (1 - weight)) + (managerial_score * weight)';
 
         $nkf = $this->expressionLanguage->evaluate($formula, [
             'individual_score' => $individualScore,
@@ -128,12 +136,13 @@ class PerformanceCalculatorService
         $efficiencyFactor = ($totalEstimatedHours > 0 && $totalActualHours > 0) ? ($totalEstimatedHours / $totalActualHours) : 1.0;
 
         // Calculate capped_efficiency_factor from settings
-        $minEfficiency = (float)($this->settings['min_efficiency_factor'] ?? 0.9);
-        $maxEfficiency = (float)($this->settings['max_efficiency_factor'] ?? 1.25);
+        $settings = $this->getSettings();
+        $minEfficiency = (float)($settings['min_efficiency_factor'] ?? 0.9);
+        $maxEfficiency = (float)($settings['max_efficiency_factor'] ?? 1.25);
         $cappedEfficiencyFactor = max($minEfficiency, min($efficiencyFactor, $maxEfficiency));
 
         // Evaluate IKI using the formula from settings
-        $formula = $this->settings['iki_formula'] ?? 'base_score * capped_efficiency_factor';
+        $formula = $settings['iki_formula'] ?? 'base_score * capped_efficiency_factor';
         $finalIki = $this->expressionLanguage->evaluate($formula, [
             'base_score' => $baseScore,
             'efficiency_factor' => $efficiencyFactor,
@@ -145,9 +154,10 @@ class PerformanceCalculatorService
 
     private function getWorkResultRating(float $finalScore): string
     {
+        $settings = $this->getSettings();
         if ($finalScore == 0) return 'Tidak Dapat Dinilai';
-        if ($finalScore >= (float)($this->settings['rating_threshold_high'] ?? 1.15)) return 'Diatas Ekspektasi';
-        if ($finalScore >= (float)($this->settings['rating_threshold_medium'] ?? 0.90)) return 'Sesuai Ekspektasi';
+        if ($finalScore >= (float)($settings['rating_threshold_high'] ?? 1.15)) return 'Diatas Ekspektasi';
+        if ($finalScore >= (float)($settings['rating_threshold_medium'] ?? 0.90)) return 'Sesuai Ekspektasi';
         return 'Dibawah Ekspektasi';
     }
 
