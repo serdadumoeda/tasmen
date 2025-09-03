@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Activity;
 use App\Models\Project;
+use App\Models\Surat;
 use App\Models\Task;
 use App\Models\User;
 use App\Models\PeminjamanRequest;
@@ -49,7 +50,8 @@ class ProjectController extends Controller
     public function createStep1()
     {
         $this->authorize('create', Project::class);
-        return view('projects.create_step1', ['project' => new Project()]);
+        $suratList = Surat::orderBy('tanggal_surat', 'desc')->select('id', 'perihal', 'nomor_surat')->get();
+        return view('projects.create_step1', ['project' => new Project(), 'suratList' => $suratList]);
     }
 
     public function storeStep1(Request $request)
@@ -61,6 +63,8 @@ class ProjectController extends Controller
             'description' => 'required|string',
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
+            'surat_ids' => 'nullable|array',
+            'surat_ids.*' => 'exists:surat,id',
         ]);
 
         $project = Project::create([
@@ -71,6 +75,11 @@ class ProjectController extends Controller
             'owner_id' => Auth::id(),
             'leader_id' => Auth::id(),
         ]);
+
+        if (!empty($validated['surat_ids'])) {
+            $suratCollection = Surat::find($validated['surat_ids']);
+            $project->surat()->saveMany($suratCollection);
+        }
 
         return redirect()->route('projects.create.step2', $project);
     }
@@ -198,8 +207,10 @@ class ProjectController extends Controller
             'in_progress' => $taskStatuses->get('in_progress', 0),
             'completed' => $taskStatuses->get('completed', 0),
         ];
+
+        $suratList = Surat::orderBy('tanggal_surat', 'desc')->select('id', 'perihal', 'nomor_surat')->get();
         
-        return view('projects.edit', compact('project', 'potentialMembers', 'stats', 'loanRequests', 'subordinateIds'));
+        return view('projects.edit', compact('project', 'potentialMembers', 'stats', 'loanRequests', 'subordinateIds', 'suratList'));
     }
     
     public function update(Request $request, Project $project)
@@ -221,9 +232,22 @@ class ProjectController extends Controller
             'leader_id' => ['required', 'exists:users,id', Rule::in($validMemberIds)],
             'members' => 'required|array',
             'members.*' => ['exists:users,id', Rule::in($validMemberIds)],
+            'surat_ids' => 'nullable|array',
+            'surat_ids.*' => 'exists:surat,id',
         ]);
 
         $project->update($validated);
+
+        // Sync Dasar Surat
+        if ($request->has('surat_ids')) {
+            // Disassociate all current letters
+            $project->surat()->update(['suratable_id' => null, 'suratable_type' => null]);
+            // Associate the new set of letters
+            if (!empty($validated['surat_ids'])) {
+                $suratCollection = Surat::find($validated['surat_ids']);
+                $project->surat()->saveMany($suratCollection);
+            }
+        }
 
         $this->syncMembers($project, $validated['leader_id'], $validated['members']);
         
