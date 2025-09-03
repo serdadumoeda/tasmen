@@ -102,6 +102,21 @@ class TimeLogController extends Controller
             'duration_in_minutes' => $durationInMinutes,
         ]);
 
+        if ($request->wantsJson()) {
+            // Hitung ulang total waktu tercatat untuk tugas ini
+            $totalMinutes = $task->timeLogs()->sum('duration_in_minutes');
+            $hours = floor($totalMinutes / 60);
+            $minutes = $totalMinutes % 60;
+
+            return response()->json([
+                'message' => 'Catatan waktu berhasil ditambahkan.',
+                'time_log_summary' => [
+                    'estimated' => (float)$task->estimated_hours ?? 0,
+                    'logged' => "{$hours} jam {$minutes} menit"
+                ]
+            ]);
+        }
+
         return back()->with('success', 'Catatan waktu berhasil ditambahkan.');
     }
 }

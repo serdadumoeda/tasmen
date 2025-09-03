@@ -519,6 +519,38 @@
                         }
                     },
 
+                    async submitManualTimeLog(event, taskId) {
+                        const form = event.target;
+                        const formData = new FormData(form);
+                        const duration = formData.get('duration_in_minutes').trim();
+
+                        if (!duration) return;
+
+                        try {
+                            const response = await fetch(form.action, {
+                                method: 'POST',
+                                body: formData,
+                                headers: {
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                                    'Accept': 'application/json',
+                                },
+                            });
+
+                            if (!response.ok) {
+                                const errorData = await response.json().catch(() => ({ message: 'Terjadi kesalahan pada server.' }));
+                                throw new Error(errorData.message);
+                            }
+
+                            const data = await response.json();
+                            this.updateTaskTimeLogDisplay(taskId, data.time_log_summary);
+                            form.reset(); // Reset form fields
+                            alert(data.message);
+
+                        } catch (error) {
+                            alert('Gagal menyimpan waktu: ' + error.message);
+                        }
+                    },
+
                     async submitComment(event, taskId) {
                         const form = event.target;
                         const formData = new FormData(form);
