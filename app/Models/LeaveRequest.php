@@ -34,4 +34,12 @@ class LeaveRequest extends Model
     public function user() { return $this->belongsTo(User::class); }
     public function leaveType() { return $this->belongsTo(LeaveType::class); }
     public function approver() { return $this->belongsTo(User::class, 'current_approver_id'); }
+
+    /**
+     * Get the official decision letter (SK) for this leave request.
+     */
+    public function surat()
+    {
+        return $this->morphOne(Surat::class, 'suratable');
+    }
 }
