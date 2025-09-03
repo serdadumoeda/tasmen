@@ -16,6 +16,7 @@ use Laravel\Sanctum\HasApiTokens;
 use App\Models\Unit; // Pastikan ini diimpor
 use App\Models\Project;
 use App\Models\Jabatan;
+use App\Models\JabatanHistory;
 use App\Models\Delegation;
 use App\Scopes\HierarchicalScope;
 use App\Services\LeaveDurationService;
@@ -126,6 +127,11 @@ class User extends Authenticatable
     public function unit(): BelongsTo
     {
         return $this->belongsTo(Unit::class);
+    }
+
+    public function jabatanHistory(): HasMany
+    {
+        return $this->hasMany(JabatanHistory::class)->latest('start_date');
     }
 
     /**

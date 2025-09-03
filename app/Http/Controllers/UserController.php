@@ -191,6 +191,14 @@ class UserController extends Controller
         return view('users.profile', compact('user'));
     }
 
+    public function history(User $user)
+    {
+        $this->authorize('view', $user);
+        $history = $user->jabatanHistory()->with(['jabatan', 'unit'])->paginate(20);
+
+        return view('users.history', compact('user', 'history'));
+    }
+
     public function update(Request $request, User $user)
     {
         $this->authorize('update', $user);

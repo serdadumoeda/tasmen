@@ -63,7 +63,12 @@
 
                         {{-- Employment Information --}}
                         <div class="md:col-span-1">
-                            <h4 class="text-lg font-medium text-gray-800 border-b pb-2 mb-4">Informasi Kepegawaian</h4>
+                            <div class="flex justify-between items-center border-b pb-2 mb-4">
+                                <h4 class="text-lg font-medium text-gray-800">Informasi Kepegawaian</h4>
+                                <a href="{{ route('users.history', $user) }}" class="text-xs font-medium text-indigo-600 hover:text-indigo-800">
+                                    Lihat Riwayat <i class="fas fa-arrow-right ml-1"></i>
+                                </a>
+                            </div>
                             <dl class="space-y-2">
                                 <div class="flex justify-between">
                                     <dt class="font-semibold text-sm text-gray-600">Jabatan:</dt>
