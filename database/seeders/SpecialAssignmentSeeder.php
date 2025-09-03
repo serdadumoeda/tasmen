@@ -17,8 +17,12 @@ class SpecialAssignmentSeeder extends Seeder
     public function run(): void
     {
         $faker = Faker::create('id_ID');
-        $users = User::where('role', '!=', User::ROLE_SUPERADMIN)->get();
-        $managers = User::whereIn('role', [User::ROLE_ESELON_I, User::ROLE_ESELON_II, User::ROLE_KOORDINATOR])->get();
+        $users = User::whereDoesntHave('roles', function ($query) {
+            $query->where('name', 'Superadmin');
+        })->get();
+        $managers = User::whereHas('roles', function ($query) {
+            $query->whereIn('name', ['Eselon I', 'Eselon II', 'Koordinator']);
+        })->get();
 
         if ($users->count() < 2 || $managers->isEmpty()) {
             $this->command->info('Not enough users or managers to create special assignments.');
