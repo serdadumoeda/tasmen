@@ -35,7 +35,7 @@ class PerformanceCalculatorService
 
     public function calculateForAllUsers(): void
     {
-        $allUsers = User::with('tasks', 'unit', 'atasan')->get()->keyBy('id');
+        $allUsers = User::with('tasks.priorityLevel', 'unit', 'atasan')->get()->keyBy('id');
         if ($allUsers->isEmpty()) return;
 
         $this->calculatedIki = [];
@@ -123,7 +123,8 @@ class PerformanceCalculatorService
         $totalWeight = 0;
         $weightedProgressSum = 0;
         foreach ($allTasks as $task) {
-            $weight = $this->getPriorityWeight($task->priority);
+            $priorityName = $task->priorityLevel->name ?? 'medium';
+            $weight = $this->getPriorityWeight($priorityName);
             $totalWeight += $weight;
             $weightedProgressSum += ($task->progress / 100) * $weight;
         }
