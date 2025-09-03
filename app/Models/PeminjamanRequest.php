@@ -3,13 +3,14 @@
 namespace App\Models;
 
 use App\Enums\RequestStatus;
+use App\Models\Traits\RecordsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class PeminjamanRequest extends Model
 {
-    use HasFactory;
+    use HasFactory, RecordsActivity;
 
     protected $fillable = [
         'project_id',
@@ -50,5 +51,12 @@ class PeminjamanRequest extends Model
         // User yang harus menyetujui, melalui kolom 'approver_id'.
         return $this->belongsTo(User::class, 'approver_id', 'id');
     }
-    // --- AKHIR PERBAIKAN FINAL ---
+
+    /**
+     * Get the official letter associated with this loan request.
+     */
+    public function surat()
+    {
+        return $this->morphOne(Surat::class, 'suratable');
+    }
 }

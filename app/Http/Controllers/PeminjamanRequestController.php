@@ -12,7 +12,10 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use App\Models\Surat;
 use App\Scopes\HierarchicalScope;
+use App\Services\NomorSuratService;
+use App\Services\SuratPeminjamanGenerator;
 use App\Notifications\PeminjamanRequested;
 use App\Notifications\PeminjamanApproved;
 use App\Notifications\PeminjamanRejected;
@@ -42,14 +45,14 @@ class PeminjamanRequestController extends Controller
 
         // 2. Ambil riwayat permintaan yang SAYA ajukan (dengan pagination)
         $mySentRequests = PeminjamanRequest::where('requester_id', $userId)
-            ->with(['project', 'requestedUser', 'approver'])
+            ->with(['project', 'requestedUser', 'approver', 'surat'])
             ->latest()
             ->paginate(config('tasmen.pagination.loan_requests', 5), ['*'], 'sent_page');
 
         // 3. Ambil riwayat persetujuan yang TELAH SAYA PROSES (dengan pagination)
         $approvalHistory = PeminjamanRequest::where('approver_id', $userId)
             ->whereIn('status', [RequestStatus::APPROVED->value, RequestStatus::REJECTED->value]) // Hanya yang sudah disetujui/ditolak
-            ->with(['project', 'requester', 'requestedUser'])
+            ->with(['project', 'requester', 'requestedUser', 'surat'])
             ->latest()
             ->paginate(config('tasmen.pagination.loan_requests', 5), ['*'], 'history_page');
 
@@ -73,7 +76,7 @@ class PeminjamanRequestController extends Controller
         return redirect()->back()->with('success', 'Riwayat telah berhasil dihapus.');
     }
     
-    public function store(Request $request)
+    public function store(Request $request, SuratPeminjamanGenerator $suratGenerator)
     {
         $this->authorize('create', PeminjamanRequest::class);
 
@@ -99,6 +102,14 @@ class PeminjamanRequestController extends Controller
             'approver_id' => $approver->id,
             'due_date' => now()->addWeekdays(config('tasmen.loan_request_due_days', 3))
         ]);
+
+        // Generate the draft letter
+        try {
+            $suratGenerator->generate($peminjamanRequest);
+        } catch (\Exception $e) {
+            // Log the error but don't fail the main request
+            \Illuminate\Support\Facades\Log::error('Gagal membuat draf surat peminjaman: ' . $e->getMessage());
+        }
 
         Notification::send($approver, new PeminjamanRequested($peminjamanRequest));
 
@@ -143,22 +154,39 @@ class PeminjamanRequestController extends Controller
         return null;
     }
 
-    public function approve(PeminjamanRequest $peminjamanRequest)
+    public function approve(PeminjamanRequest $peminjamanRequest, NomorSuratService $nomorSuratService)
     {
         $this->authorize('approve', $peminjamanRequest);
 
         try {
-            $project = Project::withoutGlobalScope(HierarchicalScope::class)->findOrFail($peminjamanRequest->project_id);
-            $project->members()->syncWithoutDetaching([$peminjamanRequest->requested_user_id]);
-            $peminjamanRequest->update(['status' => RequestStatus::APPROVED]);
+            DB::transaction(function () use ($peminjamanRequest, $nomorSuratService) {
+                $project = Project::withoutGlobalScope(HierarchicalScope::class)->findOrFail($peminjamanRequest->project_id);
+                $project->members()->syncWithoutDetaching([$peminjamanRequest->requested_user_id]);
+                $peminjamanRequest->update(['status' => RequestStatus::APPROVED]);
+
+                // Finalize the associated letter
+                $surat = $peminjamanRequest->surat;
+                if ($surat) {
+                    $surat->status = 'disetujui';
+                    // Generate number only if it doesn't have one
+                    if (!$surat->nomor_surat) {
+                        $surat->nomor_surat = $nomorSuratService->generate($surat->klasifikasi, $surat->pembuat);
+                    }
+                    $surat->save();
+                    $peminjamanRequest->recordActivity('approved_peminjaman_surat');
+                }
+            });
 
             if ($peminjamanRequest->requester) {
                 Notification::send($peminjamanRequest->requester, new PeminjamanApproved($peminjamanRequest));
             }
 
-            return redirect()->route('peminjaman-requests.my-requests')->with('success', 'Permintaan telah disetujui.');
+            return redirect()->route('peminjaman-requests.my-requests')->with('success', 'Permintaan telah disetujui dan surat resmi telah difinalisasi.');
+
         } catch (ModelNotFoundException $e) {
             return redirect()->route('peminjaman-requests.my-requests')->with('error', 'Gagal menyetujui: Proyek terkait tidak ditemukan.');
+        } catch (\Exception $e) {
+            return redirect()->route('peminjaman-requests.my-requests')->with('error', 'Terjadi kesalahan saat finalisasi surat: ' . $e->getMessage());
         }
     }
 
