@@ -10,6 +10,7 @@ use App\Notifications\SuratDisposisiNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class SuratMasukController extends Controller
 {
@@ -107,11 +108,17 @@ class SuratMasukController extends Controller
         // Find the disposition that was sent to the current user, to be used as parent
         $parentDisposisi = $surat->disposisi->firstWhere('penerima_id', Auth::id());
 
+        $breadcrumbs = [
+            ['title' => 'Surat Masuk', 'url' => route('surat-masuk.index')],
+            ['title' => Str::limit($surat->perihal, 40)],
+        ];
+
         return view('suratmasuk.show', [
             'surat' => $surat,
             'dispositionUsers' => $allUsers, // All users for selection
             'topLevelDisposisi' => $topLevelDisposisi,
-            'parentDisposisi' => $parentDisposisi
+            'parentDisposisi' => $parentDisposisi,
+            'breadcrumbs' => $breadcrumbs,
         ]);
     }
 

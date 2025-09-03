@@ -53,12 +53,12 @@
 
     {{-- Latar belakang dan padding konsisten dengan halaman lain --}}
     {{-- Mengubah py-12 menjadi py-8 untuk konsistensi padding vertikal --}}
-    <div class="py-8 bg-gray-50"> 
+    <div class="py-8 bg-gray-50" x-data="{ showDeleteModal: false }">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             {{-- Mengubah shadow-sm menjadi shadow-xl dan memastikan rounded-lg --}}
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
                 <div class="p-6 text-gray-900">
-                    <form action="{{ route('projects.update', $project) }}" method="POST">
+                    <form action="{{ route('projects.update', $project) }}" method="POST" x-data="{ isSubmitting: false }" @submit="isSubmitting = true">
                         @csrf
                         @method('PUT')
                         
@@ -67,17 +67,36 @@
                         @include('projects.partials.form')
 
                         <div class="flex items-center justify-between mt-8 border-t border-gray-200 pt-6"> {{-- Menambahkan margin atas, border, dan padding atas --}}
-                            <a href="{{ route('projects.show', $project) }}" class="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 font-medium transition-colors duration-200">
-                                <i class="fas fa-arrow-left mr-2"></i> Kembali ke Kegiatan
-                            </a>
-                            <button type="submit" class="inline-flex items-center px-5 py-2.5 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150 shadow-md hover:shadow-lg transform hover:scale-105">
-                                <i class="fas fa-save mr-2"></i> Simpan Perubahan
-                            </button>
+                            <div>
+                                @can('delete', $project)
+                                    <x-danger-button type="button" @click.prevent="showDeleteModal = true">
+                                        <i class="fas fa-trash-alt mr-2"></i> Hapus Kegiatan
+                                    </x-danger-button>
+                                @endcan
+                            </div>
+                            <div class="flex items-center">
+                                <a href="{{ route('projects.show', $project) }}" class="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 font-medium mr-6 transition-colors duration-200">
+                                    <i class="fas fa-arrow-left mr-2"></i> Kembali ke Kegiatan
+                                </a>
+                                <button type="submit"
+                                        class="inline-flex items-center justify-center px-5 py-2.5 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150 shadow-md hover:shadow-lg transform hover:scale-105 disabled:opacity-50"
+                                        :disabled="isSubmitting">
+                                    <span x-show="!isSubmitting" class="inline-flex items-center">
+                                        <i class="fas fa-save mr-2"></i> Simpan Perubahan
+                                    </span>
+                                    <span x-show="isSubmitting" class="inline-flex items-center">
+                                        <i class="fas fa-spinner fa-spin mr-2"></i> Menyimpan...
+                                    </span>
+                                </button>
+                            </div>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
+
+        {{-- Modal Konfirmasi Hapus --}}
+        @include('projects.partials.delete-modal', ['project' => $project])
     </div>
 
     @push('scripts')

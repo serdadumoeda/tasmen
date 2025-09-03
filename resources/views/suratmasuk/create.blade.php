@@ -14,7 +14,7 @@
                         <div class="space-y-6">
                             <div>
                                 <label for="perihal" class="block font-semibold text-sm text-gray-700 mb-1">Perihal Surat <span class="text-red-500">*</span></label>
-                                <input type="text" name="perihal" id="perihal" value="{{ old('perihal') }}" class="mt-1 block w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500" required>
+                                <input type="text" name="perihal" id="perihal" value="{{ old('perihal') }}" class="mt-1 block w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500" required autofocus>
                                 @error('perihal') <p class="text-sm text-red-600 mt-2">{{ $message }}</p> @enderror
                             </div>
 

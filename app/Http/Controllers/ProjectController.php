@@ -176,7 +176,12 @@ class ProjectController extends Controller
         $statuses = \App\Models\TaskStatus::all();
         $priorities = \App\Models\PriorityLevel::all();
 
-        return view('projects.show', compact('project', 'tasks', 'projectMembers', 'stats', 'loanRequests', 'statuses', 'priorities'));
+        $breadcrumbs = [
+            ['title' => 'Dashboard', 'url' => route('dashboard')],
+            ['title' => $project->name],
+        ];
+
+        return view('projects.show', compact('project', 'tasks', 'projectMembers', 'stats', 'loanRequests', 'statuses', 'priorities', 'breadcrumbs'));
     }
 
 
@@ -209,8 +214,14 @@ class ProjectController extends Controller
         ];
 
         $suratList = Surat::orderBy('tanggal_surat', 'desc')->select('id', 'perihal', 'nomor_surat')->get();
+
+        $breadcrumbs = [
+            ['title' => 'Dashboard', 'url' => route('dashboard')],
+            ['title' => $project->name, 'url' => route('projects.show', $project)],
+            ['title' => 'Edit'],
+        ];
         
-        return view('projects.edit', compact('project', 'potentialMembers', 'stats', 'loanRequests', 'subordinateIds', 'suratList'));
+        return view('projects.edit', compact('project', 'potentialMembers', 'stats', 'loanRequests', 'subordinateIds', 'suratList', 'breadcrumbs'));
     }
     
     public function update(Request $request, Project $project)

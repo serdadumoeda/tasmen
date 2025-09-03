@@ -57,8 +57,11 @@
                         <div class="p-6 hover:bg-blue-50/50 transition duration-200 ease-in-out border-b border-gray-100 last:border-b-0">
                             <div class="flex justify-between items-start">
                                 <div>
-                                    <h4 class="font-bold text-xl text-indigo-700 mb-1">{{ $sk->title }}</h4>
-                                    <div class="text-sm text-gray-600 mt-1 flex items-center space-x-3">
+                                    <div class="flex items-center gap-3">
+                                        <h4 class="font-bold text-xl text-indigo-700">{{ $sk->title }}</h4>
+                                        <x-status-badge :status="$sk->status" />
+                                    </div>
+                                    <div class="text-sm text-gray-600 mt-2 flex items-center space-x-3">
                                         <span class="inline-flex items-center"><i class="fas fa-hashtag text-gray-400 mr-1"></i>
                                             @if($sk->surat)
                                                 <a href="{{ route('surat-keluar.show', $sk->surat) }}" class="text-blue-600 hover:underline" title="Lihat Dokumen Surat">

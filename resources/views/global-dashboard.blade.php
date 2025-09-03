@@ -18,7 +18,7 @@
             <!-- Grid Metrik Utama -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <!-- Total Kegiatan -->
-                <div class="bg-white p-6 rounded-xl shadow-xl flex items-center space-x-4">
+                <x-card class="flex items-center space-x-4">
                     <div class="bg-blue-500 p-4 rounded-full">
                         <i class="fas fa-folder-open fa-2x text-white"></i>
                     </div>
@@ -26,10 +26,10 @@
                         <p class="text-3xl font-bold text-gray-800">{{ $stats['total_projects'] }}</p>
                         <p class="text-gray-500 font-medium">Total Kegiatan</p>
                     </div>
-                </div>
+                </x-card>
                 @if (!auth()->user()->isStaff())
                 <!-- Pengguna Aktif -->
-                <div class="bg-white p-6 rounded-xl shadow-xl flex items-center space-x-4">
+                <x-card class="flex items-center space-x-4">
                     <div class="bg-green-500 p-4 rounded-full">
                         <i class="fas fa-users fa-2x text-white"></i>
                     </div>
@@ -37,10 +37,10 @@
                         <p class="text-3xl font-bold text-gray-800">{{ $stats['active_users'] }}/<span class="text-2xl text-gray-600">{{ $stats['total_users'] }}</span></p>
                         <p class="text-gray-500 font-medium">Pengguna Aktif</p>
                     </div>
-                </div>
+                </x-card>
                 @endif
                 <!-- Total Tugas -->
-                <div class="bg-white p-6 rounded-xl shadow-xl flex items-center space-x-4">
+                <x-card class="flex items-center space-x-4">
                     <div class="bg-orange-500 p-4 rounded-full">
                         <i class="fas fa-tasks fa-2x text-white"></i>
                     </div>
@@ -48,10 +48,10 @@
                         <p class="text-3xl font-bold text-gray-800">{{ $stats['completed_tasks'] }}/<span class="text-2xl text-gray-600">{{ $stats['total_tasks'] }}</span></p>
                         <p class="text-gray-500 font-medium">Tugas Selesai</p>
                     </div>
-                </div>
+                </x-card>
                 @if (!auth()->user()->isStaff())
                 <!-- Permintaan Tertunda -->
-                <div class="bg-white p-6 rounded-xl shadow-xl flex items-center space-x-4">
+                <x-card class="flex items-center space-x-4">
                     <div class="bg-yellow-500 p-4 rounded-full">
                         <i class="fas fa-inbox fa-2x text-white"></i>
                     </div>
@@ -59,7 +59,7 @@
                         <p class="text-3xl font-bold text-gray-800">{{ $stats['pending_requests'] }}</p>
                         <p class="text-gray-500 font-medium">Permintaan Tertunda</p>
                     </div>
-                </div>
+                </x-card>
                 @endif
             </div>
 
@@ -69,7 +69,7 @@
                 <!-- Kolom Kiri: Daftar Kegiatan -->
                 <div class="lg:col-span-2 space-y-6">
                     <!-- Form Filter dan Pencarian -->
-                    <div class="bg-white p-4 rounded-xl shadow-lg">
+                    <x-card class="!p-4 shadow-lg">
                         <form action="{{ route('global.dashboard') }}" method="GET" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
                             <div class="md:col-span-2">
                                 <label for="search" class="sr-only">Cari Kegiatan</label>
@@ -95,7 +95,7 @@
                                 <a href="{{ route('global.dashboard') }}" class="inline-flex items-center px-4 py-2 bg-gray-200 border border-transparent rounded-md font-semibold text-xs text-gray-800 uppercase tracking-widest hover:bg-gray-300">Reset</a>
                             </div>
                         </form>
-                    </div>
+                    </x-card>
 
                     <!-- Daftar Kegiatan -->
                     @forelse ($allProjects as $project)
@@ -128,11 +128,11 @@
                             </div>
                         </a>
                     @empty
-                        <div class="bg-white p-10 rounded-xl shadow-lg text-center">
+                        <x-card class="!p-10 shadow-lg text-center">
                             <i class="fas fa-search-minus fa-3x text-gray-300 mb-4"></i>
                             <p class="text-gray-500 font-semibold">Tidak ada kegiatan yang cocok dengan kriteria Anda.</p>
                             <p class="text-sm text-gray-400 mt-2">Coba ubah filter atau kata kunci pencarian Anda.</p>
-                        </div>
+                        </x-card>
                     @endforelse
 
                     <!-- Navigasi Paginasi -->
@@ -147,7 +147,7 @@
                         <x-approval-inbox :items="$approvalItems" />
                     @endif
 
-                    <div class="bg-white overflow-hidden shadow-xl rounded-xl p-6">
+                    <x-card>
                          <h3 class="text-lg font-semibold mb-4 text-gray-900 flex items-center">
                             <i class="fas fa-history mr-3 text-indigo-500"></i>
                         Aktivitas Terbaru Sistem
@@ -186,7 +186,7 @@
                             </li>
                         @endforelse
                     </ul>
-                </div>
+                </x-card>
             </div>
         </div>
     </div>

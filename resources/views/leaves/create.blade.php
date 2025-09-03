@@ -14,13 +14,13 @@
                         <p class="text-2xl">{{ $remainingDays }} Hari</p>
                     </div>
 
-                    <form action="{{ route('leaves.store') }}" method="POST" enctype="multipart/form-data">
+                    <form action="{{ route('leaves.store') }}" method="POST" enctype="multipart/form-data" x-data="{ isSubmitting: false }" @submit="isSubmitting = true">
                         @csrf
 
                         <!-- Leave Type -->
                         <div class="mb-4">
                             <label for="leave_type_id" class="block font-medium text-sm text-gray-700">{{ __('Jenis Cuti') }}</label>
-                            <select name="leave_type_id" id="leave_type_id" class="block mt-1 w-full rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required>
+                            <select name="leave_type_id" id="leave_type_id" class="block mt-1 w-full rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required autofocus>
                                 @foreach($leaveTypes as $type)
                                     <option value="{{ $type->id }}">{{ $type->name }}</option>
                                 @endforeach
@@ -67,8 +67,15 @@
                             <a href="{{ route('leaves.index') }}" class="inline-flex items-center px-4 py-2 bg-gray-200 border border-transparent rounded-md font-semibold text-xs text-gray-800 uppercase tracking-widest hover:bg-gray-300">
                                 {{ __('Batal') }}
                             </a>
-                            <button type="submit" class="ml-4 inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700">
-                                {{ __('Ajukan') }}
+                            <button type="submit"
+                                    class="ml-4 inline-flex items-center justify-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 disabled:opacity-50"
+                                    :disabled="isSubmitting">
+                                <span x-show="!isSubmitting">
+                                    {{ __('Ajukan') }}
+                                </span>
+                                <span x-show="isSubmitting">
+                                    <i class="fas fa-spinner fa-spin mr-2"></i> {{ __('Mengajukan...') }}
+                                </span>
                             </button>
                         </div>
                     </form>
