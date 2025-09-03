@@ -57,19 +57,25 @@ trait RecordsActivity
 
     protected function activityOwner()
     {
-        // Jika model ini adalah Project, pemiliknya adalah leader-nya sendiri.
+        // If the model is a Project, its owner is the leader.
         if (class_basename($this) === 'Project') {
             return $this->leader;
         }
     
-        // PERBAIKAN: Jika tugasnya ada proyek, pemiliknya adalah leader proyek
-        if (isset($this->project)) {
-            return $this->project->leader;
+        // If the model has a project_id (like a Task), get the project's leader.
+        // This is more robust than checking `isset($this->project)` because the relationship
+        // may not be loaded during model events like 'created'.
+        if (isset($this->project_id)) {
+            // Use relationLoaded to prevent N+1 queries if the relation is already there.
+            $project = $this->relationLoaded('project') ? $this->project : \App\Models\Project::find($this->project_id);
+            if ($project) {
+                return $project->leader;
+            }
         }
     
-        // Jika tidak ada proyek (misal: tugas ad-hoc atau model User),
-        // pemilik aktivitas adalah user yang sedang login.
-        // Jika tidak ada user login (misal: dari seeder), kembalikan null.
+        // Fallback for models without a project (e.g., ad-hoc tasks, User model itself).
+        // The activity owner is the currently authenticated user.
+        // If there's no logged-in user (e.g., during seeding), this will return null.
         return auth()->user();
     }
 
