@@ -5,33 +5,42 @@
         </h2>
     </x-slot>
 
-    {{-- Latar belakang dan padding konsisten dengan halaman lain --}}
-    <div class="py-8"> 
+    <div class="py-8">
         <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
-            {{-- Bayangan dan sudut membulat konsisten --}}
-            <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
-                <div class="p-6 text-gray-900">
-                    {{-- PERBAIKAN: Tambahkan enctype untuk upload file --}}
-                    <form action="{{ route('special-assignments.update', $assignment) }}" method="POST" enctype="multipart/form-data">
-                        @csrf
-                        @method('PUT')
-                        
-                        {{-- Pastikan special-assignments._form.blade.php sudah di-styling dengan UI terbaru --}}
-                        {{-- Tombol Simpan/Batal ASUMSIKAN ada di dalam _form.blade.php --}}
-                        @include('special-assignments._form')
+            <div x-data="{ activeTab: 'edit' }" class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
+                <div class="border-b border-gray-200">
+                    <nav class="-mb-px flex space-x-8 px-6" aria-label="Tabs">
+                        <button @click="activeTab = 'edit'"
+                                :class="{
+                                    'border-indigo-500 text-indigo-600': activeTab === 'edit',
+                                    'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'edit'
+                                }"
+                                class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm focus:outline-none">
+                            <i class="fas fa-pencil-alt mr-2"></i> Edit Penugasan
+                        </button>
+                        <button @click="activeTab = 'persuratan'"
+                                :class="{
+                                    'border-indigo-500 text-indigo-600': activeTab === 'persuratan',
+                                    'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'persuratan'
+                                }"
+                                class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm focus:outline-none">
+                            <i class="fas fa-envelope-open-text mr-2"></i> Persuratan
+                        </button>
+                    </nav>
+                </div>
 
-                        {{-- BAGIAN INI DIHAPUS UNTUK MENGATASI DUPLIKASI --}}
-                        {{--
-                        <div class="flex items-center justify-end mt-8 border-t border-gray-200 pt-6">
-                            <a href="{{ route('special-assignments.index') }}" class="text-sm text-gray-600 hover:text-gray-900 font-medium mr-6 transition-colors duration-200">
-                                Batal
-                            </a>
-                            <button type="submit" class="inline-flex items-center px-5 py-2.5 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150 shadow-md hover:shadow-lg transform hover:scale-105">
-                                <i class="fas fa-save mr-2"></i> Simpan Perubahan
-                            </button>
-                        </div>
-                        --}}
-                    </form>
+                <div class="p-6 text-gray-900">
+                    <div x-show="activeTab === 'edit'" x-cloak>
+                        <form action="{{ route('special-assignments.update', $assignment) }}" method="POST" enctype="multipart/form-data">
+                            @csrf
+                            @method('PUT')
+
+                            @include('special-assignments._form')
+                        </form>
+                    </div>
+                    <div x-show="activeTab === 'persuratan'" x-cloak>
+                        @include('projects.partials.persuratan', ['model' => $assignment])
+                    </div>
                 </div>
             </div>
         </div>

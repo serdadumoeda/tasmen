@@ -57,7 +57,7 @@ class TaskController extends Controller
     public function edit(Task $task)
     {
         // Eager load relasi untuk efisiensi
-        $task->load('assignees', 'attachments', 'project.members');
+        $task->load('assignees', 'attachments', 'project.members', 'surat');
         $this->authorize('update', $task);
         
         $user = Auth::user();

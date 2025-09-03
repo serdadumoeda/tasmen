@@ -11,6 +11,7 @@ class SubTask extends Model
     use HasFactory, RecordsActivity;
 
     protected $fillable = ['task_id', 'title', 'is_completed'];
+    protected $touches = ['task'];
     protected $casts = ['is_completed' => 'boolean'];
 
     public function task()

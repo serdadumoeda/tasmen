@@ -24,6 +24,24 @@ class User extends Authenticatable
     // Trait HasApiTokens sekarang akan ditemukan
     use HasApiTokens, HasFactory, Notifiable, RecordsActivity;
 
+    /**
+     * The "booted" method of the model.
+     *
+     * @return void
+     */
+    protected static function booted(): void
+    {
+        static::created(function ($user) {
+            static::syncRoleFromUnit($user);
+        });
+
+        static::updated(function ($user) {
+            if ($user->wasChanged('unit_id')) {
+                static::syncRoleFromUnit($user);
+            }
+        });
+    }
+
     // Cache for subordinate unit IDs to prevent N+1 issues in policies.
     public ?\Illuminate\Support\Collection $subordinateUnitIdsCache = null;
 

@@ -135,8 +135,8 @@ class LeaveController extends Controller
 
     public function show(LeaveRequest $leaveRequest)
     {
-        $this->authorize('view', $leaveRequest); // Placeholder for authorization
-        $leaveRequest->load('user', 'leaveType');
+        $this->authorize('view', $leaveRequest);
+        $leaveRequest->load('user', 'leaveType', 'surat');
         return view('leaves.show', compact('leaveRequest'));
     }
 

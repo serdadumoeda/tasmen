@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Traits\RecordsActivity;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Task extends Model
 {
@@ -73,6 +74,14 @@ class Task extends Model
     public function subTasks()
     {
         return $this->hasMany(SubTask::class);
+    }
+
+    /**
+     * Get all of the task's letters.
+     */
+    public function surat(): MorphMany
+    {
+        return $this->morphMany(Surat::class, 'suratable');
     }
 
     // Method baru untuk kalkulasi progress

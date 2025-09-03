@@ -2,8 +2,8 @@
 <h3 class="text-xl font-semibold mb-3">Daftar Surat Terkait</h3>
 
 @can('create', App\Models\Surat::class)
-  {{-- This link assumes the SuratKeluarController@create method can handle these query parameters --}}
-  <a href="{{ route('surat-keluar.create', ['suratable_type' => 'App\Models\Project', 'suratable_id' => $project->id]) }}" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white font-semibold text-sm rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition ease-in-out duration-150 mb-4">
+  {{-- This link is now generic and works for any "suratable" model --}}
+  <a href="{{ route('surat-keluar.create', ['suratable_type' => get_class($suratable), 'suratable_id' => $suratable->id]) }}" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white font-semibold text-sm rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition ease-in-out duration-150 mb-4">
     <i class="fas fa-plus-circle mr-2"></i> Buat Surat Baru
   </a>
 @endcan
@@ -41,7 +41,7 @@
             </td>
           </tr>
         @empty
-          <tr><td colspan="6" class="px-6 py-12 text-center text-sm text-gray-500">Belum ada surat terkait dengan kegiatan ini.</td></tr>
+          <tr><td colspan="6" class="px-6 py-12 text-center text-sm text-gray-500">Belum ada surat terkait.</td></tr>
         @endforelse
       </tbody>
     </table>

@@ -147,6 +147,7 @@ class SpecialAssignmentController extends Controller
      */
     public function edit(SpecialAssignment $specialAssignment)
     {
+        $specialAssignment->load('surat');
         $this->authorize('update', $specialAssignment);
         $subordinateIds = auth()->user()->getAllSubordinateIds();
         $assignableUsers = User::whereIn('id', $subordinateIds)->orWhere('id', auth()->id())->orderBy('name')->get();

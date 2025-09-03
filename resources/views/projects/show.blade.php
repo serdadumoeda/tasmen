@@ -300,7 +300,7 @@
                         </div>
                         <div x-show="activeTab === 'surat'" x-cloak>
                             <div class="p-4">
-                                @include('projects.partials.persuratan', ['suratList' => $project->surat, 'project' => $project])
+                                @include('projects.partials.persuratan', ['suratList' => $project->surat, 'suratable' => $project])
                             </div>
                         </div>
                         <div x-show="activeTab === 'add'" x-cloak>

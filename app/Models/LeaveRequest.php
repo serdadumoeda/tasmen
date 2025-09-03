@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\RequestStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class LeaveRequest extends Model
 {
@@ -34,4 +35,12 @@ class LeaveRequest extends Model
     public function user() { return $this->belongsTo(User::class); }
     public function leaveType() { return $this->belongsTo(LeaveType::class); }
     public function approver() { return $this->belongsTo(User::class, 'current_approver_id'); }
+
+    /**
+     * Get all of the leave request's letters.
+     */
+    public function surat(): MorphMany
+    {
+        return $this->morphMany(Surat::class, 'suratable');
+    }
 }
