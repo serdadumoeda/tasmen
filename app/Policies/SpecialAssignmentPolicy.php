@@ -14,7 +14,7 @@ class SpecialAssignmentPolicy
     public function view(User $user, SpecialAssignment $specialAssignment): bool
     {
         // Superadmin bisa melihat semua
-        if ($user->role === User::ROLE_SUPERADMIN) {
+        if ($user->hasRole('Superadmin')) {
             return true;
         }
 
@@ -45,7 +45,7 @@ class SpecialAssignmentPolicy
     public function update(User $user, SpecialAssignment $specialAssignment): bool
     {
         // Superadmin bisa update
-        if ($user->role === User::ROLE_SUPERADMIN) {
+        if ($user->hasRole('Superadmin')) {
             return true;
         }
 

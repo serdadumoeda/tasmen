@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Role;
 use App\Models\User;
 use App\Models\Unit;
 use App\Models\Jabatan;
@@ -39,10 +40,15 @@ class RegisteredUserController extends Controller
             'email' => $request->email,
             'nip' => $request->nip,
             'password' => Hash::make($request->password),
-            'role' => User::ROLE_STAF, // Assign a default role
             'unit_id' => null, // No unit assigned on registration
             'status' => User::STATUS_ACTIVE,
         ]);
+
+        // Assign the default 'Staf' role
+        $stafRole = Role::where('name', 'Staf')->first();
+        if ($stafRole) {
+            $user->roles()->attach($stafRole);
+        }
 
         event(new Registered($user));
 
