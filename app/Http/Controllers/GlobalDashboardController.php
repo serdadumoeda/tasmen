@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Enums\RequestStatus;
 use App\Models\Activity;
+use App\Models\LeaveRequest;
 use App\Models\PeminjamanRequest;
 use App\Models\Project;
+use App\Models\Surat;
 use App\Models\Task;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -111,6 +113,35 @@ class GlobalDashboardController extends Controller
 
         $recentActivities = $activityQuery->paginate(15, ['*'], 'activityPage');
 
-        return view('global-dashboard', compact('stats', 'allProjects', 'recentActivities', 'chartData', 'search', 'status'));
+        // --- APPROVAL INBOX LOGIC ---
+        $approvalItems = collect();
+        if ($currentUser->canManageUsers()) {
+            // 1. Get Leave Requests awaiting approval
+            $leaveRequests = LeaveRequest::where('current_approver_id', $currentUser->id)
+                ->whereIn('status', [RequestStatus::PENDING, RequestStatus::APPROVED_BY_SUPERVISOR])
+                ->with('user', 'leaveType')
+                ->get();
+
+            // 2. Get Surat Keluar awaiting approval
+            $subordinateIds = $currentUser->getAllSubordinateIds();
+            $suratKeluar = Surat::where('jenis', 'keluar')
+                ->where('status', 'draft')
+                ->whereIn('pembuat_id', $subordinateIds)
+                ->with('pembuat')
+                ->get();
+
+            // 3. Get Peminjaman Pegawai awaiting approval
+            $peminjamanRequests = PeminjamanRequest::where('approver_id', $currentUser->id)
+                ->where('status', RequestStatus::PENDING)
+                ->with('requester', 'requestedUser')
+                ->get();
+
+            // Combine all items
+            $approvalItems = $leaveRequests->concat($suratKeluar)->concat($peminjamanRequests)
+                                          ->sortByDesc('created_at');
+        }
+        // --- END APPROVAL INBOX LOGIC ---
+
+        return view('global-dashboard', compact('stats', 'allProjects', 'recentActivities', 'chartData', 'search', 'status', 'approvalItems'));
     }
 }
