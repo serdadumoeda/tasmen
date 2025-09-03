@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Http\Controllers\WeeklyWorkloadController;
 
 class ResourcePoolController extends Controller
 {
@@ -16,16 +15,19 @@ class ResourcePoolController extends Controller
     {
         $manager = Auth::user();
         $teamMembers = $manager->getAllSubordinates();
+        $standardHours = config('tasmen.workload.standard_hours', 37.5);
 
-        $workloadData = $teamMembers->map(function ($member) {
+        $workloadData = $teamMembers->map(function ($member) use ($standardHours) {
             // Hitung total jam dari tugas yang belum selesai
             $totalAssignedHours = $member->tasks()
-                ->where('status', '!=', 'completed')
+                ->whereHas('status', function ($q) {
+                    $q->where('key', '!=', 'completed');
+                })
                 ->sum('estimated_hours');
 
             // Hitung persentase beban kerja
-            $workloadPercentage = (WeeklyWorkloadController::STANDARD_WEEKLY_HOURS > 0)
-                ? ($totalAssignedHours / WeeklyWorkloadController::STANDARD_WEEKLY_HOURS) * 100
+            $workloadPercentage = ($standardHours > 0)
+                ? ($totalAssignedHours / $standardHours) * 100
                 : 0;
 
             return [

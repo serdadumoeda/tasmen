@@ -30,4 +30,10 @@ return [
         // Number of items per page for the loan request history.
         'loan_requests' => 5,
     ],
+
+    'workload' => [
+        'standard_hours' => 37.5,
+        'threshold_normal' => 0.75,
+        'threshold_warning' => 1.0,
+    ],
 ];

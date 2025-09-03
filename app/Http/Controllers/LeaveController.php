@@ -87,7 +87,7 @@ class LeaveController extends Controller
         $teamIds[] = $user->id; // Include the manager themselves in the calendar
 
         $leaves = LeaveRequest::whereIn('user_id', $teamIds)
-            ->where('status', 'approved')
+            ->where('status', RequestStatus::APPROVED)
             ->with('user')
             ->get();
 
