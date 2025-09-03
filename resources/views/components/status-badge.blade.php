@@ -10,25 +10,25 @@
         case 'completed':
         case 'selesai':
         case 'disetujui':
-            $colorClasses = 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
+            $colorClasses = 'bg-green-100 text-green-800';
             break;
 
         case 'rejected':
         case 'cancelled':
         case 'dibatalkan':
-            $colorClasses = 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
+            $colorClasses = 'bg-red-100 text-red-800';
             break;
 
         case 'pending':
         case 'menunggu persetujuan':
-            $colorClasses = 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
+            $colorClasses = 'bg-yellow-100 text-yellow-800';
             break;
 
         case 'in_progress':
         case 'sedang berjalan':
         case 'approved_by_supervisor':
         case 'aktif':
-            $colorClasses = 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
+            $colorClasses = 'bg-blue-100 text-blue-800';
             if ($status === 'approved_by_supervisor') {
                 $displayText = 'Disetujui Atasan';
             }
@@ -37,16 +37,16 @@
         case 'on_hold':
         case 'ditunda':
         case 'draft':
-            $colorClasses = 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+            $colorClasses = 'bg-gray-200 text-gray-800';
             break;
 
         case 'not_started':
-            $colorClasses = 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+            $colorClasses = 'bg-gray-200 text-gray-800';
             $displayText = 'Belum Dimulai';
             break;
 
         default:
-            $colorClasses = 'bg-gray-100 text-gray-700 dark:bg-gray-600 dark:text-gray-200';
+            $colorClasses = 'bg-gray-100 text-gray-700';
             break;
     }
 @endphp
