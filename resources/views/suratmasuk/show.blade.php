@@ -63,43 +63,49 @@
                     </div>
 
                     {{-- Form Disposisi --}}
-                    <div class="bg-white p-6 rounded-lg shadow-xl">
-                        <h3 class="text-lg font-bold text-gray-800 border-b pb-2 mb-4">Buat Disposisi</h3>
-                        <form action="{{ route('disposisi.store', $surat) }}" method="POST">
-                            @csrf
-                            <div class="space-y-4">
-                                <div>
-                                    <label for="penerima_id" class="block text-sm font-medium text-gray-700">Disposisikan Kepada</label>
-                                    <select id="penerima_id" name="penerima_id[]" multiple class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-                                        @forelse ($dispositionUsers as $user)
-                                            <option value="{{ $user->id }}">{{ $user->name }}</option>
-                                        @empty
-                                            <option disabled>Tidak ada bawahan yang bisa dipilih.</option>
-                                        @endforelse
-                                    </select>
-                                    <p class="text-xs text-gray-500 mt-1">Tahan Ctrl/Cmd untuk memilih lebih dari satu.</p>
+                    @if ($parentDisposisi || Auth::user()->can('create', App\Models\Disposisi::class))
+                        <div class="bg-white p-6 rounded-lg shadow-xl">
+                            <h3 class="text-lg font-bold text-gray-800 border-b pb-2 mb-4">Buat Disposisi</h3>
+                            <form action="{{ route('disposisi.store', $surat) }}" method="POST">
+                                @csrf
+                                @if($parentDisposisi)
+                                    <input type="hidden" name="parent_disposisi_id" value="{{ $parentDisposisi->id }}">
+                                @endif
+                                <div class="space-y-4">
+                                    <div>
+                                        <label for="penerima_id" class="block text-sm font-medium text-gray-700">Disposisikan Kepada (Tujuan Utama)</label>
+                                        <select id="penerima_id" name="penerima_id[]" multiple class="mt-1 block w-full rounded-md tom-select">
+                                            @foreach ($dispositionUsers as $user)
+                                                <option value="{{ $user->id }}">{{ $user->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="tembusan_id" class="block text-sm font-medium text-gray-700">Tembusan (CC)</label>
+                                        <select id="tembusan_id" name="tembusan_id[]" multiple class="mt-1 block w-full rounded-md tom-select">
+                                            @foreach ($dispositionUsers as $user)
+                                                <option value="{{ $user->id }}">{{ $user->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="instruksi" class="block text-sm font-medium text-gray-700">Instruksi / Catatan</label>
+                                        <textarea id="instruksi" name="instruksi" rows="4" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm"></textarea>
+                                    </div>
+                                    <button type="submit" class="w-full inline-flex justify-center items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700">
+                                        <i class="fas fa-paper-plane mr-2"></i> Kirim Disposisi
+                                    </button>
                                 </div>
-                                <div>
-                                    <label for="instruksi" class="block text-sm font-medium text-gray-700">Instruksi / Catatan</label>
-                                    <textarea id="instruksi" name="instruksi" rows="4" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm"></textarea>
-                                </div>
-                                <button type="submit" class="w-full inline-flex justify-center items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700">
-                                    <i class="fas fa-paper-plane mr-2"></i> Kirim Disposisi
-                                </button>
-                            </div>
-                        </form>
-                    </div>
+                            </form>
+                        </div>
+                    @endif
 
                     {{-- Riwayat Disposisi --}}
                     <div class="bg-white p-6 rounded-lg shadow-xl">
                         <h3 class="text-lg font-bold text-gray-800 border-b pb-2 mb-4">Riwayat Disposisi</h3>
-                        <ul class="space-y-3">
-                            @forelse ($surat->disposisi as $item)
-                                <li class="text-sm text-gray-700">
-                                    <i class="fas fa-arrow-right text-gray-400 mr-2"></i>
-                                    Didisposisikan ke <strong class="text-gray-900">{{ $item->penerima->name }}</strong>
-                                    <span class="text-xs text-gray-500 block ml-6">{{ $item->created_at->diffForHumans() }}</span>
-                                </li>
+                        <ul class="space-y-2">
+                            @forelse ($topLevelDisposisi as $item)
+                                <x-disposisi-item :item="$item" />
                             @empty
                                 <li class="text-sm text-gray-500">Belum ada riwayat disposisi.</li>
                             @endforelse
