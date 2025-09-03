@@ -16,6 +16,18 @@
             </div>
         </div>
 
+        @if ($item->tembusanUsers->isNotEmpty())
+            <div class="mt-2 ml-9">
+                <p class="text-xs text-gray-500">
+                    <i class="fas fa-copy mr-1"></i>
+                    Tembusan:
+                    @foreach($item->tembusanUsers as $user)
+                        <span class="font-medium">{{ $user->name }}</span>{{ !$loop->last ? ',' : '' }}
+                    @endforeach
+                </p>
+            </div>
+        @endif
+
         @if ($item->children->isNotEmpty())
             <ul class="mt-3 space-y-2">
                 @foreach ($item->children as $child)

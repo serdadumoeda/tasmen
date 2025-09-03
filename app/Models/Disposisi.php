@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Traits\RecordsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Disposisi extends Model
 {
-    use HasFactory;
+    use HasFactory, RecordsActivity;
 
     protected $table = 'disposisi';
 
@@ -64,5 +65,18 @@ class Disposisi extends Model
     public function tembusanUsers()
     {
         return $this->belongsToMany(User::class, 'disposisi_tembusan', 'disposisi_id', 'user_id');
+    }
+
+    /**
+     * Accessor for project_id to be used by RecordsActivity trait.
+     * A disposition's project is the project of its parent letter.
+     */
+    public function getProjectIdAttribute()
+    {
+        if ($this->surat && $this->surat->suratable instanceof Project) {
+            return $this->surat->suratable->id;
+        }
+
+        return null;
     }
 }

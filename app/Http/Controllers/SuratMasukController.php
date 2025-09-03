@@ -96,8 +96,8 @@ class SuratMasukController extends Controller
         // Eager load relationships for display
         $surat->load(['lampiran', 'disposisi' => function ($query) {
             // Load the full hierarchy
-            $query->with(['pengirim', 'penerima', 'children' => function($q) {
-                $q->with('penerima', 'children'); // Recursive eager loading
+            $query->with(['pengirim', 'penerima', 'tembusanUsers', 'children' => function($q) {
+                $q->with('penerima', 'tembusanUsers', 'children'); // Recursive eager loading
             }]);
         }]);
 

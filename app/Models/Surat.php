@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Traits\RecordsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class Surat extends Model
 {
-    use HasFactory;
+    use HasFactory, RecordsActivity;
 
     protected $table = 'surat';
 
@@ -66,5 +67,17 @@ class Surat extends Model
     public function klasifikasi(): BelongsTo
     {
         return $this->belongsTo(KlasifikasiSurat::class, 'klasifikasi_id');
+    }
+
+    /**
+     * Accessor for project_id to be used by RecordsActivity trait.
+     */
+    public function getProjectIdAttribute()
+    {
+        if ($this->suratable instanceof Project) {
+            return $this->suratable->id;
+        }
+
+        return null;
     }
 }

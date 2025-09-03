@@ -3,12 +3,13 @@
 namespace App\Models;
 
 use App\Enums\RequestStatus;
+use App\Models\Traits\RecordsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class LeaveRequest extends Model
 {
-    use HasFactory;
+    use HasFactory, RecordsActivity;
 
     protected $fillable = [
         'user_id',
@@ -41,5 +42,14 @@ class LeaveRequest extends Model
     public function surat()
     {
         return $this->morphOne(Surat::class, 'suratable');
+    }
+
+    /**
+     * Accessor for project_id to be used by RecordsActivity trait.
+     * Leave requests are not project-specific.
+     */
+    public function getProjectIdAttribute()
+    {
+        return null;
     }
 }
