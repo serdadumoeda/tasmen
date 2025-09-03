@@ -101,6 +101,7 @@ class TaskController extends Controller
             'start_date' => 'nullable|date',
             'deadline' => 'nullable|date|after_or_equal:start_date',
             'progress' => 'required|integer|min:0|max:100',
+            'estimated_hours' => 'nullable|numeric|min:0',
             'task_status_id' => 'required|exists:task_statuses,id',
             'priority_level_id' => 'required|exists:priority_levels,id',
             'assignees' => 'nullable|array',
