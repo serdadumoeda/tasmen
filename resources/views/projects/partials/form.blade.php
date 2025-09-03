@@ -31,6 +31,23 @@
         <textarea name="description" id="description" rows="4" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" required>{{ old('description', $project->description ?? '') }}</textarea>
     </div>
 
+    <div>
+        <label for="surat_ids" class="block font-semibold text-sm text-gray-700 mb-1">
+            <i class="fas fa-gavel mr-2 text-gray-500"></i> Dasar Surat (Opsional)
+        </label>
+        <select name="surat_ids[]" id="surat_ids" multiple class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150 tom-select">
+            @php
+                $projectSuratIds = collect(old('surat_ids', isset($project) ? $project->surat->pluck('id')->all() : []));
+            @endphp
+            @foreach($suratList as $surat)
+                <option value="{{ $surat->id }}" @selected($projectSuratIds->contains($surat->id))>
+                    {{ $surat->nomor_surat ?? 'No. Belum Ada' }} - {{ Str::limit($surat->perihal, 50) }}
+                </option>
+            @endforeach
+        </select>
+        <p class="text-xs text-gray-500 mt-1">Pilih satu atau lebih surat sebagai dasar hukum kegiatan.</p>
+    </div>
+
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6"> {{-- Mengubah gap-4 menjadi gap-6 --}}
         <div>
             <label for="start_date" class="block font-semibold text-sm text-gray-700 mb-1">

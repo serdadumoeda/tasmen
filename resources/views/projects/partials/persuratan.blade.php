@@ -1,5 +1,7 @@
 {{-- resources/views/projects/partials/persuratan.blade.php --}}
-<h3 class="text-xl font-semibold mb-3">Daftar Surat Terkait</h3>
+<h3 class="text-xl font-semibold mb-3">Dasar Surat Kegiatan</h3>
+
+<p class="text-sm text-gray-600 mb-4">Berikut adalah daftar surat yang menjadi dasar pelaksanaan kegiatan ini. Anda dapat menambahkan atau mengubahnya melalui halaman "Edit Kegiatan".</p>
 
 @can('create', App\Models\Surat::class)
   {{-- This link assumes the SuratKeluarController@create method can handle these query parameters --}}
