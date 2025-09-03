@@ -37,6 +37,9 @@ class SuratTaskController extends Controller
             $task->project_id = null;
         }
 
+        // Link the task back to the source letter
+        $task->surat_id = $surat->id;
+
         // Set an initial status and priority
         $task->status = 'pending';
         $task->priority = 'medium';

@@ -127,7 +127,7 @@ class ProjectController extends Controller
 
         $project->load(['owner', 'leader', 'members', 'activities.user', 'surat']);
 
-        $taskQuery = $project->tasks()->with(['assignees', 'comments.user', 'attachments', 'subTasks', 'status', 'priorityLevel']);
+        $taskQuery = $project->tasks()->with(['assignees', 'comments.user', 'attachments', 'subTasks', 'status', 'priorityLevel', 'asalSurat']);
 
         if ($user->isStaff()) {
             $taskQuery->whereHas('assignees', fn($q) => $q->where('user_id', $user->id));

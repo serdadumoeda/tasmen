@@ -16,6 +16,15 @@
                     {{ $task->deadline ? \Carbon\Carbon::parse($task->deadline)->format('d M Y') : 'N/A' }}
                 </span>
             </p>
+            @if($task->asalSurat)
+                <p class="text-xs text-gray-500 mt-1">
+                    <i class="fas fa-file-import mr-1 text-gray-400"></i>
+                    Berasal dari Surat:
+                    <a href="{{ route('surat-masuk.show', $task->asalSurat) }}" class="text-blue-600 hover:underline" title="{{ $task->asalSurat->perihal }}">
+                        {{ $task->asalSurat->nomor_surat ?? 'Lihat Surat' }}
+                    </a>
+                </p>
+            @endif
         </div>
         <div class="flex items-center space-x-2 flex-shrink-0">
             <span class="badge-status text-xs font-semibold px-3 py-1 rounded-full {{ $task->status->color_class ?? 'bg-gray-100 text-gray-800' }}">{{ $task->status->label ?? 'N/A' }}</span>
