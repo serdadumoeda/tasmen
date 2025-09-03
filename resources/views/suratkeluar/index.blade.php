@@ -38,12 +38,7 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ Str::limit($surat->perihal, 50) }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ $surat->tanggal_surat->format('d M Y') }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                            <span class="px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full
-                                                @if($surat->status == 'draft') bg-yellow-100 text-yellow-800 @endif
-                                                @if($surat->status == 'disetujui') bg-green-100 text-green-800 @endif
-                                            ">
-                                                {{ ucfirst($surat->status) }}
-                                            </span>
+                                            <x-status-badge :status="$surat->status" />
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                             <a href="{{ route('surat-keluar.show', $surat) }}" class="text-indigo-600 hover:text-indigo-900">Detail</a>

@@ -88,11 +88,11 @@
                     </x-slot>
                 </x-dropdown>
                 @can('update', $project)
-                    <a href="{{ route('projects.budget-items.index', $project) }}" class="inline-flex items-center bg-green-600 text-white font-bold text-sm px-4 py-2 rounded-lg shadow-md hover:bg-green-700 transform hover:scale-105 transition ease-in-out duration-150">
-                        <i class="fas fa-wallet mr-2"></i> Anggaran
+                    <a href="{{ route('projects.budget-items.index', $project) }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg font-semibold text-sm text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150 shadow-md hover:shadow-lg">
+                        <i class="fas fa-wallet mr-2 text-green-600"></i> Anggaran
                     </a>
-                    <a href="{{ route('projects.edit', $project) }}" class="inline-flex items-center bg-amber-500 text-white font-bold text-sm px-4 py-2 rounded-lg shadow-md hover:bg-amber-600 transform hover:scale-105 transition ease-in-out duration-150">
-                        <i class="fas fa-edit mr-2"></i> Edit Kegiatan
+                    <a href="{{ route('projects.edit', $project) }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg font-semibold text-sm text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150 shadow-md hover:shadow-lg">
+                        <i class="fas fa-edit mr-2 text-amber-600"></i> Edit Kegiatan
                     </a>
                 @endcan
             </div>

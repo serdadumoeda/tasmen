@@ -35,27 +35,27 @@
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-10">
-            <div class="bg-white p-6 rounded-xl shadow hover:shadow-lg transition duration-300 text-center">
+            <x-card class="text-center transition duration-300 hover:shadow-lg">
                 <i class="bi bi-file-earmark-text text-4xl text-teal-600 mb-3"></i>
                 {{-- Note: $projects is a paginator instance, so count() gives items on the current page. Use total() for all items. --}}
                 <h3 class="text-3xl font-bold">{{ $projects->total() }}</h3>
                 <p class="text-gray-500">Kegiatan</p>
-            </div>
-            <div class="bg-white p-6 rounded-xl shadow hover:shadow-lg transition duration-300 text-center">
+            </x-card>
+            <x-card class="text-center transition duration-300 hover:shadow-lg">
                 <i class="bi bi-person text-4xl text-teal-600 mb-3"></i>
                 <h3 class="text-3xl font-bold">{{ $stats['users'] }}</h3>
                 <p class="text-gray-500">Pengguna</p>
-            </div>
-            <div class="bg-white p-6 rounded-xl shadow hover:shadow-lg transition duration-300 text-center">
+            </x-card>
+            <x-card class="text-center transition duration-300 hover:shadow-lg">
                 <i class="bi bi-journal-text text-4xl text-teal-600 mb-3"></i>
                 <h3 class="text-3xl font-bold">{{ $stats['tasks'] }}</h3>
                 <p class="text-gray-500">Tugas</p>
-            </div>
-            <div class="bg-white p-6 rounded-xl shadow hover:shadow-lg transition duration-300 text-center">
+            </x-card>
+            <x-card class="text-center transition duration-300 hover:shadow-lg">
                 <i class="bi bi-check2-square text-4xl text-teal-600 mb-3"></i>
                 <h3 class="text-3xl font-bold">{{ $stats['tasks_completed'] }}</h3>
                 <p class="text-gray-500">Tugas Selesai</p>
-            </div>
+            </x-card>
         </div>
 
 
@@ -68,8 +68,8 @@
                     <a href="{{ route('projects.show', $project) }}" class="block bg-white p-6 rounded-xl shadow hover:shadow-lg transition">
                         <div class="flex justify-between mb-1">
                             <h4 class="font-semibold text-lg">{{ $project->name }}</h4>
-                            {{-- Use the pre-calculated status and color class from the model's accessors. --}}
-                            <span class="text-sm {{ $project->status_color_class }} px-3 py-1 rounded-full">{{ \Illuminate\Support\Str::title(str_replace('_', ' ', $project->status)) }}</span>
+                            {{-- Use the new, consistent status badge component --}}
+                            <x-status-badge :status="$project->status" />
                         </div>
                         <p class="text-sm text-gray-600">Ketua: {{ $project->leader->name }}</p>
                         {{-- The budget sum is now eager-loaded via withSum for efficiency. --}}
@@ -82,9 +82,9 @@
                         <p class="text-sm text-right text-gray-500 mt-1">{{ $project->tasks->where('status', 'completed')->count() }} / {{ $project->tasks->count() }} Tugas</p>
                     </a>
                 @empty
-                    <div class="bg-white p-6 rounded-xl shadow text-center">
+                    <x-card class="text-center">
                         <p class="text-gray-500">Anda belum memiliki kegiatan. Silakan buat yang baru!</p>
-                    </div>
+                    </x-card>
                 @endforelse
 
                 {{-- Add pagination links. This fixes the broken pagination issue. --}}
@@ -93,7 +93,7 @@
                 </div>
             </div>
 
-            <div class="bg-white p-6 rounded-xl shadow">
+            <x-card>
                 <h4 class="text-lg font-bold mb-4">Aktivitas Terbaru</h4>
                 <ul class="divide-y divide-gray-200 text-sm">
                     @forelse ($activities as $activity)
@@ -115,7 +115,7 @@
                         </li>
                     @endforelse
                 </ul>
-            </div>
+            </x-card>
         </div>
     </main>
 </x-app-layout>
