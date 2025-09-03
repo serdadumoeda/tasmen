@@ -26,7 +26,7 @@ class WeeklyWorkloadController extends Controller
         }
     
         // 3. Query dasar untuk bawahan
-        if ($manager->role === User::ROLE_SUPERADMIN) {
+        if ($manager->isSuperAdmin()) {
             $subordinatesQuery = User::where('id', '!=', $manager->id);
         } else {
             $subordinatesQuery = User::teamMembers($manager);
