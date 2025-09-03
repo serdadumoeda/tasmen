@@ -181,6 +181,8 @@ class LeaveController extends Controller
             $attachmentPath = $request->file('attachment')->store('leave_attachments', 'private');
         }
 
+        $atasan = $user->getAtasanLangsung();
+
         $leaveRequest = LeaveRequest::create([
             'user_id' => $user->id,
             'leave_type_id' => $validated['leave_type_id'],
@@ -191,14 +193,14 @@ class LeaveController extends Controller
             'address_during_leave' => $validated['address_during_leave'],
             'contact_during_leave' => $validated['contact_during_leave'],
             'status' => RequestStatus::PENDING,
-            'current_approver_id' => $user->atasan_id,
+            'current_approver_id' => $atasan ? $atasan->id : null,
             'attachment_path' => $attachmentPath,
             'last_approved_step' => 0,
         ]);
 
         // Notify the direct supervisor
-        if ($user->atasan) {
-            $user->atasan->notify(new LeaveRequestSubmitted($leaveRequest));
+        if ($atasan) {
+            $atasan->notify(new LeaveRequestSubmitted($leaveRequest));
         }
 
         return redirect()->route('leaves.index')->with('success', 'Permintaan cuti berhasil diajukan.');

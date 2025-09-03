@@ -16,6 +16,7 @@ use Laravel\Sanctum\HasApiTokens;
 use App\Models\Unit; // Pastikan ini diimpor
 use App\Models\Project;
 use App\Models\Jabatan;
+use App\Models\Delegation;
 use App\Scopes\HierarchicalScope;
 use App\Services\LeaveDurationService;
 
@@ -89,6 +90,32 @@ class User extends Authenticatable
     public function bawahan(): HasMany
     {
         return $this->hasMany(User::class, 'atasan_id');
+    }
+
+    /**
+     * Get the direct supervisor, accounting for delegations (Plt./Plh.).
+     *
+     * @return User|null
+     */
+    public function getAtasanLangsung(): ?User
+    {
+        if (!$this->jabatan || !$this->jabatan->parent) {
+            return null; // No position or no parent position
+        }
+
+        $atasanJabatan = $this->jabatan->parent;
+
+        // 1. Check for an active delegation for the supervisor's position
+        $activeDelegation = Delegation::active()
+            ->where('jabatan_id', $atasanJabatan->id)
+            ->first();
+
+        if ($activeDelegation) {
+            return $activeDelegation->user; // Return the delegated user (Plt./Plh.)
+        }
+
+        // 2. If no delegation, return the definitive office holder
+        return $atasanJabatan->user;
     }
 
     public function jabatan(): \Illuminate\Database\Eloquent\Relations\HasOne
