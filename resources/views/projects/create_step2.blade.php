@@ -49,7 +49,7 @@
                                     <option value="">-- Pilih Pimpinan Kegiatan --</option>
                                     @foreach ($potentialMembers as $member)
                                         <option value="{{ $member->id }}" @selected(old('leader_id', $project->leader_id ?? '') == $member->id)>
-                                            {{ $member->name }} ({{ $member->role }})
+                                            {{ $member->name }}{{ $member->roles->isNotEmpty() ? ' (' . $member->roles->first()->name . ')' : '' }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -71,7 +71,8 @@
                                     @endphp
                                     @foreach ($potentialMembers as $member)
                                         @php
-                                            $displayName = "{$member->name} ({$member->role})";
+                                            $roleName = $member->roles->first()->name ?? '';
+                                            $displayName = $member->name . ($roleName ? " ($roleName)" : "");
                                             $isExternal = isset($subordinateIds) && !$subordinateIds->contains($member->id);
                                             $request = isset($loanRequests) && $loanRequests->has($member->id) ? $loanRequests->get($member->id) : null;
                                             if ($isExternal && $request) {

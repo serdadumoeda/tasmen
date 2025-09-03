@@ -54,7 +54,7 @@
             <option value="">-- Pilih Pimpinan Kegiatan --</option>
             @foreach ($potentialMembers as $member)
                 <option value="{{ $member->id }}" @selected(old('leader_id', $project->leader_id ?? '') == $member->id)>
-                    {{ $member->name }} ({{ $member->role }})
+                    {{ $member->name }}{{ $member->roles->isNotEmpty() ? ' (' . $member->roles->first()->name . ')' : '' }}
                 </option>
             @endforeach
         </select>
@@ -79,7 +79,7 @@
             @endphp
             @foreach ($potentialMembers as $member)
                 <option value="{{ $member->id }}" @selected($projectMemberIds->contains($member->id))>
-                    {{ $member->name }} ({{ $member->role }})
+                    {{ $member->name }}{{ $member->roles->isNotEmpty() ? ' (' . $member->roles->first()->name . ')' : '' }}
                 </option>
             @endforeach
         </select>
