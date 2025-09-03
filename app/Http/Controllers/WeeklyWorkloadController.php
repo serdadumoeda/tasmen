@@ -15,11 +15,10 @@ class WeeklyWorkloadController extends Controller
         // 1. Dapatkan pengguna yang sedang login, input pencarian, dan pengaturan
         $manager = Auth::user();
         $search = $request->input('search');
-        $settings = Setting::pluck('value', 'key')->all();
 
-        $standardHours = (float)($settings['workload_standard_hours'] ?? 37.5);
-        $thresholdNormal = (float)($settings['workload_threshold_normal'] ?? 0.75);
-        $thresholdWarning = (float)($settings['workload_threshold_warning'] ?? 1.0);
+        $standardHours = config('tasmen.workload.standard_hours', 37.5);
+        $thresholdNormal = config('tasmen.workload.threshold_normal', 0.75);
+        $thresholdWarning = config('tasmen.workload.threshold_warning', 1.0);
 
         // 2. Otorisasi
         if (!$manager || !$manager->canManageUsers()) {
@@ -40,7 +39,9 @@ class WeeklyWorkloadController extends Controller
         
         // 5. Eager load tugas
         $subordinatesQuery->with(['tasks' => function ($query) {
-            $query->where('status', '!=', 'completed')->whereNotNull('deadline');
+            $query->whereHas('status', function ($q) {
+                $q->where('key', '!=', 'completed');
+            })->whereNotNull('deadline');
         }]);
     
         // 6. Paginasi

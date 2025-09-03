@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\RequestStatus;
 use App\Models\Activity;
 use App\Models\PeminjamanRequest;
 use App\Models\Project;
@@ -45,13 +46,15 @@ class GlobalDashboardController extends Controller
         $stats = [
             'total_projects' => (clone $projectQuery)->count(),
             'total_tasks' => (clone $taskQuery)->count(),
-            'completed_tasks' => (clone $taskQuery)->where('status', 'completed')->count(),
+            'completed_tasks' => (clone $taskQuery)->whereHas('status', function ($q) {
+                $q->where('key', 'completed');
+            })->count(),
         ];
 
         if (!$currentUser->isStaff()) {
             $stats['total_users'] = (clone $userQuery)->count();
             $stats['active_users'] = (clone $userQuery)->where('status', 'active')->count();
-            $stats['pending_requests'] = PeminjamanRequest::where('status', 'pending')
+            $stats['pending_requests'] = PeminjamanRequest::where('status', RequestStatus::PENDING)
                                         ->whereIn('approver_id', (clone $userQuery)->pluck('id'))
                                         ->count();
         }
