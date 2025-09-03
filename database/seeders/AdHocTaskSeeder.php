@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\Task;
 use App\Models\User;
+use App\Models\TaskStatus;
 use Faker\Factory as Faker;
 use Illuminate\Support\Facades\Auth;
 
@@ -18,10 +19,13 @@ class AdHocTaskSeeder extends Seeder
     public function run(): void
     {
         $faker = Faker::create('id_ID');
-        $users = User::where('role', '!=', User::ROLE_SUPERADMIN)->get();
+        $users = User::whereDoesntHave('roles', function ($query) {
+            $query->where('name', 'Superadmin');
+        })->get();
+        $taskStatusIds = TaskStatus::pluck('id');
 
-        if ($users->isEmpty()) {
-            $this->command->info('No users found to assign ad-hoc tasks.');
+        if ($users->isEmpty() || $taskStatusIds->isEmpty()) {
+            $this->command->info('No users or task statuses found to assign ad-hoc tasks.');
             return;
         }
 
@@ -35,7 +39,7 @@ class AdHocTaskSeeder extends Seeder
                 'description' => $faker->realText(150),
                 'deadline' => $faker->dateTimeBetween('+1 week', '+3 months'),
                 'progress' => $faker->numberBetween(0, 100),
-                'status' => $faker->randomElement(['pending', 'in_progress', 'completed']),
+                'task_status_id' => $taskStatusIds->random(),
                 'project_id' => null, // Kunci untuk ad-hoc task
                 'estimated_hours' => $faker->randomFloat(1, 1, 8),
             ]);
