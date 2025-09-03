@@ -181,7 +181,7 @@
                                 <select name="priority_level_id" id="priority_level_id" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" required>
                                     @foreach($priorities as $priority)
                                         <option value="{{ $priority->id }}" @selected(old('priority_level_id', $task->priority_level_id) == $priority->id)>
-                                            {{ $priority->label }}
+                                            {{ $priority->name }}
                                         </option>
                                     @endforeach
                                 </select>
