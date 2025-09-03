@@ -213,6 +213,7 @@ Route::middleware(['auth'])->group(function () {
 use App\Http\Controllers\Admin\ApiKeyController;
 use App\Http\Controllers\Admin\CutiBersamaController;
 use App\Http\Controllers\Admin\ApprovalWorkflowController;
+use App\Http\Controllers\Admin\DelegationController;
 use App\Http\Controllers\Api\UnitApiController;
 use App\Http\Controllers\UnitController;
 
@@ -266,6 +267,9 @@ Route::middleware(['auth', 'superadmin'])->prefix('admin')->name('admin.')->grou
 
     // Classification Management
     Route::resource('klasifikasi', \App\Http\Controllers\Admin\KlasifikasiSuratController::class)->names('klasifikasi');
+
+    // Delegation (Plt./Plh) Management
+    Route::resource('delegations', DelegationController::class)->except(['show', 'edit', 'update']);
 
     Route::post('api_keys/{client}/tokens', [ApiKeyController::class, 'generateToken'])->name('api_keys.tokens.store');
     Route::delete('api_keys/{client}/tokens/{tokenId}', [ApiKeyController::class, 'revokeToken'])->name('api_keys.tokens.destroy');

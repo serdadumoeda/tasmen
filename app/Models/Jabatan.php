@@ -31,4 +31,14 @@ class Jabatan extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(Jabatan::class, 'parent_id');
+    }
+
+    public function children(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Jabatan::class, 'parent_id');
+    }
 }

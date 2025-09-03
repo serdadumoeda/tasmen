@@ -51,15 +51,15 @@ class LeaveApprovalService
 
     private function findNextApprover(User $applicant, string $requiredRole): ?User
     {
-        $supervisor = $applicant->atasan;
+        $supervisor = $applicant->getAtasanLangsung();
         $depth = 0;
         $maxDepth = 10; // Failsafe to prevent infinite loops
 
         while ($supervisor && $depth < $maxDepth) {
-            if ($supervisor->role === $requiredRole) {
+            if ($supervisor->hasRole($requiredRole)) {
                 return $supervisor;
             }
-            $supervisor = $supervisor->atasan;
+            $supervisor = $supervisor->getAtasanLangsung();
             $depth++;
         }
 
@@ -88,7 +88,7 @@ class LeaveApprovalService
     // The old logic as a fallback.
     private function fallbackApprovalLogic(User $approver): array
     {
-        $nextApprover = $approver->atasan;
+        $nextApprover = $approver->getAtasanLangsung();
         if ($nextApprover) {
             // Note: In fallback mode, we don't have a step number to track.
             return ['status' => 'approved_by_supervisor', 'next_approver_id' => $nextApprover->id, 'last_approved_step' => 0];
