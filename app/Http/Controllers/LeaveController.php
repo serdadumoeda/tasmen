@@ -13,10 +13,12 @@ use App\Notifications\LeaveRequestStatusUpdated;
 use App\Notifications\LeaveRequestSubmitted;
 use App\Services\LeaveApprovalService;
 use App\Services\LeaveDurationService;
+use App\Services\SuratCutiGenerator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
@@ -135,8 +137,9 @@ class LeaveController extends Controller
 
     public function show(LeaveRequest $leaveRequest)
     {
-        $this->authorize('view', $leaveRequest); // Placeholder for authorization
-        $leaveRequest->load('user', 'leaveType');
+        $this->authorize('view', $leaveRequest);
+        // Eager-load the surat relationship along with others
+        $leaveRequest->load('user', 'leaveType', 'surat');
         return view('leaves.show', compact('leaveRequest'));
     }
 
@@ -221,9 +224,9 @@ class LeaveController extends Controller
         return Storage::disk('private')->download($leaveRequest->attachment_path);
     }
 
-    public function approve(LeaveRequest $leaveRequest, LeaveApprovalService $approvalService)
+    public function approve(LeaveRequest $leaveRequest, LeaveApprovalService $approvalService, SuratCutiGenerator $suratCutiGenerator)
     {
-        $leaveRequest->load('leaveType'); // Eager-load to prevent issues in the transaction
+        $leaveRequest->load(['leaveType', 'user']); // Eager-load for use in service and notifications
         $approver = Auth::user();
 
         if ($leaveRequest->current_approver_id !== $approver->id) {
@@ -240,22 +243,22 @@ class LeaveController extends Controller
 
         // Handle final approval logic (database transaction and notification)
         if ($leaveRequest->status === RequestStatus::APPROVED) {
+            $suratGenerationError = null;
             DB::transaction(function () use ($leaveRequest) {
                 $leaveRequest->save();
 
                 // Update leave balance only for annual leave
                 if ($leaveRequest->leaveType->is_annual) {
+                    // ... (existing balance logic remains the same)
                     $defaultDays = $leaveRequest->leaveType->default_days ?? 12;
                     $balance = LeaveBalance::firstOrCreate(
                         ['user_id' => $leaveRequest->user_id, 'year' => $leaveRequest->start_date->year],
                         ['total_days' => $defaultDays, 'carried_over_days' => 0]
                     );
-
                     $daysToDeduct = $leaveRequest->duration_days;
                     $deductedFromCarryOver = min($balance->carried_over_days, $daysToDeduct);
                     $balance->carried_over_days -= $deductedFromCarryOver;
                     $daysToDeduct -= $deductedFromCarryOver;
-
                     if ($daysToDeduct > 0) {
                         $balance->days_taken += $daysToDeduct;
                     }
@@ -263,9 +266,19 @@ class LeaveController extends Controller
                 }
             });
 
+            // Try to generate the SK Cuti after the main transaction is successful
+            try {
+                $suratCutiGenerator->generate($leaveRequest, $approver);
+            } catch (\Exception $e) {
+                Log::error("Gagal men-generate SK Cuti untuk LeaveRequest #{$leaveRequest->id}: " . $e->getMessage());
+                $suratGenerationError = 'Namun, pembuatan dokumen SK Cuti otomatis gagal. Silakan hubungi admin.';
+            }
+
             // Notify the applicant of the final approval
             $leaveRequest->user->notify(new LeaveRequestStatusUpdated($leaveRequest));
-            return back()->with('success', 'Permintaan cuti telah disetujui sepenuhnya.');
+
+            $successMessage = 'Permintaan cuti telah disetujui sepenuhnya. ' . $suratGenerationError;
+            return back()->with('success', trim($successMessage));
 
         } else {
             // This is a forwarded approval

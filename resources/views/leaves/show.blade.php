@@ -9,6 +9,21 @@
         <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
                 <div class="p-6 sm:p-8 bg-white border-b border-gray-200">
+
+                    @if($leaveRequest->surat)
+                        <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                            <h4 class="font-bold text-md text-blue-800 flex items-center">
+                                <i class="fas fa-file-signature mr-2"></i>SK Cuti Telah Terbit
+                            </h4>
+                            <p class="text-sm text-gray-700 mt-1">
+                                Surat Keputusan (SK) untuk cuti ini telah di-generate oleh sistem.
+                                <a href="{{ route('surat-keluar.show', $leaveRequest->surat) }}" target="_blank" class="font-semibold text-blue-600 hover:underline">
+                                    Lihat Dokumen SK di sini.
+                                </a>
+                            </p>
+                        </div>
+                    @endif
+
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <h3 class="text-lg font-bold text-gray-800">Data Pegawai</h3>
