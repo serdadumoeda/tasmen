@@ -141,10 +141,15 @@
                     </div>
                 </div>
 
-                <!-- Kolom Kanan: Aktivitas Terbaru -->
-                <div class="bg-white overflow-hidden shadow-xl rounded-xl p-6">
-                     <h3 class="text-lg font-semibold mb-4 text-gray-900 flex items-center">
-                        <i class="fas fa-history mr-3 text-indigo-500"></i>
+                <!-- Kolom Kanan: Inbox Persetujuan dan Aktivitas -->
+                <div class="space-y-8">
+                    @if(auth()->user()->canManageUsers() && $approvalItems->isNotEmpty())
+                        <x-approval-inbox :items="$approvalItems" />
+                    @endif
+
+                    <div class="bg-white overflow-hidden shadow-xl rounded-xl p-6">
+                         <h3 class="text-lg font-semibold mb-4 text-gray-900 flex items-center">
+                            <i class="fas fa-history mr-3 text-indigo-500"></i>
                         Aktivitas Terbaru Sistem
                     </h3>
                      <ul class="space-y-4">
