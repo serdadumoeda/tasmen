@@ -19,6 +19,7 @@ class Disposisi extends Model
         'instruksi',
         'tanggal_disposisi',
         'status_baca',
+        'parent_id',
     ];
 
     protected $casts = [
@@ -39,5 +40,29 @@ class Disposisi extends Model
     public function penerima(): BelongsTo
     {
         return $this->belongsTo(User::class, 'penerima_id');
+    }
+
+    /**
+     * Get the parent disposition.
+     */
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(Disposisi::class, 'parent_id');
+    }
+
+    /**
+     * Get the child dispositions.
+     */
+    public function children()
+    {
+        return $this->hasMany(Disposisi::class, 'parent_id');
+    }
+
+    /**
+     * The users who are CC'd on this disposition.
+     */
+    public function tembusanUsers()
+    {
+        return $this->belongsToMany(User::class, 'disposisi_tembusan', 'disposisi_id', 'user_id');
     }
 }

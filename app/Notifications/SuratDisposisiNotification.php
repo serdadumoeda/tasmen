@@ -3,6 +3,8 @@
 namespace App\Notifications;
 
 use App\Models\Disposisi;
+use App\Models\Surat;
+use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -12,14 +14,18 @@ class SuratDisposisiNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    protected $disposisi;
+    protected $surat;
+    protected $pengirim;
+    protected $isTembusan;
 
     /**
      * Create a new notification instance.
      */
-    public function __construct(Disposisi $disposisi)
+    public function __construct(Surat $surat, User $pengirim, bool $isTembusan = false)
     {
-        $this->disposisi = $disposisi;
+        $this->surat = $surat;
+        $this->pengirim = $pengirim;
+        $this->isTembusan = $isTembusan;
     }
 
     /**
@@ -38,11 +44,14 @@ class SuratDisposisiNotification extends Notification implements ShouldQueue
      */
     public function toMail(object $notifiable): MailMessage
     {
+        $subject = $this->isTembusan ? 'Tembusan Surat' : 'Disposisi Surat Baru';
+        $line = $this->isTembusan ? 'Anda menerima tembusan surat.' : 'Anda menerima disposisi surat baru.';
+
         return (new MailMessage)
-                    ->subject('Disposisi Surat Baru')
-                    ->line('Anda menerima disposisi surat baru.')
-                    ->line('Perihal: ' . $this->disposisi->surat->perihal)
-                    ->action('Lihat Detail Surat', route('surat-masuk.show', $this->disposisi->surat_id))
+                    ->subject($subject)
+                    ->line($line)
+                    ->line('Perihal: ' . $this->surat->perihal)
+                    ->action('Lihat Detail Surat', route('surat-masuk.show', $this->surat->id))
                     ->line('Terima kasih.');
     }
 
@@ -53,11 +62,16 @@ class SuratDisposisiNotification extends Notification implements ShouldQueue
      */
     public function toArray(object $notifiable): array
     {
+        $message = $this->isTembusan
+            ? 'Anda menerima tembusan surat dari ' . $this->pengirim->name
+            : 'Anda menerima disposisi baru dari ' . $this->pengirim->name;
+
         return [
-            'surat_id' => $this->disposisi->surat_id,
-            'perihal' => $this->disposisi->surat->perihal,
-            'pengirim_disposisi' => $this->disposisi->pengirim->name,
-            'message' => 'Anda menerima disposisi baru dari ' . $this->disposisi->pengirim->name,
+            'surat_id' => $this->surat->id,
+            'perihal' => $this->surat->perihal,
+            'pengirim_disposisi' => $this->pengirim->name,
+            'message' => $message,
+            'is_tembusan' => $this->isTembusan,
         ];
     }
 }

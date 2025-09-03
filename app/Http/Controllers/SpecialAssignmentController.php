@@ -108,6 +108,12 @@ class SpecialAssignmentController extends Controller
 
         $klasifikasiSurat = KlasifikasiSurat::orderBy('kode')->get();
 
+        // Check for pre-filled data from the new workflow
+        if (session('surat_id')) {
+            $assignment->title = session('prefill_title');
+            $assignment->description = session('prefill_description');
+        }
+
         return view('special-assignments.create', compact('assignment', 'assignableUsers', 'skTemplates', 'klasifikasiSurat'));
     }
 
@@ -133,10 +139,11 @@ class SpecialAssignmentController extends Controller
             'create_sk' => 'sometimes|boolean',
             'template_surat_id' => 'required_if:create_sk,1|exists:template_surat,id',
             'klasifikasi_id' => 'required_if:create_sk,1|exists:klasifikasi_surat,id',
-            'sk_number' => 'nullable|string|max:255', // sk_number tetap ada untuk input manual
+            'sk_number' => 'nullable|string|max:255',
+            'surat_id' => 'nullable|exists:surat,id', // For the new top-down flow
         ]);
 
-        $dataToCreate = $request->except(['members', 'file_upload', 'create_sk', 'template_surat_id', 'klasifikasi_id']);
+        $dataToCreate = $request->except(['members', 'file_upload', 'create_sk', 'template_surat_id', 'klasifikasi_id', 'surat_id']);
         $dataToCreate['creator_id'] = $user->id;
 
         if ($request->hasFile('file_upload')) {
@@ -145,38 +152,42 @@ class SpecialAssignmentController extends Controller
 
         $sk = SpecialAssignment::create($dataToCreate);
 
-        // --- Logika Pembuatan Surat Otomatis ---
-        if ($request->boolean('create_sk')) {
+        // --- Logika Penautan atau Pembuatan Surat ---
+
+        // Workflow 1: Top-down (from an existing Surat)
+        if ($request->filled('surat_id')) {
+            $surat = Surat::find($validated['surat_id']);
+            if ($surat) {
+                $surat->suratable()->associate($sk);
+                $surat->save();
+                $sk->update(['sk_number' => $surat->nomor_surat]);
+            }
+        }
+        // Workflow 2: Bottom-up (create a new Surat from form)
+        elseif ($request->boolean('create_sk')) {
             try {
                 $template = TemplateSurat::findOrFail($validated['template_surat_id']);
                 $klasifikasi = KlasifikasiSurat::findOrFail($validated['klasifikasi_id']);
 
-                // Generate nomor surat
                 $nomorSurat = $nomorSuratService->generate($klasifikasi, $user);
 
-                // Buat entitas Surat
                 $surat = new Surat([
                     'nomor_surat' => $nomorSurat,
                     'perihal' => $sk->title,
                     'tanggal_surat' => now(),
                     'jenis' => 'KELUAR',
-                    'status' => 'DRAFT', // Status awal surat
+                    'status' => 'DRAFT',
                     'pembuat_id' => $user->id,
-                    'konten' => $template->konten, // Ambil konten dari template
+                    'konten' => $template->konten,
                     'klasifikasi_id' => $klasifikasi->id,
                 ]);
 
-                // Asosiasikan surat dengan SpecialAssignment
                 $surat->suratable()->associate($sk);
                 $surat->save();
 
-                // Update SK Penugasan dengan nomor surat yang di-generate
-                $sk->sk_number = $nomorSurat;
-                $sk->save();
+                $sk->update(['sk_number' => $nomorSurat]);
 
             } catch (\Exception $e) {
-                // Jika pembuatan surat gagal, proses pembuatan SK tetap lanjut,
-                // namun berikan pesan error.
                 return redirect()->route('special-assignments.index')->with('success', 'SK Penugasan dibuat, namun pembuatan dokumen SK otomatis gagal: ' . $e->getMessage());
             }
         }

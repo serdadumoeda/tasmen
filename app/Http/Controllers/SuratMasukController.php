@@ -90,12 +90,29 @@ class SuratMasukController extends Controller
             abort(404);
         }
 
-        // Ambil bawahan dari user yang sedang login untuk pilihan disposisi
-        $dispositionUsers = Auth::user()->bawahan;
+        // Get all users for the selection dropdowns
+        $allUsers = User::orderBy('name')->get();
 
-        $surat->load('lampiran', 'disposisi.penerima');
+        // Eager load relationships for display
+        $surat->load(['lampiran', 'disposisi' => function ($query) {
+            // Load the full hierarchy
+            $query->with(['pengirim', 'penerima', 'children' => function($q) {
+                $q->with('penerima', 'children'); // Recursive eager loading
+            }]);
+        }]);
 
-        return view('suratmasuk.show', compact('surat', 'dispositionUsers'));
+        // Get only the top-level dispositions to start rendering the tree
+        $topLevelDisposisi = $surat->disposisi->where('parent_id', null);
+
+        // Find the disposition that was sent to the current user, to be used as parent
+        $parentDisposisi = $surat->disposisi->firstWhere('penerima_id', Auth::id());
+
+        return view('suratmasuk.show', [
+            'surat' => $surat,
+            'dispositionUsers' => $allUsers, // All users for selection
+            'topLevelDisposisi' => $topLevelDisposisi,
+            'parentDisposisi' => $parentDisposisi
+        ]);
     }
 
     public function destroy(Surat $surat)
