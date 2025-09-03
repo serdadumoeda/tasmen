@@ -73,9 +73,9 @@
                                 $user = Auth::user();
                                 $canViewSCurve = ($project->start_date && $project->end_date) ||
                                                  ($user && (
-                                                     $user->role === \App\Models\User::ROLE_SUPERADMIN ||
-                                                     $user->role === \App\Models\User::ROLE_ESELON_I ||
-                                                     $user->role === \App\Models\User::ROLE_ESELON_II ||
+                                                     $user->hasRole('Superadmin') ||
+                                                     $user->hasRole('Eselon I') ||
+                                                     $user->hasRole('Eselon II') ||
                                                      $user->id === $project->owner_id
                                                  ));
                             @endphp
@@ -83,7 +83,7 @@
                                 <x-dropdown-link :href="route('projects.s-curve', $project)" class="hover:bg-gray-100 transition-colors duration-100"><i class="fas fa-chart-area w-4 mr-2 text-gray-600"></i> Kurva S</x-dropdown-link>
                             @endif
                             @can('viewTeamDashboard', $project)<x-dropdown-link :href="route('projects.team.dashboard', $project)" class="hover:bg-gray-100 transition-colors duration-100"><i class="fas fa-users-viewfinder w-4 mr-2 text-gray-600"></i> Dashboard Tim</x-dropdown-link>@endcan 
-                            @if(in_array(optional(Auth::user())->role, ['superadmin', 'Eselon I', 'Eselon II']))<div class="border-t border-gray-200"></div><x-dropdown-link :href="route('projects.report', $project)" target="_blank" class="hover:bg-gray-100 transition-colors duration-100 text-blue-600"><i class="fas fa-file-pdf w-4 mr-2 text-blue-600"></i> Laporan PDF</x-dropdown-link>@endif
+                            @if(Auth::user() && Auth::user()->hasRole(['Superadmin', 'Eselon I', 'Eselon II']))<div class="border-t border-gray-200"></div><x-dropdown-link :href="route('projects.report', $project)" target="_blank" class="hover:bg-gray-100 transition-colors duration-100 text-blue-600"><i class="fas fa-file-pdf w-4 mr-2 text-blue-600"></i> Laporan PDF</x-dropdown-link>@endif
                         </div>
                     </x-slot>
                 </x-dropdown>
@@ -326,10 +326,10 @@
                                         </div>
                                         <div>
                                             <label for="add_priority" class="block text-sm font-semibold text-gray-700 mb-1">Prioritas <span class="text-red-600">*</span></label>
-                                            <select name="priority" id="add_priority" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition duration-150">
-                                                <option value="low">Rendah</option>
-                                                <option value="medium" selected>Sedang</option>
-                                                <option value="high">Tinggi</option>
+                                            <select name="priority_level_id" id="add_priority" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" required>
+                                                @foreach($priorities as $priority)
+                                                    <option value="{{ $priority->id }}" @if(strtolower($priority->name) == 'medium') selected @endif>{{ $priority->name }}</option>
+                                                @endforeach
                                             </select>
                                         </div>
                                     </div>
