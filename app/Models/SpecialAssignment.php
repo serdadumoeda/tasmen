@@ -41,4 +41,13 @@ class SpecialAssignment extends Model
                     ->withPivot('role_in_sk')
                     ->withTimestamps();
     }
+
+    /**
+     * Get the assignment's official letter (SK).
+     * Ini adalah relasi polimorfik one-to-one.
+     */
+    public function surat()
+    {
+        return $this->morphOne(Surat::class, 'suratable');
+    }
 }

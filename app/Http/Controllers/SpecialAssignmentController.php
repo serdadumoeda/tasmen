@@ -2,8 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\KlasifikasiSurat;
 use App\Models\SpecialAssignment;
+use App\Models\Surat;
+use App\Models\TemplateSurat;
 use App\Models\User;
+use App\Services\NomorSuratService;
 use Illuminate\Http\Request;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Storage;
@@ -18,7 +22,8 @@ class SpecialAssignmentController extends Controller
     public function index(Request $request)
     {
         $currentUser = auth()->user();
-        $query = SpecialAssignment::query()->with(['creator', 'members']);
+        // Eager load the 'surat' relationship to prevent N+1 issues in the view
+        $query = SpecialAssignment::query()->with(['creator', 'members', 'surat']);
 
         // PERBAIKAN: Sederhanakan logika visibilitas hierarkis
         if ($currentUser->isSuperAdmin()) {
@@ -95,20 +100,27 @@ class SpecialAssignmentController extends Controller
             $assignableUsers->push($user);
         }
 
-        return view('special-assignments.create', compact('assignment', 'assignableUsers'));
+        // Ambil template surat yang relevan untuk SK Penugasan.
+        $skTemplates = TemplateSurat::where('judul', 'LIKE', '%SK%')
+            ->orWhere('judul', 'LIKE', '%Penugasan%')
+            ->orWhere('deskripsi', 'LIKE', '%Penugasan%')
+            ->get();
+
+        $klasifikasiSurat = KlasifikasiSurat::orderBy('kode')->get();
+
+        return view('special-assignments.create', compact('assignment', 'assignableUsers', 'skTemplates', 'klasifikasiSurat'));
     }
 
     /**
      * Menyimpan SK baru ke database.
      */
-    public function store(Request $request)
+    public function store(Request $request, NomorSuratService $nomorSuratService)
     {
         $this->authorize('create', SpecialAssignment::class);
         $user = auth()->user();
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'sk_number' => 'nullable|string|max:255',
             'start_date' => 'required|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
             'status' => 'required|in:AKTIF,SELESAI',
@@ -117,9 +129,14 @@ class SpecialAssignmentController extends Controller
             'members' => ($user->canManageUsers() ? 'required|array' : 'nullable|array'),
             'members.*.user_id' => ($user->canManageUsers() ? 'required|exists:users,id' : 'nullable|exists:users,id'),
             'members.*.role_in_sk' => ($user->canManageUsers() ? 'required|string|max:255' : 'nullable|string|max:255'),
+            // Validasi untuk pembuatan SK otomatis
+            'create_sk' => 'sometimes|boolean',
+            'template_surat_id' => 'required_if:create_sk,1|exists:template_surat,id',
+            'klasifikasi_id' => 'required_if:create_sk,1|exists:klasifikasi_surat,id',
+            'sk_number' => 'nullable|string|max:255', // sk_number tetap ada untuk input manual
         ]);
 
-        $dataToCreate = $request->except(['members', 'file_upload']);
+        $dataToCreate = $request->except(['members', 'file_upload', 'create_sk', 'template_surat_id', 'klasifikasi_id']);
         $dataToCreate['creator_id'] = $user->id;
 
         if ($request->hasFile('file_upload')) {
@@ -128,6 +145,43 @@ class SpecialAssignmentController extends Controller
 
         $sk = SpecialAssignment::create($dataToCreate);
 
+        // --- Logika Pembuatan Surat Otomatis ---
+        if ($request->boolean('create_sk')) {
+            try {
+                $template = TemplateSurat::findOrFail($validated['template_surat_id']);
+                $klasifikasi = KlasifikasiSurat::findOrFail($validated['klasifikasi_id']);
+
+                // Generate nomor surat
+                $nomorSurat = $nomorSuratService->generate($klasifikasi, $user);
+
+                // Buat entitas Surat
+                $surat = new Surat([
+                    'nomor_surat' => $nomorSurat,
+                    'perihal' => $sk->title,
+                    'tanggal_surat' => now(),
+                    'jenis' => 'KELUAR',
+                    'status' => 'DRAFT', // Status awal surat
+                    'pembuat_id' => $user->id,
+                    'konten' => $template->konten, // Ambil konten dari template
+                    'klasifikasi_id' => $klasifikasi->id,
+                ]);
+
+                // Asosiasikan surat dengan SpecialAssignment
+                $surat->suratable()->associate($sk);
+                $surat->save();
+
+                // Update SK Penugasan dengan nomor surat yang di-generate
+                $sk->sk_number = $nomorSurat;
+                $sk->save();
+
+            } catch (\Exception $e) {
+                // Jika pembuatan surat gagal, proses pembuatan SK tetap lanjut,
+                // namun berikan pesan error.
+                return redirect()->route('special-assignments.index')->with('success', 'SK Penugasan dibuat, namun pembuatan dokumen SK otomatis gagal: ' . $e->getMessage());
+            }
+        }
+
+        // --- Sinkronisasi Anggota ---
         $membersToSync = [];
         if ($user->canManageUsers()) {
             foreach ($validated['members'] as $member) {
@@ -136,7 +190,6 @@ class SpecialAssignmentController extends Controller
         } else {
             $membersToSync[$user->id] = ['role_in_sk' => 'Pelaksana'];
         }
-
         $sk->members()->sync($membersToSync);
 
         return redirect()->route('special-assignments.index')->with('success', 'SK Penugasan berhasil dibuat.');
