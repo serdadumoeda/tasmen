@@ -19,7 +19,7 @@ class AdHocTaskController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
-        $query = Task::whereNull('project_id')->with(['assignees', 'status', 'priorityLevel'])->latest();
+        $query = Task::whereNull('project_id')->with(['assignees', 'status', 'priorityLevel', 'asalSurat'])->latest();
         $subordinates = collect();
 
         if ($user->canManageUsers()) {

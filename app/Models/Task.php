@@ -19,6 +19,8 @@ class Task extends Model
         'deadline',
         'progress',
         'project_id',
+        'surat_id',
+        'creator_id',
         'estimated_hours',
         'task_status_id',
         'priority_level_id',
@@ -35,6 +37,14 @@ class Task extends Model
     public function project()
     {
         return $this->belongsTo(Project::class);
+    }
+
+    /**
+     * Get the source letter (surat) for this task, if any.
+     */
+    public function asalSurat()
+    {
+        return $this->belongsTo(Surat::class, 'surat_id');
     }
 
     /**
