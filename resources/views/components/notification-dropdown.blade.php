@@ -1,6 +1,8 @@
-<div x-data="notifications()" x-init="fetchUnread(); setInterval(() => fetchUnread(), 60000)" class="relative">
+<div x-data="notifications()" x-init="fetchUnread()" class="relative">
     <button @click="isOpen = !isOpen" class="relative z-10 block p-2 text-gray-700 bg-white border border-transparent rounded-md focus:border-blue-500 focus:ring-opacity-40 focus:ring-blue-300 focus:ring focus:outline-none">
-        <i class="fas fa-bell"></i>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+        </svg>
         <template x-if="count > 0">
             <span x-text="count" class="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full"></span>
         </template>
@@ -9,16 +11,9 @@
     <div x-show="isOpen" @click.away="isOpen = false" class="absolute right-0 z-20 w-80 mt-2 overflow-hidden bg-white rounded-md shadow-lg" x-cloak>
         <div class="py-2">
             <template x-for="notification in unread" :key="notification.id">
-                <a :href="notification.data.url" @click="markAsRead(notification.id)" class="flex items-start px-4 py-3 -mx-2 border-b hover:bg-gray-100 bg-blue-50">
-                    <div class="flex-shrink-0 w-10 text-center pt-1">
-                        <template x-if="notification.type.includes('Leave')"><i class="fas fa-calendar-alt text-blue-500"></i></template>
-                        <template x-if="notification.type.includes('Surat')"><i class="fas fa-envelope-open-text text-green-500"></i></template>
-                        <template x-if="notification.type.includes('Task')"><i class="fas fa-tasks text-yellow-500"></i></template>
-                        <template x-if="notification.type.includes('Peminjaman')"><i class="fas fa-people-arrows text-purple-500"></i></template>
-                    </div>
-                    <div class="mx-2">
-                        <p class="text-sm text-gray-700" x-html="notification.data.message"></p>
-                        <p class="text-xs text-gray-500" x-text="new Date(notification.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })"></p>
+                <a :href="notification.data.url" @click="markAsRead(notification.id)" class="flex items-center px-4 py-3 -mx-2 border-b hover:bg-gray-100">
+                    <div class="mx-3">
+                        <p class="text-sm text-gray-600" x-text="notification.data.message"></p>
                     </div>
                 </a>
             </template>
@@ -26,7 +21,6 @@
                 <p class="text-center text-sm text-gray-500 py-4">Tidak ada notifikasi baru.</p>
             </template>
         </div>
-        <a href="#" class="block bg-gray-800 text-white text-center font-bold py-2">Lihat Semua Notifikasi</a>
     </div>
 </div>
 
