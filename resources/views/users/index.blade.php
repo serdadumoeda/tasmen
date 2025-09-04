@@ -37,37 +37,36 @@
                 </form>
             </div>
 
-            <div class="overflow-x-auto border border-gray-200 rounded-lg shadow-sm">
+            <div class="overflow-x-auto bg-white overflow-hidden shadow-md rounded-xl border border-gray-200">
                 <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-100">
+                    <thead class="bg-gray-50">
                         <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider rounded-tl-lg">
-                                <i class="fas fa-user mr-2"></i> {{ __('Pengguna') }}
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                {{ __('Pengguna') }}
                             </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                <i class="fas fa-user-shield mr-2"></i> {{ __('Role') }}
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                {{ __('Role') }}
                             </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                <i class="fas fa-user-tie mr-2"></i> {{ __('Atasan Langsung') }}
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                {{ __('Atasan Langsung') }}
                             </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                <i class="fas fa-building mr-2"></i> {{ __('Unit') }}
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                {{ __('Unit') }}
                             </th>
-                            <th scope="col" class="relative px-6 py-3 text-center rounded-tr-lg"><span class="sr-only">{{ __('Aksi') }}</span></th>
+                            <th scope="col" class="relative px-6 py-3"><span class="sr-only">{{ __('Aksi') }}</span></th>
                         </tr>
                     </thead>
-                    <tbody class="bg-white divide-y divide-gray-100">
+                    <tbody class="bg-white divide-y divide-gray-200">
                         @forelse ($users as $user)
-                            <tr class="hover:bg-gray-50 transition-colors duration-150">
+                            <tr class="hover:bg-gray-50">
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex items-center">
                                         <div class="flex-shrink-0 h-10 w-10">
                                             <img class="h-10 w-10 rounded-full" src="https://ui-avatars.com/api/?name={{ urlencode($user->name) }}&background=random&color=fff" alt="{{ $user->name }}">
                                         </div>
                                         <div class="ml-4">
-                                            <div class="text-sm font-bold text-gray-900">{{ $user->name }}</div>
-                                            <div class="text-xs text-indigo-600 font-semibold">{{ $user->jabatan->name ?? 'Jabatan belum diatur' }}</div>
-                                            <div class="text-xs text-gray-500">{{ $user->email }}</div>
+                                            <div class="text-sm font-medium text-gray-900">{{ $user->name }}</div>
+                                            <div class="text-sm text-gray-500">{{ $user->email }}</div>
                                         </div>
                                     </div>
                                 </td>
@@ -86,8 +85,8 @@
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-gray-800">{{ $user->atasan->name ?? '-' }}</div>
-                                    <div class="text-xs text-gray-500">{{ $user->atasan->jabatan->name ?? '' }}</div>
+                                    <div class="text-sm font-medium text-gray-900">{{ $user->atasan->name ?? '-' }}</div>
+                                    <div class="text-sm text-gray-500">{{ $user->atasan->jabatan->name ?? '' }}</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="text-sm text-gray-900 flex items-center">
