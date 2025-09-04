@@ -150,7 +150,9 @@
                     <!-- Task Status Chart -->
                     <div class="bg-white p-4 rounded-lg shadow">
                         <h4 class="font-semibold text-lg mb-4">Status Tugas Saya</h4>
-                        <canvas id="myTasksChart"></canvas>
+                        <div class="relative h-72">
+                            <canvas id="myTasksChart"></canvas>
+                        </div>
                     </div>
 
                     <x-card>

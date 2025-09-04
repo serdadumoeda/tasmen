@@ -158,13 +158,14 @@ class GlobalDashboardController extends Controller
         $userIds = $currentUser->getAllSubordinateIds();
         $userIds->push($currentUser->id);
 
-        $myTasks = Task::whereHas('assignees', function ($query) use ($userIds) {
-            $query->whereIn('user_id', $userIds);
-        })->with('status')->get();
-
-        $myTaskStats = $myTasks->countBy(function ($task) {
-            return $task->status->key ?? 'unknown';
-        });
+        // Optimized query to count tasks by status directly in the database
+        $myTaskStats = Task::whereHas('assignees', function ($query) use ($userIds) {
+                $query->whereIn('user_id', $userIds);
+            })
+            ->join('task_statuses', 'tasks.task_status_id', '=', 'task_statuses.id')
+            ->select('task_statuses.key', DB::raw('count(*) as total'))
+            ->groupBy('task_statuses.key')
+            ->pluck('total', 'key');
 
         $taskStatusChartData = [
             'Selesai' => $myTaskStats->get('completed', 0),
