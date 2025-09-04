@@ -8,6 +8,22 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+    html {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+    body {
+        /* Sedikit memperbesar ukuran font dasar untuk keterbacaan */
+        font-size: 15px;
+        @apply font-sans text-gray-700; /* Ubah warna teks default menjadi lebih lembut dari hitam pekat */
+    }
+    /* Membuat header lebih ringan secara visual */
+    h1, h2, h3, h4, h5, h6 {
+        @apply font-semibold text-gray-800;
+    }
+}
+
 
 /* Style untuk Toggle Switch di Resource Pool */
 input:checked ~ .dot {

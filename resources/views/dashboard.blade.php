@@ -1,15 +1,23 @@
 <x-app-layout>
     {{-- Menggunakan header dinamis dari layout asli --}}
     <x-slot name="header">
-        <div class="flex justify-between items-center">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                {{ __('Daftar Kegiatan') }}
-            </h2>
-             @can('create', App\Models\Project::class)
-                <a href="{{ route('projects.create.step1') }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150 shadow-md hover:shadow-lg">
-                    <i class="fas fa-plus-circle mr-2"></i> Buat Kegiatan Baru
-                </a>
-            @endcan
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <h2 class="text-2xl font-bold leading-tight text-gray-800">
+                    Daftar Kegiatan
+                </h2>
+                <p class="mt-1 text-sm text-gray-500">
+                    Kelola semua kegiatan dan proyek yang sedang berjalan di sini.
+                </p>
+            </div>
+            <div class="mt-4 sm:mt-0 sm:ml-4">
+                 @can('create', App\Models\Project::class)
+                    <x-primary-button :href="route('projects.create.step1')">
+                        <i class="fas fa-plus mr-2"></i>
+                        Inisiasi Kegiatan Baru
+                    </x-primary-button>
+                @endcan
+            </div>
         </div>
     </x-slot>
 
@@ -62,30 +70,47 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div class="lg:col-span-2 space-y-6">
                 {{-- The controller now passes a single, paginated $projects variable. --}}
-                @forelse ($projects as $project)
-                    {{-- The redundant PHP block is removed. We now use the model's accessors directly. --}}
-                    {{-- The N+1 issue is solved because the controller eager-loads `tasks`. --}}
-                    <a href="{{ route('projects.show', $project) }}" class="block bg-white p-6 rounded-xl shadow hover:shadow-lg transition">
-                        <div class="flex justify-between mb-1">
-                            <h4 class="font-semibold text-lg">{{ $project->name }}</h4>
-                            {{-- Use the new, consistent status badge component --}}
-                            <x-status-badge :status="$project->status" />
+                @if ($projects->isNotEmpty())
+                    @foreach ($projects as $project)
+                        {{-- The redundant PHP block is removed. We now use the model's accessors directly. --}}
+                        {{-- The N+1 issue is solved because the controller eager-loads `tasks`. --}}
+                        <a href="{{ route('projects.show', $project) }}" class="block bg-white p-6 rounded-xl shadow hover:shadow-lg transition">
+                            <div class="flex justify-between mb-1">
+                                <h4 class="font-semibold text-lg">{{ $project->name }}</h4>
+                                {{-- Use the new, consistent status badge component --}}
+                                <x-status-badge :status="$project->status" />
+                            </div>
+                            <p class="text-sm text-gray-600">Ketua: {{ $project->leader->name }}</p>
+                            {{-- The budget sum is now eager-loaded via withSum for efficiency. --}}
+                            <p class="text-sm text-gray-500">Anggaran: Rp. {{ number_format($project->budget_items_sum_total_cost ?? 0, 0, ',', '.') }}</p>
+                            <div class="w-full bg-gray-200 h-2 mt-3 rounded-full">
+                                {{-- Use the `progress` accessor from the Project model. --}}
+                                <div class="bg-cyan-600 h-2 rounded-full" style="width: {{ $project->progress }}%"></div>
+                            </div>
+                            {{-- Use the eager-loaded tasks relationship for counts. --}}
+                            <p class="text-sm text-right text-gray-500 mt-1">{{ $project->tasks->where('status', 'completed')->count() }} / {{ $project->tasks->count() }} Tugas</p>
+                        </a>
+                    @endforeach
+                @else
+                    <div class="text-center bg-white p-12 rounded-xl border border-gray-200 shadow-sm">
+                        {{-- 1. Visual --}}
+                        <svg class="mx-auto h-12 w-12 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 9.776c.112-.017.227-.026.344-.026h15.812c.117 0 .232.009.344.026m-16.5 0a2.25 2.25 0 00-1.883 2.542l.857 6a2.25 2.25 0 002.227 1.932H19.05a2.25 2.25 0 002.227-1.932l.857-6a2.25 2.25 0 00-1.883-2.542m-16.5 0A2.25 2.25 0 015.625 7.5h12.75c1.135 0 2.097.79 2.234 1.883m-16.5 0a2.25 2.25 0 00-1.883-2.542l.857-6a2.25 2.25 0 002.227-1.932H19.05a2.25 2.25 0 002.227-1.932l.857 6a2.25 2.25 0 00-1.883 2.542z" />
+                        </svg>
+
+                        {{-- 2. Pesan --}}
+                        <h3 class="mt-2 text-lg font-semibold text-gray-900">Belum Ada Kegiatan</h3>
+                        <p class="mt-1 text-sm text-gray-500">Mulai bekerja dengan menginisiasi kegiatan atau proyek baru.</p>
+
+                        {{-- 3. Call to Action (CTA) --}}
+                        <div class="mt-6">
+                            <x-primary-button :href="route('projects.create.step1')">
+                                <i class="fas fa-plus mr-2"></i>
+                                Inisiasi Kegiatan Baru
+                            </x-primary-button>
                         </div>
-                        <p class="text-sm text-gray-600">Ketua: {{ $project->leader->name }}</p>
-                        {{-- The budget sum is now eager-loaded via withSum for efficiency. --}}
-                        <p class="text-sm text-gray-500">Anggaran: Rp. {{ number_format($project->budget_items_sum_total_cost ?? 0, 0, ',', '.') }}</p>
-                        <div class="w-full bg-gray-200 h-2 mt-3 rounded-full">
-                            {{-- Use the `progress` accessor from the Project model. --}}
-                            <div class="bg-cyan-600 h-2 rounded-full" style="width: {{ $project->progress }}%"></div>
-                        </div>
-                        {{-- Use the eager-loaded tasks relationship for counts. --}}
-                        <p class="text-sm text-right text-gray-500 mt-1">{{ $project->tasks->where('status', 'completed')->count() }} / {{ $project->tasks->count() }} Tugas</p>
-                    </a>
-                @empty
-                    <x-card class="text-center">
-                        <p class="text-gray-500">Anda belum memiliki kegiatan. Silakan buat yang baru!</p>
-                    </x-card>
-                @endforelse
+                    </div>
+                @endif
 
                 {{-- Add pagination links. This fixes the broken pagination issue. --}}
                 <div class="mt-6">

@@ -21,7 +21,7 @@
             <label for="name" class="block font-semibold text-sm text-gray-700 mb-1"> {{-- Styling label konsisten --}}
                 <i class="fas fa-user mr-2 text-gray-500"></i> {{ __('Nama') }} <span class="text-red-500">*</span>
             </label>
-            <input id="name" name="name" type="text" class="mt-1 block w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" value="{{ old('name', $user->name) }}" required autofocus autocomplete="name" />
+            <input id="name" name="name" type="text" class="mt-1 block w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150 @error('name') border-red-500 focus:border-red-500 focus:ring-red-500 @enderror" value="{{ old('name', $user->name) }}" required autofocus autocomplete="name" />
             @error('name') <p class="text-sm text-red-600 mt-2">{{ $message }}</p> @enderror
         </div>
 
@@ -29,7 +29,7 @@
             <label for="email" class="block font-semibold text-sm text-gray-700 mb-1"> {{-- Styling label konsisten --}}
                 <i class="fas fa-envelope mr-2 text-gray-500"></i> {{ __('Email') }} <span class="text-red-500">*</span>
             </label>
-            <input id="email" name="email" type="email" class="mt-1 block w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" value="{{ old('email', $user->email) }}" required autocomplete="username" />
+            <input id="email" name="email" type="email" class="mt-1 block w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150 @error('email') border-red-500 focus:border-red-500 focus:ring-red-500 @enderror" value="{{ old('email', $user->email) }}" required autocomplete="username" />
             @error('email') <p class="text-sm text-red-600 mt-2">{{ $message }}</p> @enderror
 
             @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
@@ -49,7 +49,7 @@
             <label for="nik" class="block font-semibold text-sm text-gray-700 mb-1">
                 <i class="fas fa-id-card mr-2 text-gray-500"></i> {{ __('NIK') }}
             </label>
-            <input id="nik" name="nik" type="text" class="mt-1 block w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" value="{{ old('nik', $user->nik) }}" autocomplete="off" />
+            <input id="nik" name="nik" type="text" class="mt-1 block w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150 @error('nik') border-red-500 focus:border-red-500 focus:ring-red-500 @enderror" value="{{ old('nik', $user->nik) }}" autocomplete="off" />
             @error('nik') <p class="text-sm text-red-600 mt-2">{{ $message }}</p> @enderror
         </div>
 
