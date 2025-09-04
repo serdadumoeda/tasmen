@@ -94,24 +94,35 @@
                                         <i class="fas fa-building-user mr-2 text-gray-500"></i> {{ $user->unit->name ?? '-' }}
                                     </div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
-                                    <a href="{{ route('users.show', $user) }}" class="text-green-600 hover:text-green-900 inline-flex items-center p-2 rounded-full hover:bg-green-50 transition-colors duration-200" title="{{ __('Lihat Profil') }}">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                    @if(Auth::user()->isSuperAdmin() && Auth::id() !== $user->id && !$user->isSuperAdmin())
-                                        <a href="{{ route('admin.users.impersonate', $user) }}" class="text-cyan-600 hover:text-cyan-900 inline-flex items-center p-2 rounded-full hover:bg-cyan-50 transition-colors duration-200 ml-2" title="{{ __('Tiru Pengguna Ini') }}">
-                                            <i class="fas fa-user-secret"></i>
-                                        </a>
-                                    @endif
-                                    <a href="{{ route('users.edit', $user) }}" class="text-indigo-600 hover:text-indigo-900 inline-flex items-center p-2 rounded-full hover:bg-indigo-50 transition-colors duration-200 ml-2" title="{{ __('Edit Pengguna') }}">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <form action="{{ route('users.deactivate', $user) }}" method="POST" class="inline-block ml-2" onsubmit="return confirm('{{ __('Apakah Anda yakin ingin mengarsipkan pengguna ini?') }}');">
-                                        @csrf
-                                        <button type="submit" class="text-yellow-600 hover:text-yellow-900 inline-flex items-center p-2 rounded-full hover:bg-yellow-50 transition-colors duration-200" title="{{ __('Arsipkan Pengguna') }}">
-                                            <i class="fas fa-archive"></i>
-                                        </button>
-                                    </form>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <x-dropdown align="right" width="48">
+                                        <x-slot name="trigger">
+                                            <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150">
+                                                <div><i class="fas fa-ellipsis-v"></i></div>
+                                            </button>
+                                        </x-slot>
+
+                                        <x-slot name="content">
+                                            <x-dropdown-link :href="route('users.show', $user)">
+                                                {{ __('Lihat Profil') }}
+                                            </x-dropdown-link>
+                                            <x-dropdown-link :href="route('users.edit', $user)">
+                                                {{ __('Edit') }}
+                                            </x-dropdown-link>
+                                            @if(Auth::user()->isSuperAdmin() && Auth::id() !== $user->id && !$user->isSuperAdmin())
+                                                <x-dropdown-link :href="route('admin.users.impersonate', $user)">
+                                                    {{ __('Tiru Pengguna') }}
+                                                </x-dropdown-link>
+                                            @endif
+                                            <div class="border-t border-gray-100"></div>
+                                            <form action="{{ route('users.deactivate', $user) }}" method="POST" onsubmit="return confirm('{{ __('Apakah Anda yakin ingin mengarsipkan pengguna ini?') }}');">
+                                                @csrf
+                                                <x-dropdown-link :href="route('users.deactivate', $user)" onclick="event.preventDefault(); this.closest('form').submit();">
+                                                    <span class="text-yellow-600">{{ __('Arsipkan') }}</span>
+                                                </x-dropdown-link>
+                                            </form>
+                                        </x-slot>
+                                    </x-dropdown>
                                 </td>
                             </tr>
                         @empty

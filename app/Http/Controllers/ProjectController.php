@@ -44,14 +44,24 @@ class ProjectController extends Controller
 
         $activities = Activity::with('user', 'subject')->latest()->take(5)->get();
 
-        return view('dashboard', compact('projects', 'stats', 'activities'));
+        $breadcrumbs = [
+            ['title' => 'Dashboard'],
+        ];
+
+        return view('dashboard', compact('projects', 'stats', 'activities', 'breadcrumbs'));
     }
 
     public function createStep1()
     {
         $this->authorize('create', Project::class);
         $suratList = Surat::orderBy('tanggal_surat', 'desc')->select('id', 'perihal', 'nomor_surat')->get();
-        return view('projects.create_step1', ['project' => new Project(), 'suratList' => $suratList]);
+
+        $breadcrumbs = [
+            ['title' => 'Dashboard', 'url' => route('dashboard')],
+            ['title' => 'Buat Kegiatan Baru'],
+        ];
+
+        return view('projects.create_step1', ['project' => new Project(), 'suratList' => $suratList, 'breadcrumbs' => $breadcrumbs]);
     }
 
     public function storeStep1(Request $request)
@@ -93,7 +103,13 @@ class ProjectController extends Controller
         $subordinateIds[] = $user->id;
         $potentialMembers = User::whereIn('id', $subordinateIds)->orderBy('name')->get();
 
-        return view('projects.create_step2', compact('project', 'potentialMembers'));
+        $breadcrumbs = [
+            ['title' => 'Dashboard', 'url' => route('dashboard')],
+            ['title' => 'Buat Kegiatan Baru', 'url' => route('projects.create.step1')],
+            ['title' => 'Tambah Tim'],
+        ];
+
+        return view('projects.create_step2', compact('project', 'potentialMembers', 'breadcrumbs'));
     }
     
     public function storeStep2(Request $request, Project $project)

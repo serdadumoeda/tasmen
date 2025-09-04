@@ -154,6 +154,18 @@ class GlobalDashboardController extends Controller
         }
         // --- END APPROVAL INBOX LOGIC ---
 
-        return view('global-dashboard', compact('stats', 'allProjects', 'recentActivities', 'chartData', 'search', 'status', 'approvalItems'));
+        // Data for Task Status Pie Chart for the logged-in user
+        $myTasks = $currentUser->tasks()->with('status')->get();
+        $myTaskStats = $myTasks->countBy(function ($task) {
+            return $task->status->key ?? 'unknown';
+        });
+
+        $taskStatusChartData = [
+            'Selesai' => $myTaskStats->get('completed', 0),
+            'Dikerjakan' => $myTaskStats->get('in_progress', 0),
+            'Tertunda' => $myTaskStats->get('pending', 0),
+        ];
+
+        return view('global-dashboard', compact('stats', 'allProjects', 'recentActivities', 'chartData', 'search', 'status', 'approvalItems', 'taskStatusChartData'));
     }
 }
