@@ -35,8 +35,13 @@ class SuratPolicy
      */
     public function update(User $user, Surat $surat): bool
     {
-        // Allow updating only if the letter is a draft and the user is the creator or a collaborator.
-        return $surat->status === 'draft' && ($user->id === $surat->pembuat_id || $surat->isCollaborator($user));
+        // Izinkan update HANYA jika statusnya masih draft
+        if ($surat->status !== 'draft') {
+            return false;
+        }
+
+        // Dan jika user adalah salah satu kolaborator (termasuk pembuat asli)
+        return $surat->collaborators()->where('user_id', $user->id)->exists();
     }
 
     /**
