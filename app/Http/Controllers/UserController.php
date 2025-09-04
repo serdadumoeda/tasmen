@@ -25,7 +25,7 @@ class UserController extends Controller
         $this->authorize('viewAny', User::class);
 
         $loggedInUser = Auth::user();
-        $query = User::with(['unit', 'jabatan', 'atasan.jabatan']);
+        $query = User::with(['unit', 'jabatan', 'atasan.jabatan', 'roles']);
 
         if (!$loggedInUser->isSuperAdmin()) {
             $query->inUnitAndSubordinatesOf($loggedInUser)
