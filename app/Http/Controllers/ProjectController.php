@@ -174,7 +174,7 @@ class ProjectController extends Controller
         $tasks = $taskQuery->paginate(10, ['*'], 'tasksPage')->appends($request->query());
         
         $loanRequests = PeminjamanRequest::where('project_id', $project->id)
-                            ->with(['requester', 'requestedUser', 'approver', 'status'])
+                            ->with(['requester', 'requestedUser', 'approver'])
                             ->latest()
                             ->get();
         
