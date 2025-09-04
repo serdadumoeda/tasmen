@@ -34,11 +34,12 @@ class SuratKeluarController extends Controller
     public function createFromTemplate(Request $request)
     {
         $klasifikasi = KlasifikasiSurat::orderBy('kode')->get();
+        $users = User::where('status', 'active')->where('id', '!=', Auth::id())->orderBy('name')->get();
 
         if ($request->has('template_id')) {
             $template = TemplateSurat::findOrFail($request->template_id);
             $settings = Setting::pluck('value', 'key')->all();
-            return view('suratkeluar.create-step2', compact('template', 'settings', 'klasifikasi'));
+            return view('suratkeluar.create-step2', compact('template', 'settings', 'klasifikasi', 'users'));
         }
 
         $templates = TemplateSurat::all();
@@ -58,6 +59,8 @@ class SuratKeluarController extends Controller
             'perihal' => 'required|string|max:255',
             'tanggal_surat' => 'required|date',
             'klasifikasi_id' => 'required|exists:klasifikasi_surat,id',
+            'collaborators' => 'nullable|array',
+            'collaborators.*' => 'exists:users,id',
         ];
 
         // Type-specific validation rules
@@ -88,6 +91,7 @@ class SuratKeluarController extends Controller
             'status' => 'draft',
             'pembuat_id' => Auth::id(),
             'konten' => $validated['konten_final'] ?? null,
+            'collaborators' => $validated['collaborators'] ?? null,
         ];
 
         $surat = Surat::create($suratData);

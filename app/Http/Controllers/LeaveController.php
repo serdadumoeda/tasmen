@@ -20,6 +20,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use App\Models\CutiBersama;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class LeaveController extends Controller
@@ -86,24 +87,47 @@ class LeaveController extends Controller
     {
         $user = Auth::user();
         $teamIds = $user->getAllSubordinateIds();
-        $teamIds[] = $user->id; // Include the manager themselves in the calendar
+        $teamIds[] = $user->id;
 
-        $leaves = LeaveRequest::whereIn('user_id', $teamIds)
+        // 1. Get Personal Leaves
+        $personalLeaves = LeaveRequest::whereIn('user_id', $teamIds)
             ->where('status', RequestStatus::APPROVED)
             ->with('user')
-            ->get();
-
-        $events = $leaves->map(function ($leave) {
-            // FullCalendar's end date is exclusive, so add a day.
-            $endDate = $leave->end_date->addDay()->format('Y-m-d');
-
-            return [
+            ->get()
+            ->map(fn($leave) => [
                 'title' => $leave->user->name,
                 'start' => $leave->start_date->format('Y-m-d'),
-                'end' => $endDate,
+                'end' => $leave->end_date->addDay()->format('Y-m-d'),
                 'allDay' => true,
-            ];
-        });
+                'color' => '#3B82F6', // Blue
+                'extendedProps' => ['type' => 'personal']
+            ]);
+
+        // 2. Get Collective Leaves (Cuti Bersama)
+        $collectiveLeaves = CutiBersama::where('start_date', '>=', now()->startOfYear())
+            ->where('end_date', '<=', now()->endOfYear())
+            ->get()
+            ->map(fn($leave) => [
+                'title' => $leave->description,
+                'start' => Carbon::parse($leave->start_date)->format('Y-m-d'),
+                'end' => Carbon::parse($leave->end_date)->addDay()->format('Y-m-d'),
+                'allDay' => true,
+                'color' => '#10B981', // Green
+                'extendedProps' => ['type' => 'collective']
+            ]);
+
+        // 3. Get National Holidays from the database
+        $nationalHolidays = \App\Models\NationalHoliday::whereYear('date', now()->year)
+            ->get()
+            ->map(fn($holiday) => [
+                'title' => $holiday->name,
+                'start' => $holiday->date->format('Y-m-d'),
+                'allDay' => true,
+                'color' => '#EF4444', // Red
+                'extendedProps' => ['type' => 'holiday']
+            ]);
+
+        $events = $personalLeaves->concat($collectiveLeaves)->concat($nationalHolidays);
 
         return view('leaves.calendar', ['events' => $events->toJson()]);
     }

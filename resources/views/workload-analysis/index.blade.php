@@ -10,6 +10,14 @@
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg"> {{-- Shadow dan rounded-lg konsisten --}}
                 <div class="p-6 bg-white border-b border-gray-200">
 
+                    <!-- Chart Section -->
+                    <div class="mb-8 p-4 border rounded-lg bg-gray-50 shadow-inner">
+                        <h3 class="text-lg font-bold text-gray-800 mb-4">Perbandingan Beban Kerja Tim (Estimasi Jam)</h3>
+                        <div class="h-64">
+                            <canvas id="workloadChart"></canvas>
+                        </div>
+                    </div>
+
                     @if (session('success'))
                         <div class="mb-6 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg relative shadow-md" role="alert"> {{-- Styling alert konsisten --}}
                             <div class="flex items-center">
@@ -169,6 +177,46 @@
     </div>
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const workloadCtx = document.getElementById('workloadChart');
+        if (workloadCtx) {
+            const chartData = @json($chartData);
+            new Chart(workloadCtx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(chartData),
+                    datasets: [{
+                        label: 'Total Estimasi Jam',
+                        data: Object.values(chartData),
+                        backgroundColor: 'rgba(59, 130, 246, 0.5)',
+                        borderColor: 'rgba(59, 130, 246, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Estimasi Jam Kerja'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+    });
+</script>
 <style>
     .btn-submit-rating.loading {
         position: relative;

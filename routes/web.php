@@ -126,6 +126,7 @@ Route::middleware(['auth'])->group(function () {
     // Rute untuk Ad-Hoc Tasks (Tugas Harian)
     Route::prefix('adhoc-tasks')->name('adhoc-tasks.')->group(function() {
         Route::get('/', [AdHocTaskController::class, 'index'])->name('index');
+        Route::get('/print-report', [\App\Http\Controllers\AdHocTaskController::class, 'printReport'])->name('print-report');
         Route::get('/create', [AdHocTaskController::class, 'create'])->name('create');
         Route::post('/', [AdHocTaskController::class, 'store'])->name('store');
         // Edit, Update, dan Destroy ditangani oleh TaskController yang sudah terkonsolidasi
@@ -228,6 +229,8 @@ Route::get('/surat/{surat}/make-task', [\App\Http\Controllers\SuratTaskControlle
 
 // Route for the digital archive
 Route::get('/arsip', [\App\Http\Controllers\ArsipController::class, 'index'])->name('arsip.index')->middleware('auth');
+Route::post('/arsip/berkas', [\App\Http\Controllers\ArsipController::class, 'storeBerkas'])->name('arsip.berkas.store')->middleware('auth');
+Route::post('/arsip/berkas/add-surat', [\App\Http\Controllers\ArsipController::class, 'addSuratToBerkas'])->name('arsip.berkas.add-surat')->middleware('auth');
 
 // API routes for units, accessible without authentication
 Route::get('/api/units/eselon-i', [UnitApiController::class, 'getEselonIUnits']);

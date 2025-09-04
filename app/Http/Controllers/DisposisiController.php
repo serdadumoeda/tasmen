@@ -56,4 +56,18 @@ class DisposisiController extends Controller
 
         return redirect()->route('surat-masuk.show', $surat)->with('success', 'Surat berhasil didisposisikan.');
     }
+
+    public function lacak(Surat $surat)
+    {
+        $this->authorize('view', $surat);
+
+        // Fetch top-level dispositions for the given letter
+        // and recursively load all children and their relationships.
+        $disposisiTree = Disposisi::where('surat_id', $surat->id)
+            ->whereNull('parent_id') // Get only root dispositions
+            ->with('childrenRecursive', 'pengirim', 'penerima', 'tembusanUsers')
+            ->get();
+
+        return view('suratmasuk.lacak_disposisi', compact('surat', 'disposisiTree'));
+    }
 }

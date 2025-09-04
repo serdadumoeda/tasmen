@@ -136,8 +136,20 @@ class GlobalDashboardController extends Controller
                 ->with('requester', 'requestedUser')
                 ->get();
 
+            // 4. Get Tasks awaiting approval
+            $taskRequests = Task::whereHas('status', function ($query) {
+                    $query->where('key', 'pending_review');
+                })
+                ->whereHas('project.leader', function ($query) use ($currentUser) {
+                    $query->where('id', $currentUser->id);
+                })
+                ->with('project', 'users')
+                ->get();
+
             // Combine all items
-            $approvalItems = $leaveRequests->concat($suratKeluar)->concat($peminjamanRequests)
+            $approvalItems = $leaveRequests->concat($suratKeluar)
+                                          ->concat($peminjamanRequests)
+                                          ->concat($taskRequests)
                                           ->sortByDesc('created_at');
         }
         // --- END APPROVAL INBOX LOGIC ---

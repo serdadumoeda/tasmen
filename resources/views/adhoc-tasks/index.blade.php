@@ -47,9 +47,17 @@
                                     @endforeach
                                 </select>
                             </div>
+                            <div>
+                                <label for="start_date" class="sr-only">Tanggal Mulai</label>
+                                <input type="date" name="start_date" id="start_date" value="{{ request('start_date') }}" class="block w-full rounded-lg border-gray-300 shadow-sm text-sm" title="Tanggal Mulai">
+                            </div>
+                            <div>
+                                <label for="end_date" class="sr-only">Tanggal Selesai</label>
+                                <input type="date" name="end_date" id="end_date" value="{{ request('end_date') }}" class="block w-full rounded-lg border-gray-300 shadow-sm text-sm" title="Tanggal Selesai">
+                            </div>
 
                             @if(Auth::user()->canManageUsers())
-                            <div>
+                            <div class="md:col-span-2">
                                 <label for="personnel_id" class="sr-only">Filter Personel</label>
                                 <select name="personnel_id" id="personnel_id" class="block w-full rounded-lg border-gray-300 shadow-sm text-sm">
                                     <option value="">Semua Personel</option>
@@ -61,6 +69,11 @@
                             @endif
                         </div>
                         <div class="mt-4 flex flex-col sm:flex-row justify-end items-center gap-3">
+                            <div class="flex-grow">
+                                <a href="#" id="print-report-btn" target="_blank" class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg text-xs hover:bg-green-700">
+                                    <i class="fas fa-print mr-2"></i> Cetak Laporan
+                                </a>
+                            </div>
                              <div>
                                 <label for="sort_by" class="text-sm font-medium text-gray-700">Urutkan:</label>
                                 <select name="sort_by" id="sort_by" class="rounded-lg border-gray-300 shadow-sm text-sm" onchange="this.form.submit()">
@@ -121,4 +134,32 @@
             </div>
         </div>
     </div>
+    @push('scripts')
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const printBtn = document.getElementById('print-report-btn');
+                const startDateInput = document.getElementById('start_date');
+                const endDateInput = document.getElementById('end_date');
+
+                function updatePrintLink() {
+                    const baseUrl = "{{ route('adhoc-tasks.print-report') }}";
+                    const startDate = startDateInput.value;
+                    const endDate = endDateInput.value;
+
+                    const params = new URLSearchParams();
+                    if (startDate) params.append('start_date', startDate);
+                    if (endDate) params.append('end_date', endDate);
+
+                    printBtn.href = `${baseUrl}?${params.toString()}`;
+                }
+
+                // Initial update
+                updatePrintLink();
+
+                // Update link when dates change
+                startDateInput.addEventListener('change', updatePrintLink);
+                endDateInput.addEventListener('change', updatePrintLink);
+            });
+        </script>
+    @endpush
 </x-app-layout>

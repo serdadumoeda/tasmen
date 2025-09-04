@@ -44,6 +44,14 @@ class Disposisi extends Model
     }
 
     /**
+     * Get all children dispositions recursively.
+     */
+    public function childrenRecursive()
+    {
+        return $this->children()->with('childrenRecursive', 'pengirim', 'penerima', 'tembusanUsers');
+    }
+
+    /**
      * Get the parent disposition.
      */
     public function parent(): BelongsTo
