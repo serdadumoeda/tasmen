@@ -4,7 +4,7 @@
     $isOverdue = $task->deadline && $task->deadline < now() && $task->progress < 100;
 @endphp
 
-<div class="border border-gray-200 p-4 rounded-lg @if($isOverdue) border-red-300 bg-red-50 @endif" id="task-{{ $task->id }}">
+<x-card class="p-4 @if($isOverdue) !border-red-300 bg-red-50 @endif" id="task-{{ $task->id }}">
     {{-- Header Kartu: Judul dan Tombol Aksi --}}
     <div class="flex justify-between items-start">
         <div>
@@ -138,4 +138,4 @@
             </div>
         </div>
     </div>
-</div>
+</x-card>

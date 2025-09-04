@@ -38,29 +38,31 @@
                     <label for="search" class="sr-only">Cari Kegiatan</label>
                     <input type="text" name="search" id="search" placeholder="Cari berdasarkan nama atau deskripsi..." value="{{ request('search') }}" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition duration-150">
                 </div>
-                <button type="submit" class="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700">Cari</button>
+                <x-primary-button type="submit" class="w-full sm:w-auto justify-center">
+                    Cari
+                </x-primary-button>
             </form>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-10">
-            <x-card class="text-center transition duration-300 hover:shadow-lg">
-                <i class="bi bi-file-earmark-text text-4xl text-teal-600 mb-3"></i>
+            <x-card class="p-6 text-center">
+                <i class="fas fa-file-alt text-4xl text-teal-600 mb-3"></i>
                 {{-- Note: $projects is a paginator instance, so count() gives items on the current page. Use total() for all items. --}}
                 <h3 class="text-3xl font-bold">{{ $projects->total() }}</h3>
                 <p class="text-gray-500">Kegiatan</p>
             </x-card>
-            <x-card class="text-center transition duration-300 hover:shadow-lg">
-                <i class="bi bi-person text-4xl text-teal-600 mb-3"></i>
+            <x-card class="p-6 text-center">
+                <i class="fas fa-users text-4xl text-teal-600 mb-3"></i>
                 <h3 class="text-3xl font-bold">{{ $stats['users'] }}</h3>
                 <p class="text-gray-500">Pengguna</p>
             </x-card>
-            <x-card class="text-center transition duration-300 hover:shadow-lg">
-                <i class="bi bi-journal-text text-4xl text-teal-600 mb-3"></i>
+            <x-card class="p-6 text-center">
+                <i class="fas fa-tasks text-4xl text-teal-600 mb-3"></i>
                 <h3 class="text-3xl font-bold">{{ $stats['tasks'] }}</h3>
                 <p class="text-gray-500">Tugas</p>
             </x-card>
-            <x-card class="text-center transition duration-300 hover:shadow-lg">
-                <i class="bi bi-check2-square text-4xl text-teal-600 mb-3"></i>
+            <x-card class="p-6 text-center">
+                <i class="fas fa-check-double text-4xl text-teal-600 mb-3"></i>
                 <h3 class="text-3xl font-bold">{{ $stats['tasks_completed'] }}</h3>
                 <p class="text-gray-500">Tugas Selesai</p>
             </x-card>
@@ -74,7 +76,7 @@
                     @foreach ($projects as $project)
                         {{-- The redundant PHP block is removed. We now use the model's accessors directly. --}}
                         {{-- The N+1 issue is solved because the controller eager-loads `tasks`. --}}
-                        <a href="{{ route('projects.show', $project) }}" class="block bg-white p-6 rounded-xl shadow hover:shadow-lg transition">
+                        <x-card as="a" href="{{ route('projects.show', $project) }}" class="block p-6">
                             <div class="flex justify-between mb-1">
                                 <h4 class="font-semibold text-lg">{{ $project->name }}</h4>
                                 {{-- Use the new, consistent status badge component --}}
