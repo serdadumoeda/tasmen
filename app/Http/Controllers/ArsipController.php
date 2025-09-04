@@ -3,8 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\KlasifikasiSurat;
+use App\Models\Berkas;
+use App\Models\KlasifikasiSurat;
 use App\Models\Surat;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class ArsipController extends Controller
 {
@@ -43,7 +46,40 @@ class ArsipController extends Controller
 
         $suratList = $query->paginate(25)->withQueryString();
         $klasifikasi = KlasifikasiSurat::orderBy('kode')->get();
+        $berkasList = Berkas::where('user_id', Auth::id())->orderBy('name')->get();
 
-        return view('arsip.index', compact('suratList', 'klasifikasi'));
+        return view('arsip.index', compact('suratList', 'klasifikasi', 'berkasList'));
+    }
+
+    public function storeBerkas(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+        ]);
+
+        Auth::user()->berkas()->create($validated);
+
+        return back()->with('success', 'Berkas virtual berhasil dibuat.');
+    }
+
+    public function addSuratToBerkas(Request $request)
+    {
+        $validated = $request->validate([
+            'berkas_id' => 'required|exists:berkas,id',
+            'surat_ids' => 'required|array|min:1',
+            'surat_ids.*' => 'exists:surat,id',
+        ]);
+
+        $berkas = Berkas::findOrFail($validated['berkas_id']);
+
+        // Authorize that the user owns the Berkas
+        if ($berkas->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $berkas->surat()->syncWithoutDetaching($validated['surat_ids']);
+
+        return back()->with('success', count($validated['surat_ids']) . ' surat berhasil ditambahkan ke berkas "' . $berkas->name . '".');
     }
 }

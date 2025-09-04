@@ -31,12 +31,20 @@ class SuratPolicy
     }
 
     /**
+     * Determine whether the user can update the model.
+     */
+    public function update(User $user, Surat $surat): bool
+    {
+        // Allow updating only if the letter is a draft and the user is the creator or a collaborator.
+        return $surat->status === 'draft' && ($user->id === $surat->pembuat_id || $surat->isCollaborator($user));
+    }
+
+    /**
      * Determine whether the user can delete the model.
      */
     public function delete(User $user, Surat $surat): bool
     {
-        // Only the user who created the letter can delete it.
-        // Admins are handled by the Gate::before callback in AuthServiceProvider.
-        return $user->id === $surat->pembuat_id;
+        // Only the creator or a collaborator can delete a draft letter.
+        return $surat->status === 'draft' && ($user->id === $surat->pembuat_id || $surat->isCollaborator($user));
     }
 }

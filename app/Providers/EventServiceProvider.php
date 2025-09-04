@@ -11,6 +11,8 @@ use App\Observers\JabatanObserver;
 use App\Observers\SubTaskObserver;
 use App\Observers\UnitObserver;
 use App\Observers\SettingObserver;
+use App\Models\User;
+use App\Observers\UserObserver;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -31,5 +33,6 @@ class EventServiceProvider extends ServiceProvider
         SubTask::observe(SubTaskObserver::class);
         Unit::observe(UnitObserver::class);
         Setting::observe(SettingObserver::class);
+        User::observe(UserObserver::class);
     }
 }

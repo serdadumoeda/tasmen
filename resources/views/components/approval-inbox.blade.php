@@ -49,6 +49,20 @@
                             Lihat Detail
                         </a>
                     </div>
+                @elseif ($item instanceof \App\Models\Task)
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <p class="text-sm font-semibold text-gray-700">
+                                <span class="font-bold text-orange-600">Verifikasi Tugas:</span> {{ $item->name }}
+                            </p>
+                            <p class="text-xs text-gray-500 mt-1">
+                                Proyek: {{ $item->project->name ?? 'Tugas non-proyek' }}
+                            </p>
+                        </div>
+                        <a href="{{ route('projects.show', $item->project) }}" class="text-xs inline-block px-3 py-1 font-semibold text-indigo-800 bg-indigo-100 rounded-full hover:bg-indigo-200">
+                            Lihat Detail
+                        </a>
+                    </div>
                 @endif
             </div>
         @empty

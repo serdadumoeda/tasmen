@@ -40,6 +40,19 @@
                                 @error('tanggal_surat') <p class="text-sm text-red-600 mt-2">{{ $message }}</p> @enderror
                             </div>
 
+                            <div>
+                                <label for="collaborators" class="block font-semibold text-sm text-gray-700 mb-1">Kolaborator (Opsional)</label>
+                                <select name="collaborators[]" id="collaborators" multiple class="mt-1 block w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 tom-select">
+                                    @foreach($users as $user)
+                                        <option value="{{ $user->id }}" {{ in_array($user->id, old('collaborators', [])) ? 'selected' : '' }}>
+                                            {{ $user->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <p class="text-xs text-gray-500 mt-1">Pilih pengguna lain yang dapat mengedit draf surat ini.</p>
+                                @error('collaborators') <p class="text-sm text-red-600 mt-2">{{ $message }}</p> @enderror
+                            </div>
+
                             <div id="placeholder-inputs" class="space-y-4 p-4 bg-indigo-50 border border-indigo-200 rounded-lg">
                                 <!-- Input fields for placeholders will be inserted here by JavaScript -->
                                 <p id="no-placeholder-message" class="text-sm text-gray-600">Tidak ada placeholder dinamis yang ditemukan di template ini.</p>
