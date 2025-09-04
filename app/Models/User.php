@@ -183,6 +183,11 @@ class User extends Authenticatable
         return $this->belongsToMany(Role::class);
     }
 
+    public function berkas(): HasMany
+    {
+        return $this->hasMany(Berkas::class);
+    }
+
     // --- QUERY SCOPES ---
 
     public function scopeTeamMembers($query, User $manager)
