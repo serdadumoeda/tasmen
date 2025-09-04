@@ -45,23 +45,23 @@
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-10">
-            <x-card class="p-6 text-center">
+            <x-card class="text-center">
                 <i class="fas fa-file-alt text-4xl text-teal-600 mb-3"></i>
                 {{-- Note: $projects is a paginator instance, so count() gives items on the current page. Use total() for all items. --}}
                 <h3 class="text-3xl font-bold">{{ $projects->total() }}</h3>
                 <p class="text-gray-500">Kegiatan</p>
             </x-card>
-            <x-card class="p-6 text-center">
+            <x-card class="text-center">
                 <i class="fas fa-users text-4xl text-teal-600 mb-3"></i>
                 <h3 class="text-3xl font-bold">{{ $stats['users'] }}</h3>
                 <p class="text-gray-500">Pengguna</p>
             </x-card>
-            <x-card class="p-6 text-center">
+            <x-card class="text-center">
                 <i class="fas fa-tasks text-4xl text-teal-600 mb-3"></i>
                 <h3 class="text-3xl font-bold">{{ $stats['tasks'] }}</h3>
                 <p class="text-gray-500">Tugas</p>
             </x-card>
-            <x-card class="p-6 text-center">
+            <x-card class="text-center">
                 <i class="fas fa-check-double text-4xl text-teal-600 mb-3"></i>
                 <h3 class="text-3xl font-bold">{{ $stats['tasks_completed'] }}</h3>
                 <p class="text-gray-500">Tugas Selesai</p>
@@ -76,7 +76,7 @@
                     @foreach ($projects as $project)
                         {{-- The redundant PHP block is removed. We now use the model's accessors directly. --}}
                         {{-- The N+1 issue is solved because the controller eager-loads `tasks`. --}}
-                        <x-card as="a" href="{{ route('projects.show', $project) }}" class="block p-6">
+                        <x-card as="a" href="{{ route('projects.show', $project) }}" class="block">
                             <div class="flex justify-between mb-1">
                                 <h4 class="font-semibold text-lg">{{ $project->name }}</h4>
                                 {{-- Use the new, consistent status badge component --}}
