@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Jabatan;
 use App\Models\User;
 use App\Models\Unit;
 use App\Models\LeaveBalance;
@@ -93,10 +94,11 @@ class UserController extends Controller
         $this->authorize('create', User::class);
         $supervisors = User::orderBy('name')->get();
         $eselonIUnits = Unit::whereNull('parent_unit_id')->orderBy('name')->get();
+        $jabatans = Jabatan::orderBy('name')->get();
         $user = new User();
         $selectedUnitPath = [];
 
-        return view('users.create', compact('user', 'supervisors', 'eselonIUnits', 'selectedUnitPath'));
+        return view('users.create', compact('user', 'supervisors', 'eselonIUnits', 'jabatans', 'selectedUnitPath'));
     }
 
     public function store(Request $request)
@@ -172,6 +174,7 @@ class UserController extends Controller
         $this->authorize('update', $user);
         $supervisors = User::where('id', '!=', $user->id)->orderBy('name')->get();
         $eselonIUnits = Unit::whereNull('parent_unit_id')->orderBy('name')->get();
+        $jabatans = Jabatan::orderBy('name')->get();
 
         $selectedUnitPath = [];
         if ($user->unit) {
@@ -181,7 +184,7 @@ class UserController extends Controller
             $selectedUnitPath[] = $user->unit->id;
         }
 
-        return view('users.edit', compact('user', 'supervisors', 'eselonIUnits', 'selectedUnitPath'));
+        return view('users.edit', compact('user', 'supervisors', 'eselonIUnits', 'jabatans', 'selectedUnitPath'));
     }
 
     public function profile(User $user)
