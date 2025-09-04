@@ -147,6 +147,12 @@
                         <x-approval-inbox :items="$approvalItems" />
                     @endif
 
+                    <!-- Task Status Chart -->
+                    <div class="bg-white p-4 rounded-lg shadow">
+                        <h4 class="font-semibold text-lg mb-4">Status Tugas Saya</h4>
+                        <canvas id="myTasksChart"></canvas>
+                    </div>
+
                     <x-card>
                          <h3 class="text-lg font-semibold mb-4 text-gray-900 flex items-center">
                             <i class="fas fa-history mr-3 text-indigo-500"></i>
@@ -190,4 +196,44 @@
             </div>
         </div>
     </div>
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const ctx = document.getElementById('myTasksChart');
+        if (ctx) {
+            const chartData = @json($taskStatusChartData ?? []);
+            if (Object.values(chartData).some(v => v > 0)) {
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(chartData),
+                        datasets: [{
+                            label: 'Tugas',
+                            data: Object.values(chartData),
+                            backgroundColor: [
+                                '#4CAF50', // Selesai
+                                '#FFC107', // Dikerjakan
+                                '#f44336'  // Tertunda
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                            }
+                        }
+                    }
+                });
+            } else {
+                ctx.parentElement.innerHTML = '<p class=\"text-center text-gray-500 py-8\">Anda belum memiliki tugas.</p>';
+            }
+        }
+    });
+</script>
+@endpush
 </x-app-layout>
