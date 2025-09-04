@@ -6,7 +6,7 @@
     </x-slot>
 
     <div class="py-12 bg-gray-50">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        <div class="max-w-screen-2xl mx-auto sm:px-6 lg:px-8">
             <x-card>
                 <div class="flex justify-between items-center mb-6">
                     <h1 class="text-xl font-bold text-gray-800 flex items-center">
