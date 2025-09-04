@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\KlasifikasiSurat;
 use App\Models\Berkas;
-use App\Models\KlasifikasiSurat;
 use App\Models\Surat;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
