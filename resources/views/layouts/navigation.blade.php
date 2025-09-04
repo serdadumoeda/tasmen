@@ -11,13 +11,13 @@ if (count($words) >= 2) {
 @endphp
 
 {{-- Menyatukan state Alpine.js di sini untuk mengelola semua dropdown dan modal --}}
-<nav x-data="{ open: false }" class="bg-white border-b border-gray-100">
+<nav x-data="{ open: false, showAboutModal: false }" class="bg-[#00796B] border-b border-green-800">
     <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
             <div class="flex">
                 <div class="shrink-0 flex items-center">
                     <a href="{{ route('dashboard') }}">
-                        <x-application-logo class="block h-9 w-auto fill-current text-gray-800" />
+                        <x-application-logo class="block h-9 w-auto fill-current text-white" />
                     </a>
                 </div>
 
@@ -32,7 +32,7 @@ if (count($words) >= 2) {
                     <div class="hidden sm:flex sm:items-center">
                         <x-dropdown align="left" width="60">
                             <x-slot name="trigger">
-                                <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 hover:bg-gray-50 focus:outline-none focus:bg-gray-50 transition ease-in-out duration-150">
+                                <button class="inline-flex items-center px-3 py-2 border-b-2 text-sm font-medium leading-5 transition duration-150 ease-in-out {{ (request()->routeIs(['global.dashboard', 'adhoc-tasks.*', 'special-assignments.*', 'projects.show', 'projects.create.*'])) && !request()->routeIs('executive.summary') ? 'border-yellow-300 text-white bg-green-700/50' : 'border-transparent text-white hover:text-yellow-300 hover:border-yellow-300/75 focus:outline-none' }}">
                                     <i class="fas fa-briefcase w-4 h-4 mr-2"></i>
                                     <div>Kerja</div>
                                     <div class="ms-1"><svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg></div>
@@ -53,7 +53,7 @@ if (count($words) >= 2) {
                     <div class="hidden sm:flex sm:items-center">
                         <x-dropdown align="left" width="60">
                             <x-slot name="trigger">
-                                <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 hover:bg-gray-50 focus:outline-none focus:bg-gray-50 transition ease-in-out duration-150">
+                                <button class="inline-flex items-center px-3 py-2 border-b-2 text-sm font-medium leading-5 transition duration-150 ease-in-out {{ request()->routeIs(['surat-masuk.*', 'surat-keluar.*', 'templatesurat.*', 'admin.klasifikasi.*']) ? 'border-yellow-300 text-white bg-green-700/50' : 'border-transparent text-white hover:text-yellow-300 hover:border-yellow-300/75 focus:outline-none' }}">
                                     <i class="fas fa-envelope-open-text w-4 h-4 mr-2"></i>
                                     <div>Persuratan</div>
                                     <div class="ms-1"><svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg></div>
@@ -83,7 +83,7 @@ if (count($words) >= 2) {
                         <div class="hidden sm:flex sm:items-center">
                             <x-dropdown align="left" width="60">
                                 <x-slot name="trigger">
-                                    <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 hover:bg-gray-50 focus:outline-none focus:bg-gray-50 transition ease-in-out duration-150">
+                                    <button class="inline-flex items-center px-3 py-2 border-b-2 text-sm font-medium leading-5 transition duration-150 ease-in-out {{ request()->routeIs(['workload.analysis', 'weekly-workload.index']) ? 'border-yellow-300 text-white bg-green-700/50' : 'border-transparent text-white hover:text-yellow-300 hover:border-yellow-300/75 focus:outline-none' }}">
                                         <i class="fas fa-chart-pie w-4 h-4 mr-2"></i>
                                         <div>Laporan & Analisis</div>
                                         <div class="ms-1"><svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg></div>
@@ -102,7 +102,7 @@ if (count($words) >= 2) {
                         <div class="hidden sm:flex sm:items-center">
                             <x-dropdown align="left" width="60">
                                 <x-slot name="trigger">
-                                    <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 hover:bg-gray-50 focus:outline-none focus:bg-gray-50 transition ease-in-out duration-150">
+                                    <button class="inline-flex items-center px-3 py-2 border-b-2 text-sm font-medium leading-5 transition duration-150 ease-in-out {{ request()->routeIs(['users.*', 'admin.units.*', 'resource-pool.*', 'peminjaman-requests.*']) && !request()->routeIs('admin.api_keys.*', 'admin.activities.index') ? 'border-yellow-300 text-white bg-green-700/50' : 'border-transparent text-white hover:text-yellow-300 hover:border-yellow-300/75 focus:outline-none' }}">
                                         <i class="fas fa-users-cog w-4 h-4 mr-2"></i>
                                         <div>Tim</div>
                                         <div class="ms-1"><svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg></div>
@@ -128,7 +128,7 @@ if (count($words) >= 2) {
                         <div class="hidden sm:flex sm:items-center">
                             <x-dropdown align="left" width="60">
                                 <x-slot name="trigger">
-                                    <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 hover:bg-gray-50 focus:outline-none focus:bg-gray-50 transition ease-in-out duration-150">
+                                    <button class="inline-flex items-center px-3 py-2 border-b-2 text-sm font-medium leading-5 transition duration-150 ease-in-out {{ request()->routeIs(['admin.settings.*', 'admin.api_keys.*', 'admin.activities.index', 'templatesurat.*']) ? 'border-yellow-300 text-white bg-green-700/50' : 'border-transparent text-white hover:text-yellow-300 hover:border-yellow-300/75 focus:outline-none' }}">
                                         <i class="fas fa-cogs w-4 h-4 mr-2"></i>
                                         <div>Pengaturan</div>
                                         <div class="ms-1"><svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg></div>
