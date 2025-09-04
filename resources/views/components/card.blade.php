@@ -1,3 +1,3 @@
-<div {{ $attributes->merge(['class' => 'p-6 bg-white overflow-hidden shadow-md rounded-xl border border-gray-200']) }}>
+<div {{ $attributes->merge(['class' => 'bg-white overflow-hidden rounded-xl border border-gray-200 shadow-md transition duration-300 ease-in-out hover:shadow-lg']) }}>
     {{ $slot }}
 </div>
