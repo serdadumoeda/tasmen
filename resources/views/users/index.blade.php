@@ -72,16 +72,18 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     @php
-                                        $role = $user->role;
-                                        $badgeColor = match ($role) {
+                                        // Correctly access the first role's name from the `roles` relationship
+                                        $roleName = $user->roles->first()->name ?? 'N/A';
+                                        $badgeColor = match ($roleName) {
                                             'Superadmin', 'Menteri' => 'bg-red-100 text-red-800',
                                             'Eselon I', 'Eselon II' => 'bg-indigo-100 text-indigo-800',
                                             'Koordinator', 'Sub Koordinator' => 'bg-blue-100 text-blue-800',
+                                            'N/A' => 'bg-yellow-100 text-yellow-800',
                                             default => 'bg-gray-100 text-gray-800',
                                         };
                                     @endphp
                                     <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full {{ $badgeColor }}">
-                                        {{ $role }}
+                                        {{ $roleName }}
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
