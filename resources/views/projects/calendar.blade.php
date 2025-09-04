@@ -81,7 +81,7 @@
     </x-slot>
 
     <div class="py-12 bg-gray-50 flex-grow"> {{-- Latar belakang konsisten, flex-grow untuk mengisi ruang --}}
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 h-full"> {{-- Ensure container takes full height --}}
+        <div class="max-w-screen-2xl mx-auto sm:px-6 lg:px-8 h-full"> {{-- Ensure container takes full height --}}
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg"> {{-- Shadow dan rounded-lg konsisten --}}
                 <div class="p-6 text-gray-900">
                     <div id="calendar"></div>

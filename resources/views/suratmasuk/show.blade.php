@@ -22,7 +22,7 @@
     </x-slot>
 
     <div class="py-12 bg-gray-50">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        <div class="max-w-screen-2xl mx-auto sm:px-6 lg:px-8">
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {{-- Kolom utama untuk konten surat (lampiran) --}}
                 <div class="lg:col-span-2 bg-white overflow-hidden shadow-xl sm:rounded-lg">

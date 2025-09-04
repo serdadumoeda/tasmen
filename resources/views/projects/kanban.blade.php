@@ -56,7 +56,7 @@
 
     {{-- Badan Papan Kanban --}}
     <div class="py-12 bg-gray-50 flex-grow"> {{-- Latar belakang konsisten, flex-grow untuk mengisi ruang --}}
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 h-full"> {{-- Ensure container takes full height --}}
+        <div class="max-w-screen-2xl mx-auto sm:px-6 lg:px-8 h-full"> {{-- Ensure container takes full height --}}
             {{-- Hapus h-full dari kanban-container --}}
             <div id="kanban-container" class="bg-white p-6 rounded-xl shadow-2xl overflow-x-auto flex flex-col"> {{-- Shadow-2xl, rounded-xl, flex-col untuk kolom --}}
                 <div id="kanban-board" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 flex-grow"> {{-- Grid dengan gap yang konsisten, flex-grow --}}
