@@ -12,7 +12,7 @@ if (count($words) >= 2) {
 
 {{-- Menyatukan state Alpine.js di sini untuk mengelola semua dropdown dan modal --}}
 <nav x-data="{ open: false, showAboutModal: false }" class="bg-[#00796B] border-b border-green-800 shadow-2xl relative z-50"> 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
             <div class="flex">
                 <div class="shrink-0 flex items-center">
