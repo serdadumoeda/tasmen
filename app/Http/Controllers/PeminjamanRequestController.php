@@ -13,9 +13,7 @@ use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use App\Models\Surat;
-use App\Models\TemplateSurat;
 use App\Scopes\HierarchicalScope;
-use App\Services\ApprovalHierarchyService;
 use App\Services\NomorSuratService;
 use App\Services\SuratPeminjamanGenerator;
 use App\Notifications\PeminjamanRequested;
@@ -26,13 +24,6 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 class PeminjamanRequestController extends Controller
 {
     use AuthorizesRequests;
-
-    protected $approvalHierarchyService;
-
-    public function __construct(ApprovalHierarchyService $approvalHierarchyService)
-    {
-        $this->approvalHierarchyService = $approvalHierarchyService;
-    }
 
     public function index()
     {
@@ -74,36 +65,6 @@ class PeminjamanRequestController extends Controller
     }
 
     /**
-     * Menampilkan form untuk memulai permintaan peminjaman,
-     * yang akan dialihkan ke pembuatan surat.
-     */
-    public function create()
-    {
-        $this->authorize('create', PeminjamanRequest::class);
-
-        // Cari template surat untuk peminjaman pegawai
-        $template = TemplateSurat::where('jenis', 'peminjaman_pegawai')->first();
-
-        if (!$template) {
-            // Beri pesan error jika admin belum membuat templatenya
-            return redirect()->route('peminjaman-requests.index')
-                ->with('error', 'Template surat untuk peminjaman pegawai belum dibuat oleh Admin.');
-        }
-
-        // Ambil daftar user yang bisa dipinjam
-        $availableUsers = User::where('status', 'active')->where('id', '!=', auth()->id())->get();
-
-        // Redirect ke form pembuatan surat keluar dengan parameter
-        return redirect()->route('surat-keluar.create.from-template', [
-            'template_id' => $template->id,
-            'prefill_data' => [
-                'peminjam_id' => auth()->id(),
-                // Anda bisa tambahkan prefill lain jika perlu
-            ]
-        ]);
-    }
-
-    /**
      * Method baru untuk menghapus riwayat permintaan/persetujuan.
      */
     public function destroy(PeminjamanRequest $peminjamanRequest)
@@ -115,8 +76,83 @@ class PeminjamanRequestController extends Controller
         return redirect()->back()->with('success', 'Riwayat telah berhasil dihapus.');
     }
 
-    // The store method is now obsolete as the creation is handled via the official letter flow.
-    // public function store(...) { ... }
+    public function store(Request $request, SuratPeminjamanGenerator $suratGenerator)
+    {
+        $this->authorize('create', PeminjamanRequest::class);
+
+        $validator = Validator::make($request->all(), [
+            'project_id' => 'required|exists:projects,id',
+            'requested_user_id' => 'required|exists:users,id',
+            'message' => 'nullable|string|max:1000',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'message' => 'Data tidak valid.', 'errors' => $validator->errors()], 422);
+        }
+
+        $requestedUser = User::findOrFail($request->requested_user_id);
+        $approver = $this->findCoordinator($requestedUser);
+
+        if (!$approver) {
+            return response()->json(['success' => false, 'message' => 'Koordinator untuk anggota ini tidak dapat ditemukan.'], 422);
+        }
+
+        $peminjamanRequest = PeminjamanRequest::create($request->all() + [
+            'requester_id' => Auth::id(),
+            'approver_id' => $approver->id,
+            'due_date' => now()->addWeekdays(config('tasmen.loan_request_due_days', 3))
+        ]);
+
+        // Generate the draft letter
+        try {
+            $suratGenerator->generate($peminjamanRequest);
+        } catch (\Exception $e) {
+            // Log the error but don't fail the main request
+            \Illuminate\Support\Facades\Log::error('Gagal membuat draf surat peminjaman: ' . $e->getMessage());
+        }
+
+        Notification::send($approver, new PeminjamanRequested($peminjamanRequest));
+
+        return response()->json(['success' => true, 'message' => 'Permintaan peminjaman anggota telah berhasil dikirim.']);
+    }
+
+    private function findCoordinator(User $user): ?User
+    {
+        // PERBAIKAN: Menggunakan hierarki Unit dan relasi Role yang baru.
+        $user->load('unit.parentUnit.parentUnit'); // Load beberapa level ke atas.
+
+        $currentUnit = $user->unit;
+
+        while ($currentUnit) {
+            // Cari approver (Koordinator atau Eselon II) di unit saat ini.
+            $approver = User::where('unit_id', $currentUnit->id)
+                ->whereHas('roles', function ($query) {
+                    $query->whereIn('name', ['Koordinator', 'Eselon II']);
+                })
+                ->with('roles') // Eager load roles to use in orderBy
+                ->get()
+                ->sortBy(function ($user) {
+                    if ($user->hasRole('Koordinator')) {
+                        return 1;
+                    }
+                    if ($user->hasRole('Eselon II')) {
+                        return 2;
+                    }
+                    return 3;
+                })
+                ->first();
+
+            if ($approver) {
+                return $approver;
+            }
+
+            // Jika tidak ditemukan, pindah ke unit induk.
+            $currentUnit = $currentUnit->parentUnit;
+        }
+
+        // Jika sampai ke puncak hierarki dan tidak ditemukan, kembalikan null.
+        return null;
+    }
 
     public function approve(PeminjamanRequest $peminjamanRequest, NomorSuratService $nomorSuratService)
     {

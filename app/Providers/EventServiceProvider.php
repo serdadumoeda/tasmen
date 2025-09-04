@@ -17,17 +17,6 @@ use App\Observers\UserObserver;
 class EventServiceProvider extends ServiceProvider
 {
     /**
-     * The event to listener mappings for the application.
-     *
-     * @var array<class-string, array<int, class-string>>
-     */
-    protected $listen = [
-        \App\Events\SuratPeminjamanDisetujui::class => [
-            \App\Listeners\CreatePeminjamanRequest::class,
-        ],
-    ];
-
-    /**
      * Register services.
      */
     public function register(): void
