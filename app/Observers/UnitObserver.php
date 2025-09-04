@@ -67,7 +67,10 @@ class UnitObserver
             $this->clearHierarchyCache($unit);
             $oldParentId = $unit->getOriginal('parent_unit_id');
             if ($oldParentId) {
-                $this->clearHierarchyCache(Unit::find($oldParentId));
+                $oldParent = Unit::find($oldParentId);
+                if ($oldParent) {
+                    $this->clearHierarchyCache($oldParent);
+                }
             }
         }
     }
