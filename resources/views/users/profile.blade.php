@@ -28,7 +28,7 @@
                                 </div>
                                 <div class="flex justify-between">
                                     <dt class="font-semibold text-sm text-gray-600">Email:</dt>
-                                    <dd class="text-sm text-gray-900">{{ $user->email }}</dd>
+                                    <dd class="text-sm text-gray-900 text-right break-all">{{ $user->email }}</dd>
                                 </div>
                                 <div class="flex justify-between">
                                     <dt class="font-semibold text-sm text-gray-600">Tempat, Tgl. Lahir:</dt>

@@ -192,17 +192,10 @@
                     }, 500);
                 });
 
-                addBtn.addEventListener('click', function() {
-                    const button = this;
-                    const originalBtnText = button.innerHTML;
-                    button.disabled = true;
-                    button.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i> Memproses...`;
-
+                addBtn.addEventListener('click', () => {
                     const selectedRadio = document.querySelector('.member-radio:checked');
                     if (!selectedRadio) {
                         alert('Silakan pilih satu anggota untuk ditambahkan.');
-                        button.disabled = false;
-                        button.innerHTML = originalBtnText;
                         return;
                     }
                     
@@ -210,34 +203,32 @@
                     const memberName = selectedRadio.getAttribute('data-name');
                     const type = selectedRadio.getAttribute('data-type');
                         
+                    // Get the TomSelect instance for 'members'
                     const tomSelectInstance = membersSelect.tomselect;
 
-                    if (tomSelectInstance.getValue().includes(memberId)) {
+                    if (tomSelectInstance.getValue().includes(memberId)) { // Check if already selected in TomSelect
                         alert(`${memberName} sudah ada di dalam tim.`);
-                        button.disabled = false;
-                        button.innerHTML = originalBtnText;
                         return;
                     }
 
                     if (type === 'pool') {
+                        // Add directly to TomSelect
                         tomSelectInstance.addOption({value: memberId, text: memberName});
                         tomSelectInstance.addItem(memberId);
-                        button.disabled = false;
-                        button.innerHTML = originalBtnText;
-                        closeModal();
                     } else {
-                        sendBorrowRequest(memberId, memberName, tomSelectInstance, button, originalBtnText);
+                        // Send borrow request, then add to TomSelect (or alert failure)
+                        sendBorrowRequest(memberId, memberName, tomSelectInstance); // Pass TomSelect instance
                     }
+
+                    closeModal();
                 });
 
-                function sendBorrowRequest(memberId, memberName, tomSelectInstance, button, originalBtnText) {
-                    let projectId = '{{ $project->id }}';
+                function sendBorrowRequest(memberId, memberName, tomSelectInstance) {
+                    let projectId = '{{ $project->id }}'; // Project ID is available in this context
 
                     let message = prompt(`Anda akan mengirim permintaan untuk menugaskan "${memberName}".\nTambahkan pesan untuk atasan mereka (opsional):`);
                     
                     if (message === null) {
-                        button.disabled = false;
-                        button.innerHTML = originalBtnText;
                         return;
                     }
 
@@ -255,9 +246,9 @@
                     .then(data => {
                         if (data.success) {
                             alert(`Permintaan untuk ${memberName} telah terkirim.`);
+                            // Add the member to TomSelect with a "Pending" indicator
                             tomSelectInstance.addOption({value: memberId, text: `${memberName} [Menunggu]`});
                             tomSelectInstance.addItem(memberId);
-                            closeModal();
                         } else {
                             alert(`Gagal mengirim permintaan: ${data.message || 'Terjadi kesalahan yang tidak diketahui.'}`);
                         }
@@ -265,10 +256,6 @@
                     .catch(error => {
                         console.error('Error sending borrow request:', error);
                         alert(`Gagal mengirim permintaan: ${error.message || 'Terjadi kesalahan koneksi.'}`);
-                    })
-                    .finally(() => {
-                        button.disabled = false;
-                        button.innerHTML = originalBtnText;
                     });
                 }
             } else {
