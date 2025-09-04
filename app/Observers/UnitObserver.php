@@ -57,24 +57,17 @@ class UnitObserver
     public function updated(Unit $unit): void
     {
         if ($unit->isDirty('parent_unit_id')) {
-            // Clear cache for both old and new hierarchies
+            // The logic for incrementally updating a closure table is complex.
+            // For simplicity and guaranteed correctness, we will rebuild the entire
+            // table on any parent_unit_id change. This is less performant on
+            // large datasets but ensures data integrity.
+            Unit::rebuildPaths();
+
+            // Clear all relevant caches after the rebuild
             $this->clearHierarchyCache($unit);
             $oldParentId = $unit->getOriginal('parent_unit_id');
             if ($oldParentId) {
                 $this->clearHierarchyCache(Unit::find($oldParentId));
-            }
-
-            // A simple approach: rebuild paths for the moved unit and all its descendants.
-            $descendantIds = $unit->descendants()->pluck('id')->toArray();
-
-            // Delete old paths for the entire subtree
-            DB::table('unit_paths')->whereIn('descendant_id', $descendantIds)->delete();
-
-            // Rebuild paths for the moved unit and its descendants
-            $allUnitsInSubtree = Unit::whereIn('id', $descendantIds)->get();
-            foreach ($allUnitsInSubtree as $u) {
-                // Manually call the path insertion logic for each unit in the subtree
-                $this->rebuildPathsFor($u);
             }
         }
     }
