@@ -21,7 +21,7 @@
         </div>
     </x-slot>
 
-    <main class="max-w-7xl mx-auto px-4 py-10">
+    <main class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {{-- Menampilkan pesan sukses dari session --}}
         @if (session('success'))
             <div class="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">

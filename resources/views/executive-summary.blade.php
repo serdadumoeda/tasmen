@@ -6,7 +6,7 @@
     </x-slot>
 
     <div class="py-12 bg-gradient-to-br from-gray-50 to-gray-200"> {{-- Latar belakang gradien lembut --}}
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        <div class="max-w-screen-2xl mx-auto sm:px-6 lg:px-8">
 
             {{-- Panel Insight --}}
             <x-insight-panel :insights="$insights" :preview-insights="$previewInsights" />
