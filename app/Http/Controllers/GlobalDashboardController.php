@@ -154,8 +154,14 @@ class GlobalDashboardController extends Controller
         }
         // --- END APPROVAL INBOX LOGIC ---
 
-        // Data for Task Status Pie Chart for the logged-in user
-        $myTasks = $currentUser->tasks()->with('status')->get();
+        // Data for Task Status Pie Chart for the logged-in user and their subordinates
+        $userIds = $currentUser->getAllSubordinateIds();
+        $userIds->push($currentUser->id);
+
+        $myTasks = Task::whereHas('assignees', function ($query) use ($userIds) {
+            $query->whereIn('user_id', $userIds);
+        })->with('status')->get();
+
         $myTaskStats = $myTasks->countBy(function ($task) {
             return $task->status->key ?? 'unknown';
         });
