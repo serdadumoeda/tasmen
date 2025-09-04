@@ -26,27 +26,16 @@ class Project extends Model
      */
     public function getProgressAttribute(): int
     {
-        static $completedStatusId = null;
-
         $totalTasks = $this->tasks->count();
         if ($totalTasks === 0) {
             return 0;
         }
-
-        if ($completedStatusId === null) {
-            // Find the status ID for 'completed' and cache it for the duration of the request.
-            $completedStatus = \App\Models\TaskStatus::where('key', 'completed')->first();
-            // If not found, cache -1 to prevent re-querying on the same request.
-            $completedStatusId = $completedStatus ? $completedStatus->id : -1;
+        // It's more efficient to get the status ID once
+        $completedStatus = \App\Models\TaskStatus::where('key', 'completed')->first();
+        if (!$completedStatus) {
+            return 0; // Or handle as an error
         }
-
-        if ($completedStatusId === -1) {
-            return 0; // The 'completed' status does not exist, so progress is 0.
-        }
-
-        $completedTasks = $this->tasks->where('task_status_id', $completedStatusId)->count();
-
-        // Standard division, rounded to the nearest integer.
+        $completedTasks = $this->tasks->where('task_status_id', $completedStatus->id)->count();
         return round(($completedTasks / $totalTasks) * 100);
     }
 
