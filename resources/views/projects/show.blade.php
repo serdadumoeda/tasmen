@@ -101,7 +101,7 @@
     
     <div x-data="projectDetail()">
         <div class="py-12 bg-gray-50"> {{-- Pastikan latar belakang halaman konsisten --}}
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-8">
+            <div class="max-w-screen-2xl mx-auto sm:px-6 lg:px-8 space-y-8">
                 <div>
                     <h2 class="text-2xl font-semibold text-gray-700 mb-4">Ringkasan Kegiatan</h2>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"> {{-- Gap lebih besar --}}

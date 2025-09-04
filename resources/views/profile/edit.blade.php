@@ -7,7 +7,7 @@
 
     {{-- Latar belakang dan padding konsisten dengan halaman lain --}}
     <div class="py-12 bg-gray-50"> 
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+        <div class="max-w-screen-2xl mx-auto sm:px-6 lg:px-8 space-y-6">
             {{-- Bagian Update Profile Information --}}
             <div class="p-4 sm:p-8 bg-white shadow-xl sm:rounded-lg"> {{-- Shadow dan rounded-lg konsisten --}}
                 <div class="max-w-xl">

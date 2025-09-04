@@ -54,7 +54,7 @@
     {{-- Latar belakang dan padding konsisten dengan halaman lain --}}
     {{-- Mengubah py-12 menjadi py-8 untuk konsistensi padding vertikal --}}
     <div class="py-8 bg-gray-50" x-data="{ showDeleteModal: false }">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        <div class="max-w-screen-2xl mx-auto sm:px-6 lg:px-8">
             {{-- Mengubah shadow-sm menjadi shadow-xl dan memastikan rounded-lg --}}
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
                 <div class="p-6 text-gray-900">

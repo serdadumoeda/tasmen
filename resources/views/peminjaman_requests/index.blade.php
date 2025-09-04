@@ -6,7 +6,7 @@
     </x-slot>
 
     <div class="py-12 bg-gray-50"> {{-- Latar belakang konsisten --}}
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        <div class="max-w-screen-2xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg"> {{-- Shadow dan rounded-lg konsisten --}}
                 <div class="p-6 text-gray-900">
                     <h3 class="text-xl font-bold text-gray-800 mb-3 flex items-center">

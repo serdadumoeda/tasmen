@@ -15,7 +15,7 @@
 
     {{-- Hapus bg-gray-50 dan flex-grow karena sekarang diatur oleh main di app.blade.php --}}
     <div class="py-8"> 
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        <div class="max-w-screen-2xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white p-6 rounded-xl shadow-xl mb-6">
                 <form action="{{ route('special-assignments.index') }}" method="GET">
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
