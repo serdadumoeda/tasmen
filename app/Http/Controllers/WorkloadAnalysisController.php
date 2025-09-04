@@ -35,10 +35,20 @@ class WorkloadAnalysisController extends Controller
             $subordinatesQuery->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($search) . '%']);
         }
 
+        // --- Chart Data Preparation ---
+        // Clone the query before pagination to get all subordinates for the chart
+        $allSubordinatesForChart = (clone $subordinatesQuery)->with('tasks')->get();
+
+        $chartData = $allSubordinatesForChart->mapWithKeys(function ($user) {
+            // Use accessors from User model if they exist, otherwise calculate here
+            $totalHours = $user->tasks->sum('estimated_hours');
+            return [$user->name => $totalHours];
+        });
+
         // Ambil hasil dengan paginasi dan pertahankan query string
         $subordinates = $subordinatesQuery->paginate(20)->withQueryString();
         
-        return view('workload-analysis.index', compact('manager', 'subordinates', 'search', 'highlightUserId'));
+        return view('workload-analysis.index', compact('manager', 'subordinates', 'search', 'highlightUserId', 'chartData'));
     }
 
     /**

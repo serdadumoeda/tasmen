@@ -137,7 +137,9 @@ class GlobalDashboardController extends Controller
                 ->get();
 
             // 4. Get Tasks awaiting approval
-            $taskRequests = Task::where('status', 'pending_review')
+            $taskRequests = Task::whereHas('status', function ($query) {
+                    $query->where('key', 'pending_review');
+                })
                 ->whereHas('project.leader', function ($query) use ($currentUser) {
                     $query->where('id', $currentUser->id);
                 })

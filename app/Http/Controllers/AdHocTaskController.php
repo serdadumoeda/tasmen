@@ -97,6 +97,34 @@ class AdHocTaskController extends Controller
     /**
      * Menyimpan tugas ad-hoc baru ke database.
      */
+    public function printReport(Request $request)
+    {
+        $validated = $request->validate([
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date',
+        ]);
+
+        $user = Auth::user();
+        $startDate = $validated['start_date'] ?? now()->startOfWeek();
+        $endDate = $validated['end_date'] ?? now()->endOfWeek();
+
+        $completedStatus = \App\Models\TaskStatus::where('key', 'completed')->firstOrFail();
+
+        $completedTasks = Task::whereNull('project_id')
+            ->where('task_status_id', $completedStatus->id)
+            ->whereHas('assignees', fn ($q) => $q->where('user_id', $user->id))
+            ->whereBetween('updated_at', [$startDate, $endDate]) // Assuming updated_at tracks completion time
+            ->orderBy('updated_at', 'desc')
+            ->get();
+
+        return view('adhoc-tasks.print', [
+            'tasks' => $completedTasks,
+            'user' => $user,
+            'startDate' => $startDate,
+            'endDate' => $endDate
+        ]);
+    }
+
     public function store(Request $request)
     {
         $this->authorize('create', Task::class);
