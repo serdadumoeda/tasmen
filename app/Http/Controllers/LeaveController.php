@@ -11,7 +11,6 @@ use App\Models\Unit;
 use App\Notifications\LeaveRequestForwarded;
 use App\Notifications\LeaveRequestStatusUpdated;
 use App\Notifications\LeaveRequestSubmitted;
-use App\Services\ApprovalHierarchyService;
 use App\Services\LeaveApprovalService;
 use App\Services\LeaveDurationService;
 use App\Services\SuratCutiGenerator;
@@ -27,13 +26,6 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 class LeaveController extends Controller
 {
     use AuthorizesRequests;
-
-    protected $approvalHierarchyService;
-
-    public function __construct(ApprovalHierarchyService $approvalHierarchyService)
-    {
-        $this->approvalHierarchyService = $approvalHierarchyService;
-    }
 
     public function index(Request $request)
     {
@@ -213,12 +205,7 @@ class LeaveController extends Controller
             $attachmentPath = $request->file('attachment')->store('leave_attachments', 'private');
         }
 
-        // Cari approver menggunakan service, bukan relasi langsung
-        $approver = $this->approvalHierarchyService->findCurrentApproverFor(Auth::user());
-
-        if (!$approver) {
-            return back()->with('error', 'Atasan Anda tidak ditemukan atau belum di-set.');
-        }
+        $atasan = $user->getAtasanLangsung();
 
         $leaveRequest = LeaveRequest::create([
             'user_id' => $user->id,
@@ -230,14 +217,14 @@ class LeaveController extends Controller
             'address_during_leave' => $validated['address_during_leave'],
             'contact_during_leave' => $validated['contact_during_leave'],
             'status' => RequestStatus::PENDING,
-            'current_approver_id' => $approver->id,
+            'current_approver_id' => $atasan ? $atasan->id : null,
             'attachment_path' => $attachmentPath,
             'last_approved_step' => 0,
         ]);
 
         // Notify the direct supervisor
-        if ($approver) {
-            $approver->notify(new LeaveRequestSubmitted($leaveRequest));
+        if ($atasan) {
+            $atasan->notify(new LeaveRequestSubmitted($leaveRequest));
         }
 
         return redirect()->route('leaves.index')->with('success', 'Permintaan cuti berhasil diajukan.');

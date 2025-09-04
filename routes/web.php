@@ -151,7 +151,6 @@ Route::middleware(['auth'])->group(function () {
     // Rute API untuk mengambil anggota pool (digunakan oleh AJAX di halaman proyek)
     Route::get('/api/resource-pool/members', [ResourcePoolController::class, 'getAvailableMembers'])->name('api.resource-pool.members');
     Route::controller(PeminjamanRequestController::class)->middleware('auth')->group(function () {
-       Route::get('/peminjaman-requests/create', 'create')->name('peminjaman-requests.create');
        Route::get('/my-loan-requests', 'myRequests')->name('peminjaman-requests.my-requests');
        Route::get('/peminjaman-requests', 'index')->name('peminjaman-requests.index');
        Route::post('/peminjaman-requests', 'store')->name('peminjaman-requests.store');
@@ -211,9 +210,6 @@ Route::middleware(['auth'])->group(function () {
 
     // Route for viewing attachments securely
     Route::get('/lampiran/{lampiranSurat}', [\App\Http\Controllers\LampiranController::class, 'show'])->name('lampiran.show');
-
-    Route::get('/laporan-kinerja', [\App\Http\Controllers\LaporanKinerjaController::class, 'index'])->name('laporan-kinerja.index');
-    Route::post('/laporan-kinerja/generate', [\App\Http\Controllers\LaporanKinerjaController::class, 'generate'])->name('laporan-kinerja.generate');
 });
 
 use App\Http\Controllers\Admin\ApiKeyController;
@@ -277,7 +273,7 @@ Route::middleware(['auth', 'superadmin'])->prefix('admin')->name('admin.')->grou
     Route::resource('klasifikasi', \App\Http\Controllers\Admin\KlasifikasiSuratController::class)->names('klasifikasi');
 
     // Delegation (Plt./Plh) Management
-    Route::resource('delegasi', \App\Http\Controllers\Admin\DelegasiController::class);
+    Route::resource('delegations', DelegationController::class)->except(['show', 'edit', 'update']);
 
     Route::post('api_keys/{client}/tokens', [ApiKeyController::class, 'generateToken'])->name('api_keys.tokens.store');
     Route::delete('api_keys/{client}/tokens/{tokenId}', [ApiKeyController::class, 'revokeToken'])->name('api_keys.tokens.destroy');

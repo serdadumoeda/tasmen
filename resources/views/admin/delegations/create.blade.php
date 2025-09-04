@@ -1,58 +1,70 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Tambah Delegasi Baru') }}
+            {{ __('Buat Delegasi Baru (Plt./Plh.)') }}
         </h2>
     </x-slot>
 
     <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 bg-white border-b border-gray-200">
-                    <form action="{{ route('admin.delegasi.store') }}" method="POST">
+        <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
+            <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
+                <div class="p-6">
+                    <form action="{{ route('admin.delegations.store') }}" method="POST">
                         @csrf
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-6">
                             <div>
-                                <label for="jabatan_id" class="block font-medium text-sm text-gray-700">Jabatan yang Didelegasikan</label>
-                                <select name="jabatan_id" id="jabatan_id" class="block mt-1 w-full rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required>
-                                    @foreach($jabatans as $jabatan)
-                                        <option value="{{ $jabatan->id }}">{{ $jabatan->nama_jabatan }}</option>
+                                <label for="jabatan_id" class="block text-sm font-medium text-gray-700">Jabatan yang Didelegasikan</label>
+                                <select id="jabatan_id" name="jabatan_id" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md" required>
+                                    <option value="">-- Pilih Jabatan --</option>
+                                    @foreach ($jabatans as $jabatan)
+                                        <option value="{{ $jabatan->id }}" {{ old('jabatan_id') == $jabatan->id ? 'selected' : '' }}>
+                                            {{ $jabatan->name }} (Pejabat: {{ $jabatan->user->name }})
+                                        </option>
                                     @endforeach
                                 </select>
+                                @error('jabatan_id') <span class="text-sm text-red-600 mt-1">{{ $message }}</span> @enderror
                             </div>
+
                             <div>
-                                <label for="user_id" class="block font-medium text-sm text-gray-700">User Penerima Delegasi</label>
-                                <select name="user_id" id="user_id" class="block mt-1 w-full rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required>
-                                    @foreach($users as $user)
-                                        <option value="{{ $user->id }}">{{ $user->name }}</option>
+                                <label for="user_id" class="block text-sm font-medium text-gray-700">Didelegasikan Kepada</label>
+                                <select id="user_id" name="user_id" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md" required>
+                                    <option value="">-- Pilih Pegawai --</option>
+                                    @foreach ($users as $user)
+                                        <option value="{{ $user->id }}" {{ old('user_id') == $user->id ? 'selected' : '' }}>
+                                            {{ $user->name }}
+                                        </option>
                                     @endforeach
                                 </select>
+                                @error('user_id') <span class="text-sm text-red-600 mt-1">{{ $message }}</span> @enderror
                             </div>
+
                             <div>
-                                <label for="jenis" class="block font-medium text-sm text-gray-700">Jenis Delegasi</label>
-                                <select name="jenis" id="jenis" class="block mt-1 w-full rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required>
-                                    <option value="Plt">Plt (Pelaksana Tugas)</option>
-                                    <option value="Plh">Plh (Pelaksana Harian)</option>
+                                <label for="type" class="block text-sm font-medium text-gray-700">Tipe Delegasi</label>
+                                <select id="type" name="type" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md" required>
+                                    <option value="Plt" {{ old('type') == 'Plt' ? 'selected' : '' }}>Plt (Pelaksana Tugas)</option>
+                                    <option value="Plh" {{ old('type') == 'Plh' ? 'selected' : '' }}>Plh (Pelaksana Harian)</option>
                                 </select>
+                                @error('type') <span class="text-sm text-red-600 mt-1">{{ $message }}</span> @enderror
                             </div>
-                            <div>
-                                <label for="keterangan" class="block font-medium text-sm text-gray-700">Keterangan</label>
-                                <textarea name="keterangan" id="keterangan" rows="3" class="block mt-1 w-full rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"></textarea>
-                            </div>
-                             <div>
-                                <label for="tanggal_mulai" class="block font-medium text-sm text-gray-700">Tanggal Mulai</label>
-                                <input type="date" name="tanggal_mulai" id="tanggal_mulai" class="block mt-1 w-full rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required>
-                            </div>
-                            <div>
-                                <label for="tanggal_selesai" class="block font-medium text-sm text-gray-700">Tanggal Selesai</label>
-                                <input type="date" name="tanggal_selesai" id="tanggal_selesai" class="block mt-1 w-full rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label for="start_date" class="block text-sm font-medium text-gray-700">Tanggal Mulai</label>
+                                    <input type="date" name="start_date" id="start_date" value="{{ old('start_date') }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required>
+                                    @error('start_date') <span class="text-sm text-red-600 mt-1">{{ $message }}</span> @enderror
+                                </div>
+                                <div>
+                                    <label for="end_date" class="block text-sm font-medium text-gray-700">Tanggal Selesai</label>
+                                    <input type="date" name="end_date" id="end_date" value="{{ old('end_date') }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required>
+                                    @error('end_date') <span class="text-sm text-red-600 mt-1">{{ $message }}</span> @enderror
+                                </div>
                             </div>
                         </div>
 
-                        <div class="flex items-center justify-end mt-6">
-                            <a href="{{ route('admin.delegasi.index') }}" class="text-sm text-gray-600 hover:text-gray-900 mr-4">Batal</a>
-                            <button type="submit" class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700">
-                                Simpan
+                        <div class="flex items-center justify-end mt-8 border-t pt-6">
+                            <a href="{{ route('admin.delegations.index') }}" class="text-sm text-gray-600 hover:text-gray-900 mr-4">Batal</a>
+                            <button type="submit" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700">
+                                Simpan Delegasi
                             </button>
                         </div>
                     </form>

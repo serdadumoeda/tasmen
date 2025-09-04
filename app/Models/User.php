@@ -183,11 +183,6 @@ class User extends Authenticatable
         return $this->belongsToMany(Role::class);
     }
 
-    public function collaborativeSurats()
-    {
-        return $this->belongsToMany(Surat::class, 'surat_collaborators');
-    }
-
     // --- QUERY SCOPES ---
 
     public function scopeTeamMembers($query, User $manager)
