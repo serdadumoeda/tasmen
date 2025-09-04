@@ -22,7 +22,7 @@
     </x-slot>
 
     <div class="py-12 bg-gray-50">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        <div class="max-w-screen-2xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white p-6 rounded-xl shadow-xl mb-6">
                 <form action="{{ route('users.index') }}" method="GET">
                     <div class="flex items-center space-x-3">
