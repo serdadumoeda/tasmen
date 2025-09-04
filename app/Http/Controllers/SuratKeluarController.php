@@ -91,10 +91,18 @@ class SuratKeluarController extends Controller
             'status' => 'draft',
             'pembuat_id' => Auth::id(),
             'konten' => $validated['konten_final'] ?? null,
+            'template_surat_id' => $validated['template_id'] ?? null,
             'collaborators' => $validated['collaborators'] ?? null,
         ];
 
         $surat = Surat::create($suratData);
+
+        // Tambahkan logika untuk menyimpan kolaborator
+        $collaboratorIds = $request->input('collaborators', []);
+        // Always include the author as a collaborator
+        $collaboratorIds[] = Auth::id();
+
+        $surat->collaborators()->sync(array_unique($collaboratorIds));
 
         if ($request->input('submission_type') === 'upload') {
             if ($request->hasFile('lampiran')) {
@@ -162,6 +170,11 @@ class SuratKeluarController extends Controller
             $surat->save();
 
             $surat->recordActivity('approved_suratkeluar');
+
+            // Cek jika ini surat peminjaman dan trigger event jika iya
+            if ($surat->template && $surat->template->jenis === 'peminjaman_pegawai') {
+                event(new \App\Events\SuratPeminjamanDisetujui($surat));
+            }
 
             return redirect()->route('surat-keluar.show', $surat)->with('success', 'Surat berhasil disetujui dan PDF telah ditandatangani.');
 

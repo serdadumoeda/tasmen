@@ -27,13 +27,17 @@ class Surat extends Model
         'suratable_id',     // tambahkan ke fillable
         'suratable_type',   // tambahkan ke fillable
         'klasifikasi_id',
-        'collaborators',
+        'template_surat_id',
     ];
 
     protected $casts = [
         'tanggal_surat' => 'date',
-        'collaborators' => 'array',
     ];
+
+    public function template(): BelongsTo
+    {
+        return $this->belongsTo(TemplateSurat::class, 'template_surat_id');
+    }
 
     public function pembuat(): BelongsTo
     {
@@ -83,15 +87,9 @@ class Surat extends Model
         return null;
     }
 
-    /**
-     * Check if a user is a collaborator on this letter.
-     *
-     * @param User $user
-     * @return boolean
-     */
-    public function isCollaborator(User $user): bool
+    public function collaborators()
     {
-        return in_array($user->id, $this->collaborators ?? []);
+        return $this->belongsToMany(User::class, 'surat_collaborators');
     }
 
     /**
