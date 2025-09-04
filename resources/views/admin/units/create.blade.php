@@ -6,7 +6,7 @@
     </x-slot>
 
     <div class="py-12 bg-gray-50"> {{-- Latar belakang konsisten --}}
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        <div class="max-w-screen-2xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg"> {{-- Shadow dan rounded-lg konsisten --}}
                 <div class="p-6 bg-white border-b border-gray-200">
                     <form action="{{ route('admin.units.store') }}" method="POST" x-data="{ isSubmitting: false }" @submit="isSubmitting = true">
