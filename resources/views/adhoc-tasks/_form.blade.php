@@ -17,8 +17,9 @@
 
     @if (Auth::user()->canManageUsers())
         <div>
-            <label for="assignees" class="block font-semibold text-sm text-gray-700 mb-1">Tugaskan Kepada <span class="text-red-500">*</span></label> {{-- Menambahkan font-semibold dan mb-1 --}}
-            <select name="assignees[]" id="assignees" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" multiple required> {{-- Mengubah rounded-md menjadi rounded-lg, menambahkan fokus, dan transisi --}}
+            <label for="assignees" class="block font-semibold text-sm text-gray-700 mb-1">Tugaskan Kepada <span class="text-red-500">*</span></label>
+            {{-- MODIFIKASI: Tambahkan kelas tom-select dan placeholder --}}
+            <select name="assignees[]" id="assignees" class="tom-select" multiple required placeholder="Pilih anggota tim...">
                 @php
                     $assignedUserIds = old('assignees', isset($task) ? $task->assignees->pluck('id')->all() : []);
                 @endphp
@@ -28,37 +29,40 @@
                     </option>
                 @endforeach
             </select>
-            <p class="text-xs text-gray-500 mt-1">Anda bisa memilih lebih dari satu orang dengan menahan tombol Ctrl/Cmd.</p>
+            <p class="text-xs text-gray-500 mt-1">Anda bisa memilih lebih dari satu orang.</p>
         </div>
     @else
         <input type="hidden" name="assignees[]" value="{{ Auth::id() }}">
     @endif
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6"> {{-- Mengubah gap-4 menjadi gap-6 --}}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
             <label for="start_date" class="block font-semibold text-sm text-gray-700 mb-1">Tanggal Mulai</label>
             <input type="date" name="start_date" id="start_date" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" value="{{ old('start_date', optional($task->start_date)->format('Y-m-d')) }}">
         </div>
         <div>
-            <label for="deadline" class="block font-semibold text-sm text-gray-700 mb-1">Deadline <span class="text-red-500">*</span></label> {{-- Menambahkan font-semibold dan mb-1 --}}
-            <input type="date" name="deadline" id="deadline" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" value="{{ old('deadline', optional($task->deadline)->format('Y-m-d')) }}" required> {{-- Mengubah rounded-md menjadi rounded-lg, menambahkan fokus, dan transisi --}}
+            <label for="deadline" class="block font-semibold text-sm text-gray-700 mb-1">Deadline <span class="text-red-500">*</span></label>
+            <input type="date" name="deadline" id="deadline" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" value="{{ old('deadline', optional($task->deadline)->format('Y-m-d')) }}" required>
         </div>
         <div>
-            <label for="estimated_hours" class="block font-semibold text-sm text-gray-700 mb-1">Estimasi Jam <span class="text-red-500">*</span></label> {{-- Menambahkan font-semibold dan mb-1 --}}
-            <input type="number" step="0.5" name="estimated_hours" id="estimated_hours" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" value="{{ old('estimated_hours', $task->estimated_hours ?? '') }}" placeholder="Contoh: 2.5" required> {{-- Mengubah rounded-md menjadi rounded-lg, menambahkan fokus, dan transisi --}}
+            <label for="estimated_hours" class="block font-semibold text-sm text-gray-700 mb-1">Estimasi Jam <span class="text-red-500">*</span></label>
+            <input type="number" step="0.5" name="estimated_hours" id="estimated_hours" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" value="{{ old('estimated_hours', $task->estimated_hours ?? '') }}" placeholder="Contoh: 2.5" required>
         </div>
     </div>
     
     <div>
         <label for="priority_level_id" class="block font-semibold text-sm text-gray-700 mb-1">Prioritas</label>
+        {{-- MODIFIKASI: Tambahkan placeholder --}}
         <select name="priority_level_id" id="priority_level_id" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" required>
+            <option value="">-- Pilih Prioritas --</option>
             @php
-                // Find the default 'medium' priority ID if it exists, otherwise fallback to any first level.
-                $defaultPriorityId = $priorities->firstWhere('key', 'medium')?->id ?? $priorities->first()?->id;
+                // Find the default 'medium' priority ID if it exists, otherwise fallback to null.
+                $defaultPriorityId = $priorities->firstWhere('name', 'Medium')?->id;
             @endphp
             @foreach($priorities as $priority)
+                {{-- MODIFIKASI: Ganti $priority->label menjadi $priority->name --}}
                 <option value="{{ $priority->id }}" @selected(old('priority_level_id', $task->priority_level_id ?? $defaultPriorityId) == $priority->id)>
-                    {{ $priority->label }}
+                    {{ $priority->name }}
                 </option>
             @endforeach
         </select>
