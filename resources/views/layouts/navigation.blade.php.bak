@@ -22,22 +22,20 @@ if (count($words) >= 2) {
                 </div>
 
                 <!-- Navigation Links -->
-                <div class="hidden space-x-2 sm:-my-px sm:ms-10 sm:flex items-center">
-
-                    {{-- Dasbor --}}
-                    <div class="nav-item-container">
-                        <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard', 'executive.summary')" class="nav-icon-link">
-                            <i class="fas fa-tachometer-alt text-xl"></i>
-                        </x-nav-link>
-                        <div class="nav-tooltip">{{ __('Dasbor') }}</div>
-                    </div>
+                <div class="hidden space-x-4 sm:-my-px sm:ms-10 sm:flex">
+                    <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard', 'executive.summary')">
+                        <i class="fas fa-tachometer-alt w-4 h-4 mr-2"></i>
+                        {{ __('Dasbor') }}
+                    </x-nav-link>
 
                     {{-- Dropdown Menu Kerja --}}
-                    <div class="nav-item-container">
+                    <div class="hidden sm:flex sm:items-center">
                         <x-dropdown align="left" width="60">
                             <x-slot name="trigger">
-                                <button class="nav-icon-link inline-flex items-center justify-center text-white focus:outline-none transition duration-150 ease-in-out {{ (request()->routeIs(['global.dashboard', 'adhoc-tasks.*', 'special-assignments.*', 'projects.show', 'projects.create.*'])) && !request()->routeIs('executive.summary') ? 'active' : '' }}">
-                                    <i class="fas fa-briefcase text-xl"></i>
+                                <button class="inline-flex items-center px-3 py-2 border-b-2 text-sm font-medium leading-5 transition duration-150 ease-in-out {{ (request()->routeIs(['global.dashboard', 'adhoc-tasks.*', 'special-assignments.*', 'projects.show', 'projects.create.*'])) && !request()->routeIs('executive.summary') ? 'border-yellow-300 text-white bg-green-700/50' : 'border-transparent text-white hover:text-yellow-300 hover:border-yellow-300/75 focus:outline-none' }}">
+                                    <i class="fas fa-briefcase w-4 h-4 mr-2"></i>
+                                    <div>Kerja</div>
+                                    <div class="ms-1"><svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg></div>
                                 </button>
                             </x-slot>
                             <x-slot name="content">
@@ -49,15 +47,16 @@ if (count($words) >= 2) {
                                 <x-dropdown-link :href="route('special-assignments.index')">SK Penugasan</x-dropdown-link>
                             </x-slot>
                         </x-dropdown>
-                        <div class="nav-tooltip">Kerja</div>
                     </div>
 
                     {{-- Dropdown Persuratan --}}
-                    <div class="nav-item-container">
+                    <div class="hidden sm:flex sm:items-center">
                         <x-dropdown align="left" width="60">
                             <x-slot name="trigger">
-                                <button class="nav-icon-link inline-flex items-center justify-center text-white focus:outline-none transition duration-150 ease-in-out {{ request()->routeIs(['surat-masuk.*', 'surat-keluar.*', 'templatesurat.*', 'admin.klasifikasi.*']) ? 'active' : '' }}">
-                                    <i class="fas fa-envelope-open-text text-xl"></i>
+                                <button class="inline-flex items-center px-3 py-2 border-b-2 text-sm font-medium leading-5 transition duration-150 ease-in-out {{ request()->routeIs(['surat-masuk.*', 'surat-keluar.*', 'templatesurat.*', 'admin.klasifikasi.*']) ? 'border-yellow-300 text-white bg-green-700/50' : 'border-transparent text-white hover:text-yellow-300 hover:border-yellow-300/75 focus:outline-none' }}">
+                                    <i class="fas fa-envelope-open-text w-4 h-4 mr-2"></i>
+                                    <div>Persuratan</div>
+                                    <div class="ms-1"><svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg></div>
                                 </button>
                             </x-slot>
                             <x-slot name="content">
@@ -71,24 +70,23 @@ if (count($words) >= 2) {
                                 <x-dropdown-link :href="route('arsip.index')">Arsip Digital</x-dropdown-link>
                             </x-slot>
                         </x-dropdown>
-                        <div class="nav-tooltip">Persuratan</div>
                     </div>
 
                     {{-- Menu Cuti --}}
-                    <div class="nav-item-container">
-                        <x-nav-link :href="route('leaves.index')" :active="request()->routeIs('leaves.*')" class="nav-icon-link">
-                            <i class="fas fa-calendar-alt text-xl"></i>
-                        </x-nav-link>
-                        <div class="nav-tooltip">{{ __('Cuti') }}</div>
-                    </div>
+                    <x-nav-link :href="route('leaves.index')" :active="request()->routeIs('leaves.*')">
+                        <i class="fas fa-calendar-alt w-4 h-4 mr-2"></i>
+                        {{ __('Cuti') }}
+                    </x-nav-link>
 
                     {{-- Dropdown Laporan & Analisis --}}
                     @if (Auth::user()->isTopLevelManager())
-                        <div class="nav-item-container">
+                        <div class="hidden sm:flex sm:items-center">
                             <x-dropdown align="left" width="60">
                                 <x-slot name="trigger">
-                                    <button class="nav-icon-link inline-flex items-center justify-center text-white focus:outline-none transition duration-150 ease-in-out {{ request()->routeIs(['workload.analysis', 'weekly-workload.index']) ? 'active' : '' }}">
-                                        <i class="fas fa-chart-pie text-xl"></i>
+                                    <button class="inline-flex items-center px-3 py-2 border-b-2 text-sm font-medium leading-5 transition duration-150 ease-in-out {{ request()->routeIs(['workload.analysis', 'weekly-workload.index']) ? 'border-yellow-300 text-white bg-green-700/50' : 'border-transparent text-white hover:text-yellow-300 hover:border-yellow-300/75 focus:outline-none' }}">
+                                        <i class="fas fa-chart-pie w-4 h-4 mr-2"></i>
+                                        <div>Laporan & Analisis</div>
+                                        <div class="ms-1"><svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg></div>
                                     </button>
                                 </x-slot>
                                 <x-slot name="content">
@@ -96,17 +94,18 @@ if (count($words) >= 2) {
                                     <x-dropdown-link :href="route('weekly-workload.index')">Beban Kerja Mingguan</x-dropdown-link>
                                 </x-slot>
                             </x-dropdown>
-                            <div class="nav-tooltip">Laporan & Analisis</div>
                         </div>
                     @endif
 
                     {{-- Dropdown Manajemen Tim --}}
                     @if(Auth::user()->canManageUsers())
-                        <div class="nav-item-container">
+                        <div class="hidden sm:flex sm:items-center">
                             <x-dropdown align="left" width="60">
                                 <x-slot name="trigger">
-                                    <button class="nav-icon-link inline-flex items-center justify-center text-white focus:outline-none transition duration-150 ease-in-out {{ request()->routeIs(['users.*', 'admin.units.*', 'resource-pool.*', 'peminjaman-requests.*']) && !request()->routeIs('admin.api_keys.*', 'admin.activities.index') ? 'active' : '' }}">
-                                        <i class="fas fa-users-cog text-xl"></i>
+                                    <button class="inline-flex items-center px-3 py-2 border-b-2 text-sm font-medium leading-5 transition duration-150 ease-in-out {{ request()->routeIs(['users.*', 'admin.units.*', 'resource-pool.*', 'peminjaman-requests.*']) && !request()->routeIs('admin.api_keys.*', 'admin.activities.index') ? 'border-yellow-300 text-white bg-green-700/50' : 'border-transparent text-white hover:text-yellow-300 hover:border-yellow-300/75 focus:outline-none' }}">
+                                        <i class="fas fa-users-cog w-4 h-4 mr-2"></i>
+                                        <div>Tim</div>
+                                        <div class="ms-1"><svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg></div>
                                     </button>
                                 </x-slot>
                                 <x-slot name="content">
@@ -121,17 +120,18 @@ if (count($words) >= 2) {
                                     <x-dropdown-link :href="route('resource-pool.index')">Resource Pool</x-dropdown-link>
                                 </x-slot>
                             </x-dropdown>
-                            <div class="nav-tooltip">Tim</div>
                         </div>
                     @endif
 
                     {{-- Dropdown Pengaturan Sistem (Hanya untuk Superadmin) --}}
                     @if(Auth::user()->isSuperAdmin())
-                        <div class="nav-item-container">
+                        <div class="hidden sm:flex sm:items-center">
                             <x-dropdown align="left" width="60">
                                 <x-slot name="trigger">
-                                    <button class="nav-icon-link inline-flex items-center justify-center text-white focus:outline-none transition duration-150 ease-in-out {{ request()->routeIs(['admin.settings.*', 'admin.api_keys.*', 'admin.activities.index', 'templatesurat.*']) ? 'active' : '' }}">
-                                        <i class="fas fa-cogs text-xl"></i>
+                                    <button class="inline-flex items-center px-3 py-2 border-b-2 text-sm font-medium leading-5 transition duration-150 ease-in-out {{ request()->routeIs(['admin.settings.*', 'admin.api_keys.*', 'admin.activities.index', 'templatesurat.*']) ? 'border-yellow-300 text-white bg-green-700/50' : 'border-transparent text-white hover:text-yellow-300 hover:border-yellow-300/75 focus:outline-none' }}">
+                                        <i class="fas fa-cogs w-4 h-4 mr-2"></i>
+                                        <div>Pengaturan</div>
+                                        <div class="ms-1"><svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg></div>
                                     </button>
                                 </x-slot>
                                 <x-slot name="content">
@@ -151,7 +151,6 @@ if (count($words) >= 2) {
                                     <x-dropdown-link :href="route('admin.activities.index')">Log Aktivitas</x-dropdown-link>
                                 </x-slot>
                             </x-dropdown>
-                            <div class="nav-tooltip">Pengaturan</div>
                         </div>
                     @endif
                 </div>
@@ -224,7 +223,6 @@ if (count($words) >= 2) {
         </div>
     </div>
 
-    {{-- Responsive Navigation Menu --}}
     <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
         <div class="pt-2 pb-3 space-y-1">
              @if(Auth::user()->isTopLevelManager())
@@ -265,7 +263,7 @@ if (count($words) >= 2) {
             <div class="text-gray-700 text-base leading-relaxed mb-4">
                 Aplikasi ini adalah sebuah platform manajemen kegiatan dan tugas yang dirancang untuk membantu tim mengelola alur kerja, melacak progres, dan meningkatkan kolaborasi secara efisien.
             </div>
-            
+
             <div class="mt-4 pt-4 border-t border-gray-200">
                 <h4 class="font-bold text-lg text-gray-800 mb-3 flex items-center">
                     <i class="fas fa-users-line mr-2 text-blue-600"></i> Tim Kegiatan Web
