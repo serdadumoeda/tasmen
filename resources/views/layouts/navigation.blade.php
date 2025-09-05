@@ -207,7 +207,7 @@ if (count($words) >= 2) {
                             <div class="rounded-xl shadow-2xl py-1 bg-white ring-1 ring-black ring-opacity-10">
                                 <div class="px-4 py-2 border-b border-gray-200">
                                     <div class="font-medium text-base text-gray-800">{{ Auth::user()->name }}</div>
-                                    <div class="font-medium text-sm text-gray-500">{{ Auth::user()->email }}</div>
+                                    <div class="font-medium text-sm text-gray-500 break-words">{{ Auth::user()->email }}</div>
                                 </div>
                                 <x-dropdown-link :href="route('profile.edit')" class="hover:bg-gray-100 transition-colors duration-100"><i class="fa-solid fa-user-gear w-4 mr-2 text-gray-600"></i>Profil</x-dropdown-link>
                                 <div class="border-t border-gray-200"></div>
