@@ -32,8 +32,10 @@ graph TD
     classDef io fill:#F4ECF7,stroke:#8E44AD,color:#6C3483,stroke-width:1px;
 
     subgraph "A. Alur Utama"
-        A1["<i class='fa fa-list-alt'></i> Halaman Daftar Surat Keluar"]:::page -->|Klik 'Buat Surat Baru'| B_Flow["<i class='fa fa-plus-circle'></i> Alur Pembuatan Surat"];
-        A1 -->|Klik 'Detail'| C_Flow["<i class='fa fa-file-alt'></i> Alur Detail & Persetujuan"];
+        A1["<i class='fa fa-list-alt'></i> Halaman Daftar Surat Keluar"]:::page -->|Klik 'Buat Surat Baru'| LinkTo_B["<i class='fa fa-plus-circle'></i> Buat Surat"];
+        A1 -->|Klik 'Detail'| LinkTo_C["<i class='fa fa-file-alt'></i> Lihat Detail"];
+        LinkTo_B --> B1;
+        LinkTo_C --> C1;
     end
 
     subgraph B_Flow [B. Alur Pembuatan Surat Keluar]
