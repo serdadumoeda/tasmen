@@ -76,8 +76,9 @@ input:checked ~ .block {
     border-color: transparent transparent #2d3748 transparent; /* Panah menunjuk ke atas */
 }
 
-/* Modifier untuk tooltip di samping kanan */
-.nav-tooltip.tooltip-right {
+/* Saat submenu terbuka (menggunakan :has() untuk mengecek keberadaan .submenu-is-open),
+   ubah posisi tooltip ke samping kanan. */
+.nav-item-container:has(.submenu-is-open) .nav-tooltip {
     top: 50%;
     left: 100%;
     transform: translateY(-50%);
@@ -85,8 +86,8 @@ input:checked ~ .block {
     margin-left: 12px; /* Jarak dari ikon di samping */
 }
 
-/* Panah untuk tooltip di samping kanan */
-.nav-tooltip.tooltip-right::after {
+/* Sesuaikan panah tooltip saat berada di samping kanan */
+.nav-item-container:has(.submenu-is-open) .nav-tooltip::after {
     top: 50%;
     right: 100%; /* Posisi di kiri tooltip, menunjuk ke ikon */
     left: auto;
@@ -105,20 +106,35 @@ input:checked ~ .block {
 
 /* Penyesuaian untuk ikon di dalam link navigasi */
 .nav-icon-link {
+    position: relative; /* Diperlukan untuk posisi pseudo-element ::after */
     display: inline-flex;
     align-items: center;
     justify-content: center;
     width: 40px; /* Lebar tetap */
     height: 40px; /* Tinggi tetap */
     border-radius: 50%; /* Membuatnya bulat */
-    transition: background-color 0.2s ease-in-out;
+    transition: background-color 0.2s ease-in-out, transform 0.2s ease-in-out; /* Tambahkan transisi untuk transform */
 }
 
 .nav-icon-link:hover {
     background-color: rgba(255, 255, 255, 0.15); /* Efek highlight saat hover */
+    transform: scale(1.1); /* Efek zoom saat hover */
 }
 
 .nav-icon-link.active {
     background-color: rgba(255, 255, 255, 0.25); /* Latar belakang lebih jelas untuk link aktif */
     border-bottom: none !important; /* Menghilangkan border-bottom default dari x-nav-link */
+}
+
+/* Indikator setengah lingkaran untuk item aktif */
+.nav-icon-link.active::after {
+    content: '';
+    position: absolute;
+    bottom: -4px; /* Posisi di bawah ikon */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 16px; /* Lebar setengah lingkaran */
+    height: 8px; /* Tinggi setengah lingkaran (setengah dari lebar) */
+    background-color: #FFC107; /* Warna kuning sebagai indikator */
+    border-radius: 8px 8px 0 0; /* Membuat bentuk setengah lingkaran atas */
 }

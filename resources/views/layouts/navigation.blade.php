@@ -53,7 +53,7 @@ if (count($words) >= 2) {
                                 <x-dropdown-link :href="route('special-assignments.index')">SK Penugasan</x-dropdown-link>
                             </x-slot>
                         </x-dropdown>
-                        <div class="nav-tooltip tooltip-right">Kerja</div>
+                        <div class="nav-tooltip">Kerja</div>
                     </div>
 
                     {{-- Dropdown Persuratan --}}
@@ -75,7 +75,7 @@ if (count($words) >= 2) {
                                 <x-dropdown-link :href="route('arsip.index')">Arsip Digital</x-dropdown-link>
                             </x-slot>
                         </x-dropdown>
-                        <div class="nav-tooltip tooltip-right">Persuratan</div>
+                        <div class="nav-tooltip">Persuratan</div>
                     </div>
 
                     {{-- Menu Cuti --}}
@@ -100,7 +100,7 @@ if (count($words) >= 2) {
                                     <x-dropdown-link :href="route('weekly-workload.index')">Beban Kerja Mingguan</x-dropdown-link>
                                 </x-slot>
                             </x-dropdown>
-                            <div class="nav-tooltip tooltip-right">Laporan & Analisis</div>
+                            <div class="nav-tooltip">Laporan & Analisis</div>
                         </div>
                     @endif
 
@@ -125,7 +125,7 @@ if (count($words) >= 2) {
                                     <x-dropdown-link :href="route('resource-pool.index')">Resource Pool</x-dropdown-link>
                                 </x-slot>
                             </x-dropdown>
-                            <div class="nav-tooltip tooltip-right">Tim</div>
+                            <div class="nav-tooltip">Tim</div>
                         </div>
                     @endif
 
@@ -155,7 +155,7 @@ if (count($words) >= 2) {
                                     <x-dropdown-link :href="route('admin.activities.index')">Log Aktivitas</x-dropdown-link>
                                 </x-slot>
                             </x-dropdown>
-                            <div class="nav-tooltip tooltip-right">Pengaturan</div>
+                            <div class="nav-tooltip">Pengaturan</div>
                         </div>
                     @endif
                 </div>

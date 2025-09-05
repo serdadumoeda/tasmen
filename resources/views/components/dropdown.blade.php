@@ -23,7 +23,7 @@ $width = match ($width) {
                 content.style.left = `${rect.left}px`;
             }
         }
-    }" @click.outside="open = false" @close.stop="open = false">
+    }" @click.outside="open = false" @close.stop="open = false" :class="{'submenu-is-open': open}">
     <div @click="open = ! open; if (open) { $nextTick(() => position()) }" x-ref="trigger">
         {{ $trigger }}
     </div>
