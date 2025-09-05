@@ -16,22 +16,15 @@ class Project extends Model
     protected $fillable = ['name', 'description', 'leader_id', 'owner_id', 'start_date', 'end_date'];
 
     /**
-     * [REFACTOR] Cache the 'completed' status ID to avoid repeated queries.
-     * @var int|null
-     */
-    protected static ?int $completedStatusId = null;
-
-    /**
-     * [REFACTOR] A dedicated relationship for completed tasks.
-     * This is more efficient and reliable than filtering the general tasks collection.
+     * [REFACTOR 2.0] A dedicated relationship for completed tasks.
+     * This version uses a `whereHas` clause, making it more resilient to data inconsistencies
+     * as it doesn't rely on a pre-fetched ID.
      */
     public function completedTasks()
     {
-        if (is_null(self::$completedStatusId)) {
-            self::$completedStatusId = TaskStatus::where('key', 'completed')->value('id') ?? -1;
-        }
-
-        return $this->hasMany(Task::class)->where('task_status_id', self::$completedStatusId);
+        return $this->hasMany(Task::class)->whereHas('status', function ($query) {
+            $query->where('key', 'completed');
+        });
     }
 
     /**
