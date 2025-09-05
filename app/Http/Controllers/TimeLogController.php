@@ -76,47 +76,64 @@ class TimeLogController extends Controller
 
     public function storeManual(Request $request, Task $task)
     {
-        $validated = $request->validate([
-            'duration_in_minutes' => 'required|integer|min:1',
-            'log_date' => 'required|date',
-        ]);
-
-        $startTime = Carbon::parse($validated['log_date']);
-        $durationInMinutes = (int) $validated['duration_in_minutes'];
-        $endTime = $startTime->copy()->addMinutes($durationInMinutes);
-
-        // Validasi tumpang tindih
-        $isOverlapping = TimeLog::where('user_id', Auth::id())
-            ->where('start_time', '<', $endTime)
-            ->where('end_time', '>', $startTime)
-            ->exists();
-
-        if ($isOverlapping) {
-            return back()->withInput()->with('error', 'Waktu yang Anda masukkan tumpang tindih dengan catatan waktu yang sudah ada.');
-        }
-
-        $timeLog = $task->timeLogs()->create([
-            'user_id' => Auth::id(),
-            'start_time' => $startTime,
-            'end_time' => $endTime,
-            'duration_in_minutes' => $durationInMinutes,
-        ]);
-
-        if ($request->wantsJson()) {
-            // Hitung ulang total waktu tercatat untuk tugas ini
-            $totalMinutes = $task->timeLogs()->sum('duration_in_minutes');
-            $hours = floor($totalMinutes / 60);
-            $minutes = $totalMinutes % 60;
-
-            return response()->json([
-                'message' => 'Catatan waktu berhasil ditambahkan.',
-                'time_log_summary' => [
-                    'estimated' => (float)$task->estimated_hours ?? 0,
-                    'logged' => "{$hours} jam {$minutes} menit"
-                ]
+        try {
+            $validated = $request->validate([
+                'duration_in_minutes' => 'required|integer|min:1',
+                'log_date' => 'required|date',
             ]);
-        }
 
-        return back()->with('success', 'Catatan waktu berhasil ditambahkan.');
+            $startTime = Carbon::parse($validated['log_date']);
+            $durationInMinutes = (int) $validated['duration_in_minutes'];
+            $endTime = $startTime->copy()->addMinutes($durationInMinutes);
+
+            // Validasi tumpang tindih
+            $isOverlapping = TimeLog::where('user_id', Auth::id())
+                ->where('start_time', '<', $endTime)
+                ->where('end_time', '>', $startTime)
+                ->exists();
+
+            if ($isOverlapping) {
+                if ($request->wantsJson()) {
+                    return response()->json([
+                        'message' => 'Waktu yang Anda masukkan tumpang tindih dengan catatan waktu yang sudah ada.'
+                    ], 422);
+                }
+                return back()->withInput()->with('error', 'Waktu yang Anda masukkan tumpang tindih dengan catatan waktu yang sudah ada.');
+            }
+
+            $timeLog = $task->timeLogs()->create([
+                'user_id' => Auth::id(),
+                'start_time' => $startTime,
+                'end_time' => $endTime,
+                'duration_in_minutes' => $durationInMinutes,
+            ]);
+
+            if ($request->wantsJson()) {
+                // Hitung ulang total waktu tercatat untuk tugas ini
+                $totalMinutes = $task->timeLogs()->sum('duration_in_minutes');
+                $hours = floor($totalMinutes / 60);
+                $minutes = $totalMinutes % 60;
+
+                return response()->json([
+                    'message' => 'Catatan waktu berhasil ditambahkan.',
+                    'time_log_summary' => [
+                        'estimated' => (float)$task->estimated_hours ?? 0,
+                        'logged' => "{$hours} jam {$minutes} menit"
+                    ]
+                ]);
+            }
+
+            return back()->with('success', 'Catatan waktu berhasil ditambahkan.');
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'message' => 'Data yang diberikan tidak valid.',
+                    'errors' => $e->errors(),
+                ], 422);
+            }
+            // Untuk non-AJAX, biarkan Laravel menangani redirect
+            throw $e;
+        }
     }
 }
