@@ -8,6 +8,9 @@ use Illuminate\Support\Facades\View;
 use App\Http\View\Composers\ProjectListComposer;
 use App\Services\BreadcrumbService;
 use App\Http\View\Composers\BreadcrumbComposer;
+use App\Services\PageTitleService;
+use App\Services\NotificationService;
+use App\Http\View\Composers\PageTitleComposer;
 
 
 use App\Models\Project;
@@ -42,6 +45,12 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(BreadcrumbService::class, function ($app) {
             return new BreadcrumbService();
         });
+        $this->app->singleton(PageTitleService::class, function ($app) {
+            return new PageTitleService();
+        });
+        $this->app->singleton(NotificationService::class, function ($app) {
+            return new NotificationService();
+        });
     }
 
     /**
@@ -61,5 +70,6 @@ class AppServiceProvider extends ServiceProvider
         // Daftarkan View Composer
         View::composer('layouts.navigation', ProjectListComposer::class);
         View::composer('components.breadcrumbs', BreadcrumbComposer::class);
+        View::composer('layouts.app', PageTitleComposer::class);
     }
 }

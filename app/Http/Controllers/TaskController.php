@@ -16,6 +16,7 @@ use App\Notifications\TaskRequiresApproval;
 use App\Models\SubTask;
 use App\Models\Unit; // Tambahkan model Unit
 use App\Services\BreadcrumbService;
+use App\Services\PageTitleService;
 
 class TaskController extends Controller
 {
@@ -55,7 +56,7 @@ class TaskController extends Controller
         return redirect()->route('projects.show', $project)->with('success', 'Tugas baru berhasil ditambahkan!');
     }
 
-    public function edit(Task $task, BreadcrumbService $breadcrumbService)
+    public function edit(Task $task, BreadcrumbService $breadcrumbService, PageTitleService $pageTitleService)
     {
         // Eager load relasi untuk efisiensi
         $task->load('assignees', 'attachments', 'project.members');
@@ -63,6 +64,7 @@ class TaskController extends Controller
         
         $user = Auth::user();
         $assignableUsers = collect();
+        $pageTitleService->setTitle('Edit Tugas: ' . $task->title);
 
         if ($task->project_id) {
             // Breadcrumb untuk tugas proyek
