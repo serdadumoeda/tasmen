@@ -10,6 +10,8 @@ use App\Notifications\SuratDisposisiNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use App\Services\PageTitleService;
+use App\Services\BreadcrumbService;
 use Illuminate\Support\Str;
 
 class SuratMasukController extends Controller
@@ -134,5 +136,13 @@ class SuratMasukController extends Controller
         $surat->delete();
 
         return redirect()->route('surat-masuk.index')->with('success', 'Surat masuk berhasil dihapus.');
+    }
+
+    public function showWorkflow(PageTitleService $pageTitleService, BreadcrumbService $breadcrumbService)
+    {
+        $pageTitleService->setTitle('Alur Kerja Surat Masuk');
+        $breadcrumbService->add('Surat Masuk', route('surat-masuk.index'));
+        $breadcrumbService->add('Alur Kerja');
+        return view('suratmasuk.workflow');
     }
 }
