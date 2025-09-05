@@ -1,8 +1,14 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Arsip Digital Persuratan') }}
-        </h2>
+        <div class="flex justify-between items-center">
+            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+                {{ __('Arsip Digital Persuratan') }}
+            </h2>
+            <x-secondary-button :href="route('arsip.workflow')">
+                <i class="fas fa-sitemap mr-2"></i>
+                Lihat Alur Kerja
+            </x-secondary-button>
+        </div>
     </x-slot>
 
     <div class="py-12">

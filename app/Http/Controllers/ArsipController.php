@@ -7,6 +7,8 @@ use App\Models\Berkas;
 use App\Models\Surat;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Services\PageTitleService;
+use App\Services\BreadcrumbService;
 
 class ArsipController extends Controller
 {
@@ -80,5 +82,13 @@ class ArsipController extends Controller
         $berkas->surat()->syncWithoutDetaching($validated['surat_ids']);
 
         return back()->with('success', count($validated['surat_ids']) . ' surat berhasil ditambahkan ke berkas "' . $berkas->name . '".');
+    }
+
+    public function showWorkflow(PageTitleService $pageTitleService, BreadcrumbService $breadcrumbService)
+    {
+        $pageTitleService->setTitle('Alur Kerja Arsip Digital');
+        $breadcrumbService->add('Arsip Digital', route('arsip.index'));
+        $breadcrumbService->add('Alur Kerja');
+        return view('arsip.workflow');
     }
 }

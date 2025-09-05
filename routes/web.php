@@ -235,6 +235,7 @@ Route::get('/surat/{surat}/make-task', [\App\Http\Controllers\SuratTaskControlle
 
 // Route for the digital archive
 Route::get('/arsip', [\App\Http\Controllers\ArsipController::class, 'index'])->name('arsip.index')->middleware('auth');
+Route::get('/arsip/workflow', [\App\Http\Controllers\ArsipController::class, 'showWorkflow'])->name('arsip.workflow')->middleware('auth');
 Route::post('/arsip/berkas', [\App\Http\Controllers\ArsipController::class, 'storeBerkas'])->name('arsip.berkas.store')->middleware('auth');
 Route::post('/arsip/berkas/add-surat', [\App\Http\Controllers\ArsipController::class, 'addSuratToBerkas'])->name('arsip.berkas.add-surat')->middleware('auth');
 
