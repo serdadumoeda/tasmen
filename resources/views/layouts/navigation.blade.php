@@ -13,16 +13,20 @@ if (count($words) >= 2) {
 {{-- Menyatukan state Alpine.js di sini untuk mengelola semua dropdown dan modal --}}
 <nav x-data="{ open: false, showAboutModal: false }" class="bg-[#00796B] border-b border-green-800">
     <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between h-16">
-            <div class="flex">
-                <div class="shrink-0 flex items-center">
+        <div class="flex items-center justify-between h-16">
+
+            <!-- Left Section: Logo -->
+            <div class="flex items-center">
+                <div class="shrink-0">
                     <a href="{{ route('dashboard') }}">
                         <x-application-logo class="block h-9 w-auto fill-current text-white" />
                     </a>
                 </div>
+            </div>
 
-                <!-- Navigation Links -->
-                <div class="hidden space-x-2 sm:-my-px sm:ms-10 sm:flex items-center">
+            <!-- Center Section: Navigation Links -->
+            <div class="flex-1 flex justify-center items-center">
+                <div class="hidden space-x-6 sm:flex items-center">
 
                     {{-- Dasbor --}}
                     <div class="nav-item-container">
@@ -157,9 +161,10 @@ if (count($words) >= 2) {
                 </div>
             </div>
 
-            <div class="hidden sm:flex sm:items-center sm:ms-6">
+            <!-- Right Section: User Profile & Actions -->
+            <div class="hidden sm:flex sm:items-center">
                 {{-- Dropdown Notifikasi --}}
-                <div class="ms-3 relative" x-data="notifications()" x-init="fetchUnread()">
+                <div class="relative" x-data="notifications()" x-init="fetchUnread()">
                     <x-dropdown align="right" width="48">
                         <x-slot name="trigger">
                             <button @click="isOpen = !isOpen; markAsRead(null)" class="inline-flex items-center p-2 text-white bg-green-700/50 rounded-full hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-green-800 focus:ring-white transition ease-in-out duration-150 relative transform hover:scale-110 shadow-md hover:shadow-lg">
@@ -216,6 +221,7 @@ if (count($words) >= 2) {
                 </div>
             </div>
 
+            <!-- Hamburger -->
             <div class="-me-2 flex items-center sm:hidden">
                 <button @click="open = ! open" class="inline-flex items-center justify-center p-2 rounded-md text-white hover:text-gray-200 hover:bg-green-800 focus:outline-none focus:bg-green-800 transition">
                     <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24"><path :class="{'hidden': open, 'inline-flex': ! open }" class="inline-flex" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /><path :class="{'hidden': ! open, 'inline-flex': open }" class="hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
