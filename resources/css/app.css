@@ -33,3 +33,73 @@ input:checked ~ .dot {
 input:checked ~ .block {
     background-color: #a7f3d0; /* Atur warna latar belakang saat aktif */
 }
+
+/* === Custom Styles for Icon-based Navigation === */
+
+/* Container untuk setiap item navigasi yang akan memiliki tooltip */
+.nav-item-container {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+/* Styling untuk tooltip */
+.nav-tooltip {
+    position: absolute;
+    bottom: 100%; /* Posisi di atas ikon */
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 10px; /* Jarak dari ikon */
+    padding: 6px 12px;
+    border-radius: 6px;
+    background-color: #2d3748; /* Warna latar belakang gelap (sesuai selera) */
+    color: white;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap; /* Agar teks tidak terpotong */
+    z-index: 50; /* Pastikan di atas elemen lain */
+
+    /* Default state: tidak terlihat dan tidak bisa di-hover */
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease-in-out, visibility 0.2s ease-in-out;
+    pointer-events: none; /* Mencegah tooltip mengganggu hover pada ikon */
+}
+
+/* Panah kecil di bawah tooltip */
+.nav-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #2d3748 transparent transparent transparent;
+}
+
+/* Tampilkan tooltip saat container di-hover */
+.nav-item-container:hover .nav-tooltip {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Penyesuaian untuk ikon di dalam link navigasi */
+.nav-icon-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px; /* Lebar tetap */
+    height: 40px; /* Tinggi tetap */
+    border-radius: 50%; /* Membuatnya bulat */
+    transition: background-color 0.2s ease-in-out;
+}
+
+.nav-icon-link:hover {
+    background-color: rgba(255, 255, 255, 0.15); /* Efek highlight saat hover */
+}
+
+.nav-icon-link.active {
+    background-color: rgba(255, 255, 255, 0.25); /* Latar belakang lebih jelas untuk link aktif */
+    border-bottom: none !important; /* Menghilangkan border-bottom default dari x-nav-link */
+}
