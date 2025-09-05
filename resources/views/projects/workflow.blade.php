@@ -1,130 +1,123 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+            <i class="fas fa-sitemap mr-2"></i>
             {{ __('Alur Kerja Modul Kegiatan') }}
         </h2>
     </x-slot>
 
     <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 bg-white border-b border-gray-200">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-8">
 
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">Flowchart Visual</h3>
-                    <div class="p-4 bg-gray-50 rounded-lg">
+            <!-- Definisi Style untuk Mermaid -->
+            <style>
+                .mermaid .actor { fill: #D6EAF8; stroke: #2E86C1; }
+                .mermaid .process { fill: #D1F2EB; stroke: #16A085; }
+                .mermaid .decision { fill: #FDEDEC; stroke: #C0392B; }
+                .mermaid .io { fill: #FCF3CF; stroke: #F39C12; }
+            </style>
+
+            <!-- Alur Utama -->
+            <x-card>
+                <div class="p-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">1. Alur Utama Navigasi</h3>
+                    <p class="text-gray-600 mb-6">Alur ini menunjukkan bagaimana pengguna berpindah dari halaman utama ke fitur-fitur inti dalam modul kegiatan.</p>
+                    <div class="p-4 bg-gray-50 rounded-lg text-center">
                         <pre class="mermaid">
 graph TD
-    %% --- Main Flow ---
-    A[Start: Dashboard] --> B{Akses Menu 'Kegiatan'};
-    B --> C[Halaman Daftar Kegiatan];
-    C -->|Klik 'Buat Kegiatan'| D_Flow[Alur Pembuatan Kegiatan Baru];
-    C -->|Klik nama kegiatan| E_Flow[Alur Lihat Detail Kegiatan];
+    A[<i class='fas fa-desktop'></i> Dashboard]:::io -->|Klik Menu 'Kegiatan'| B[<i class='fas fa-list-alt'></i> Halaman Daftar Kegiatan]:::io;
+    B -->|Klik Tombol<br><b>'Buat Kegiatan Baru'</b>| C[<i class='fas fa-plus-circle'></i> Alur Pembuatan Kegiatan];
+    B -->|Klik Nama Kegiatan| D[<i class='fas fa-eye'></i> Alur Detail Kegiatan];
 
-    %% --- D: Alur Pembuatan Kegiatan Baru ---
-    subgraph D_Flow [Alur Pembuatan Kegiatan Baru]
-        D1[Klik 'Buat Kegiatan'] --> D2{Cek Otorisasi: 'create' Project};
-        D2 -- Diizinkan --> D3[Tampilkan Form Step 1: Inisiasi];
-        D2 -- Ditolak --> D_End(End: Akses Ditolak);
-        D3 -- Isi data & submit --> D4{Proses: Validasi Input Step 1};
-        D4 -- Gagal --> D3;
-        D4 -- Sukses --> D5[Simpan data Project & Owner];
-        D5 --> D6[Redirect ke Form Step 2: Tambah Tim];
-        D6 -- Isi data tim & submit --> D7{Proses: Validasi Input Step 2};
-        D7 -- Gagal --> D6;
-        D7 -- Sukses --> D8[Update Project Leader & sinkronisasi Anggota Tim];
-        D8 --> E_Flow;
-    end
-
-    %% --- E: Alur Lihat Detail Kegiatan ---
-    subgraph E_Flow [Alur Lihat Detail Kegiatan]
-        E1[Klik Nama Kegiatan] --> E2{Cek Otorisasi: 'view' Project};
-        E2 -- Diizinkan --> E3[Tampilkan Halaman Detail Kegiatan];
-        E2 -- Ditolak --> E_End(End: Akses Ditolak);
-        E3 --> E_Tugas[Tab: Tugas];
-        E3 --> E_Tim[Tab: Tim];
-        E3 --> E_Anggaran[Tab: Anggaran];
-        E3 --> E_Lainnya[Fitur Lainnya];
-    end
-
-    %% --- Sub-Flows dari Detail Kegiatan ---
-    subgraph E_Tugas [Tab Tugas]
-        T1[Lihat Daftar Tugas] --> T2[Klik 'Tambah Tugas'];
-        T2 --> T3{Proses: Tampilkan Modal/Form Tambah Tugas};
-        T3 -- Isi data & submit --> T4{Proses: Validasi & Simpan Tugas Baru};
-        T4 --> T1;
-        T1 -->|Klik 'Edit Tugas'| T5[Alur Edit Tugas];
-        T5 --> T1;
-    end
-
-    subgraph E_Lainnya [Fitur Lainnya]
-        L1[Tombol 'Edit Kegiatan'] --> L2{Cek Otorisasi: 'update' Project};
-        L2 -- Diizinkan --> L3[Tampilkan Form Edit Kegiatan];
-        L3 -- Submit perubahan --> L4{Proses: Validasi & Update Kegiatan};
-        L4 --> E3;
-
-        L5[Tombol 'Papan Kanban'] --> L6[Tampilkan Halaman Kanban];
-        L6 -->|Drag & Drop Tugas| L7{Proses: Update Status Tugas};
-        L7 --> L6;
-
-        L8[Tombol 'Kalender'] --> L9[Tampilkan Halaman Kalender];
-        L10[Tombol 'Kurva S'] --> L11[Tampilkan Halaman Kurva S];
-        L12[Tombol 'Laporan PDF'] --> L13{Proses: Generate & Download Laporan PDF};
-    end
+    classDef io fill:#EBF5FB,stroke:#3498DB,stroke-width:2px,color:#2874A6;
+    classDef process fill:#E8F8F5,stroke:#1ABC9C,stroke-width:2px,color:#148F77;
+    class A,B,C,D io;
                         </pre>
                     </div>
-
-                    <h3 class="text-lg font-medium text-gray-900 mt-8 mb-4">Penjelasan Rinci Alur Proses</h3>
-                    <div class="prose max-w-none">
-                        <ol>
-                            <li>
-                                <strong>Akses Awal:</strong>
-                                <ul>
-                                    <li>Pengguna memulai dari <strong>Dashboard</strong> dan mengakses menu <strong>Kegiatan</strong>.</li>
-                                    <li>Sistem menampilkan <strong>Halaman Daftar Kegiatan</strong>, di mana pengguna hanya bisa melihat kegiatan yang sesuai dengan hierarki jabatannya.</li>
-                                </ul>
-                            </li>
-                            <li>
-                                <strong>Alur Pembuatan Kegiatan Baru (Detail):</strong>
-                                <ul>
-                                    <li><strong>Otorisasi:</strong> Sebelum menampilkan form, sistem memeriksa apakah pengguna memiliki izin untuk <code>create</code> (membuat) kegiatan.</li>
-                                    <li><strong>Step 1 (Inisiasi):</strong> Pengguna mengisi form. Saat submit, sistem melakukan <strong>validasi input</strong>. Jika gagal, pengguna dikembalikan ke form dengan pesan error. Jika berhasil, data dasar proyek disimpan.</li>
-                                    <li><strong>Step 2 (Tim):</strong> Pengguna diarahkan ke form kedua untuk menambah tim. Sistem kembali melakukan <strong>validasi</strong> saat form ini di-submit. Jika berhasil, data ketua dan anggota tim disimpan, dan pengguna langsung diarahkan ke <strong>Halaman Detail Kegiatan</strong> yang baru dibuat.</li>
-                                </ul>
-                            </li>
-                            <li>
-                                <strong>Halaman Detail Kegiatan (Pusat Aktivitas):</strong>
-                                <ul>
-                                    <li><strong>Otorisasi:</strong> Sistem memeriksa izin <code>view</code> (melihat) sebelum menampilkan halaman detail.</li>
-                                    <li>Halaman ini adalah pusat dari semua fitur terkait kegiatan.</li>
-                                </ul>
-                            </li>
-                            <li>
-                                <strong>Sub-Alur pada Tab Tugas:</strong>
-                                <ul>
-                                    <li>Saat pengguna mengklik <strong>'Tambah Tugas'</strong>, sebuah form akan muncul.</li>
-                                    <li>Setelah disubmit, data tugas divalidasi dan disimpan. Halaman kemudian <strong>me-refresh daftar tugas</strong> untuk menampilkan tugas yang baru ditambahkan. Alurnya kembali ke daftar tugas.</li>
-                                </ul>
-                            </li>
-                            <li>
-                                <strong>Sub-Alur pada Fitur Lainnya:</strong>
-                                <ul>
-                                    <li><strong>Edit Kegiatan:</strong> Memerlukan izin <code>update</code>. Alurnya mirip dengan pembuatan kegiatan, yaitu menampilkan form, validasi, dan kembali ke halaman detail setelah berhasil.</li>
-                                    <li><strong>Papan Kanban:</strong> Ini adalah fitur interaktif. Saat pengguna menggeser (<em>drag & drop</em>) sebuah kartu tugas, sistem memproses <strong>perubahan status tugas</strong> di latar belakang dan me-refresh tampilan papan Kanban.</li>
-                                    <li><strong>Laporan PDF:</strong> Fitur ini memicu proses di server untuk men-generate file PDF dan langsung menawarkan unduhan ke pengguna.</li>
-                                </ul>
-                            </li>
-                        </ol>
-                    </div>
-
                 </div>
-            </div>
+            </x-card>
+
+            <!-- Alur Pembuatan Kegiatan -->
+            <x-card>
+                <div class="p-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">2. Alur Pembuatan Kegiatan Baru</h3>
+                    <p class="text-gray-600 mb-6">Proses dua langkah untuk menginisiasi sebuah kegiatan baru, mulai dari pengisian data dasar hingga pembentukan tim.</p>
+                    <div class="p-4 bg-gray-50 rounded-lg text-center">
+                        <pre class="mermaid">
+graph TD
+    D1[<i class='fas fa-mouse-pointer'></i> Mulai] --> D2{<i class='fas fa-shield-alt'></i> Cek Izin: 'create'}:::decision;
+    D2 -- <i class='fas fa-check'></i> Diizinkan --> D3[<i class='fas fa-keyboard'></i> Form Step 1: Inisiasi]:::io;
+    D2 -- <i class='fas fa-times'></i> Ditolak --> D_End(<i class='fas fa-ban'></i> Akses Ditolak);
+    D3 -- Isi data & Submit --> D4{<i class='fas fa-check-double'></i> Validasi Input}:::decision;
+    D4 -- <i class='fas fa-times'></i> Gagal --> D3;
+    D4 -- <i class='fas fa-check'></i> Sukses --> D5[<i class='fas fa-save'></i> Simpan Project]:::process;
+    D5 --> D6[<i class='fas fa-users'></i> Form Step 2: Tambah Tim]:::io;
+    D6 -- Isi Tim & Submit --> D7{<i class='fas fa-check-double'></i> Validasi Tim}:::decision;
+    D7 -- <i class='fas fa-times'></i> Gagal --> D6;
+    D7 -- <i class='fas fa-check'></i> Sukses --> D8[<i class='fas fa-sync-alt'></i> Update & Sinkronisasi Tim]:::process;
+    D8 --> D9[<i class='fas fa-file-alt'></i> Redirect ke Halaman Detail];
+
+    classDef io fill:#EBF5FB,stroke:#3498DB,stroke-width:2px,color:#2874A6;
+    classDef process fill:#E8F8F5,stroke:#1ABC9C,stroke-width:2px,color:#148F77;
+    classDef decision fill:#FEF9E7,stroke:#F1C40F,stroke-width:2px,color:#B7950B;
+    class D1,D3,D6,D9 io;
+    class D5,D8 process;
+    class D2,D4,D7 decision;
+                        </pre>
+                    </div>
+                </div>
+            </x-card>
+
+            <!-- Alur Detail Kegiatan -->
+            <x-card>
+                <div class="p-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">3. Halaman Detail Kegiatan & Fitur-Fiturnya</h3>
+                    <p class="text-gray-600 mb-6">Pusat dari semua aktivitas terkait sebuah kegiatan. Dari sini, pengguna dapat mengakses berbagai fitur manajemen.</p>
+                    <div class="p-4 bg-gray-50 rounded-lg text-center">
+                        <pre class="mermaid">
+graph TD
+    E1[<i class='fas fa-file-alt'></i> Halaman Detail Kegiatan]:::io --> E_Tugas[<i class='fas fa-tasks'></i> Tab: Tugas];
+    E1 --> E_Tim[<i class='fas fa-users-cog'></i> Tab: Tim];
+    E1 --> E_Anggaran[<i class='fas fa-wallet'></i> Tab: Anggaran];
+    E1 --> E_Lainnya[<i class='fas fa-cogs'></i> Fitur Lainnya];
+
+    subgraph E_Lainnya [Fitur Lainnya]
+        direction LR
+        L1[<i class='fas fa-edit'></i> Edit Kegiatan] --> L2{<i class='fas fa-shield-alt'></i> Cek Izin 'update'}:::decision;
+        L5[<i class='fas fa-th-large'></i> Papan Kanban] --> L6[<i class='fas fa-chalkboard'></i> Halaman Kanban];
+        L8[<i class='fas fa-calendar-alt'></i> Kalender] --> L9[<i class='fas fa-calendar-day'></i> Halaman Kalender];
+        L10[<i class='fas fa-chart-line'></i> Kurva S] --> L11[<i class='fas fa-chart-area'></i> Halaman Kurva S];
+        L12[<i class='fas fa-file-pdf'></i> Laporan PDF] --> L13[<i class='fas fa-download'></i> Generate & Unduh];
+    end
+
+    classDef io fill:#EBF5FB,stroke:#3498DB,stroke-width:2px,color:#2874A6;
+    classDef decision fill:#FEF9E7,stroke:#F1C40F,stroke-width:2px,color:#B7950B;
+    class E1 io;
+    class L2 decision;
+                        </pre>
+                    </div>
+                </div>
+            </x-card>
+
         </div>
     </div>
 
     @push('scripts')
         <script type="module">
             import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
-            mermaid.initialize({ startOnLoad: true });
+            // Add Font Awesome icons to Mermaid config
+            mermaid.initialize({
+                startOnLoad: true,
+                fontFamily: 'inherit',
+                theme: 'base',
+                themeVariables: {
+                    primaryColor: '#F8F9FA',
+                    primaryTextColor: '#333',
+                    primaryBorderColor: '#DEE2E6',
+                    lineColor: '#6C757D',
+                    textColor: '#333',
+                }
+            });
         </script>
     @endpush
 </x-app-layout>
