@@ -76,7 +76,7 @@ graph TD
                             <h4 class="font-semibold text-gray-800">2. Alur Pembuatan Template (B)</h4>
                             <p>Pengguna dapat membuat template baru untuk digunakan dalam pembuatan surat keluar.</p>
                             <ul class="list-disc list-inside ml-4 space-y-2">
-                                <li><strong>Formulir</strong>: Pengguna mengisi judul, deskripsi singkat, dan konten utama dari template. Konten ini mendukung HTML dan placeholder khusus (misalnya, `{{nama_penerima}}`) yang nantinya akan diganti saat surat dibuat.</li>
+                                <li><strong>Formulir</strong>: Pengguna mengisi judul, deskripsi singkat, dan konten utama dari template. Konten ini mendukung HTML dan placeholder khusus (misalnya, `@{{nama_penerima}}`) yang nantinya akan diganti saat surat dibuat.</li>
                                 <li><strong>Penyimpanan</strong>: Setelah divalidasi, template disimpan ke database dan akan muncul di daftar.</li>
                             </ul>
                         </div>
