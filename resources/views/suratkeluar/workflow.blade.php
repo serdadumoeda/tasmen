@@ -32,11 +32,7 @@ graph TD
     classDef io fill:#F4ECF7,stroke:#8E44AD,color:#6C3483,stroke-width:1px;
 
     %% --- A. Alur Utama ---
-    A1["<i class='fa fa-list-alt'></i> Halaman Daftar<br>Surat Keluar"]:::page -->|Klik 'Buat Surat'| LinkToB["<i class='fa fa-plus-circle'></i> Ke Alur Pembuatan"];
-    A1 -->|Klik 'Detail'| LinkToC["<i class='fa fa-file-alt'></i> Ke Alur Detail"];
-
-    LinkToB --> B1;
-    LinkToC --> C1;
+    A1["<i class='fa fa-list-alt'></i> Halaman Daftar<br>Surat Keluar"]:::page;
 
     %% --- B. Alur Pembuatan ---
     subgraph B_Flow [Alur Pembuatan Surat Keluar]
@@ -48,7 +44,7 @@ graph TD
         B2 -->|'Unggah Manual'| B5["<i class='fa fa-upload'></i> Unggah PDF"]:::page;
         B5 -- Submit --> B_Save;
 
-        B_Save["<i class='fa fa-cogs'></i> Simpan Draf &<br>Generate Nomor"]:::process --> C1;
+        B_Save["<i class='fa fa-cogs'></i> Simpan Draf &<br>Generate Nomor"]:::process;
     end
 
     %% --- C. Alur Persetujuan ---
@@ -59,7 +55,6 @@ graph TD
         C3 -- Sukses --> C4["<i class='fa fa-signature'></i> Panggil TTE Service"]:::process;
         C4 -- Gagal TTD --> C5["<i class='fa fa-exclamation-triangle'></i> Tampilkan Error"]:::io;
         C4 -- Sukses TTD --> C6["<i class='fa fa-file-pdf'></i> Simpan PDF Final"]:::process;
-        C6 --> D1;
     end
 
     %% --- D. Alur Tindak Lanjut ---
@@ -67,7 +62,13 @@ graph TD
         D1["<i class='fa fa-file-powerpoint'></i> Surat Disetujui"]:::page --> D2["<i class='fa fa-file-signature'></i> Aksi: Buat SK Penugasan"]:::action;
         D2 --> D3["<i class='fa fa-arrow-right'></i> Redirect ke Form SK"]:::page;
     end
-                        </pre>
+
+    %% --- Menghubungkan Alur ---
+    A1 -->|Klik 'Buat Surat'| B1;
+    A1 -->|Klik 'Detail'| C1;
+    B_Save --> C1;
+    C6 --> D1;
+</pre>
                     </div>
                 </div>
             </x-card>
@@ -96,7 +97,7 @@ graph TD
                         </div>
                         <div>
                             <h4 class="font-semibold text-gray-800">3. Alur Tindak Lanjut</h4>
-                            <p>Setelah surat keluar disetujui, surat tersebut dapat menjadi dasar untuk aksi selanjutnya, seperti membuat SK Penugasan baru.</p>
+                            <p>Setelah sebuah surat keluar disetujui, surat tersebut dapat menjadi dasar untuk aksi selanjutnya, seperti membuat SK Penugasan baru.</p>
                         </div>
                     </div>
                 </div>
