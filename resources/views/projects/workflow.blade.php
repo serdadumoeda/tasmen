@@ -2,7 +2,7 @@
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
             <i class="fas fa-sitemap mr-2"></i>
-            {{ __('Alur Kerja Modul Kegiatan') }}
+            {{ __('Alur Kerja Detail Modul Kegiatan') }}
         </h2>
     </x-slot>
 
@@ -11,111 +11,133 @@
 
             <!-- Definisi Style untuk Mermaid -->
             <style>
-                .mermaid .actor { fill: #D6EAF8; stroke: #2E86C1; }
-                .mermaid .process { fill: #D1F2EB; stroke: #16A085; }
-                .mermaid .decision { fill: #FDEDEC; stroke: #C0392B; }
-                .mermaid .io { fill: #FCF3CF; stroke: #F39C12; }
+                .mermaid .page { fill: #EBF5FB; stroke: #3498DB; stroke-width: 1px; }
+                .mermaid .action { fill: #FEF9E7; stroke: #F1C40F; stroke-width: 1px; }
+                .mermaid .process { fill: #E8F8F5; stroke: #1ABC9C; stroke-width: 1px; }
+                .mermaid .fa { font-family: 'Font Awesome 6 Free'; font-weight: 900; }
             </style>
-
-            <!-- Alur Utama -->
-            <x-card>
-                <div class="p-6">
-                    <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">1. Alur Utama Navigasi</h3>
-                    <p class="text-gray-600 mb-6">Alur ini menunjukkan bagaimana pengguna berpindah dari halaman utama ke fitur-fitur inti dalam modul kegiatan.</p>
-                    <div class="p-4 bg-gray-50 rounded-lg text-center">
-                        <pre class="mermaid">
-graph TD
-    A[<i class='fas fa-desktop'></i> Dashboard]:::io -->|Klik Menu 'Kegiatan'| B[<i class='fas fa-list-alt'></i> Halaman Daftar Kegiatan]:::io;
-    B -->|Klik Tombol<br><b>'Buat Kegiatan Baru'</b>| C[<i class='fas fa-plus-circle'></i> Alur Pembuatan Kegiatan];
-    B -->|Klik Nama Kegiatan| D[<i class='fas fa-eye'></i> Alur Detail Kegiatan];
-
-    classDef io fill:#EBF5FB,stroke:#3498DB,stroke-width:2px,color:#2874A6;
-    classDef process fill:#E8F8F5,stroke:#1ABC9C,stroke-width:2px,color:#148F77;
-    class A,B,C,D io;
-                        </pre>
-                    </div>
-                </div>
-            </x-card>
-
-            <!-- Alur Pembuatan Kegiatan -->
-            <x-card>
-                <div class="p-6">
-                    <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">2. Alur Pembuatan Kegiatan Baru</h3>
-                    <p class="text-gray-600 mb-6">Proses dua langkah untuk menginisiasi sebuah kegiatan baru, mulai dari pengisian data dasar hingga pembentukan tim.</p>
-                    <div class="p-4 bg-gray-50 rounded-lg text-center">
-                        <pre class="mermaid">
-graph TD
-    D1[<i class='fas fa-mouse-pointer'></i> Mulai] --> D2{<i class='fas fa-shield-alt'></i> Cek Izin: 'create'}:::decision;
-    D2 -- <i class='fas fa-check'></i> Diizinkan --> D3[<i class='fas fa-keyboard'></i> Form Step 1: Inisiasi]:::io;
-    D2 -- <i class='fas fa-times'></i> Ditolak --> D_End(<i class='fas fa-ban'></i> Akses Ditolak);
-    D3 -- Isi data & Submit --> D4{<i class='fas fa-check-double'></i> Validasi Input}:::decision;
-    D4 -- <i class='fas fa-times'></i> Gagal --> D3;
-    D4 -- <i class='fas fa-check'></i> Sukses --> D5[<i class='fas fa-save'></i> Simpan Project]:::process;
-    D5 --> D6[<i class='fas fa-users'></i> Form Step 2: Tambah Tim]:::io;
-    D6 -- Isi Tim & Submit --> D7{<i class='fas fa-check-double'></i> Validasi Tim}:::decision;
-    D7 -- <i class='fas fa-times'></i> Gagal --> D6;
-    D7 -- <i class='fas fa-check'></i> Sukses --> D8[<i class='fas fa-sync-alt'></i> Update & Sinkronisasi Tim]:::process;
-    D8 --> D9[<i class='fas fa-file-alt'></i> Redirect ke Halaman Detail];
-
-    classDef io fill:#EBF5FB,stroke:#3498DB,stroke-width:2px,color:#2874A6;
-    classDef process fill:#E8F8F5,stroke:#1ABC9C,stroke-width:2px,color:#148F77;
-    classDef decision fill:#FEF9E7,stroke:#F1C40F,stroke-width:2px,color:#B7950B;
-    class D1,D3,D6,D9 io;
-    class D5,D8 process;
-    class D2,D4,D7 decision;
-                        </pre>
-                    </div>
-                </div>
-            </x-card>
 
             <!-- Alur Detail Kegiatan -->
             <x-card>
                 <div class="p-6">
-                    <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">3. Halaman Detail Kegiatan & Fitur-Fiturnya</h3>
-                    <p class="text-gray-600 mb-6">Pusat dari semua aktivitas terkait sebuah kegiatan. Dari sini, pengguna dapat mengakses berbagai fitur manajemen.</p>
+                    <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Halaman Detail Kegiatan & Fitur-Fiturnya</h3>
+                    <p class="text-gray-600 mb-6">Flowchart ini merinci semua interaksi dan proses yang terjadi di dalam halaman detail sebuah kegiatan, yang merupakan pusat dari semua aktivitas.</p>
                     <div class="p-4 bg-gray-50 rounded-lg text-center">
                         <pre class="mermaid">
 graph TD
-    E1[<i class='fas fa-file-alt'></i> Halaman Detail Kegiatan]:::io --> E_Tugas[<i class='fas fa-tasks'></i> Tab: Tugas];
-    E1 --> E_Tim[<i class='fas fa-users-cog'></i> Tab: Tim];
-    E1 --> E_Anggaran[<i class='fas fa-wallet'></i> Tab: Anggaran];
-    E1 --> E_Lainnya[<i class='fas fa-cogs'></i> Fitur Lainnya];
-
-    subgraph E_Lainnya [Fitur Lainnya]
-        direction LR
-        L1[<i class='fas fa-edit'></i> Edit Kegiatan] --> L2{<i class='fas fa-shield-alt'></i> Cek Izin 'update'}:::decision;
-        L5[<i class='fas fa-th-large'></i> Papan Kanban] --> L6[<i class='fas fa-chalkboard'></i> Halaman Kanban];
-        L8[<i class='fas fa-calendar-alt'></i> Kalender] --> L9[<i class='fas fa-calendar-day'></i> Halaman Kalender];
-        L10[<i class='fas fa-chart-line'></i> Kurva S] --> L11[<i class='fas fa-chart-area'></i> Halaman Kurva S];
-        L12[<i class='fas fa-file-pdf'></i> Laporan PDF] --> L13[<i class='fas fa-download'></i> Generate & Unduh];
+    subgraph "Halaman Detail Kegiatan (projects.show)"
+        A["<i class='fa fa-file-alt'></i> Halaman Detail"]:::page --> B[Tab: Ringkasan Tugas];
+        A --> C[Tab: Tim];
+        A --> D[Tab: Anggaran];
+        A --> E[Tab: Surat Terkait];
+        A --> F[Area Tombol Aksi];
     end
 
-    classDef io fill:#EBF5FB,stroke:#3498DB,stroke-width:2px,color:#2874A6;
-    classDef decision fill:#FEF9E7,stroke:#F1C40F,stroke-width:2px,color:#B7950B;
-    class E1 io;
-    class L2 decision;
+    subgraph B [Tab: Ringkasan Tugas]
+        B1[Daftar Tugas]:::page --> B2["<i class='fa fa-plus'></i> Aksi: Tambah Tugas"]:::action;
+        B2 --> B3[Modal/Form Tambah Tugas]:::page;
+        B3 -- Submit --> B4["<i class='fa fa-cogs'></i> Controller: TaskController@store"]:::process;
+        B4 -- Sukses --> B1;
+
+        B1 --> B5["<i class='fa fa-edit'></i> Aksi: Edit Tugas"]:::action;
+        B5 --> B6["<i class='fa fa-arrow-right'></i> Halaman Edit Tugas (tasks.edit)"]:::page;
+
+        B1 --> B7["<i class='fa fa-filter'></i> Aksi: Filter & Urutkan"]:::action;
+        B7 -- Submit --> B8["<i class='fa fa-cogs'></i> Controller: ProjectController@show (Reload)"]:::process;
+        B8 --> B1;
+    end
+
+    subgraph F [Area Tombol Aksi]
+        F1["<i class='fa fa-edit'></i> Tombol: Edit Kegiatan"]:::action --> F2["<i class='fa fa-cogs'></i> Controller: ProjectController@edit"]:::process;
+        F2 --> F3["<i class='fa fa-arrow-right'></i> Halaman Edit Kegiatan (projects.edit)"]:::page;
+
+        F4["<i class='fa fa-th-large'></i> Tombol: Papan Kanban"]:::action --> F5["<i class='fa fa-cogs'></i> Controller: ProjectController@showKanban"]:::process;
+        F5 --> F6["<i class='fa fa-arrow-right'></i> Halaman Kanban (projects.kanban)"]:::page;
+        F6 -- Drag & Drop Tugas --> F7["<i class='fa fa-cogs'></i> AJAX Call: TaskController@updateStatus"]:::process;
+        F7 --> F6;
+
+        F8["<i class='fa fa-calendar-alt'></i> Tombol: Kalender"]:::action --> F9["<i class='fa fa-cogs'></i> Controller: ProjectController@showCalendar"]:::process;
+        F9 --> F10["<i class='fa fa-arrow-right'></i> Halaman Kalender (projects.calendar)"]:::page;
+        F10 -- Memuat data dari --> F11["<i class='fa fa-cogs'></i> Endpoint: ProjectController@tasksJson"]:::process;
+
+        F12["<i class='fa fa-chart-line'></i> Tombol: Kurva S"]:::action --> F13["<i class='fa fa-cogs'></i> Controller: ProjectController@sCurve"]:::process;
+        F13 --> F14["<i class='fa fa-arrow-right'></i> Halaman Grafik Kurva S (projects.s-curve)"]:::page;
+
+        F15["<i class='fa fa-file-pdf'></i> Tombol: Laporan PDF"]:::action --> F16["<i class='fa fa-cogs'></i> Controller: ProjectController@downloadReport"]:::process;
+        F16 --> F17["<i class='fa fa-download'></i> Generate & Unduh PDF"];
+    end
+
+    subgraph C [Tab: Tim]
+        C1[Lihat Anggota Tim]:::page --> C2[Lihat Analisis Beban Kerja]:::page;
+        C1 -- Ditangani oleh --> C3["<i class='fa fa-cogs'></i> Controller: ProjectController@teamDashboard"]:::process;
+    end
+
+    subgraph D [Tab: Anggaran]
+        D1[Lihat Anggaran]:::page --> D2["<i class='fa fa-plus'></i> Aksi: Tambah/Edit Item"]:::action;
+        D1 --> D3["<i class='fa fa-dollar-sign'></i> Aksi: Tambah Realisasi"]:::action;
+        D1 -- Ditangani oleh --> D4["<i class='fa fa-cogs'></i> Controller: BudgetItemController"]:::process;
+    end
+
+    classDef page fill:#EBF5FB,stroke:#3498DB,color:#2874A6;
+    classDef action fill:#FEF9E7,stroke:#F1C40F,color:#B7950B;
+    classDef process fill:#E8F8F5,stroke:#1ABC9C,color:#148F77;
                         </pre>
                     </div>
                 </div>
             </x-card>
 
+            <x-card>
+                <div class="p-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Penjelasan Sangat Detail untuk Setiap Fitur</h3>
+                    <div class="prose max-w-none text-gray-700">
+                        <h4 class="font-semibold text-gray-800">1. Tab: Ringkasan Tugas (B)</h4>
+                        <ul class="list-disc list-inside space-y-2">
+                            <li><strong>Tampilan (B1):</strong> Menampilkan tabel daftar tugas yang terkait dengan kegiatan ini. Kolom yang ada biasanya: Judul Tugas, Prioritas, Status, Tanggal Deadline, dan Penanggung Jawab (Assignees).</li>
+                            <li><strong>Tambah Tugas (B2-B4):</strong>
+                                <ul class="list-disc list-inside ml-4">
+                                    <li>Ketika tombol 'Tambah Tugas' diklik, sebuah form (kemungkinan dalam bentuk modal/popup) akan muncul.</li>
+                                    <li>Form ini berisi field seperti: Judul, Deskripsi, Tanggal Deadline, Prioritas, dan pilihan Anggota Tim untuk ditugaskan.</li>
+                                    <li>Setelah disubmit, data dikirim ke method <code>store</code> di <code>TaskController</code>. Method ini akan melakukan validasi, menyimpan tugas baru ke database, dan menautkannya dengan kegiatan ini. Halaman akan dimuat ulang untuk menampilkan tugas baru di daftar.</li>
+                                </ul>
+                            </li>
+                            <li><strong>Filter & Urutkan (B7-B8):</strong> Pengguna bisa memfilter daftar tugas (misalnya hanya menampilkan yang berstatus "In Progress") atau mengurutkannya (misalnya berdasarkan deadline). Aksi ini akan me-reload halaman detail kegiatan dengan parameter query baru.</li>
+                        </ul>
+
+                        <h4 class="font-semibold text-gray-800 mt-6">2. Tombol Aksi Utama (F)</h4>
+                        <ul class="list-disc list-inside space-y-2">
+                            <li><strong>Edit Kegiatan (F1-F3):</strong> Tombol ini mengarahkan pengguna ke halaman baru (<code>projects.edit</code>) yang berisi form untuk mengubah data inti kegiatan seperti nama, deskripsi, tanggal, dan komposisi tim. Proses ini ditangani oleh <code>ProjectController@edit</code> (untuk menampilkan form) dan <code>ProjectController@update</code> (untuk menyimpan perubahan).</li>
+                            <li><strong>Papan Kanban (F4-F7):</strong> Mengarahkan ke halaman visual (<code>projects.kanban</code>) di mana tugas-tugas ditampilkan sebagai kartu dalam kolom-kolom status (Pending, In Progress, Selesai). Pengguna bisa menggeser kartu dari satu kolom ke kolom lain (drag & drop). Aksi ini memicu panggilan <strong>AJAX</strong> di latar belakang ke <code>TaskController@updateStatus</code> untuk mengubah status tugas secara instan tanpa me-reload seluruh halaman.</li>
+                            <li><strong>Kalender (F8-F11):</strong> Membuka halaman kalender (<code>projects.calendar</code>) yang menampilkan deadline tugas. Kalender ini secara dinamis memuat data tugas dari sebuah endpoint API (<code>ProjectController@tasksJson</code>) yang mengembalikan data dalam format JSON.</li>
+                            <li><strong>Kurva S (F12-F14):</strong> Fitur analisis canggih yang mengarahkan ke halaman grafik (<code>projects.s-curve</code>). Halaman ini membandingkan rencana kumulatif (berdasarkan estimasi jam) dengan progres aktual (berdasarkan <em>time log</em> yang diisi oleh anggota tim).</li>
+                            <li><strong>Laporan PDF (F15-F17):</strong> Aksi ini tidak membuka halaman baru, tetapi langsung memicu method <code>ProjectController@downloadReport</code> di server. Method ini akan men-generate file laporan dalam format PDF dan mengirimkannya ke browser pengguna untuk diunduh.</li>
+                        </ul>
+
+                        <h4 class="font-semibold text-gray-800 mt-6">3. Tab Lainnya (C, D, E)</h4>
+                        <ul class="list-disc list-inside space-y-2">
+                            <li><strong>Tab Tim (C):</strong> Menampilkan daftar anggota tim beserta analisis beban kerja mereka (misalnya, jumlah tugas yang sedang dikerjakan, total estimasi jam). Ditangani oleh <code>ProjectController@teamDashboard</code>.</li>
+                            <li><strong>Tab Anggaran (D):</strong> Area khusus untuk manajemen finansial kegiatan. Pengguna bisa mendefinisikan pos-pos anggaran dan mencatat setiap realisasi (pengeluaran) yang terjadi. Ditangani oleh <code>BudgetItemController</code>.</li>
+                            <li><strong>Tab Surat Terkait (E):</strong> Menampilkan daftar surat-surat yang menjadi dasar atau referensi dari kegiatan ini. Ini adalah hasil dari relasi polimorfik yang sudah kita bahas sebelumnya.</li>
+                        </ul>
+                    </div>
+                </div>
+            </x-card>
         </div>
     </div>
 
     @push('scripts')
         <script type="module">
             import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
-            // Add Font Awesome icons to Mermaid config
             mermaid.initialize({
                 startOnLoad: true,
                 fontFamily: 'inherit',
                 theme: 'base',
                 themeVariables: {
-                    primaryColor: '#F8F9FA',
+                    primaryColor: '#ffffff',
                     primaryTextColor: '#333',
-                    primaryBorderColor: '#DEE2E6',
-                    lineColor: '#6C757D',
-                    textColor: '#333',
+                    primaryBorderColor: '#e5e7eb',
+                    lineColor: '#6b7280',
+                    textColor: '#374151',
+                    fontSize: '14px',
                 }
             });
         </script>
