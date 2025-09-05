@@ -18,8 +18,12 @@ class AdHocTaskController extends Controller
     /**
      * Menampilkan daftar tugas ad-hoc.
      */
-    public function index(Request $request)
+    public function index(Request $request, PageTitleService $pageTitleService, BreadcrumbService $breadcrumbService)
     {
+        $pageTitleService->setTitle('Tugas Harian');
+        $breadcrumbService->add('Dashboard', route('dashboard'));
+        $breadcrumbService->add('Tugas Harian');
+
         $user = Auth::user();
         $query = Task::whereNull('project_id')->with(['assignees', 'status', 'priorityLevel', 'asalSurat'])->latest();
         $subordinates = collect();
@@ -73,9 +77,14 @@ class AdHocTaskController extends Controller
     /**
      * Menampilkan form untuk membuat tugas ad-hoc baru.
      */
-    public function create()
+    public function create(PageTitleService $pageTitleService, BreadcrumbService $breadcrumbService)
     {
         $this->authorize('create', Task::class);
+        $pageTitleService->setTitle('Buat Tugas Harian Baru');
+        $breadcrumbService->add('Dashboard', route('dashboard'));
+        $breadcrumbService->add('Tugas Harian', route('adhoc-tasks.index'));
+        $breadcrumbService->add('Buat Baru');
+
         $user = Auth::user();
         $assignableUsers = collect();
 
