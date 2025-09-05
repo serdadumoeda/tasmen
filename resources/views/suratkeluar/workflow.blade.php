@@ -32,35 +32,35 @@ graph TD
     classDef io fill:#F4ECF7,stroke:#8E44AD,color:#6C3483,stroke-width:1px;
 
     %% --- A. Alur Utama ---
-    A1["<i class='fa fa-list-alt'></i> Halaman Daftar<br>Surat Keluar"]:::page;
+    A1["Halaman Daftar<br>Surat Keluar"]:::page;
 
     %% --- B. Alur Pembuatan ---
     subgraph B_Flow [Alur Pembuatan Surat Keluar]
-        B1[Mulai] --> B2["<i class='fa fa-th-list'></i> Pilih Metode"]:::page;
-        B2 -->|'Dari Template'| B3["<i class='fa fa-file-word'></i> Pilih Template"]:::page;
-        B3 --> B4["<i class='fa fa-keyboard'></i> Isi Konten"]:::page;
+        B1[Mulai] --> B2["Pilih Metode"]:::page;
+        B2 -->|'Dari Template'| B3["Pilih Template"]:::page;
+        B3 --> B4["Isi Konten"]:::page;
         B4 -- Submit --> B_Save;
 
-        B2 -->|'Unggah Manual'| B5["<i class='fa fa-upload'></i> Unggah PDF"]:::page;
+        B2 -->|'Unggah Manual'| B5["Unggah PDF"]:::page;
         B5 -- Submit --> B_Save;
 
-        B_Save["<i class='fa fa-cogs'></i> Simpan Draf &<br>Generate Nomor"]:::process;
+        B_Save["Simpan Draf &<br>Generate Nomor"]:::process;
     end
 
     %% --- C. Alur Persetujuan ---
     subgraph C_Flow [Alur Detail & Persetujuan]
-        C1["<i class='fa fa-file-alt'></i> Halaman Detail (Draft)"]:::page --> C2["<i class='fa fa-user-check'></i> Aksi: Setujui"]:::action;
-        C2 -- Pilih Pejabat & TTD --> C3{<i class='fa fa-check-double'></i> Validasi}:::decision;
+        C1["Halaman Detail (Draft)"]:::page --> C2["Aksi: Setujui"]:::action;
+        C2 -- Pilih Pejabat & TTD --> C3{Validasi}:::decision;
         C3 -- Gagal --> C1;
-        C3 -- Sukses --> C4["<i class='fa fa-signature'></i> Panggil TTE Service"]:::process;
-        C4 -- Gagal TTD --> C5["<i class='fa fa-exclamation-triangle'></i> Tampilkan Error"]:::io;
-        C4 -- Sukses TTD --> C6["<i class='fa fa-file-pdf'></i> Simpan PDF Final"]:::process;
+        C3 -- Sukses --> C4["Panggil TTE Service"]:::process;
+        C4 -- Gagal TTD --> C5["Tampilkan Error"]:::io;
+        C4 -- Sukses TTD --> C6["Simpan PDF Final"]:::process;
     end
 
     %% --- D. Alur Tindak Lanjut ---
     subgraph D_Flow [Alur Tindak Lanjut (Opsional)]
-        D1["<i class='fa fa-file-powerpoint'></i> Surat Disetujui"]:::page --> D2["<i class='fa fa-file-signature'></i> Aksi: Buat SK Penugasan"]:::action;
-        D2 --> D3["<i class='fa fa-arrow-right'></i> Redirect ke Form SK"]:::page;
+        D1["Surat Disetujui"]:::page --> D2["Aksi: Buat SK Penugasan"]:::action;
+        D2 --> D3["Redirect ke Form SK"]:::page;
     end
 
     %% --- Menghubungkan Alur ---
@@ -107,21 +107,33 @@ graph TD
     </div>
 
     @push('scripts')
-        <script type="module">
-            import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
-            mermaid.initialize({
-                startOnLoad: true,
-                fontFamily: 'inherit',
-                theme: 'base',
-                themeVariables: {
-                    primaryColor: '#ffffff',
-                    primaryTextColor: '#333',
-                    primaryBorderColor: '#e5e7eb',
-                    lineColor: '#6b7280',
-                    textColor: '#374151',
-                    fontSize: '14px',
-                }
-            });
-        </script>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+
+        // Set konfigurasi di awal
+        mermaid.initialize({
+            startOnLoad: false, // <-- UBAH INI JADI FALSE
+            fontFamily: 'inherit',
+            theme: 'base',
+            themeVariables: {
+                primaryColor: '#ffffff',
+                primaryTextColor: '#333',
+                primaryBorderColor: '#e5e7eb',
+                lineColor: '#6b7280',
+                textColor: '#374151',
+                fontSize: '14px',
+            }
+        });
+
+        // Panggil mermaid.run() secara eksplisit setelah DOM siap
+        document.addEventListener('DOMContentLoaded', function() {
+            // Memberi sedikit delay jika ada rendering komponen lain
+            setTimeout(() => {
+                mermaid.run({
+                    querySelector: '.mermaid' // Pastikan hanya merender elemen dengan class mermaid
+                });
+            }, 100); // Delay 100ms
+        });
+    </script>
     @endpush
 </x-app-layout>
