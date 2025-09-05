@@ -18,8 +18,8 @@
     @if (Auth::user()->canManageUsers())
         <div>
             <label for="assignees" class="block font-semibold text-sm text-gray-700 mb-1">Tugaskan Kepada <span class="text-red-500">*</span></label>
-            {{-- MODIFIKASI: Tambahkan kelas tom-select dan placeholder --}}
-            <select name="assignees[]" id="assignees" class="tom-select" multiple required placeholder="Pilih anggota tim...">
+            {{-- MODIFIKASI: Ganti kelas menjadi tom-select-multiple --}}
+            <select name="assignees[]" id="assignees" class="tom-select-multiple" multiple required placeholder="Pilih anggota tim...">
                 @php
                     $assignedUserIds = old('assignees', isset($task) ? $task->assignees->pluck('id')->all() : []);
                 @endphp
