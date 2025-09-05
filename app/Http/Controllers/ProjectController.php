@@ -24,6 +24,7 @@ class ProjectController extends Controller
     public function index(Request $request, BreadcrumbService $breadcrumbService)
     {
         $breadcrumbService->add('Dashboard', route('dashboard'));
+        $breadcrumbService->hideBackButton();
         $query = Project::with(['owner', 'leader', 'members'])
             ->withCount(['tasks', 'completedTasks'])
             ->withSum('budgetItems', 'total_cost');
