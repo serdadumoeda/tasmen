@@ -4,9 +4,15 @@
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 {{ __('Manajemen Klasifikasi Surat') }}
             </h2>
-            <a href="{{ route('admin.klasifikasi.create') }}" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold text-sm hover:bg-blue-700">
-                <i class="fas fa-plus mr-2"></i> Tambah Klasifikasi Baru
-            </a>
+            <div class="flex items-center space-x-2">
+                <x-secondary-button :href="route('admin.klasifikasi.workflow')">
+                    <i class="fas fa-sitemap mr-2"></i>
+                    Lihat Alur Kerja
+                </x-secondary-button>
+                <a href="{{ route('admin.klasifikasi.create') }}" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold text-sm hover:bg-blue-700">
+                    <i class="fas fa-plus mr-2"></i> Tambah Klasifikasi Baru
+                </a>
+            </div>
         </div>
     </x-slot>
 

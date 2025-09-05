@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\KlasifikasiSurat;
 use Illuminate\Http\Request;
+use App\Services\PageTitleService;
+use App\Services\BreadcrumbService;
 
 class KlasifikasiSuratController extends Controller
 {
@@ -57,5 +59,13 @@ class KlasifikasiSuratController extends Controller
         // Add a check to prevent deletion if it has children? For now, we allow it.
         $klasifikasi->delete();
         return redirect()->route('admin.klasifikasi.index')->with('success', 'Klasifikasi berhasil dihapus.');
+    }
+
+    public function showWorkflow(PageTitleService $pageTitleService, BreadcrumbService $breadcrumbService)
+    {
+        $pageTitleService->setTitle('Alur Kerja Klasifikasi Surat');
+        $breadcrumbService->add('Klasifikasi Surat', route('admin.klasifikasi.index'));
+        $breadcrumbService->add('Alur Kerja');
+        return view('admin.klasifikasi.workflow');
     }
 }
