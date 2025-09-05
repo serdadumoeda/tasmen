@@ -9,110 +9,117 @@
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-8">
 
+            <!-- Intro Card -->
             <x-card>
                 <div class="p-6">
-                    <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Flowchart Alur Kerja Kegiatan</h3>
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">Dokumentasi Alur Kerja</h3>
+                    <p class="text-gray-600">Halaman ini berisi dokumentasi lengkap dan detail mengenai alur kerja Modul Kegiatan, dari navigasi umum hingga fitur-fitur spesifik. Gunakan ini sebagai panduan untuk memahami cara kerja sistem.</p>
+                </div>
+            </x-card>
+
+            <!-- Flowchart Umum -->
+            <x-card>
+                <div class="p-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">1. Flowchart Alur Kerja Umum</h3>
                     <p class="text-gray-600 mb-6">Flowchart ini merinci keseluruhan alur kerja modul kegiatan, mulai dari navigasi awal, pembuatan kegiatan, hingga interaksi dengan semua fitur di halaman detail.</p>
                     <div class="p-4 bg-gray-50 rounded-lg text-center">
                         <pre class="mermaid">
 graph TD
-    %% --- Definisi Style ---
     classDef page fill:#EBF5FB,stroke:#3498DB,color:#2874A6,stroke-width:1px;
     classDef action fill:#FEF9E7,stroke:#F1C40F,color:#B7950B,stroke-width:1px;
     classDef process fill:#E8F8F5,stroke:#1ABC9C,color:#148F77,stroke-width:1px;
     classDef decision fill:#FDEDEC,stroke:#C0392B,color:#A93226,stroke-width:1px;
-    classDef io fill:#F4ECF7,stroke:#8E44AD,color:#6C3483,stroke-width:1px;
 
-    %% --- 1. Alur Utama ---
-    subgraph "1. Alur Utama Navigasi"
-        A["<i class='fa fa-desktop'></i> Dashboard"]:::io -->|Klik Menu 'Kegiatan'| B["<i class='fa fa-list-alt'></i> Halaman Daftar Kegiatan"]:::page;
-        B -->|Klik Tombol<br><b>'Buat Kegiatan Baru'</b>| C_Flow["<i class='fa fa-plus-circle'></i> Alur Pembuatan Kegiatan"];
-        B -->|Klik Nama Kegiatan| D_Flow["<i class='fa fa-eye'></i> Alur Detail Kegiatan"];
+    subgraph "A. Alur Utama Navigasi"
+        A1["<i class='fa fa-desktop'></i> Dashboard"]:::page -->|Klik Menu| A2["<i class='fa fa-list-alt'></i> Halaman Daftar Kegiatan"]:::page;
+        A2 -->|Klik 'Buat'| B_Flow["<i class='fa fa-plus-circle'></i> Alur Pembuatan Kegiatan"];
+        A2 -->|Klik Nama Kegiatan| C_Flow["<i class='fa fa-eye'></i> Alur Detail Kegiatan"];
     end
 
-    %% --- 2. Alur Pembuatan Kegiatan ---
-    subgraph C_Flow [2. Alur Pembuatan Kegiatan Baru]
-        C1[Mulai dari Daftar Kegiatan] --> C2{<i class='fa fa-shield-alt'></i> Cek Izin: 'create'}:::decision;
-        C2 -- <i class='fa fa-check'></i> Diizinkan --> C3["<i class='fa fa-keyboard'></i> Form Step 1: Inisiasi"]:::page;
-        C2 -- <i class='fa fa-times'></i> Ditolak --> C_End(<i class='fa fa-ban'></i> Akses Ditolak);
-        C3 -- Isi data & Submit --> C4{<i class='fa fa-check-double'></i> Validasi Input}:::decision;
-        C4 -- <i class='fa fa-times'></i> Gagal --> C3;
-        C4 -- <i class='fa fa-check'></i> Sukses --> C5["<i class='fa fa-save'></i> Simpan Project"]:::process;
-        C5 --> C6["<i class='fa fa-users'></i> Form Step 2: Tambah Tim"]:::page;
-        C6 -- Isi Tim & Submit --> C7{<i class='fa fa-check-double'></i> Validasi Tim}:::decision;
-        C7 -- <i class='fa fa-times'></i> Gagal --> C6;
-        C7 -- <i class='fa fa-check'></i> Sukses --> C8["<i class='fa fa-sync-alt'></i> Update & Sinkronisasi Tim"]:::process;
-        C8 --> D_Flow;
+    subgraph B_Flow [B. Alur Pembuatan Kegiatan Baru]
+        B1[Mulai] --> B2{<i class='fa fa-shield-alt'></i> Cek Izin: 'create'}:::decision;
+        B2 -- Diizinkan --> B3["<i class='fa fa-keyboard'></i> Form Step 1: Inisiasi"]:::page;
+        B3 -- Submit --> B4{<i class='fa fa-check-double'></i> Validasi}:::decision;
+        B4 -- Gagal --> B3;
+        B4 -- Sukses --> B5["<i class='fa fa-save'></i> Simpan Project"]:::process;
+        B5 --> B6["<i class='fa fa-users'></i> Form Step 2: Tim"]:::page;
+        B6 -- Submit --> B7{<i class='fa fa-check-double'></i> Validasi}:::decision;
+        B7 -- Gagal --> B6;
+        B7 -- Sukses --> B8["<i class='fa fa-sync-alt'></i> Simpan Tim"]:::process;
+        B8 --> C_Flow;
     end
 
-    %% --- 3. Alur Detail Kegiatan ---
-    subgraph D_Flow [3. Halaman Detail Kegiatan & Fitur-Fiturnya]
-        D1["<i class='fa fa-file-alt'></i> Halaman Detail"]:::page --> D_Tugas[Tab: Ringkasan Tugas];
-        D1 --> D_Tim[Tab: Tim];
-        D1 --> D_Anggaran[Tab: Anggaran];
-        D1 --> D_Surat[Tab: Surat Terkait];
-        D1 --> D_Aksi[Area Tombol Aksi];
-    end
-
-    %% --- Sub-flows dari Detail Kegiatan ---
-    subgraph D_Tugas [Tab: Ringkasan Tugas]
-        T1[Daftar Tugas]:::page --> T2["<i class='fa fa-plus'></i> Aksi: Tambah Tugas"]:::action;
-        T2 --> T3[Modal/Form Tambah Tugas]:::page;
-        T3 -- Submit --> T4["<i class='fa fa-cogs'></i> Controller: TaskController@store"]:::process;
-        T4 -- Sukses --> T1;
-    end
-
-    subgraph D_Aksi [Area Tombol Aksi]
-        A1["<i class='fa fa-edit'></i> Tombol: Edit Kegiatan"]:::action --> A2["<i class='fa fa-cogs'></i> Controller: ProjectController@edit"]:::process;
-        A2 --> A3["<i class='fa fa-arrow-right'></i> Halaman Edit Kegiatan"]:::page;
-
-        A4["<i class='fa fa-th-large'></i> Tombol: Papan Kanban"]:::action --> A5["<i class='fa fa-cogs'></i> Controller: ProjectController@showKanban"]:::process;
-        A5 --> A6["<i class='fa fa-arrow-right'></i> Halaman Kanban"]:::page;
-        A6 -- Drag & Drop Tugas --> A7["<i class='fa fa-cogs'></i> AJAX Call: TaskController@updateStatus"]:::process;
-        A7 --> A6;
-
-        A8["<i class='fa fa-calendar-alt'></i> Tombol: Kalender"]:::action --> A9["<i class='fa fa-cogs'></i> Controller: ProjectController@showCalendar"]:::process;
-        A9 --> A10["<i class='fa fa-arrow-right'></i> Halaman Kalender"]:::page;
-        A10 -- Memuat data dari --> A11["<i class='fa fa-cogs'></i> Endpoint: ProjectController@tasksJson"]:::process;
-
-        A12["<i class='fa fa-file-pdf'></i> Tombol: Laporan PDF"]:::action --> A13["<i class='fa fa-cogs'></i> Controller: ProjectController@downloadReport"]:::process;
-        A13 --> A14["<i class='fa fa-download'></i> Generate & Unduh PDF"];
+    subgraph C_Flow [C. Alur Detail Kegiatan]
+        C1["<i class='fa fa-file-alt'></i> Halaman Detail"]:::page --> C2[Tab & Tombol Aksi];
     end
                         </pre>
                     </div>
                 </div>
             </x-card>
 
+            <!-- Rincian Halaman Detail -->
             <x-card>
                 <div class="p-6">
-                    <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Penjelasan Detail Alur Kerja</h3>
-                    <div class="prose max-w-none text-gray-700 space-y-4">
-                        <div>
-                            <h4 class="font-semibold text-gray-800">1. Alur Utama Navigasi</h4>
-                            <p>Pengguna memulai dari Dashboard, lalu masuk ke menu utama Kegiatan untuk melihat daftar semua kegiatan yang dapat diakses. Dari daftar ini, pengguna dapat memilih untuk membuat kegiatan baru atau melihat detail kegiatan yang sudah ada.</p>
-                        </div>
-                        <div>
-                            <h4 class="font-semibold text-gray-800">2. Alur Pembuatan Kegiatan Baru</h4>
-                            <p>Ini adalah proses dua langkah yang terstruktur. Pertama, sistem akan memvalidasi izin pengguna. Kemudian, pengguna mengisi detail dasar kegiatan. Setelah validasi berhasil, pengguna melanjutkan ke langkah kedua untuk membentuk tim dan menunjuk ketua. Jika semua validasi sukses, kegiatan baru berhasil dibuat dan pengguna diarahkan ke halaman detailnya.</p>
-                        </div>
-                        <div>
-                            <h4 class="font-semibold text-gray-800">3. Halaman Detail Kegiatan & Fitur-Fiturnya</h4>
-                            <p>Ini adalah halaman pusat untuk mengelola sebuah kegiatan. Semua fitur utama dapat diakses dari sini:</p>
-                            <ul class="list-disc list-inside ml-4 space-y-2">
-                                <li><strong>Manajemen Tugas:</strong> Pengguna dapat menambah tugas baru melalui form modal, yang datanya akan disimpan melalui `TaskController`. Daftar tugas akan otomatis diperbarui.</li>
-                                <li><strong>Tombol Aksi:</strong>
-                                    <ul class="list-disc list-inside ml-6">
-                                        <li><strong>Edit Kegiatan:</strong> Membuka halaman form baru untuk mengedit data inti proyek.</li>
-                                        <li><strong>Papan Kanban:</strong> Menyediakan tampilan visual untuk manajemen status tugas secara interaktif melalui panggilan AJAX.</li>
-                                        <li><strong>Kalender:</strong> Menampilkan jadwal dan deadline tugas dengan memuat data dari endpoint JSON.</li>
-                                        <li><strong>Laporan PDF:</strong> Memicu proses di server untuk men-generate laporan ringkasan proyek yang bisa langsung diunduh.</li>
-                                    </ul>
-                                </li>
-                            </ul>
-                        </div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">2. Rincian Halaman Detail Kegiatan</h3>
+                    <p class="text-gray-600 mb-6">Halaman ini adalah pusat kendali untuk sebuah kegiatan. Strukturnya dibagi menjadi dua bagian utama: **Tombol Aksi Global** di header, dan **Area Konten Berbasis Tab**.</p>
+
+                    <div class="prose max-w-none text-gray-700">
+                        <h4 class="font-semibold text-gray-800">Tombol Aksi Global (di Header)</h4>
+                        <ul class="list-disc list-inside space-y-2">
+                            <li><strong>Dropdown "Tampilan & Laporan"</strong>: Menyediakan akses cepat ke berbagai visualisasi data (Kanban, Kalender, Kurva S) dan untuk mengunduh Laporan PDF.</li>
+                            <li><strong>Tombol "Anggaran"</strong>: Mengarahkan ke halaman manajemen finansial kegiatan (memerlukan izin `update`).</li>
+                            <li><strong>Tombol "Edit Kegiatan"</strong>: Mengarahkan ke halaman untuk mengubah data inti kegiatan (memerlukan izin `update`).</li>
+                        </ul>
+
+                        <h4 class="font-semibold text-gray-800 mt-6">Area Konten Berbasis Tab</h4>
+                        <ul class="list-disc list-inside space-y-2">
+                            <li><strong>Tab "Daftar Tugas" (Default)</strong>: Menampilkan semua tugas dalam kegiatan. Ini adalah area kerja utama.</li>
+                            <li><strong>Tab "Informasi & Aktivitas"</strong>: Menampilkan deskripsi, detail, tim, dan log aktivitas proyek.</li>
+                            <li><strong>Tab "Persuratan"</strong>: Menampilkan surat-surat yang terkait dengan kegiatan ini.</li>
+                            <li><strong>Tab "Tambah Tugas Baru"</strong>: Form untuk menambah tugas baru (memerlukan izin `update`).</li>
+                        </ul>
                     </div>
                 </div>
             </x-card>
+
+            <!-- Flowchart Fokus Tugas -->
+            <x-card>
+                <div class="p-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">3. Flowchart Fokus: Manajemen Tugas</h3>
+                    <p class="text-gray-600 mb-6">Flowchart ini merinci semua aksi yang bisa dilakukan pengguna terkait **Tugas** dari dalam Halaman Detail Kegiatan.</p>
+                    <div class="p-4 bg-gray-50 rounded-lg text-center">
+                        <pre class="mermaid">
+graph TD
+    subgraph "Alur Kerja Tab Tugas"
+        A["<i class='fa fa-list-check'></i> Tab: Daftar Tugas"]:::page --> B["<i class='fa fa-filter'></i> Filter & Urutkan Tugas"]:::action;
+        B -- Terapkan Filter --> A;
+
+        A --> C["<i class='fa fa-plus-circle'></i> Aksi: Tambah Tugas Baru"]:::action;
+        C -- Buka Tab/Form --> D[Form Tambah Tugas]:::page;
+        D -- Isi Form & Submit --> E{"<i class='fa fa-cogs'></i> Controller:<br>TaskController@store"}:::process;
+        E -- Validasi Gagal --> D;
+        E -- Validasi Sukses --> F["<i class='fa fa-sync-alt'></i> Simpan & Refresh Daftar"]:::process;
+        F --> A;
+
+        A --> G["<i class='fa fa-edit'></i> Aksi: Edit Tugas"]:::action;
+        G --> H["<i class='fa fa-arrow-right'></i> Buka Halaman<br>Edit Tugas (tasks.edit)"]:::page;
+
+        A --> I["<i class='fa fa-trash-alt'></i> Aksi: Hapus Tugas"]:::action;
+        I -- Konfirmasi --> J{"<i class='fa fa-cogs'></i> Controller:<br>TaskController@destroy"}:::process;
+        J --> F;
+
+        A --> K["<i class='fa fa-search'></i> Lihat Detail Tugas (Expand)"];
+        K --> L["Tampilkan Rincian:<br>- Deskripsi<br>- Sub-Tugas<br>- Komentar<br>- Lampiran"];
+    end
+
+    classDef page fill:#EBF5FB,stroke:#3498DB,color:#2874A6;
+    classDef action fill:#FEF9E7,stroke:#F1C40F,color:#B7950B;
+    classDef process fill:#E8F8F5,stroke:#1ABC9C,color:#148F77;
+                        </pre>
+                    </div>
+                </div>
+            </x-card>
+
         </div>
     </div>
 
