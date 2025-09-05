@@ -526,4 +526,13 @@ class ProjectController extends Controller
 
         return response()->json($events);
     }
+
+    public function showWorkflow(PageTitleService $pageTitleService, BreadcrumbService $breadcrumbService)
+    {
+        $this->authorize('create', Project::class); // Only users who can create projects can see the workflow
+        $pageTitleService->setTitle('Alur Kerja Kegiatan');
+        $breadcrumbService->add('Dashboard', route('dashboard'));
+        $breadcrumbService->add('Alur Kerja Kegiatan');
+        return view('projects.workflow');
+    }
 }

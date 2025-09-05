@@ -42,6 +42,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [HomeController::class, 'index'])->name('dashboard');
     // Rute untuk daftar kegiatan (proyek)
     Route::get('/projects', [ProjectController::class, 'index'])->name('projects.index');
+    Route::get('/projects/workflow', [ProjectController::class, 'showWorkflow'])->name('projects.workflow');
 
 
     // Langkah 1: Menampilkan form inisiasi proyek
