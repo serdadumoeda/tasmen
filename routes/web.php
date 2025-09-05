@@ -191,6 +191,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/profile/complete', [CompleteProfileController::class, 'store'])->name('profile.complete.store');
 
     // Routes for Letter Templates
+    Route::get('/templatesurat/workflow', [\App\Http\Controllers\TemplateSuratController::class, 'showWorkflow'])->name('templatesurat.workflow');
     Route::resource('templatesurat', \App\Http\Controllers\TemplateSuratController::class)->except(['show']);
 
     // Routes for Outgoing Letters

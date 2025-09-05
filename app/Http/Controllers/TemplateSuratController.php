@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\TemplateSurat;
 use Illuminate\Http\Request;
+use App\Services\PageTitleService;
+use App\Services\BreadcrumbService;
 
 class TemplateSuratController extends Controller
 {
@@ -80,5 +82,13 @@ class TemplateSuratController extends Controller
         $templatesurat->delete();
 
         return redirect()->route('templatesurat.index')->with('success', 'Template surat berhasil dihapus.');
+    }
+
+    public function showWorkflow(PageTitleService $pageTitleService, BreadcrumbService $breadcrumbService)
+    {
+        $pageTitleService->setTitle('Alur Kerja Template Surat');
+        $breadcrumbService->add('Template Surat', route('templatesurat.index'));
+        $breadcrumbService->add('Alur Kerja');
+        return view('templatesurat.workflow');
     }
 }
