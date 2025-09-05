@@ -196,6 +196,7 @@ Route::middleware(['auth'])->group(function () {
     // Routes for Outgoing Letters
     Route::prefix('surat-keluar')->name('surat-keluar.')->group(function () {
         Route::get('/', [\App\Http\Controllers\SuratKeluarController::class, 'index'])->name('index');
+        Route::get('/workflow', [\App\Http\Controllers\SuratKeluarController::class, 'showWorkflow'])->name('workflow');
         Route::get('/create', [\App\Http\Controllers\SuratKeluarController::class, 'create'])->name('create');
         Route::get('/create/from-template', [\App\Http\Controllers\SuratKeluarController::class, 'createFromTemplate'])->name('create.from-template');
         Route::get('/create/upload', [\App\Http\Controllers\SuratKeluarController::class, 'createUpload'])->name('create.upload');

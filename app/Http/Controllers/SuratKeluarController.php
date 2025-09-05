@@ -12,6 +12,8 @@ use App\Services\NomorSuratService;
 use App\Services\Tte\TteManager;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Services\PageTitleService;
+use App\Services\BreadcrumbService;
 use Illuminate\Support\Facades\Storage;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -221,5 +223,13 @@ class SuratKeluarController extends Controller
             ->with('surat_id', $surat->id)
             ->with('prefill_title', $surat->perihal)
             ->with('prefill_description', "Dibuat berdasarkan surat nomor " . $surat->nomor_surat . " perihal " . $surat->perihal . ".");
+    }
+
+    public function showWorkflow(PageTitleService $pageTitleService, BreadcrumbService $breadcrumbService)
+    {
+        $pageTitleService->setTitle('Alur Kerja Surat Keluar');
+        $breadcrumbService->add('Surat Keluar', route('surat-keluar.index'));
+        $breadcrumbService->add('Alur Kerja');
+        return view('suratkeluar.workflow');
     }
 }
