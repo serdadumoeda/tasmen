@@ -33,18 +33,63 @@
     </div>
 
     @push('styles')
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.min.css">
+    <style>
+        .ts-control {
+            border-radius: 0.5rem; /* rounded-lg */
+            border-color: #d1d5db; /* gray-300 */
+            padding: 0.5rem 0.75rem;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* shadow-sm */
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        }
+        .ts-control.focus {
+            border-color: #6366f1; /* indigo-500 */
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2); /* ring-indigo-500 */
+        }
+        .ts-control .item {
+            background-color: #4f46e5; /* indigo-600 */
+            color: white;
+            border-radius: 0.25rem;
+            font-weight: 500;
+            padding: 0.25rem 0.5rem;
+            margin: 0.125rem;
+        }
+        .ts-control .item.active {
+            background-color: #4338ca; /* indigo-700 */
+        }
+        .ts-control .remove {
+            color: white;
+            opacity: 0.8;
+        }
+        .ts-control .remove:hover {
+            color: white;
+            opacity: 1;
+        }
+        .ts-dropdown {
+            border-radius: 0.5rem; /* rounded-lg */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-lg */
+        }
+        .ts-dropdown .option.active {
+            background-color: #e0e7ff; /* indigo-100 */
+            color: #1e3a8a; /* indigo-900 */
+        }
+    </style>
     @endpush
+
     @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            new TomSelect('#assignees', {
-                plugins: ['remove_button'],
-                create: false,
-                maxItems: null,
-                placeholder: 'Pilih Anggota Tim'
-            });
+            const selectElement = document.getElementById('assignees');
+            if (selectElement) {
+                new TomSelect(selectElement, {
+                    plugins: ['remove_button'],
+                    create: false,
+                    maxItems: null,
+                    placeholder: 'Pilih Anggota Tim',
+                    items: @json(old('assignees', $task->assignees->pluck('id')->toArray()))
+                });
+            }
         });
     </script>
     @endpush
