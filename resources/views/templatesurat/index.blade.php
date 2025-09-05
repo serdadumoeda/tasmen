@@ -4,9 +4,15 @@
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 {{ __('Manajemen Template Surat') }}
             </h2>
-            <a href="{{ route('templatesurat.create') }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150 shadow-md hover:shadow-lg">
-                <i class="fas fa-plus-circle mr-2"></i> {{ __('Tambah Template Baru') }}
-            </a>
+            <div class="flex items-center space-x-2">
+                <x-secondary-button :href="route('templatesurat.workflow')">
+                    <i class="fas fa-sitemap mr-2"></i>
+                    Lihat Alur Kerja
+                </x-secondary-button>
+                <a href="{{ route('templatesurat.create') }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150 shadow-md hover:shadow-lg">
+                    <i class="fas fa-plus-circle mr-2"></i> {{ __('Tambah Template Baru') }}
+                </a>
+            </div>
         </div>
     </x-slot>
 
