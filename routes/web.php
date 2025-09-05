@@ -208,6 +208,7 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // Routes for Incoming Letters & Dispositions
+    Route::get('/surat-masuk/workflow', [\App\Http\Controllers\SuratMasukController::class, 'showWorkflow'])->name('surat-masuk.workflow');
     Route::resource('surat-masuk', \App\Http\Controllers\SuratMasukController::class)->only(['index', 'create', 'store', 'show', 'destroy']);
     Route::post('/surat-masuk/{surat}/disposisi', [\App\Http\Controllers\DisposisiController::class, 'store'])->name('disposisi.store');
 
