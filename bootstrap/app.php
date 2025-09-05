@@ -17,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             \App\Http\Middleware\MarkNotificationAsRead::class,
             \App\Http\Middleware\CheckProfileIsComplete::class,
+            \App\Http\Middleware\PreventBackHistory::class,
         ]);
 
         $middleware->alias([
@@ -24,6 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'can.manage.leave.settings' => \App\Http\Middleware\CheckCanManageLeaveSettings::class,
             'auth.apikey' => \App\Http\Middleware\AuthenticateApiClient::class,
             'log.api' => \App\Http\Middleware\LogApiActivity::class,
+            'prevent-back-history' => \App\Http\Middleware\PreventBackHistory::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
