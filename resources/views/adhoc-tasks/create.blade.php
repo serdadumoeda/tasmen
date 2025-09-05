@@ -29,4 +29,21 @@
             </div>
         </div>
     </div>
+
+    @push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize TomSelect on the assignees field with specific options
+            const assigneeSelect = document.getElementById('assignees');
+            if (assigneeSelect) {
+                new TomSelect(assigneeSelect, {
+                    plugins: ['remove_button'],
+                    create: false,
+                    maxItems: null,
+                    placeholder: 'Pilih Anggota Tim...'
+                });
+            }
+        });
+    </script>
+    @endpush
 </x-app-layout>
