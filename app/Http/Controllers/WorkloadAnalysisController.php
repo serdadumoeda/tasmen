@@ -6,6 +6,8 @@ use App\Models\User;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Services\PageTitleService;
+use App\Services\BreadcrumbService;
 
 class WorkloadAnalysisController extends Controller
 {
@@ -22,7 +24,7 @@ class WorkloadAnalysisController extends Controller
         }
 
         // Dapatkan query dasar untuk bawahan
-        if ($manager->role === 'Superadmin') {
+        if ($manager->isSuperAdmin()) {
             $subordinatesQuery = User::where('id', '!=', $manager->id);
         } else {
             // Replikasi logika dari getAllSubordinates untuk mendapatkan query builder
@@ -98,5 +100,13 @@ class WorkloadAnalysisController extends Controller
             'projectTasks' => $projectTasks,
             'specialAssignments' => $user->specialAssignments,
         ]);
+    }
+
+    public function showWorkflow(PageTitleService $pageTitleService, BreadcrumbService $breadcrumbService)
+    {
+        $pageTitleService->setTitle('Alur Kerja Analisis Beban Kerja');
+        $breadcrumbService->add('Analisis Beban Kerja', route('workload.analysis'));
+        $breadcrumbService->add('Alur Kerja');
+        return view('workload-analysis.workflow');
     }
 }
