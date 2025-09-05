@@ -7,6 +7,8 @@ use App\Models\ApprovalWorkflow;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use App\Services\PageTitleService;
+use App\Services\BreadcrumbService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
@@ -241,5 +243,13 @@ class UnitController extends Controller
         $jabatans = $query->orderBy('name')->get(['id', 'name']);
 
         return response()->json($jabatans);
+    }
+
+    public function showWorkflow(PageTitleService $pageTitleService, BreadcrumbService $breadcrumbService)
+    {
+        $pageTitleService->setTitle('Alur Kerja Manajemen Unit');
+        $breadcrumbService->add('Manajemen Unit', route('admin.units.index'));
+        $breadcrumbService->add('Alur Kerja');
+        return view('admin.units.workflow');
     }
 }
