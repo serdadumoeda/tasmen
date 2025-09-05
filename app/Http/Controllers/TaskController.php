@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Notification;
 use App\Notifications\TaskRequiresApproval;
 use App\Models\SubTask;
 use App\Models\Unit; // Tambahkan model Unit
+use App\Services\BreadcrumbService;
 
 class TaskController extends Controller
 {
@@ -54,7 +55,7 @@ class TaskController extends Controller
         return redirect()->route('projects.show', $project)->with('success', 'Tugas baru berhasil ditambahkan!');
     }
 
-    public function edit(Task $task)
+    public function edit(Task $task, BreadcrumbService $breadcrumbService)
     {
         // Eager load relasi untuk efisiensi
         $task->load('assignees', 'attachments', 'project.members');
@@ -64,9 +65,17 @@ class TaskController extends Controller
         $assignableUsers = collect();
 
         if ($task->project_id) {
+            // Breadcrumb untuk tugas proyek
+            $breadcrumbService->add('Dashboard', route('dashboard'));
+            $breadcrumbService->add($task->project->name, route('projects.show', $task->project));
+            $breadcrumbService->add('Edit Tugas');
             // Untuk tugas proyek, ambil anggota tim proyek
             $assignableUsers = $task->project->members()->orderBy('name')->get();
         } else {
+            // Breadcrumb untuk tugas ad-hoc
+            $breadcrumbService->add('Dashboard', route('dashboard'));
+            $breadcrumbService->add('Tugas Harian', route('adhoc-tasks.index'));
+            $breadcrumbService->add('Edit Tugas');
             // Untuk tugas ad-hoc, gunakan logika dari AdHocTaskController
             if ($user->canManageUsers()) {
                 // Manajer bisa menugaskan ke diri sendiri dan semua bawahan
