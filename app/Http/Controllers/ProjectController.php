@@ -15,16 +15,17 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\DB;
 use App\Services\BreadcrumbService;
+use App\Services\PageTitleService;
 
 class ProjectController extends Controller
 {
     use AuthorizesRequests;
 
     
-    public function index(Request $request, BreadcrumbService $breadcrumbService)
+    public function index(Request $request, BreadcrumbService $breadcrumbService, PageTitleService $pageTitleService)
     {
         $breadcrumbService->add('Dashboard', route('dashboard'));
-        $breadcrumbService->hideBackButton();
+        $pageTitleService->setTitle('Dashboard');
         $query = Project::with(['owner', 'leader', 'members'])
             ->withCount(['tasks', 'completedTasks'])
             ->withSum('budgetItems', 'total_cost');
@@ -51,11 +52,12 @@ class ProjectController extends Controller
         return view('dashboard', compact('projects', 'stats', 'activities'));
     }
 
-    public function createStep1(BreadcrumbService $breadcrumbService)
+    public function createStep1(BreadcrumbService $breadcrumbService, PageTitleService $pageTitleService)
     {
         $this->authorize('create', Project::class);
         $breadcrumbService->add('Dashboard', route('dashboard'));
         $breadcrumbService->add('Buat Kegiatan Baru');
+        $pageTitleService->setTitle('Buat Kegiatan Baru');
         $suratList = Surat::orderBy('tanggal_surat', 'desc')->select('id', 'perihal', 'nomor_surat')->get();
 
         return view('projects.create_step1', ['project' => new Project(), 'suratList' => $suratList]);
@@ -91,12 +93,13 @@ class ProjectController extends Controller
         return redirect()->route('projects.create.step2', $project);
     }
 
-    public function createStep2(Project $project, BreadcrumbService $breadcrumbService)
+    public function createStep2(Project $project, BreadcrumbService $breadcrumbService, PageTitleService $pageTitleService)
     {
         $this->authorize('update', $project);
         $breadcrumbService->add('Dashboard', route('dashboard'));
         $breadcrumbService->add('Buat Kegiatan Baru', route('projects.create.step1'));
         $breadcrumbService->add('Tambah Tim');
+        $pageTitleService->setTitle('Tambah Tim - ' . $project->name);
 
         $user = Auth::user();
         $subordinateIds = $user->getAllSubordinateIds();
@@ -130,11 +133,12 @@ class ProjectController extends Controller
         return redirect()->route('projects.show', $project)->with('success', 'Tim proyek berhasil dibentuk!');
     }
 
-    public function show(Request $request, Project $project, BreadcrumbService $breadcrumbService)
+    public function show(Request $request, Project $project, BreadcrumbService $breadcrumbService, PageTitleService $pageTitleService)
     {
         $this->authorize('view', $project);
         $breadcrumbService->add('Dashboard', route('dashboard'));
         $breadcrumbService->add($project->name);
+        $pageTitleService->setTitle('Proyek: ' . $project->name);
         $user = Auth::user();
 
         $project->load(['owner', 'leader', 'members', 'activities.user', 'surat']);
@@ -192,12 +196,13 @@ class ProjectController extends Controller
     }
 
 
-    public function edit(Project $project, BreadcrumbService $breadcrumbService)
+    public function edit(Project $project, BreadcrumbService $breadcrumbService, PageTitleService $pageTitleService)
     {
         $this->authorize('update', $project);
         $breadcrumbService->add('Dashboard', route('dashboard'));
         $breadcrumbService->add($project->name, route('projects.show', $project));
         $breadcrumbService->add('Edit');
+        $pageTitleService->setTitle('Edit Proyek: ' . $project->name);
 
         $project->load('owner', 'members', 'tasks.status');
         

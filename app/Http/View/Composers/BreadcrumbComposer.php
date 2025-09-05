@@ -17,6 +17,5 @@ class BreadcrumbComposer
     public function compose(View $view)
     {
         $view->with('breadcrumbs', $this->breadcrumbService->get());
-        $view->with('showBackButton', $this->breadcrumbService->getShowBackButton());
     }
 }
