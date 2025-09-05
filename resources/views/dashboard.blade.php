@@ -11,11 +11,11 @@
                 </p>
             </div>
         <div class="mt-4 sm:mt-0 sm:ml-4 flex items-center space-x-2">
-                 @can('create', App\Models\Project::class)
-                <x-secondary-button :href="route('projects.workflow')">
-                    <i class="fas fa-sitemap mr-2"></i>
-                    Lihat Alur Kerja
-                </x-secondary-button>
+            <x-secondary-button :href="route('projects.workflow')">
+                <i class="fas fa-sitemap mr-2"></i>
+                Lihat Alur Kerja
+            </x-secondary-button>
+            @can('create', App\Models\Project::class)
                     <x-primary-button :href="route('projects.create.step1')">
                         <i class="fas fa-plus mr-2"></i>
                         Inisiasi Kegiatan Baru
