@@ -291,9 +291,14 @@ class ProjectController extends Controller
         return redirect()->route('dashboard')->with('success', "Proyek '{$projectName}' berhasil dihapus.");
     }
     
-    public function sCurve(Project $project)
+    public function sCurve(Project $project, PageTitleService $pageTitleService, BreadcrumbService $breadcrumbService)
     {
         $this->authorize('view', $project);
+        $pageTitleService->setTitle('Kurva S - ' . $project->name);
+        $breadcrumbService->add('Dashboard', route('dashboard'));
+        $breadcrumbService->add($project->name, route('projects.show', $project));
+        $breadcrumbService->add('Kurva S');
+
         if (!$project->start_date || !$project->end_date) {
             return back()->with('error', 'Proyek ini belum memiliki tanggal mulai dan selesai untuk membuat Kurva S.');
         }
@@ -378,9 +383,13 @@ class ProjectController extends Controller
         return view('projects.s-curve', compact('project', 'chartData'));
     }
 
-    public function teamDashboard(Project $project)
+    public function teamDashboard(Project $project, PageTitleService $pageTitleService, BreadcrumbService $breadcrumbService)
     {
         $this->authorize('viewTeamDashboard', $project);
+        $pageTitleService->setTitle('Dashboard Tim - ' . $project->name);
+        $breadcrumbService->add('Dashboard', route('dashboard'));
+        $breadcrumbService->add($project->name, route('projects.show', $project));
+        $breadcrumbService->add('Dashboard Tim');
         $project->load(['members', 'tasks.assignees', 'tasks.timeLogs', 'tasks.status', 'tasks.priorityLevel']);
         $priorities = \App\Models\PriorityLevel::all();
         $statuses = \App\Models\TaskStatus::all();
@@ -456,9 +465,13 @@ class ProjectController extends Controller
         return $pdf->download('laporan-proyek-' . $project->name . '-' . now()->format('Y-m-d') . '.pdf');
     }
 
-    public function showKanban(Project $project)
+    public function showKanban(Project $project, PageTitleService $pageTitleService, BreadcrumbService $breadcrumbService)
     {
         $this->authorize('view', $project);
+        $pageTitleService->setTitle('Papan Kanban - ' . $project->name);
+        $breadcrumbService->add('Dashboard', route('dashboard'));
+        $breadcrumbService->add($project->name, route('projects.show', $project));
+        $breadcrumbService->add('Papan Kanban');
 
         $tasks = $project->tasks()->with(['assignees', 'comments', 'subTasks', 'status'])->get();
         $statuses = \App\Models\TaskStatus::all();
@@ -469,9 +482,13 @@ class ProjectController extends Controller
         return view('projects.kanban', compact('project', 'groupedTasks', 'statuses'));
     }
 
-    public function showCalendar(Project $project)
+    public function showCalendar(Project $project, PageTitleService $pageTitleService, BreadcrumbService $breadcrumbService)
     {
         $this->authorize('view', $project);
+        $pageTitleService->setTitle('Kalender - ' . $project->name);
+        $breadcrumbService->add('Dashboard', route('dashboard'));
+        $breadcrumbService->add($project->name, route('projects.show', $project));
+        $breadcrumbService->add('Kalender');
         return view('projects.calendar', compact('project'));
     }
     
