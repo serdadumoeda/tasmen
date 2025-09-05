@@ -45,7 +45,7 @@ graph TD
         B2 -->|Pilih 'Unggah Manual'| B5["<i class='fa fa-upload'></i> Unggah File PDF"]:::page;
         B5 -- Submit --> B_Save;
 
-        B_Save{"<i class='fa fa-cogs'></i> Simpan sebagai Draf<br>+ Generate Nomor Surat"}:::process --> C_Flow;
+        B_Save["<i class='fa fa-cogs'></i> Simpan sebagai Draf<br>+ Generate Nomor Surat"]:::process --> C1;
     end
 
     subgraph C_Flow [C. Alur Detail & Persetujuan]
@@ -55,7 +55,7 @@ graph TD
         C3 -- Sukses --> C4["<i class='fa fa-signature'></i> Panggil TTE Service<br>untuk Tanda Tangan Digital"]:::process;
         C4 -- Gagal TTD --> C5["<i class='fa fa-exclamation-triangle'></i> Tampilkan Error"]:::io;
         C4 -- Sukses TTD --> C6["<i class='fa fa-file-pdf'></i> Simpan PDF Final &<br>Ubah Status jadi 'Disetujui'"]:::process;
-        C6 --> D_Flow["<i class='fa fa-cogs'></i> Alur Tindak Lanjut"];
+        C6 --> D1;
     end
 
     subgraph D_Flow [D. Alur Tindak Lanjut (Opsional)]
