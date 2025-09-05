@@ -127,6 +127,7 @@ Route::middleware(['auth'])->group(function () {
     // Rute untuk Ad-Hoc Tasks (Tugas Harian)
     Route::prefix('adhoc-tasks')->name('adhoc-tasks.')->group(function() {
         Route::get('/', [AdHocTaskController::class, 'index'])->name('index');
+        Route::get('/workflow', [AdHocTaskController::class, 'showWorkflow'])->name('workflow');
         Route::get('/print-report', [\App\Http\Controllers\AdHocTaskController::class, 'printReport'])->name('print-report');
         Route::get('/create', [AdHocTaskController::class, 'create'])->name('create');
         Route::post('/', [AdHocTaskController::class, 'store'])->name('store');

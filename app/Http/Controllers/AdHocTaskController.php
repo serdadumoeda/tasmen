@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Task;
 use App\Models\User;
+use App\Services\BreadcrumbService;
+use App\Services\PageTitleService;
 use App\Notifications\TaskAssigned;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
@@ -186,4 +188,11 @@ class AdHocTaskController extends Controller
         return $redirect;
     }
 
+    public function showWorkflow(PageTitleService $pageTitleService, BreadcrumbService $breadcrumbService)
+    {
+        $pageTitleService->setTitle('Alur Kerja Tugas Harian');
+        $breadcrumbService->add('Tugas Harian', route('adhoc-tasks.index'));
+        $breadcrumbService->add('Alur Kerja');
+        return view('adhoc-tasks.workflow');
+    }
 }
