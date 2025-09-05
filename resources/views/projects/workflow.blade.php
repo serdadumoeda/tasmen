@@ -61,10 +61,42 @@ graph TD
             <x-card>
                 <div class="p-6">
                     <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">2. Rincian Halaman Detail Kegiatan</h3>
-                    <p class="text-gray-600 mb-6">Halaman ini adalah pusat kendali untuk sebuah kegiatan. Strukturnya dibagi menjadi dua bagian utama: **Tombol Aksi Global** di header, dan **Area Konten Berbasis Tab**.</p>
+                    <p class="text-gray-600 mb-6">Halaman ini adalah pusat kendali untuk sebuah kegiatan. Flowchart berikut memetakan semua elemen interaktif utama yang tersedia di halaman ini.</p>
+
+                    <div class="p-4 bg-gray-50 rounded-lg text-center mb-6">
+                        <pre class="mermaid">
+graph TD
+    subgraph "Struktur Halaman Detail"
+        A["<i class='fa fa-file-alt'></i> Halaman Detail"]:::page --> B["<i class='fa fa-layer-group'></i> Area Konten (Tabs)"]
+        A --> C["<i class='fa fa-ellipsis-h'></i> Tombol Aksi Global"]
+    end
+
+    subgraph C [Tombol Aksi Global]
+        C1["<i class='fa fa-edit'></i> Edit Kegiatan"]:::action
+        C2["<i class='fa fa-wallet'></i> Anggaran"]:::action
+        C3["<i class='fa fa-eye'></i> Dropdown Tampilan & Laporan"]:::action
+    end
+
+    C3 --> L1["Papan Kanban"]
+    C3 --> L2["Kalender"]
+    C3 --> L3["Kurva S"]
+    C3 --> L4["Dashboard Tim"]
+    C3 --> L5["Laporan PDF"]
+
+    subgraph B [Area Konten Berbasis Tab]
+        B1["Tab: Daftar Tugas"]:::page
+        B2["Tab: Informasi & Aktivitas"]:::page
+        B3["Tab: Persuratan"]:::page
+        B4["Tab: Tambah Tugas Baru"]:::page
+    end
+
+    classDef page fill:#EBF5FB,stroke:#3498DB,color:#2874A6;
+    classDef action fill:#FEF9E7,stroke:#F1C40F,color:#B7950B;
+                        </pre>
+                    </div>
 
                     <div class="prose max-w-none text-gray-700">
-                        <h4 class="font-semibold text-gray-800">Tombol Aksi Global (di Header)</h4>
+                        <h4 class="font-semibold text-gray-800">Penjelasan Tombol Aksi Global</h4>
                         <ul class="list-disc list-inside space-y-2">
                             <li><strong>Dropdown "Tampilan & Laporan"</strong>: Menyediakan akses cepat ke berbagai visualisasi data (Kanban, Kalender, Kurva S) dan untuk mengunduh Laporan PDF.</li>
                             <li><strong>Tombol "Anggaran"</strong>: Mengarahkan ke halaman manajemen finansial kegiatan (memerlukan izin `update`).</li>
