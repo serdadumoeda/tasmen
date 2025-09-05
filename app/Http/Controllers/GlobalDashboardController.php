@@ -69,8 +69,10 @@ class GlobalDashboardController extends Controller
             $projectQuery->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($search) . '%']);
         }
 
-        // Eager load relationships for performance. `tasks` is needed for the status accessor.
-        $projectQuery->with(['leader', 'tasks'])->withSum('budgetItems', 'total_cost');
+        // REFACTOR: Eager load counts for performance. This is crucial for the new progress accessor.
+        $projectQuery->with(['leader'])
+                     ->withCount(['tasks', 'completedTasks'])
+                     ->withSum('budgetItems', 'total_cost');
 
         // Get all projects matching the search criteria first.
         $projects = $projectQuery->latest()->get();

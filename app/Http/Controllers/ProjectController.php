@@ -22,7 +22,8 @@ class ProjectController extends Controller
     
     public function index(Request $request)
     {
-        $query = Project::with(['owner', 'leader', 'members', 'tasks'])
+        $query = Project::with(['owner', 'leader', 'members'])
+            ->withCount(['tasks', 'completedTasks'])
             ->withSum('budgetItems', 'total_cost');
 
         if ($request->filled('search')) {

@@ -16,26 +16,50 @@ class Project extends Model
     protected $fillable = ['name', 'description', 'leader_id', 'owner_id', 'start_date', 'end_date'];
 
     /**
-     * [ACCESSOR BARU] Menghitung progres proyek secara dinamis.
+     * [REFACTOR] Cache the 'completed' status ID to avoid repeated queries.
+     * @var int|null
+     */
+    protected static ?int $completedStatusId = null;
+
+    /**
+     * [REFACTOR] A dedicated relationship for completed tasks.
+     * This is more efficient and reliable than filtering the general tasks collection.
+     */
+    public function completedTasks()
+    {
+        if (is_null(self::$completedStatusId)) {
+            self::$completedStatusId = TaskStatus::where('key', 'completed')->value('id') ?? -1;
+        }
+
+        return $this->hasMany(Task::class)->where('task_status_id', self::$completedStatusId);
+    }
+
+    /**
+     * [REFACTOR] Menghitung progres proyek secara dinamis dan efisien.
      * Dihitung berdasarkan jumlah tugas yang selesai dibagi total tugas.
      *
      * @return int
      *
-     * @warning Potensi N+1 Query! Pastikan relasi 'tasks' di-eager load (->with('tasks'))
-     *          sebelum mengakses atribut ini pada koleksi proyek.
+     * @note This accessor now relies on eager loading counts `withCount(['tasks', 'completedTasks'])`
+     *       for optimal performance on collections.
      */
     public function getProgressAttribute(): int
     {
-        $totalTasks = $this->tasks->count();
+        // If the counts are already loaded via withCount, use them.
+        // This is a huge performance boost for collections.
+        if (isset($this->attributes['tasks_count'])) {
+            $totalTasks = (int) $this->attributes['tasks_count'];
+            $completedTasks = (int) ($this->attributes['completed_tasks_count'] ?? 0);
+        } else {
+            // Fallback for a single model instance.
+            $totalTasks = $this->tasks()->count();
+            $completedTasks = $this->completedTasks()->count();
+        }
+
         if ($totalTasks === 0) {
             return 0;
         }
-        // It's more efficient to get the status ID once
-        $completedStatus = \App\Models\TaskStatus::where('key', 'completed')->first();
-        if (!$completedStatus) {
-            return 0; // Or handle as an error
-        }
-        $completedTasks = $this->tasks->where('task_status_id', $completedStatus->id)->count();
+
         return round(($completedTasks / $totalTasks) * 100);
     }
 
