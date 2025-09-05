@@ -57,7 +57,7 @@ input:checked ~ .block {
     font-size: 12px;
     font-weight: 500;
     white-space: nowrap; /* Agar teks tidak terpotong */
-    z-index: 50; /* Pastikan di atas elemen lain */
+    z-index: 9999; /* Nilai sangat tinggi untuk memastikan tooltip di atas segalanya */
 
     /* Default state: tidak terlihat dan tidak bisa di-hover */
     opacity: 0;
