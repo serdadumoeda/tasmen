@@ -1,21 +1,4 @@
 <x-app-layout>
-    <x-slot name="styles">
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.min.css">
-        <style>
-            .ts-control {
-                border-radius: 0.5rem;
-                border-color: #d1d5db;
-                padding: 0.5rem 0.75rem;
-                box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-                transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-            }
-            .ts-control.focus {
-                border-color: #6366f1;
-                box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
-            }
-        </style>
-    </x-slot>
-
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
             {{ __('Tambah Tugas Harian Baru') }}
@@ -46,20 +29,4 @@
             </div>
         </div>
     </div>
-
-    @push('scripts')
-    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            document.querySelectorAll('.tom-select').forEach(element => {
-                new TomSelect(element, {
-                    plugins: ['remove_button'],
-                    create: false,
-                    maxItems: null,
-                    placeholder: 'Pilih Anggota Tim'
-                });
-            });
-        });
-    </script>
-    @endpush
 </x-app-layout>
