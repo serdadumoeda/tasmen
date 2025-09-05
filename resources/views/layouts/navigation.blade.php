@@ -39,8 +39,8 @@ if (count($words) >= 2) {
                                 </button>
                             </x-slot>
                             <x-slot name="content">
-                                <div class="px-4 py-2 text-xs text-gray-400">Proyek & Kegiatan</div>
-                                <x-dropdown-link :href="route('global.dashboard')">Daftar Kegiatan</x-dropdown-link>
+                                <div class="px-4 py-2 text-xs text-gray-400">Kegiatan</div>
+                                <x-dropdown-link :href="route('global.dashboard')">Kegiatan</x-dropdown-link>
                                 <div class="border-t border-gray-100"></div>
                                 <div class="px-4 py-2 text-xs text-gray-400">Tugas</div>
                                 <x-dropdown-link :href="route('adhoc-tasks.index')">Tugas Harian</x-dropdown-link>
