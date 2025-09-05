@@ -43,40 +43,59 @@ input:checked ~ .block {
     align-items: center;
 }
 
-/* Styling untuk tooltip */
+/* Styling default untuk tooltip (posisi di bawah) */
 .nav-tooltip {
     position: absolute;
-    bottom: 100%; /* Posisi di atas ikon */
+    top: 100%; /* Posisi di bawah ikon */
     left: 50%;
     transform: translateX(-50%);
-    margin-bottom: 10px; /* Jarak dari ikon */
+    margin-top: 10px; /* Jarak dari ikon */
     padding: 6px 12px;
     border-radius: 6px;
-    background-color: #2d3748; /* Warna latar belakang gelap (sesuai selera) */
+    background-color: #2d3748;
     color: white;
     font-size: 12px;
     font-weight: 500;
-    white-space: nowrap; /* Agar teks tidak terpotong */
-    z-index: 9999; /* Nilai sangat tinggi untuk memastikan tooltip di atas segalanya */
-
-    /* Default state: tidak terlihat dan tidak bisa di-hover */
+    white-space: nowrap;
+    z-index: 9999;
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.2s ease-in-out, visibility 0.2s ease-in-out;
-    pointer-events: none; /* Mencegah tooltip mengganggu hover pada ikon */
+    pointer-events: none;
 }
 
-/* Panah kecil di bawah tooltip */
+/* Panah kecil di atas tooltip (default) */
 .nav-tooltip::after {
     content: '';
     position: absolute;
-    top: 100%;
+    bottom: 100%; /* Posisi di atas tooltip, menunjuk ke ikon */
     left: 50%;
     margin-left: -5px;
     border-width: 5px;
     border-style: solid;
-    border-color: #2d3748 transparent transparent transparent;
+    border-color: transparent transparent #2d3748 transparent; /* Panah menunjuk ke atas */
 }
+
+/* Modifier untuk tooltip di samping kanan */
+.nav-tooltip.tooltip-right {
+    top: 50%;
+    left: 100%;
+    transform: translateY(-50%);
+    margin-top: 0;
+    margin-left: 12px; /* Jarak dari ikon di samping */
+}
+
+/* Panah untuk tooltip di samping kanan */
+.nav-tooltip.tooltip-right::after {
+    top: 50%;
+    right: 100%; /* Posisi di kiri tooltip, menunjuk ke ikon */
+    left: auto;
+    bottom: auto;
+    transform: translateY(-50%);
+    margin-left: 0;
+    border-color: transparent #2d3748 transparent transparent; /* Panah menunjuk ke kiri */
+}
+
 
 /* Tampilkan tooltip saat container di-hover */
 .nav-item-container:hover .nav-tooltip {
