@@ -17,8 +17,8 @@
 
     @if (Auth::user()->canManageUsers())
         <div>
-            <label for="assignees" class="block font-semibold text-sm text-gray-700 mb-1">Tugaskan Kepada <span class="text-red-500">*</span></label>
-            <select name="assignees[]" id="assignees" class="select2-searchable block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" multiple required>
+            <label for="assignees" class="block font-semibold text-sm text-gray-700 mb-1">Tugaskan Kepada <span class="text-red-500">*</span></label> {{-- Menambahkan font-semibold dan mb-1 --}}
+            <select name="assignees[]" id="assignees" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" multiple required> {{-- Mengubah rounded-md menjadi rounded-lg, menambahkan fokus, dan transisi --}}
                 @php
                     $assignedUserIds = old('assignees', isset($task) ? $task->assignees->pluck('id')->all() : []);
                 @endphp
