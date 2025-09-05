@@ -276,6 +276,7 @@ Route::middleware(['auth', 'superadmin'])->prefix('admin')->name('admin.')->grou
     Route::post('api/settings/simulate-formula', [\App\Http\Controllers\Admin\SettingController::class, 'simulate'])->name('settings.simulate');
 
     // Classification Management
+    Route::get('klasifikasi/workflow', [\App\Http\Controllers\Admin\KlasifikasiSuratController::class, 'showWorkflow'])->name('klasifikasi.workflow');
     Route::resource('klasifikasi', \App\Http\Controllers\Admin\KlasifikasiSuratController::class)->names('klasifikasi');
 
     // Delegation (Plt./Plh) Management
