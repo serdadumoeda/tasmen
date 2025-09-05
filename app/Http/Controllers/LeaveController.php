@@ -22,6 +22,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use App\Models\CutiBersama;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use App\Services\PageTitleService;
+use App\Services\BreadcrumbService;
 
 class LeaveController extends Controller
 {
@@ -342,5 +344,13 @@ class LeaveController extends Controller
         $leaveRequest->recordActivity('rejected_leaverequest');
 
         return back()->with('success', 'Permintaan cuti telah ditolak.');
+    }
+
+    public function showWorkflow(PageTitleService $pageTitleService, BreadcrumbService $breadcrumbService)
+    {
+        $pageTitleService->setTitle('Alur Kerja Manajemen Cuti');
+        $breadcrumbService->add('Manajemen Cuti', route('leaves.index'));
+        $breadcrumbService->add('Alur Kerja');
+        return view('leaves.workflow');
     }
 }
