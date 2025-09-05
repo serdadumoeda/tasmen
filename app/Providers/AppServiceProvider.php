@@ -6,6 +6,8 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\View;
 use App\Http\View\Composers\ProjectListComposer;
+use App\Services\BreadcrumbService;
+use App\Http\View\Composers\BreadcrumbComposer;
 
 
 use App\Models\Project;
@@ -37,6 +39,9 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->register(\SimpleSoftwareIO\QrCode\QrCodeServiceProvider::class);
+        $this->app->singleton(BreadcrumbService::class, function ($app) {
+            return new BreadcrumbService();
+        });
     }
 
     /**
@@ -55,5 +60,6 @@ class AppServiceProvider extends ServiceProvider
 
         // Daftarkan View Composer
         View::composer('layouts.navigation', ProjectListComposer::class);
+        View::composer('components.breadcrumbs', BreadcrumbComposer::class);
     }
 }

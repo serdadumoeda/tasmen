@@ -40,13 +40,11 @@
         @endif
 
         {{-- Breadcrumb Navigation --}}
-        @if (isset($breadcrumbs) && count($breadcrumbs) > 0)
-            <div class="bg-white shadow-sm border-t border-gray-200">
-                <div class="max-w-screen-2xl mx-auto py-2 px-4 sm:px-6 lg:px-8">
-                    <x-breadcrumbs :segments="$breadcrumbs" />
-                </div>
+        <div class="bg-white shadow-sm border-t border-gray-200">
+            <div class="max-w-screen-2xl mx-auto py-2 px-4 sm:px-6 lg:px-8">
+                <x-breadcrumbs />
             </div>
-        @endif
+        </div>
 
         <main class="flex-grow bg-gray-50">
             {{ $slot }}
