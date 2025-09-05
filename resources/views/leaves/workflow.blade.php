@@ -31,38 +31,62 @@ graph TD
     classDef decision fill:#FDEDEC,stroke:#C0392B,color:#A93226,stroke-width:1px;
     classDef io fill:#F4ECF7,stroke:#8E44AD,color:#6C3483,stroke-width:1px;
 
-    subgraph "A. Alur Pengajuan"
-        A1["<i class='fa fa-user'></i> Pegawai"]:::action -->|Klik 'Ajukan Cuti'| A2["<i class='fa fa-keyboard'></i> Form Pengajuan Cuti"]:::page;
-        A2 -- Isi Form & Submit --> A3{<i class='fa fa-check-double'></i> Validasi & Cek Saldo}:::decision;
-        A3 -- Gagal --> A2;
-        A3 -- Sukses --> A4["<i class='fa fa-save'></i> Simpan Permintaan Cuti<br>(Status: PENDING)"]:::process;
-        A4 --> A5["<i class='fa fa-bell'></i> Notifikasi ke Atasan Langsung"]:::process;
-        A5 --> B1;
+    %% --- Definisi Elemen ---
+    subgraph A [Alur Pengajuan]
+        A1["<i class='fa fa-user'></i> Pegawai"]:::action;
+        A2["<i class='fa fa-keyboard'></i> Form Pengajuan Cuti"]:::page;
+        A3{<i class='fa fa-check-double'></i> Validasi & Cek Saldo}:::decision;
+        A4["<i class='fa fa-save'></i> Simpan Permintaan Cuti<br>(Status: PENDING)"]:::process;
+        A5["<i class='fa fa-bell'></i> Notifikasi ke Atasan"]:::process;
     end
 
-    subgraph "B. Alur Persetujuan Berjenjang"
-        B1["<i class='fa fa-user-tie'></i> Atasan"]:::action -->|Buka Notifikasi/Detail| B2["<i class='fa fa-file-alt'></i> Halaman Detail Cuti"]:::page;
-        B2 -->|Klik 'Setujui'| B3["<i class='fa fa-cogs'></i> LeaveApprovalService.processApproval"]:::process;
-        B3 --> B4{<i class='fa fa-question-circle'></i> Ada Jenjang Berikutnya? (berdasarkan Workflow & Role)}:::decision;
-
-        B4 -- Ya --> B5["Ubah Status: 'APPROVED_BY_SUPERVISOR'<br>Update Penyetuju Berikutnya"]:::process;
-        B5 --> B6["<i class='fa fa-bell'></i> Notifikasi ke Atasan Berikutnya"]:::process;
-        B6 --> B1;
-
-        B4 -- Tidak (Final) --> B7["Ubah Status: 'APPROVED'"]:::process;
-        B7 --> C_Flow["<i class='fa fa-file-signature'></i> Alur Penerbitan SK"];
-
-        B2 -->|Klik 'Tolak'| B8["<i class='fa fa-gavel'></i> Form Alasan Penolakan"]:::page;
-        B8 -- Submit --> B9["Ubah Status: 'REJECTED'"]:::process;
-        B9 --> B10["<i class='fa fa-bell'></i> Notifikasi ke Pegawai"]:::process;
+    subgraph B [Alur Persetujuan Berjenjang]
+        B1["<i class='fa fa-user-tie'></i> Atasan"]:::action;
+        B2["<i class='fa fa-file-alt'></i> Halaman Detail Cuti"]:::page;
+        B3["<i class='fa fa-cogs'></i> LeaveApprovalService"]:::process;
+        B4{<i class='fa fa-question-circle'></i> Ada Jenjang Berikutnya?}:::decision;
+        B5["Ubah Status: 'APPROVED_BY_SUPERVISOR'<br>Update Penyetuju Berikutnya"]:::process;
+        B6["<i class='fa fa-bell'></i> Notifikasi ke Atasan Berikutnya"]:::process;
+        B7["Ubah Status: 'APPROVED'"]:::process;
+        B8["<i class='fa fa-gavel'></i> Form Alasan Penolakan"]:::page;
+        B9["Ubah Status: 'REJECTED'"]:::process;
+        B10["<i class='fa fa-bell'></i> Notifikasi ke Pegawai"]:::process;
     end
 
-    subgraph "C. Alur Penerbitan SK Otomatis"
-        C1["<i class='fa fa-cogs'></i> SuratCutiGenerator.generate"]:::process --> C2["<i class='fa fa-file-word'></i> Buat Dokumen Surat<br>dari Template"]:::process;
-        C2 --> C3["<i class='fa fa-save'></i> Simpan Surat di Database<br>& Tautkan ke Permintaan Cuti"]:::process;
-        C3 --> C4["<i class='fa fa-check-circle'></i> Selesai"];
+    subgraph C [Alur Penerbitan SK Otomatis]
+        C1["<i class='fa fa-cogs'></i> SuratCutiGenerator"]:::process;
+        C2["<i class='fa fa-file-word'></i> Buat Dokumen SK Cuti"]:::process;
+        C3["<i class='fa fa-save'></i> Simpan Surat & Tautkan"]:::process;
+        C4["<i class='fa fa-check-circle'></i> Selesai"];
     end
-                        </pre>
+
+    %% --- Menghubungkan Alur ---
+    A1 -->|Klik 'Ajukan Cuti'| A2;
+    A2 -- Submit --> A3;
+    A3 -- Gagal --> A2;
+    A3 -- Sukses --> A4;
+    A4 --> A5;
+    A5 --> B1;
+
+    B1 -->|Buka Notifikasi| B2;
+    B2 -->|Klik 'Setujui'| B3;
+    B3 --> B4;
+
+    B4 -- Ya --> B5;
+    B5 --> B6;
+    B6 --> B1;
+
+    B4 -- Tidak (Final) --> B7;
+    B7 --> C1;
+
+    B2 -->|Klik 'Tolak'| B8;
+    B8 -- Submit --> B9;
+    B9 --> B10;
+
+    C1 --> C2;
+    C2 --> C3;
+    C3 --> C4;
+</pre>
                     </div>
                 </div>
             </x-card>
