@@ -5,6 +5,10 @@
                 {{ __('Manajemen Cuti') }}
             </h2>
             <div class="flex items-center space-x-2">
+                <x-secondary-button :href="route('leaves.workflow')">
+                    <i class="fas fa-sitemap mr-2"></i>
+                    Lihat Alur Kerja
+                </x-secondary-button>
                 <a href="{{ route('leaves.calendar') }}" class="inline-flex items-center px-4 py-2 bg-gray-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700">
                     <i class="fas fa-calendar-alt mr-2"></i> {{ __('Lihat Kalender') }}
                 </a>

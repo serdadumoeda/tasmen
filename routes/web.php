@@ -177,6 +177,7 @@ Route::middleware(['auth'])->group(function () {
     // Leave Management Module Routes
     Route::group(['prefix' => 'leaves', 'as' => 'leaves.'], function () {
         Route::get('/', [\App\Http\Controllers\LeaveController::class, 'index'])->name('index');
+        Route::get('/workflow', [\App\Http\Controllers\LeaveController::class, 'showWorkflow'])->name('workflow');
         Route::get('/calendar', [\App\Http\Controllers\LeaveController::class, 'calendar'])->name('calendar');
         Route::get('/create', [\App\Http\Controllers\LeaveController::class, 'create'])->name('create');
         Route::post('/', [\App\Http\Controllers\LeaveController::class, 'store'])->name('store');
