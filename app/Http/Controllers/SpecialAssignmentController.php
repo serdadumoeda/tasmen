@@ -10,6 +10,8 @@ use App\Models\User;
 use App\Services\NomorSuratService;
 use Illuminate\Http\Request;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use App\Services\PageTitleService;
+use App\Services\BreadcrumbService;
 use Illuminate\Support\Facades\Storage;
 
 class SpecialAssignmentController extends Controller
@@ -269,5 +271,13 @@ class SpecialAssignmentController extends Controller
 
         $specialAssignment->delete();
         return back()->with('success', 'SK Penugasan berhasil dihapus.');
+    }
+
+    public function showWorkflow(PageTitleService $pageTitleService, BreadcrumbService $breadcrumbService)
+    {
+        $pageTitleService->setTitle('Alur Kerja SK Penugasan');
+        $breadcrumbService->add('SK Penugasan', route('special-assignments.index'));
+        $breadcrumbService->add('Alur Kerja');
+        return view('special-assignments.workflow');
     }
 }

@@ -5,11 +5,17 @@
                 {{ __('Daftar SK Penugasan') }}
             </h2>
             
-            @can('create', App\Models\SpecialAssignment::class)
-            <a href="{{ route('special-assignments.create') }}" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition ease-in-out duration-150 shadow-md hover:shadow-lg transform hover:scale-105">
-                <i class="fas fa-plus-circle mr-2"></i> Tambah SK Baru
-            </a>
-            @endcan
+            <div class="flex items-center space-x-2">
+                <x-secondary-button :href="route('special-assignments.workflow')">
+                    <i class="fas fa-sitemap mr-2"></i>
+                    Lihat Alur Kerja
+                </x-secondary-button>
+                @can('create', App\Models\SpecialAssignment::class)
+                <a href="{{ route('special-assignments.create') }}" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition ease-in-out duration-150 shadow-md hover:shadow-lg transform hover:scale-105">
+                    <i class="fas fa-plus-circle mr-2"></i> Tambah SK Baru
+                </a>
+                @endcan
+            </div>
         </div>
     </x-slot>
 

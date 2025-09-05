@@ -123,6 +123,7 @@ Route::middleware(['auth'])->group(function () {
         ->parameters(['budget-items' => 'budgetItem']);
 
     Route::resource('special-assignments', SpecialAssignmentController::class)->except(['show']);
+    Route::get('/special-assignments/workflow', [SpecialAssignmentController::class, 'showWorkflow'])->name('special-assignments.workflow');
 
     // Rute untuk Ad-Hoc Tasks (Tugas Harian)
     Route::prefix('adhoc-tasks')->name('adhoc-tasks.')->group(function() {
