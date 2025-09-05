@@ -246,6 +246,7 @@ Route::get('/api/units/eselon-i', [UnitApiController::class, 'getEselonIUnits'])
 Route::get('/api/units/{parentUnit}/children', [UnitApiController::class, 'getChildUnits']);
 
 Route::middleware(['auth', 'superadmin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('units/workflow', [UnitController::class, 'showWorkflow'])->name('units.workflow');
     Route::resource('units', UnitController::class);
     Route::post('units/{unit}/jabatans', [UnitController::class, 'storeJabatan'])->name('units.jabatans.store');
     Route::delete('jabatans/{jabatan}', [UnitController::class, 'destroyJabatan'])->name('jabatans.destroy');
