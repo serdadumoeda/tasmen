@@ -20,67 +20,124 @@
                 <div class="p-6 sm:px-10 text-center">
                     <div class="mermaid">
                         graph TD
-                            A[Mulai] --> B{Akses Menu<br>Manajemen Tim};
-                            B --> C[Tampil Daftar Pengguna Aktif];
+                            %% Node Definitions
+                            A[Mulai];
+                            B{Akses Menu<br>Manajemen Tim};
+                            C[Tampil Daftar Pengguna Aktif];
+                            Y{Lihat Daftar Arsip?};
+                            End[Selesai];
 
                             subgraph "Aksi Utama"
-                                C --> D[Tambah Pengguna Baru];
-                                C --> E[Edit Pengguna];
-                                C --> F[Non-Aktifkan Pengguna];
-                                C --> G[Impor Pengguna Massal];
+                                D[Tambah Pengguna Baru];
+                                E[Edit Pengguna];
+                                F[Non-Aktifkan Pengguna];
+                                G[Impor Pengguna Massal];
                             end
 
-                            D --> H[Isi Form Data Pengguna];
-                            H --> I{Validasi Data};
-                            I -- Valid --> J[Simpan Pengguna Baru &<br>Tentukan Role];
-                            I -- Tidak Valid --> K[Tampilkan Pesan Error];
+                            subgraph "Proses Tambah"
+                                H[Isi Form Data Pengguna];
+                                I{Validasi Data};
+                                J[Simpan Pengguna Baru &<br>Tentukan Role];
+                                K[Tampilkan Pesan Error];
+                            end
+
+                            subgraph "Proses Edit"
+                                L[Pilih Pengguna];
+                                M[Ubah Data pada Form];
+                                N{Validasi Data Edit};
+                                O[Update Data Pengguna];
+                                P[Tampilkan Pesan Error Edit];
+                            end
+
+                            subgraph "Proses Non-Aktifkan"
+                                Q[Pilih Pengguna untuk Non-Aktifkan];
+                                R{Konfirmasi};
+                                S[Ubah Status jadi 'Suspended',<br>Kosongkan Jabatan,<br>Alihkan Bawahan];
+                                T[Pengguna Masuk ke Daftar Arsip];
+                            end
+
+                            subgraph "Proses Impor"
+                                U[Upload File CSV];
+                                V{Validasi Format File};
+                                W[Proses Impor Data];
+                                X[Tampilkan Pesan Error Impor];
+                            end
+
+                            subgraph "Area Arsip"
+                                Z[Tampil Daftar Pengguna<br>yang Dinon-Aktifkan];
+                                AA[Aktifkan Kembali];
+                                AB[Hapus Permanen];
+                            end
+
+                            subgraph "Proses Aktifkan Kembali"
+                                AC[Pilih Pengguna dari Arsip];
+                                AD{Konfirmasi Aktivasi};
+                                AE[Ubah Status jadi 'Active'];
+                            end
+
+                            subgraph "Proses Hapus Permanen"
+                                AF[Pilih Pengguna dari Arsip];
+                                AG{Konfirmasi Hapus};
+                                AH[Hapus Data Pengguna<br>dari Database];
+                            end
+
+                            %% Link Definitions
+                            A --> B;
+                            B --> C;
+                            C --> D;
+                            C --> E;
+                            C --> F;
+                            C --> G;
+                            C --> Y;
+
+                            D --> H;
+                            H --> I;
+                            I -- Valid --> J;
+                            I -- Tidak Valid --> K;
                             J --> C;
                             K --> H;
 
-                            E --> L[Pilih Pengguna];
-                            L --> M[Ubah Data pada Form];
-                            M --> N{Validasi Data};
-                            N -- Valid --> O[Update Data Pengguna];
-                            N -- Tidak Valid --> P[Tampilkan Pesan Error];
+                            E --> L;
+                            L --> M;
+                            M --> N;
+                            N -- Valid --> O;
+                            N -- Tidak Valid --> P;
                             O --> C;
                             P --> M;
 
-                            F --> Q[Pilih Pengguna];
-                            Q --> R{Konfirmasi};
-                            R -- Ya --> S[Ubah Status jadi 'Suspended',<br>Kosongkan Jabatan,<br>Alihkan Bawahan];
-                            S --> T[Pengguna Masuk ke Daftar Arsip];
+                            F --> Q;
+                            Q --> R;
+                            R -- Ya --> S;
                             R -- Tidak --> C;
+                            S --> T;
+                            T --> Z;
 
-                            G --> U[Upload File CSV];
-                            U --> V{Validasi Format File};
-                            V -- Valid --> W[Proses Impor Data];
-                            V -- Tidak Valid --> X[Tampilkan Pesan Error];
+                            G --> U;
+                            U --> V;
+                            V -- Valid --> W;
+                            V -- Tidak Valid --> X;
                             W --> C;
                             X --> G;
 
-                            C --> Y{Lihat Daftar Arsip?};
-                            Y -- Ya --> Z[Tampil Daftar Pengguna<br>yang Dinon-Aktifkan];
-                            Y -- Tidak --> End[Selesai];
+                            Y -- Ya --> Z;
+                            Y -- Tidak --> End;
 
-                            subgraph "Aksi Arsip"
-                                Z --> AA[Aktifkan Kembali];
-                                Z --> AB[Hapus Permanen];
-                            end
+                            Z --> AA;
+                            Z --> AB;
 
-                            AA --> AC[Pilih Pengguna];
-                            AC --> AD{Konfirmasi};
-                            AD -- Ya --> AE[Ubah Status jadi 'Active'];
+                            AA --> AC;
+                            AC --> AD;
+                            AD -- Ya --> AE;
                             AD -- Tidak --> Z;
                             AE --> C;
 
-                            AB --> AF[Pilih Pengguna];
-                            AF --> AG{Konfirmasi};
-                            AG -- Ya --> AH[Hapus Data Pengguna<br>dari Database];
+                            AB --> AF;
+                            AF --> AG;
+                            AG -- Ya --> AH;
                             AG -- Tidak --> Z;
                             AH --> Z;
 
-                            T --> Z;
-
+                            %% Styling
                             style A fill:#28a745,stroke:#333,stroke-width:2px,color:#fff
                             style End fill:#dc3545,stroke:#333,stroke-width:2px,color:#fff
                     </div>
