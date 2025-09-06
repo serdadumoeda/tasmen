@@ -34,13 +34,13 @@ graph TD
     B --> C["<i class='fa fa-list-ul'></i> Daftar Unit Kerja"]:::page;
     C --> D{Pilih Aksi}:::decision;
 
-    subgraph Aksi_Utama
+    subgraph sg1 [Aksi Utama]
         D -- Tambah --> E["<i class='fa fa-plus-circle'></i> Tambah Unit Baru"]:::action;
         D -- Edit --> F["<i class='fa fa-edit'></i> Edit Unit"]:::action;
         D -- Hapus --> G["<i class='fa fa-trash'></i> Hapus Unit"]:::action;
     end
 
-    subgraph Proses_Tambah_Edit
+    subgraph sg2 [Proses Tambah/Edit]
         E --> H["<i class='fa fa-keyboard'></i> Isi Form<br>(Nama, Induk Unit, Kepala Unit)"]:::page;
         F --> H;
         H --> I{Validasi Data}:::decision;
@@ -50,7 +50,7 @@ graph TD
         K --> H;
     end
 
-    subgraph Proses_Hapus
+    subgraph sg3 [Proses Hapus]
         G --> L{Konfirmasi Hapus}:::decision;
         L -- Ya --> M{Cek Ketergantungan<br>(Pegawai/Jabatan/Sub-Unit)}:::decision;
         L -- Tidak --> C;
