@@ -100,4 +100,11 @@ class ApprovalWorkflowController extends Controller
 
         return redirect()->route('admin.approval-workflows.show', $approvalWorkflow)->with('success', 'Langkah persetujuan berhasil dihapus.');
     }
+
+    public function showWorkflow()
+    {
+        // Reuse authorization from index or other relevant methods
+        $this->authorize('viewAny', ApprovalWorkflow::class);
+        return view('admin.approval-workflows.workflow');
+    }
 }

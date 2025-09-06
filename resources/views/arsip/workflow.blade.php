@@ -2,26 +2,24 @@
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
             <i class="fas fa-archive mr-2"></i>
-            {{ __('Alur Kerja Modul Arsip Digital') }}
+            {{ __('Alur Kerja Arsip Digital') }}
         </h2>
     </x-slot>
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-8">
 
-            <!-- Intro Card -->
             <x-card>
                 <div class="p-6">
-                    <h3 class="text-xl font-bold text-gray-800 mb-2">Dokumentasi Alur Kerja Arsip Digital</h3>
-                    <p class="text-gray-600">Halaman ini berisi dokumentasi lengkap mengenai alur kerja Modul Arsip Digital, yang berfungsi sebagai pusat pencarian dan pengorganisasian semua surat yang telah diarsipkan.</p>
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">Dokumentasi Alur Arsip Digital</h3>
+                    <p class="text-gray-600">Halaman ini menjelaskan proses penggunaan modul Arsip Digital, yang memungkinkan pengguna untuk mencari dan mengelompokkan surat-surat penting ke dalam berkas virtual pribadi.</p>
                 </div>
             </x-card>
 
-            <!-- Flowchart Umum -->
             <x-card>
                 <div class="p-6">
                     <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Flowchart Alur Kerja</h3>
-                    <p class="text-gray-600 mb-6">Flowchart ini merinci keseluruhan alur kerja standar untuk modul Arsip Digital.</p>
+                    <p class="text-gray-600 mb-6">Flowchart ini merinci bagaimana pengguna berinteraksi dengan arsip dan mengelola berkas virtual mereka.</p>
                     <div class="p-4 bg-gray-50 rounded-lg text-center">
                         <pre class="mermaid">
 graph TD
@@ -29,60 +27,73 @@ graph TD
     classDef action fill:#FEF9E7,stroke:#F1C40F,color:#B7950B,stroke-width:1px;
     classDef process fill:#E8F8F5,stroke:#1ABC9C,color:#148F77,stroke-width:1px;
     classDef decision fill:#FDEDEC,stroke:#C0392B,color:#A93226,stroke-width:1px;
+    classDef data fill:#FADBD8,stroke:#E74C3C,color:#B03A2E,stroke-width:1px;
 
-    subgraph "A. Pencarian & Filter"
-        A1["<i class='fa fa-search'></i> Halaman Arsip Digital"]:::page --> A2["Isi Form Filter<br>(Kata Kunci, Tgl, Jenis, Klasifikasi)"]:::action;
-        A2 -- Klik 'Cari' --> A3["<i class='fa fa-cogs'></i> Controller: ArsipController@index"]:::process;
-        A3 --> A4["Tampilkan Hasil Pencarian"]:::page;
+    subgraph "A. Pencarian & Penemuan"
+        A1["<i class='fa fa-user'></i> Pengguna"]:::action --> A2["<i class='fa fa-archive'></i> Halaman Arsip Digital"]:::page;
+        A2 --> A3["<i class='fa fa-search'></i> Gunakan Filter<br>(Keyword, Tanggal, Jenis, Klasifikasi)"]:::action;
+        A3 --> A4["<i class='fa fa-list'></i> Tampilkan Hasil Pencarian"]:::page;
+        A4 --> A5["<i class='fa fa-check-square'></i> Pilih Satu atau Lebih Surat"]:::action;
     end
 
-    subgraph "B. Manajemen Berkas (Folder)"
-        B1["Sidebar Berkas"] --> B2["<i class='fa fa-folder-plus'></i> Isi Form Buat Berkas Baru"]:::action;
-        B2 -- Klik 'Buat' --> B3{<i class='fa fa-check-double'></i> Validasi}:::decision;
-        B3 -- Gagal --> B2;
-        B3 -- Sukses --> B4["<i class='fa fa-save'></i> Controller: ArsipController@storeBerkas"]:::process;
-        B4 --> B5["<i class='fa fa-sync-alt'></i> Refresh Daftar Berkas"]:::page;
+    subgraph "B. Pengelolaan Berkas Virtual"
+        B1["<i class='fa fa-folder-plus'></i> Buat Berkas Baru"]:::action;
+        B1 -- Nama & Deskripsi --> B2["<i class='fa fa-save'></i> Simpan Berkas<br>(Milik Pengguna)"]:::process;
+        B2 --> B3["<i class='fa fa-folder'></i> Berkas Tersedia di Dropdown"]:::page;
     end
 
-    subgraph "C. Mengelompokkan Surat ke Berkas"
-        C1["Daftar Hasil Pencarian Surat"]:::page --> C2["<i class='fa fa-check-square'></i> Pilih satu atau<br>lebih surat (checkbox)"]:::action;
-        C2 --> C3["<i class='fa fa-folder'></i> Pilih Berkas Tujuan<br>dari dropdown"]:::action;
-        C3 -- Klik 'Masukkan ke Berkas' --> C4{<i class='fa fa-check-double'></i> Validasi}:::decision;
-        C4 -- Gagal --> C1;
-        C4 -- Sukses --> C5["<i class='fa fa-save'></i> Controller:<br>ArsipController@addSuratToBerkas"]:::process;
-        C5 --> C6["<i class='fa fa-info-circle'></i> Tampilkan notifikasi<br>sukses"]:::page;
+    subgraph "C. Pengelompokan Surat"
+        C1["<i class='fa fa-folder-open'></i> Pilih Berkas Tujuan<br>dari Dropdown"]:::action;
+        C2["<i class='fa fa-share-square'></i> Klik 'Tambahkan ke Berkas'"]:::action;
+        C3["<i class='fa fa-link'></i> Sistem Membuat Relasi<br>Surat <--> Berkas"]:::process;
+        C4["<i class='fa fa-info-circle'></i> Tampilkan Pesan Sukses"]:::process;
     end
 
-    %% --- Hubungan antar alur ---
-    A4 --> C1
+    A2 --> B1;
+    A5 --> C1;
+    C1 --> C2;
+    C2 --> C3;
+    C3 --> C4;
+    C4 --> A2;
+
+    subgraph "Sumber Data"
+        S1["Database Surat Masuk"]:::data;
+        S2["Database Surat Keluar"]:::data;
+        S1 -- Status 'Disetujui'/'Diarsipkan' --> A2;
+        S2 -- Status 'Disetujui'/'Diarsipkan' --> A2;
+    end
+
                         </pre>
                     </div>
                 </div>
             </x-card>
 
-            <!-- Penjelasan Detail -->
             <x-card>
                 <div class="p-6">
-                    <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Penjelasan Detail Alur Kerja</h3>
+                    <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Deskripsi Alur Kerja</h3>
                     <div class="prose max-w-none text-gray-700 space-y-4">
                         <div>
-                            <h4 class="font-semibold text-gray-800">1. Pencarian & Filter (A)</h4>
-                            <p>Halaman utama modul ini adalah mesin pencari yang kuat untuk semua surat (masuk dan keluar) yang sudah selesai diproses. Pengguna dapat dengan mudah menemukan surat berdasarkan berbagai kriteria.</p>
-                        </div>
-                        <div>
-                            <h4 class="font-semibold text-gray-800">2. Manajemen Berkas (B)</h4>
-                            <p>Pengguna dapat membuat "berkas" atau folder virtual pribadi untuk mengorganisir surat-surat penting. Proses ini dilakukan di sidebar halaman.</p>
+                            <h4 class="font-semibold text-gray-800">1. Pusat Pencarian Surat</h4>
+                            <p>Modul Arsip Digital berfungsi sebagai pusat pencarian untuk semua surat (masuk dan keluar) yang telah menyelesaikan siklusnya (berstatus 'Disetujui' atau 'Diarsipkan').</p>
                             <ul class="list-disc list-inside ml-4 space-y-2">
-                                <li><strong>Buat Berkas</strong>: Pengguna mengisi nama dan deskripsi untuk berkas baru, lalu menyimpannya. Daftar berkas akan langsung diperbarui.</li>
+                                <li><strong>Pencarian Komprehensif</strong>: Pengguna dapat dengan mudah menemukan surat berdasarkan kata kunci, rentang tanggal, jenis surat (masuk/keluar), atau kode klasifikasi.</li>
+                                <li><strong>Akses Terpadu</strong>: Ini menghilangkan kebutuhan untuk mencari di dua modul yang terpisah, menyediakan satu sumber kebenaran untuk semua korespondensi yang telah selesai.</li>
                             </ul>
                         </div>
                         <div>
-                            <h4 class="font-semibold text-gray-800">3. Mengelompokkan Surat (C)</h4>
-                            <p>Ini adalah fungsi inti dari modul arsip. Setelah menemukan surat-surat yang relevan melalui pencarian, pengguna dapat mengelompokkannya ke dalam berkas.</p>
+                            <h4 class="font-semibold text-gray-800">2. Berkas Virtual Pribadi</h4>
+                            <p>Fitur utama dari modul ini adalah kemampuan pengguna untuk membuat "berkas" atau folder virtual mereka sendiri. Ini adalah sistem pengarsipan pribadi di atas arsip umum.</p>
                              <ul class="list-disc list-inside ml-4 space-y-2">
-                                <li><strong>Pilih Surat</strong>: Pengguna menandai satu atau lebih surat menggunakan checkbox di samping setiap baris.</li>
-                                <li><strong>Pilih Berkas Tujuan</strong>: Pengguna memilih salah satu berkas yang sudah mereka buat dari menu dropdown di bagian bawah tabel.</li>
-                                 <li><strong>Simpan</strong>: Dengan mengklik tombol "Masukkan ke Berkas", sistem akan membuat relasi antara surat-surat yang dipilih dengan berkas tujuan.</li>
+                                <li><strong>Pembuatan Berkas</strong>: Pengguna dapat membuat berkas dengan nama apa pun yang mereka inginkan (misalnya, "Surat Undangan Rapat 2024" atau "SK Terkait Proyek X").</li>
+                                <li><strong>Pengelompokan Surat</strong>: Setelah menemukan surat-surat yang relevan melalui pencarian, pengguna dapat memilih beberapa surat sekaligus dan memasukkannya ke dalam berkas yang sesuai.</li>
+                                <li><strong>Relasi Fleksibel</strong>: Sebuah surat dapat dimasukkan ke dalam beberapa berkas yang berbeda, dan sebuah berkas dapat berisi banyak surat.</li>
+                             </ul>
+                        </div>
+                         <div>
+                            <h4 class="font-semibold text-gray-800">3. Tujuan & Manfaat</h4>
+                             <ul class="list-disc list-inside ml-4 space-y-2">
+                                <li><strong>Temu Kembali Informasi</strong>: Mempercepat proses penemuan kembali surat-surat penting yang saling terkait, bahkan jika surat-surat tersebut dibuat pada waktu yang berbeda dan oleh orang yang berbeda.</li>
+                                <li><strong>Pengarsipan Kontekstual</strong>: Memungkinkan pengguna untuk mengelompokkan surat berdasarkan konteks atau subjek tertentu yang relevan dengan pekerjaan mereka, bukan hanya berdasarkan urutan kronologis.</li>
                             </ul>
                         </div>
                     </div>

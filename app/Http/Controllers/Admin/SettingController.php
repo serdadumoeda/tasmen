@@ -103,4 +103,10 @@ class SettingController extends Controller
             return response()->json(['error' => 'Gagal mengevaluasi rumus: ' . $e->getMessage()], 500);
         }
     }
+
+    public function showWorkflow()
+    {
+        $this->authorize('manage_settings');
+        return view('admin.settings.workflow');
+    }
 }

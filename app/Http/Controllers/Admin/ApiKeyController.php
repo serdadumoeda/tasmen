@@ -149,4 +149,9 @@ class ApiKeyController extends Controller
         return redirect()->route('admin.api_keys.index')
             ->with('success', 'API client and all its keys have been deleted.');
     }
+
+    public function showWorkflow()
+    {
+        return view('admin.api_keys.workflow');
+    }
 }

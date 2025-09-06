@@ -1,212 +1,141 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex justify-between items-center">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                {{ __('Alur Kerja Manajemen Pengguna') }}
-            </h2>
-            <a href="{{ route('users.index') }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150 transform hover:scale-105">
-                <i class="fas fa-arrow-left mr-2"></i> {{ __('Kembali ke Daftar Pengguna') }}
-            </a>
-        </div>
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+            <i class="fas fa-users-cog mr-2"></i>
+            {{ __('Alur Kerja Manajemen Pengguna') }}
+        </h2>
     </x-slot>
 
-    <div class="py-12 bg-gray-50">
-        <div class="max-w-screen-2xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-xl rounded-xl border border-gray-200">
-                <div class="p-6 sm:px-10 bg-white border-b border-gray-200">
-                    <h3 class="text-2xl font-bold text-gray-800">Diagram Alur Kerja</h3>
-                    <p class="text-gray-500 mt-2">Diagram ini menjelaskan proses utama dalam pengelolaan data pengguna, mulai dari pembuatan hingga penghapusan.</p>
+    <div class="py-12">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-8">
+
+            <x-card>
+                <div class="p-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">Dokumentasi Alur Kerja Pengguna</h3>
+                    <p class="text-gray-600">Halaman ini berisi dokumentasi lengkap mengenai alur kerja Modul Manajemen Pengguna, mulai dari pembuatan, pembaruan, hingga pengarsipan dan penghapusan pengguna.</p>
                 </div>
-                <div class="p-6 sm:px-10 text-center">
-                    <div class="mermaid">
-                        graph TD
-                            %% Node Definitions
-                            A[Mulai];
-                            B{Akses Menu<br>Manajemen Tim};
-                            C[Tampil Daftar Pengguna Aktif];
-                            Y{Lihat Daftar Arsip?};
-                            End[Selesai];
+            </x-card>
 
-                            subgraph "Aksi Utama"
-                                D[Tambah Pengguna Baru];
-                                E[Edit Pengguna];
-                                F[Non-Aktifkan Pengguna];
-                                G[Impor Pengguna Massal];
-                            end
+            <x-card>
+                <div class="p-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Flowchart Alur Kerja</h3>
+                    <p class="text-gray-600 mb-6">Flowchart ini merinci keseluruhan proses utama dalam pengelolaan data pengguna.</p>
+                    <div class="p-4 bg-gray-50 rounded-lg text-center">
+                        <pre class="mermaid">
+graph TD
+    classDef start fill:#28a745,stroke:#333,stroke-width:2px,color:#fff;
+    classDef end fill:#dc3545,stroke:#333,stroke-width:2px,color:#fff;
+    classDef page fill:#EBF5FB,stroke:#3498DB,color:#2874A6,stroke-width:1px;
+    classDef action fill:#FEF9E7,stroke:#F1C40F,color:#B7950B,stroke-width:1px;
+    classDef process fill:#E8F8F5,stroke:#1ABC9C,color:#148F77,stroke-width:1px;
+    classDef decision fill:#FDEDEC,stroke:#C0392B,color:#A93226,stroke-width:1px;
 
-                            subgraph "Proses Tambah"
-                                H[Isi Form Data Pengguna];
-                                I{Validasi Data};
-                                J[Simpan Pengguna Baru &<br>Tentukan Role];
-                                K[Tampilkan Pesan Error];
-                            end
+    subgraph "Manajemen Aktif"
+        A[Mulai]:::start --> B["<i class='fa fa-users'></i> Menu Manajemen Tim"]:::page;
+        B --> C["<i class='fa fa-list'></i> Daftar Pengguna Aktif"]:::page;
+        C --> D["<i class='fa fa-plus-circle'></i> Tambah Pengguna"]:::action;
+        C --> E["<i class='fa fa-edit'></i> Edit Pengguna"]:::action;
+        C --> F["<i class='fa fa-archive'></i> Arsipkan Pengguna"]:::action;
+        C --> G["<i class='fa fa-file-csv'></i> Impor Pengguna"]:::action;
+        C --> H{Lihat Arsip?}:::decision;
+    end
 
-                            subgraph "Proses Edit"
-                                L[Pilih Pengguna];
-                                M[Ubah Data pada Form];
-                                N{Validasi Data Edit};
-                                O[Update Data Pengguna];
-                                P[Tampilkan Pesan Error Edit];
-                            end
+    subgraph "Proses Tambah/Edit"
+        D --> I["<i class='fa fa-keyboard'></i> Isi Form Data"];
+        E --> I;
+        I --> J{Validasi Data?}:::decision;
+        J -- Valid --> K["<i class='fa fa-save'></i> Simpan/Update Data"]:::process;
+        J -- Tidak Valid --> L["<i class='fa fa-exclamation-triangle'></i> Tampilkan Error"]:::process;
+        K --> C;
+        L --> I;
+    end
 
-                            subgraph "Proses Non-Aktifkan"
-                                Q[Pilih Pengguna untuk Non-Aktifkan];
-                                R{Konfirmasi};
-                                S[Ubah Status jadi 'Suspended',<br>Kosongkan Jabatan,<br>Alihkan Bawahan];
-                                T[Pengguna Masuk ke Daftar Arsip];
-                            end
+    subgraph "Proses Arsip"
+        F --> M{Konfirmasi Arsip?}:::decision;
+        M -- Ya --> N["<i class='fa fa-cogs'></i> Ubah Status 'Suspended'<br>Kosongkan Jabatan<br>Alihkan Bawahan"]:::process;
+        M -- Tidak --> C;
+        N --> O["<i class='fa fa-archive'></i> Pengguna Masuk Arsip"]:::process;
+    end
 
-                            subgraph "Proses Impor"
-                                U[Upload File CSV];
-                                V{Validasi Format File};
-                                W[Proses Impor Data];
-                                X[Tampilkan Pesan Error Impor];
-                            end
+    subgraph "Manajemen Arsip"
+        H -- Ya --> P["<i class='fa fa-list-alt'></i> Daftar Pengguna Arsip"]:::page;
+        P --> Q["<i class='fa fa-user-check'></i> Aktifkan Kembali"]:::action;
+        P --> R["<i class='fa fa-trash-alt'></i> Hapus Permanen"]:::action;
+        R --> S{Konfirmasi Hapus?}:::decision;
+        S -- Ya --> T["<i class='fa fa-database'></i> Hapus dari DB"]:::process;
+        S -- Tidak --> P;
+        T --> P;
+        Q --> U{Konfirmasi Aktivasi?}:::decision;
+        U -- Ya --> V["<i class='fa fa-cogs'></i> Ubah Status 'Active'"]:::process;
+        U -- Tidak --> P;
+        V --> C;
+        H -- Tidak --> Z[Selesai]:::end;
+    end
 
-                            subgraph "Area Arsip"
-                                Z[Tampil Daftar Pengguna<br>yang Dinon-Aktifkan];
-                                AA[Aktifkan Kembali];
-                                AB[Hapus Permanen];
-                            end
-
-                            subgraph "Proses Aktifkan Kembali"
-                                AC[Pilih Pengguna dari Arsip];
-                                AD{Konfirmasi Aktivasi};
-                                AE[Ubah Status jadi 'Active'];
-                            end
-
-                            subgraph "Proses Hapus Permanen"
-                                AF[Pilih Pengguna dari Arsip];
-                                AG{Konfirmasi Hapus};
-                                AH[Hapus Data Pengguna<br>dari Database];
-                            end
-
-                            %% Link Definitions
-                            A --> B;
-                            B --> C;
-                            C --> D;
-                            C --> E;
-                            C --> F;
-                            C --> G;
-                            C --> Y;
-
-                            D --> H;
-                            H --> I;
-                            I -- Valid --> J;
-                            I -- Tidak Valid --> K;
-                            J --> C;
-                            K --> H;
-
-                            E --> L;
-                            L --> M;
-                            M --> N;
-                            N -- Valid --> O;
-                            N -- Tidak Valid --> P;
-                            O --> C;
-                            P --> M;
-
-                            F --> Q;
-                            Q --> R;
-                            R -- Ya --> S;
-                            R -- Tidak --> C;
-                            S --> T;
-                            T --> Z;
-
-                            G --> U;
-                            U --> V;
-                            V -- Valid --> W;
-                            V -- Tidak Valid --> X;
-                            W --> C;
-                            X --> G;
-
-                            Y -- Ya --> Z;
-                            Y -- Tidak --> End;
-
-                            Z --> AA;
-                            Z --> AB;
-
-                            AA --> AC;
-                            AC --> AD;
-                            AD -- Ya --> AE;
-                            AD -- Tidak --> Z;
-                            AE --> C;
-
-                            AB --> AF;
-                            AF --> AG;
-                            AG -- Ya --> AH;
-                            AG -- Tidak --> Z;
-                            AH --> Z;
-
-                            %% Styling
-                            style A fill:#28a745,stroke:#333,stroke-width:2px,color:#fff
-                            style End fill:#dc3545,stroke:#333,stroke-width:2px,color:#fff
+    O --> P;
+                        </pre>
                     </div>
                 </div>
-            </div>
+            </x-card>
 
-            <div class="mt-8 bg-white overflow-hidden shadow-xl rounded-xl border border-gray-200">
-                <div class="p-6 sm:px-10 bg-white border-b border-gray-200">
-                    <h3 class="text-2xl font-bold text-gray-800">Deskripsi Alur Kerja</h3>
-                    <p class="text-gray-500 mt-2">Penjelasan detail untuk setiap langkah dalam proses manajemen pengguna.</p>
-                </div>
-                <div class="p-6 sm:px-10">
-                    <dl class="space-y-6">
+            <x-card>
+                <div class="p-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Deskripsi Alur Kerja</h3>
+                    <div class="prose max-w-none text-gray-700 space-y-4">
                         <div>
-                            <dt class="font-semibold text-lg text-gray-800">1. Akses Menu & Daftar Pengguna</dt>
-                            <dd class="mt-1 text-gray-600">Admin mengakses menu "Manajemen Tim" untuk melihat daftar semua pengguna aktif dalam sistem. Dari halaman ini, Admin dapat melakukan pencarian, melihat detail, dan memulai berbagai aksi.</dd>
+                            <h4 class="font-semibold text-gray-800">1. Manajemen Pengguna Aktif</h4>
+                            <p>Admin mengakses menu <strong>Manajemen Tim</strong> untuk melihat dan mengelola semua pengguna yang aktif. Dari halaman utama, Admin dapat melakukan aksi-aksi berikut:</p>
+                            <ul class="list-disc list-inside ml-4 space-y-2">
+                                <li><strong>Tambah Pengguna</strong>: Membuka form untuk membuat pengguna baru, lengkap dengan data diri, unit kerja, jabatan, dan atasan.</li>
+                                <li><strong>Edit Pengguna</strong>: Mengubah data pengguna yang sudah ada.</li>
+                                <li><strong>Impor Pengguna</strong>: Melakukan impor data pengguna secara massal melalui upload file CSV.</li>
+                                <li><strong>Arsipkan Pengguna</strong>: Memulai proses untuk menonaktifkan pengguna.</li>
+                            </ul>
                         </div>
                         <div>
-                            <dt class="font-semibold text-lg text-gray-800">2. Proses Tambah Pengguna</dt>
-                            <dd class="mt-1 text-gray-600">Admin memilih "Tambah Pengguna" dan mengisi form dengan data lengkap seperti nama, email, NIP, jabatan, unit kerja, dan atasan. Setelah divalidasi, pengguna baru akan dibuat dan role-nya akan disinkronkan secara otomatis berdasarkan unit kerjanya.</dd>
+                            <h4 class="font-semibold text-gray-800">2. Proses Pengarsipan</h4>
+                            <p>Pengguna yang tidak lagi aktif (karena pensiun, mutasi, dll.) tidak langsung dihapus, melainkan diarsipkan untuk menjaga integritas data historis.</p>
+                             <ul class="list-disc list-inside ml-4 space-y-2">
+                                <li><strong>Konfirmasi</strong>: Sistem akan meminta konfirmasi sebelum mengarsipkan.</li>
+                                <li><strong>Proses Sistem</strong>: Status pengguna diubah menjadi `suspended`, jabatannya dikosongkan, dan jika ia memiliki bawahan, maka bawahan tersebut akan secara otomatis dialihkan ke atasan dari pengguna yang diarsipkan.</li>
+                                <li><strong>Masuk ke Arsip</strong>: Pengguna yang telah diproses akan hilang dari daftar aktif dan muncul di daftar arsip.</li>
+                            </ul>
                         </div>
                         <div>
-                            <dt class="font-semibold text-lg text-gray-800">3. Proses Edit Pengguna</dt>
-                            <dd class="mt-1 text-gray-600">Admin dapat mengubah data pengguna yang sudah ada. Perubahan data akan divalidasi sebelum disimpan. Jika terjadi perpindahan unit, atasan pengguna tersebut akan di-reset.</dd>
+                            <h4 class="font-semibold text-gray-800">3. Manajemen Arsip</h4>
+                            <p>Di halaman arsip, Admin dapat mengelola pengguna yang telah dinonaktifkan:</p>
+                             <ul class="list-disc list-inside ml-4 space-y-2">
+                                <li><strong>Aktifkan Kembali</strong>: Mengubah status pengguna kembali menjadi `active`. Setelah diaktifkan, Admin perlu mengatur ulang jabatan dan unit kerja pengguna secara manual.</li>
+                                <li><strong>Hapus Permanen</strong>: Menghapus data pengguna secara permanen dari sistem. Aksi ini tidak dapat dibatalkan.</li>
+                            </ul>
                         </div>
                          <div>
-                            <dt class="font-semibold text-lg text-gray-800">4. Proses Impor Pengguna</dt>
-                            <dd class="mt-1 text-gray-600">Untuk efisiensi, Admin dapat mengimpor banyak pengguna sekaligus menggunakan file CSV dengan format yang telah ditentukan. Sistem akan memvalidasi file sebelum memproses data.</dd>
+                            <h4 class="font-semibold text-gray-800">4. Peniruan (Impersonate)</h4>
+                            <p>Superadmin memiliki kemampuan untuk "meniru" akun pengguna lain. Fitur ini sangat berguna untuk debugging atau memberikan bantuan teknis seolah-olah sebagai pengguna tersebut, tanpa memerlukan password mereka.</p>
                         </div>
-                        <div>
-                            <dt class="font-semibold text-lg text-gray-800">5. Proses Non-Aktifkan (Arsipkan) Pengguna</dt>
-                            <dd class="mt-1 text-gray-600">Pengguna yang sudah tidak aktif (misal: pensiun, mutasi) tidak langsung dihapus, melainkan diarsipkan. Proses ini akan mengubah status pengguna menjadi 'suspended', mengosongkan jabatan yang dipegangnya, dan mengalihkan bawahannya (jika ada) ke atasan dari pengguna yang dinon-aktifkan.</dd>
-                        </div>
-                        <div>
-                            <dt class="font-semibold text-lg text-gray-800">6. Manajemen Arsip</dt>
-                            <dd class="mt-1 text-gray-600">Admin dapat mengakses halaman "Lihat Arsip" untuk melihat daftar pengguna yang dinon-aktifkan. Dari sini, Admin memiliki dua opsi:</dd>
-                            <dd class="mt-2 text-gray-600 pl-4">
-                                <ul class="list-disc list-inside space-y-1">
-                                    <li><b>Aktifkan Kembali:</b> Mengembalikan status pengguna menjadi 'active'. Pengguna tersebut harus di-assign kembali ke sebuah jabatan secara manual.</li>
-                                    <li><b>Hapus Permanen:</b> Menghapus data pengguna secara permanen dari database. Aksi ini tidak dapat dibatalkan dan hanya boleh dilakukan jika data pengguna sudah benar-benar tidak diperlukan lagi.</li>
-                                </ul>
-                            </dd>
-                        </div>
-                         <div>
-                            <dt class="font-semibold text-lg text-gray-800">7. Peniruan (Impersonate)</dt>
-                            <dd class="mt-1 text-gray-600">Superadmin memiliki kemampuan untuk "meniru" akun pengguna lain. Fitur ini sangat berguna untuk debugging atau memberikan bantuan teknis seolah-olah sebagai pengguna tersebut, tanpa memerlukan password mereka.</dd>
-                        </div>
-                    </dl>
+                    </div>
                 </div>
-            </div>
+            </x-card>
+
         </div>
     </div>
-</x-app-layout>
 
-@push('scripts')
-<script type="module">
-    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
-    mermaid.initialize({
-        startOnLoad: true,
-        fontFamily: 'inherit',
-        theme: 'base',
-        themeVariables: {
-            primaryColor: '#ffffff',
-            primaryTextColor: '#333',
-            primaryBorderColor: '#e5e7eb',
-            lineColor: '#6b7280',
-            textColor: '#374151',
-            fontSize: '14px',
-        }
-    });
-</script>
-@endpush
+    @push('scripts')
+        <script type="module">
+            import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+            mermaid.initialize({
+                startOnLoad: true,
+                fontFamily: 'inherit',
+                theme: 'base',
+                themeVariables: {
+                    primaryColor: '#ffffff',
+                    primaryTextColor: '#333',
+                    primaryBorderColor: '#e5e7eb',
+                    lineColor: '#6b7280',
+                    textColor: '#374151',
+                    fontSize: '14px',
+                }
+            });
+        </script>
+    @endpush
+</x-app-layout>

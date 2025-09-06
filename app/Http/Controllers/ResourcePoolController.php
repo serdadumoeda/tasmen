@@ -86,4 +86,10 @@ class ResourcePoolController extends Controller
 
         return response()->json($members);
     }
+
+    public function showWorkflow()
+    {
+        $this->authorize('viewAny', User::class);
+        return view('resource_pool.workflow');
+    }
 }

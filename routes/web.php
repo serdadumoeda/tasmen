@@ -151,6 +151,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Rute untuk Manajemen Resource Pool
     Route::get('/resource-pool', [ResourcePoolController::class, 'index'])->name('resource-pool.index');
+    Route::get('/resource-pool/workflow', [ResourcePoolController::class, 'showWorkflow'])->name('resource-pool.workflow');
     Route::put('/resource-pool/update/{user}', [ResourcePoolController::class, 'update'])->name('resource-pool.update');
 
     // Rute API untuk mengambil anggota pool (digunakan oleh AJAX di halaman proyek)
@@ -268,12 +269,14 @@ Route::middleware(['auth', 'superadmin'])->prefix('admin')->name('admin.')->grou
     Route::get('/activities', [\App\Http\Controllers\ActivityController::class, 'index'])->name('activities.index');
 
     // API Key Management
+    Route::get('api_keys/workflow', [ApiKeyController::class, 'showWorkflow'])->name('api_keys.workflow');
     Route::get('api_keys/docs', [ApiKeyController::class, 'showDocs'])->name('api_keys.docs');
     Route::get('api_keys/query-helper', [ApiKeyController::class, 'showQueryHelper'])->name('api_keys.query_helper');
     Route::resource('api_keys', ApiKeyController::class)->except(['show', 'edit'])->parameters(['api_keys' => 'client']);
 
     // General Settings
     Route::get('settings', [\App\Http\Controllers\Admin\SettingController::class, 'index'])->name('settings.index');
+    Route::get('settings/workflow', [\App\Http\Controllers\Admin\SettingController::class, 'showWorkflow'])->name('settings.workflow');
     Route::get('settings/formulas', [\App\Http\Controllers\Admin\SettingController::class, 'formulas'])->name('settings.formulas');
     Route::post('settings', [\App\Http\Controllers\Admin\SettingController::class, 'update'])->name('settings.update');
 
@@ -294,8 +297,10 @@ Route::middleware(['auth', 'superadmin'])->prefix('admin')->name('admin.')->grou
 
 Route::middleware(['auth', 'can.manage.leave.settings'])->prefix('admin')->name('admin.')->group(function () {
     // Cuti Bersama Management
+    Route::get('cuti-bersama/workflow', [CutiBersamaController::class, 'showWorkflow'])->name('cuti-bersama.workflow');
     Route::resource('cuti-bersama', CutiBersamaController::class)->parameters(['cuti-bersama' => 'cutiBersama']);
     // Approval Workflow Management
+    Route::get('approval-workflows/workflow', [ApprovalWorkflowController::class, 'showWorkflow'])->name('approval-workflows.workflow');
     Route::resource('approval-workflows', ApprovalWorkflowController::class);
     Route::post('approval-workflows/{approvalWorkflow}/steps', [ApprovalWorkflowController::class, 'addStep'])->name('approval-workflows.steps.store');
     Route::delete('approval-workflows/{approvalWorkflow}/steps/{step}', [ApprovalWorkflowController::class, 'destroyStep'])->name('approval-workflows.steps.destroy');
