@@ -161,6 +161,7 @@ class WorkloadAnalysisController extends Controller
             'projects'
         );
 
+        $settings = \App\Models\Setting::pluck('value', 'key')->all();
         $adhocTasks = $user->tasks()->whereNull('project_id')->get();
         $projectTasks = $user->tasks()->whereNotNull('project_id')->get()->groupBy('project.name');
 
@@ -169,6 +170,7 @@ class WorkloadAnalysisController extends Controller
             'adhocTasks' => $adhocTasks,
             'projectTasks' => $projectTasks,
             'specialAssignments' => $user->specialAssignments,
+            'settings' => $settings,
         ]);
     }
 

@@ -28,15 +28,39 @@
                         <p class="text-3xl font-bold text-purple-900">{{ $user->active_sk_count }}</p>
                     </div>
                     <!-- Performance Predicate Explanation Card -->
-                    <div class="bg-yellow-50 p-4 rounded-lg shadow">
-                        <h3 class="text-lg font-semibold text-yellow-800">Predikat Kinerja (SKP)</h3>
-                        <p class="text-3xl font-bold text-yellow-900">{{ $user->performance_predicate }}</p>
-                        <div class="text-xs text-yellow-700 mt-2">
-                            <p>Berdasarkan matriks:</p>
-                            <ul class="list-disc list-inside ml-2">
-                                <li><strong>Hasil Kerja:</strong> {{ $user->work_result_rating }}</li>
-                                <li><strong>Perilaku Kerja:</strong> {{ $user->work_behavior_rating ?? 'Sesuai Ekspektasi' }}</li>
-                            </ul>
+                    <div class="bg-yellow-50 p-4 rounded-lg shadow lg:col-span-4">
+                        <h3 class="text-lg font-semibold text-yellow-800 mb-2">Rincian Perhitungan Predikat Kinerja (SKP): <span class="text-yellow-900 font-bold">{{ $user->performance_predicate }}</span></h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                            <!-- Kolom Rating Hasil Kerja -->
+                            <div class="p-4 bg-white rounded-lg border">
+                                <h4 class="font-bold text-gray-800 mb-2">1. Rating Hasil Kerja: <span class="text-blue-600">{{ $user->work_result_rating }}</span></h4>
+                                <p class="text-xs text-gray-600 mb-2">
+                                    Rating ini didasarkan pada <strong class="text-gray-900">Nilai Kinerja Final (NKF)</strong> pegawai, yang saat ini adalah <strong class="text-gray-900">{{ number_format($user->final_performance_value, 3) }}</strong>.
+                                    Nilai ini sendiri dihitung dari akumulasi progres tugas, efisiensi waktu, dan kinerja tim (jika seorang manajer).
+                                </p>
+                                <ul class="text-xs space-y-1">
+                                    <li class="p-1 rounded {{ $user->work_result_rating == 'Diatas Ekspektasi' ? 'bg-green-100 font-bold' : '' }}">Jika NKF &ge; {{ $settings['rating_threshold_high'] ?? '1.15' }}  &rarr; Diatas Ekspektasi</li>
+                                    <li class="p-1 rounded {{ $user->work_result_rating == 'Sesuai Ekspektasi' ? 'bg-green-100 font-bold' : '' }}">Jika NKF &ge; {{ $settings['rating_threshold_medium'] ?? '0.90' }} &rarr; Sesuai Ekspektasi</li>
+                                    <li class="p-1 rounded {{ $user->work_result_rating == 'Dibawah Ekspektasi' ? 'bg-red-100 font-bold' : '' }}">Jika NKF &lt; {{ $settings['rating_threshold_medium'] ?? '0.90' }}  &rarr; Dibawah Ekspektasi</li>
+                                </ul>
+                            </div>
+                            <!-- Kolom Predikat Kinerja -->
+                            <div class="p-4 bg-white rounded-lg border">
+                                <h4 class="font-bold text-gray-800 mb-2">2. Penentuan Predikat SKP</h4>
+                                <p class="text-xs text-gray-600 mb-2">
+                                    Predikat final adalah hasil dari matriks kuadran antara <strong>Rating Hasil Kerja</strong> dan <strong>Penilaian Perilaku Kerja</strong> (yang diinput oleh atasan).
+                                </p>
+                                <div class="text-xs">
+                                    <p class="mb-2">Kombinasi saat ini:</p>
+                                    <div class="p-2 rounded bg-gray-100 border text-center">
+                                        <span class="font-semibold">{{ $user->work_result_rating }}</span>
+                                        <span class="mx-2">+</span>
+                                        <span class="font-semibold">{{ $user->work_behavior_rating ?? 'Sesuai Ekspektasi' }}</span>
+                                        <span class="mx-2">&darr;</span>
+                                        <strong class="text-blue-600">{{ $user->performance_predicate }}</strong>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
