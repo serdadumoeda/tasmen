@@ -212,10 +212,12 @@ class PerformanceCalculatorService
         if ($allTasks->isEmpty()) {
             return [
                 'iki_formula' => $settings['iki_formula'] ?? 'N/A',
-                'iki_calculation' => 'Tidak ada tugas untuk dinilai.',
+                'iki_components' => [],
+                'iki_calculation_error' => 'Tidak ada tugas untuk dinilai.',
                 'iki_result' => 0,
-                'nkf_formula' => 'N/A',
-                'nkf_calculation' => 'Tidak ada IKI untuk dinilai.',
+                'nkf_formula' => $settings['nkf_formula_staf'] ?? 'N/A',
+                'nkf_components' => [],
+                'nkf_calculation_error' => 'Tidak ada IKI untuk dinilai.',
                 'nkf_result' => 0,
             ];
         }

@@ -36,15 +36,21 @@
                             <div class="p-4 bg-white rounded-lg border">
                                 <h4 class="font-bold text-gray-800 mb-2">1. Perhitungan Indeks Kinerja Individu (IKI)</h4>
                                 <p class="text-xs text-gray-600 mb-2">IKI mengukur kinerja individu berdasarkan progres tugas dan efisiensi waktu.</p>
-                                <div class="text-xs p-2 rounded bg-gray-100 border font-mono mb-2">
-                                    <p class="font-semibold">Rumus: <code class="text-red-600">{{ $performanceDetails['iki_formula'] }}</code></p>
-                                    <p>Hasil: {{ str_replace(array_keys($performanceDetails['iki_components']), array_values($performanceDetails['iki_components']), $performanceDetails['iki_formula']) }} = <strong class="text-red-600">{{ $performanceDetails['iki_result'] }}</strong></p>
-                                </div>
-                                <ul class="text-xs space-y-1">
-                                    @foreach($performanceDetails['iki_components'] as $key => $value)
-                                    <li><span class="font-semibold">{{ ucfirst(str_replace('_', ' ', $key)) }}:</span> {{ $value }}</li>
-                                    @endforeach
-                                </ul>
+                                @if(empty($performanceDetails['iki_components']))
+                                    <div class="text-xs p-2 rounded bg-yellow-100 border border-yellow-300 text-yellow-800">
+                                        <p><i class="fas fa-info-circle mr-1"></i> {{ $performanceDetails['iki_calculation_error'] }}</p>
+                                    </div>
+                                @else
+                                    <div class="text-xs p-2 rounded bg-gray-100 border font-mono mb-2">
+                                        <p class="font-semibold">Rumus: <code class="text-red-600">{{ $performanceDetails['iki_formula'] }}</code></p>
+                                        <p>Hasil: {{ str_replace(array_keys($performanceDetails['iki_components']), array_values($performanceDetails['iki_components']), $performanceDetails['iki_formula']) }} = <strong class="text-red-600">{{ $performanceDetails['iki_result'] }}</strong></p>
+                                    </div>
+                                    <ul class="text-xs space-y-1">
+                                        @foreach($performanceDetails['iki_components'] as $key => $value)
+                                        <li><span class="font-semibold">{{ ucfirst(str_replace('_', ' ', $key)) }}:</span> {{ $value }}</li>
+                                        @endforeach
+                                    </ul>
+                                @endif
                                 <div class="mt-3 pt-3 border-t text-xs text-gray-600">
                                     <p class="font-bold mb-1">Interpretasi IKI:</p>
                                     <ul class="list-disc list-inside">
@@ -59,15 +65,21 @@
                             <div class="p-4 bg-white rounded-lg border">
                                 <h4 class="font-bold text-gray-800 mb-2">2. Perhitungan Nilai Kinerja Final (NKF)</h4>
                                 <p class="text-xs text-gray-600 mb-2">NKF adalah skor akhir yang menjadi dasar rating hasil kerja. Untuk pimpinan, nilai ini juga dipengaruhi oleh kinerja timnya.</p>
-                                <div class="text-xs p-2 rounded bg-gray-100 border font-mono mb-2">
-                                    <p class="font-semibold">Rumus: <code class="text-blue-600">{{ $performanceDetails['nkf_formula'] }}</code></p>
-                                    <p>Hasil: {{ str_replace(array_keys($performanceDetails['nkf_components']), array_values($performanceDetails['nkf_components']), $performanceDetails['nkf_formula']) }} = <strong class="text-blue-600">{{ $performanceDetails['nkf_result'] }}</strong></p>
-                                </div>
-                                <ul class="text-xs space-y-1 mb-3">
-                                     @foreach($performanceDetails['nkf_components'] as $key => $value)
-                                    <li><span class="font-semibold">{{ ucfirst(str_replace('_', ' ', $key)) }}:</span> {{ $value }}</li>
-                                    @endforeach
-                                </ul>
+                                @if(empty($performanceDetails['nkf_components']))
+                                    <div class="text-xs p-2 rounded bg-yellow-100 border border-yellow-300 text-yellow-800">
+                                        <p><i class="fas fa-info-circle mr-1"></i> {{ $performanceDetails['nkf_calculation_error'] }}</p>
+                                    </div>
+                                @else
+                                    <div class="text-xs p-2 rounded bg-gray-100 border font-mono mb-2">
+                                        <p class="font-semibold">Rumus: <code class="text-blue-600">{{ $performanceDetails['nkf_formula'] }}</code></p>
+                                        <p>Hasil: {{ str_replace(array_keys($performanceDetails['nkf_components']), array_values($performanceDetails['nkf_components']), $performanceDetails['nkf_formula']) }} = <strong class="text-blue-600">{{ $performanceDetails['nkf_result'] }}</strong></p>
+                                    </div>
+                                    <ul class="text-xs space-y-1 mb-3">
+                                        @foreach($performanceDetails['nkf_components'] as $key => $value)
+                                        <li><span class="font-semibold">{{ ucfirst(str_replace('_', ' ', $key)) }}:</span> {{ $value }}</li>
+                                        @endforeach
+                                    </ul>
+                                @endif
                                 <div class="mt-3 pt-3 border-t text-xs text-gray-600">
                                      <p class="font-bold mb-1">Interpretasi Rating Hasil Kerja (berdasarkan NKF):</p>
                                     <ul class="list-disc list-inside">
