@@ -193,10 +193,20 @@
 </x-app-layout>
 
 @push('scripts')
-<script src="{{ asset('assets/plugins/mermaid/mermaid.min.js') }}"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        mermaid.initialize({ startOnLoad: true });
+<script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({
+        startOnLoad: true,
+        fontFamily: 'inherit',
+        theme: 'base',
+        themeVariables: {
+            primaryColor: '#ffffff',
+            primaryTextColor: '#333',
+            primaryBorderColor: '#e5e7eb',
+            lineColor: '#6b7280',
+            textColor: '#374151',
+            fontSize: '14px',
+        }
     });
 </script>
 @endpush
