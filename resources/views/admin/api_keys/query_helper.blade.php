@@ -4,10 +4,15 @@
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 {{ __('API Query Helper') }}
             </h2>
-            <a href="{{ route('admin.api_keys.index') }}" class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 active:bg-gray-900 focus:outline-none focus:border-gray-900 focus:ring ring-gray-300 disabled:opacity-25 transition ease-in-out duration-150">
-                <i class="fas fa-arrow-left mr-2"></i>
-                Kembali ke Manajemen Kunci API
-            </a>
+            <div class="flex items-center space-x-2">
+                <a href="{{ route('admin.api_keys.query_helper_workflow') }}" class="inline-flex items-center px-4 py-2 bg-blue-500 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-600">
+                    <i class="fas fa-project-diagram mr-2"></i> Alur Kerja
+                </a>
+                <a href="{{ route('admin.api_keys.index') }}" class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Kembali
+                </a>
+            </div>
         </div>
     </x-slot>
 

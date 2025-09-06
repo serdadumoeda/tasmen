@@ -19,7 +19,7 @@ class WorkloadAnalysisController extends Controller
         $this->authorize('viewAny', User::class);
         $manager = Auth::user();
         $search = $request->input('search');
-        $period = $request->input('period', 'all'); // Default to 'all'
+        $period = $request->input('period', 'all');
 
         // --- Date Period Calculation ---
         $startDate = null;
@@ -38,7 +38,6 @@ class WorkloadAnalysisController extends Controller
                 $endDate = Carbon::now()->endOfQuarter();
                 break;
             case 'semester':
-                // Assuming semester 1 is Jan-Jun, semester 2 is Jul-Dec
                 $currentMonth = Carbon::now()->month;
                 if ($currentMonth <= 6) {
                     $startDate = Carbon::now()->startOfYear();
@@ -54,48 +53,53 @@ class WorkloadAnalysisController extends Controller
                 break;
         }
 
-        // --- Subordinates Query ---
+        // --- Base Subordinates Query ---
         if ($manager->isSuperAdmin()) {
-            $subordinatesQuery = User::where('id', '!=', $manager->id);
+            $baseSubordinatesQuery = User::where('id', '!=', $manager->id);
         } else {
             $subordinateUnitIds = $manager->unit ? $manager->unit->getAllSubordinateUnitIds() : [];
-            $subordinatesQuery = User::whereIn('unit_id', $subordinateUnitIds)->where('id', '!=', $manager->id);
+            $baseSubordinatesQuery = User::whereIn('unit_id', $subordinateUnitIds)->where('id', '!=', $manager->id);
         }
 
         if ($search) {
-            $subordinatesQuery->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($search) . '%']);
+            $baseSubordinatesQuery->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($search) . '%']);
         }
 
-        // Eager load tasks with deadline filter if a period is selected
-        $subordinatesQuery->with(['tasks' => function ($query) use ($startDate, $endDate) {
-            if ($startDate && $endDate) {
-                $query->whereBetween('deadline', [$startDate, $endDate]);
-            }
-        }, 'specialAssignments' => function ($query) use ($startDate, $endDate) {
-            if ($startDate && $endDate) {
-                $query->where('status', '!=', 'SELESAI') // or filter by dates if they exist
+        // --- Eager Loading Closure ---
+        $eagerLoadTasksAndAssignments = function ($query) use ($startDate, $endDate) {
+            $query->with(['tasks' => function ($q) use ($startDate, $endDate) {
+                if ($startDate && $endDate) {
+                    $q->whereBetween('deadline', [$startDate, $endDate]);
+                }
+            }, 'specialAssignments' => function ($q) use ($startDate, $endDate) {
+                if ($startDate && $endDate) {
+                    $q->where('status', '!=', 'SELESAI')
                       ->whereBetween('end_date', [$startDate, $endDate]);
-            }
-        }]);
+                }
+            }]);
+        };
 
-        $subordinates = $subordinatesQuery->paginate(20)->withQueryString();
+        // --- Chart Data Calculation (ALL subordinates) ---
+        $chartQuery = clone $baseSubordinatesQuery;
+        $allSubordinatesForChart = $eagerLoadTasksAndAssignments($chartQuery)->get();
+        $chartData = $allSubordinatesForChart->mapWithKeys(function ($user) {
+            return [$user->name => $user->tasks->sum('estimated_hours')];
+        });
 
-        // --- Workload & Chart Data Calculation ---
+        // --- Table Data Calculation (Paginated) ---
+        $tableQuery = $eagerLoadTasksAndAssignments($baseSubordinatesQuery);
+        $subordinates = $tableQuery->paginate(20)->withQueryString();
         $workloadData = [];
-        $chartData = [];
 
-        // Use the paginated results for calculation to avoid double queries
         foreach ($subordinates as $user) {
             $totalTaskHours = $user->tasks->sum('estimated_hours');
 
-            // For periodic analysis, use effective hours. For 'all', use a standard.
             if ($startDate && $endDate) {
                 $effectiveHours = $user->getEffectiveWorkingHours($startDate, $endDate);
                 $workloadPercentage = ($effectiveHours > 0) ? ($totalTaskHours / $effectiveHours) * 100 : 0;
             } else {
-                // Fallback for 'all' - shows total commitment, not capacity
-                $effectiveHours = null; // Not applicable
-                $workloadPercentage = null; // Not applicable
+                $effectiveHours = null;
+                $workloadPercentage = null;
             }
 
             $workloadData[$user->id] = [
@@ -104,8 +108,6 @@ class WorkloadAnalysisController extends Controller
                 'percentage' => $workloadPercentage,
                 'active_sk_count' => $user->specialAssignments->count(),
             ];
-
-            $chartData[$user->name] = $totalTaskHours;
         }
 
         return view('workload-analysis.index', compact(
@@ -124,7 +126,6 @@ class WorkloadAnalysisController extends Controller
      */
     public function updateBehavior(Request $request, User $user, \App\Services\PerformanceCalculatorService $calculator)
     {
-        // Otorisasi dipindahkan ke UserPolicy untuk konsistensi dan perbaikan bug.
         $this->authorize('rateBehavior', $user);
 
         $validated = $request->validate([
@@ -133,12 +134,9 @@ class WorkloadAnalysisController extends Controller
 
         $user->update($validated);
 
-        // Panggil service untuk menghitung ulang skor kinerja user ini dan atasannya.
         $calculator->calculateForSingleUserAndParents($user);
 
-        // PERBAIKAN: Kembalikan respons JSON untuk permintaan AJAX.
         if ($request->ajax() || $request->wantsJson()) {
-            // Muat ulang data user untuk mendapatkan nilai-nilai yang sudah dihitung ulang.
             $user->refresh();
             return response()->json(['success' => true, 'user' => $user]);
         }

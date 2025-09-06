@@ -12,14 +12,13 @@
             <x-card>
                 <div class="p-6">
                     <h3 class="text-xl font-bold text-gray-800 mb-2">Dokumentasi Alur Kerja Cuti</h3>
-                    <p class="text-gray-600">Halaman ini berisi dokumentasi lengkap mengenai alur kerja Modul Manajemen Cuti, mulai dari pengajuan oleh pegawai, proses persetujuan berjenjang, hingga penerbitan SK Cuti otomatis. Alur ini memastikan proses yang transparan dan akuntabel.</p>
+                    <p class="text-gray-600">Halaman ini menjelaskan proses pengajuan, persetujuan berjenjang, dan penerbitan SK Cuti otomatis.</p>
                 </div>
             </x-card>
 
             <x-card>
                 <div class="p-6">
                     <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Flowchart Alur Kerja</h3>
-                    <p class="text-gray-600 mb-6">Flowchart ini merinci keseluruhan alur kerja standar untuk modul Manajemen Cuti.</p>
                     <div class="p-4 bg-gray-50 rounded-lg text-center">
                         <pre class="mermaid">
 graph TD
@@ -29,79 +28,50 @@ graph TD
     classDef decision fill:#FDEDEC,stroke:#C0392B;
     classDef notif fill:#F4ECF7,stroke:#8E44AD;
 
-    subgraph sg1 [A. Alur Pengajuan]
-        A1["<i class='fa fa-user'></i> Pegawai"]:::action;
-        A2["<i class='fa fa-keyboard'></i> Form Pengajuan Cuti"]:::page;
-        A3{<i class='fa fa-check-double'></i> Validasi & Cek Saldo}:::decision;
-        A4["<i class='fa fa-save'></i> Simpan Permintaan Cuti"]:::process;
-        A5["<i class='fa fa-bell'></i> Notifikasi ke Atasan"]:::notif;
+    subgraph sg1 [A. Pengajuan]
+        A1(Pegawai):::action --> A2(Form Pengajuan Cuti):::page;
+        A2 -- Submit --> A3{Validasi & Cek Saldo}:::decision;
+        A3 -- Gagal --> A2;
+        A3 -- Sukses --> A4(Simpan Permintaan):::process;
+        A4 --> A5(Notifikasi ke Atasan):::notif;
     end
 
-    subgraph sg2 [B. Alur Persetujuan Berjenjang]
-        B1["<i class='fa fa-user-tie'></i> Atasan"]:::action;
-        B2["<i class='fa fa-file-alt'></i> Halaman Detail Cuti"]:::page;
-        B3["<i class='fa fa-cogs'></i> LeaveApprovalService"]:::process;
-        B4{<i class='fa fa-question-circle'></i> Ada Jenjang Berikutnya?}:::decision;
-        B5["Ubah Status & Teruskan"]:::process;
-        B6["<i class='fa fa-bell'></i> Notifikasi ke Atasan Berikutnya"]:::notif;
-        B7["Ubah Status: APPROVED"]:::process;
-        B8["<i class='fa fa-gavel'></i> Form Alasan Penolakan"]:::page;
-        B9["Ubah Status: REJECTED"]:::process;
-        B10["<i class='fa fa-bell'></i> Notifikasi ke Pegawai"]:::notif;
+    subgraph sg2 [B. Persetujuan Berjenjang]
+        A5 --> B1(Atasan):::action;
+        B1 --> B2(Detail Permintaan Cuti):::page;
+        B2 -- Setujui --> B3{Ada Jenjang Berikutnya?}:::decision;
+        B3 -- Ya --> B4(Teruskan ke Atasan Berikutnya):::process;
+        B4 --> B1;
+        B3 -- Tidak / Final --> B5(Status: Approved):::process;
+        B2 -- Tolak --> B6(Status: Rejected):::process;
     end
 
-    subgraph sg3 [C. Alur Penerbitan SK Otomatis]
-        C1["<i class='fa fa-cogs'></i> SuratCutiGenerator"]:::process;
-        C2["<i class='fa fa-file-word'></i> Buat Dokumen SK Cuti"]:::process;
-        C3["<i class='fa fa-save'></i> Simpan Surat & Tautkan"]:::process;
-        C4["<i class='fa fa-check-circle'></i> Selesai"];
+    subgraph sg3 [C. Penerbitan SK Otomatis]
+        B5 --> C1(Generate Dokumen SK):::process;
+        C1 --> C2(Simpan & Tautkan Surat):::process;
+        C2 --> C3(Selesai);
     end
 
-    A1 --> A2;
-    A2 -- Submit --> A3;
-    A3 -- Gagal --> A2;
-    A3 -- Sukses --> A4;
-    A4 --> A5;
-    A5 --> B1;
-
-    B1 --> B2;
-    B2 -- Setujui --> B3;
-    B3 --> B4;
-
-    B4 -- Ya --> B5;
-    B5 --> B6;
-    B6 --> B1;
-
-    B4 -- Tidak (Final) --> B7;
-    B7 --> C1;
-
-    B2 -- Tolak --> B8;
-    B8 -- Submit --> B9;
-    B9 --> B10;
-
-    C1 --> C2;
-    C2 --> C3;
-    C3 --> C4;
-</pre>
+                        </pre>
                     </div>
                 </div>
             </x-card>
 
             <x-card>
                 <div class="p-6">
-                    <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Penjelasan Detail Alur Kerja</h3>
+                    <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Deskripsi Alur Kerja</h3>
                     <div class="prose max-w-none text-gray-700 space-y-4">
                         <div>
-                            <h4 class="font-semibold text-gray-800">1. Alur Pengajuan (A)</h4>
-                            <p>Proses dimulai ketika seorang pegawai mengajukan cuti melalui form yang tersedia. Sistem akan memvalidasi sisa saldo cuti sebelum menyimpan permintaan dan mengirim notifikasi ke atasan.</p>
+                            <h4 class="font-semibold text-gray-800">1. Pengajuan Cuti</h4>
+                            <p>Pegawai mengajukan cuti melalui form. Sistem akan memvalidasi sisa saldo cuti sebelum menyimpan dan mengirim notifikasi ke atasan.</p>
                         </div>
                         <div>
-                            <h4 class="font-semibold text-gray-800">2. Alur Persetujuan Berjenjang (B)</h4>
-                            <p>Ini adalah inti dari modul Cuti. Proses persetujuan tidak statis, melainkan dinamis berdasarkan workflow yang telah diatur untuk unit kerja pegawai. `LeaveApprovalService` akan secara otomatis meneruskan permintaan ke level atasan berikutnya hingga persetujuan final tercapai atau permintaan ditolak.</p>
+                            <h4 class="font-semibold text-gray-800">2. Persetujuan Berjenjang</h4>
+                            <p>Atasan menerima notifikasi dan dapat menyetujui atau menolak. Jika disetujui, sistem akan memeriksa apakah ada level persetujuan berikutnya sesuai alur kerja yang diatur untuk unit pegawai. Jika ada, permintaan akan diteruskan. Jika tidak, permintaan dianggap disetujui sepenuhnya.</p>
                         </div>
                         <div>
-                            <h4 class="font-semibold text-gray-800">3. Penerbitan SK Otomatis (C)</h4>
-                            <p>Setelah persetujuan final, `SuratCutiGenerator` akan dipanggil untuk membuat dokumen SK Cuti dari template. Dokumen ini kemudian disimpan dan ditautkan ke permintaan cuti yang bersangkutan untuk memastikan semua data terhubung.</p>
+                            <h4 class="font-semibold text-gray-800">3. Penerbitan SK Otomatis</h4>
+                            <p>Setelah persetujuan final, sistem secara otomatis membuat dokumen SK Cuti dari template dan menautkannya ke permintaan cuti yang bersangkutan.</p>
                         </div>
                     </div>
                 </div>
@@ -116,15 +86,7 @@ graph TD
             mermaid.initialize({
                 startOnLoad: true,
                 fontFamily: 'inherit',
-                theme: 'base',
-                themeVariables: {
-                    primaryColor: '#ffffff',
-                    primaryTextColor: '#333',
-                    primaryBorderColor: '#e5e7eb',
-                    lineColor: '#6b7280',
-                    textColor: '#374151',
-                    fontSize: '14px',
-                }
+                theme: 'base'
             });
         </script>
     @endpush

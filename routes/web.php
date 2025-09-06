@@ -273,6 +273,7 @@ Route::middleware(['auth', 'superadmin'])->prefix('admin')->name('admin.')->grou
     Route::get('api_keys/workflow', [ApiKeyController::class, 'showWorkflow'])->name('api_keys.workflow');
     Route::get('api_keys/docs', [ApiKeyController::class, 'showDocs'])->name('api_keys.docs');
     Route::get('api_keys/query-helper', [ApiKeyController::class, 'showQueryHelper'])->name('api_keys.query_helper');
+    Route::get('api_keys/query-helper/workflow', [ApiKeyController::class, 'showQueryHelperWorkflow'])->name('api_keys.query_helper_workflow');
     Route::resource('api_keys', ApiKeyController::class)->except(['show', 'edit'])->parameters(['api_keys' => 'client']);
 
     // General Settings
