@@ -87,8 +87,9 @@ class SuratMasukController extends Controller
         return redirect()->route('surat-masuk.index')->with('success', 'Surat masuk berhasil diarsipkan dan disposisi otomatis telah dibuat.');
     }
 
-    public function show(Surat $surat)
+    public function show(Surat $surat_masuk)
     {
+        $surat = $surat_masuk;
         if ($surat->jenis !== 'masuk') {
             abort(404);
         }
