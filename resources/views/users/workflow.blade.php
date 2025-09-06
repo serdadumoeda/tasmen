@@ -30,7 +30,7 @@ graph TD
     classDef process fill:#E8F8F5,stroke:#1ABC9C,color:#148F77,stroke-width:1px;
     classDef decision fill:#FDEDEC,stroke:#C0392B,color:#A93226,stroke-width:1px;
 
-    subgraph Manajemen_Aktif
+    subgraph sg1 [Manajemen Aktif]
         A[Mulai]:::start --> B["<i class='fa fa-users'></i> Menu Manajemen Tim"]:::page;
         B --> C["<i class='fa fa-list'></i> Daftar Pengguna Aktif"]:::page;
         C --> D["<i class='fa fa-plus-circle'></i> Tambah Pengguna"]:::action;
@@ -40,7 +40,7 @@ graph TD
         C --> H{Lihat Arsip?}:::decision;
     end
 
-    subgraph Proses_Tambah_Edit
+    subgraph sg2 [Proses Tambah/Edit]
         D --> I["<i class='fa fa-keyboard'></i> Isi Form Data"]:::page;
         E --> I;
         I --> J{Validasi Data?}:::decision;
@@ -50,14 +50,14 @@ graph TD
         L --> I;
     end
 
-    subgraph Proses_Arsip
+    subgraph sg3 [Proses Arsip]
         F --> M{Konfirmasi Arsip?}:::decision;
         M -- Ya --> N["<i class='fa fa-cogs'></i> Ubah Status 'Suspended'<br>Kosongkan Jabatan<br>Alihkan Bawahan"]:::process;
         M -- Tidak --> C;
         N --> O["<i class='fa fa-archive'></i> Pengguna Masuk Arsip"]:::process;
     end
 
-    subgraph Manajemen_Arsip
+    subgraph sg4 [Manajemen Arsip]
         H -- Ya --> P["<i class='fa fa-list-alt'></i> Daftar Pengguna Arsip"]:::page;
         P --> Q["<i class='fa fa-user-check'></i> Aktifkan Kembali"]:::action;
         P --> R["<i class='fa fa-trash-alt'></i> Hapus Permanen"]:::action;
