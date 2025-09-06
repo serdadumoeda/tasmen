@@ -204,4 +204,10 @@ class PeminjamanRequestController extends Controller
 
         return redirect()->route('peminjaman-requests.my-requests')->with('success', 'Permintaan telah ditolak.');
     }
+
+    public function showWorkflow()
+    {
+        $this->authorize('viewAny', PeminjamanRequest::class);
+        return view('peminjaman_requests.workflow');
+    }
 }

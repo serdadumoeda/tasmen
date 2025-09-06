@@ -158,6 +158,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/api/resource-pool/members', [ResourcePoolController::class, 'getAvailableMembers'])->name('api.resource-pool.members');
     Route::controller(PeminjamanRequestController::class)->middleware('auth')->group(function () {
        Route::get('/my-loan-requests', 'myRequests')->name('peminjaman-requests.my-requests');
+       Route::get('/peminjaman-requests/workflow', 'showWorkflow')->name('peminjaman-requests.workflow');
        Route::get('/peminjaman-requests', 'index')->name('peminjaman-requests.index');
        Route::post('/peminjaman-requests', 'store')->name('peminjaman-requests.store');
        Route::post('/peminjaman-requests/{peminjamanRequest}/approve', 'approve')->name('peminjaman-requests.approve');
