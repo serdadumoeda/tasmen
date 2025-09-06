@@ -35,7 +35,7 @@
                             <!-- Kolom Rating Hasil Kerja & IKI -->
                             <div class="p-4 bg-white rounded-lg border">
                                 <h4 class="font-bold text-gray-800 mb-2">1. Perhitungan Indeks Kinerja Individu (IKI)</h4>
-                                <p class="text-xs text-gray-600 mb-2">IKI mengukur kinerja individu berdasarkan progres tugas dan efisiensi waktu.</p>
+                                <p class="text-xs text-gray-600 mb-2">IKI mengukur kinerja individu berdasarkan progres tugas dan efisiensi waktu. <strong class="text-gray-800">Base Score</strong> adalah rata-rata progres semua tugas yang dibobot berdasarkan prioritasnya.</p>
                                 @if(empty($performanceDetails['iki_components']))
                                     <div class="text-xs p-2 rounded bg-yellow-100 border border-yellow-300 text-yellow-800">
                                         <p><i class="fas fa-info-circle mr-1"></i> {{ $performanceDetails['iki_calculation_error'] }}</p>
