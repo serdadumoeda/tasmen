@@ -20,6 +20,8 @@ use App\Policies\TaskPolicy;
 use App\Policies\UnitPolicy;
 use App\Policies\UserPolicy;
 use App\Policies\SettingPolicy;
+use App\Models\ApprovalWorkflow;
+use App\Policies\ApprovalWorkflowPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Gate;
 
@@ -40,6 +42,7 @@ class AuthServiceProvider extends ServiceProvider
         LampiranSurat::class => LampiranSuratPolicy::class,
         Surat::class => SuratPolicy::class,
         Setting::class => SettingPolicy::class,
+        \App\Models\ApprovalWorkflow::class => \App\Policies\ApprovalWorkflowPolicy::class,
     ];
 
     /**

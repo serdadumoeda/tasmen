@@ -56,4 +56,9 @@ class CutiBersamaController extends Controller
 
         return redirect()->route('admin.cuti_bersama.index')->with('success', 'Tanggal Cuti Bersama berhasil dihapus.');
     }
+
+    public function showWorkflow()
+    {
+        return view('admin.cuti_bersama.workflow');
+    }
 }

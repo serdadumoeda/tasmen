@@ -1,119 +1,124 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Alur Kerja Manajemen Unit') }}
+            <i class="fas fa-sitemap mr-2"></i>
+            {{ __('Alur Kerja Manajemen Unit Kerja') }}
         </h2>
     </x-slot>
 
     <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 bg-white border-b border-gray-200">
-                    <div class="flex justify-between items-center mb-6">
-                        <h3 class="text-2xl font-bold text-gray-800">Diagram Alur Kerja</h3>
-                        <a href="{{ route('admin.units.index') }}" class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 active:bg-gray-900 focus:outline-none focus:border-gray-900 focus:ring ring-gray-300 disabled:opacity-25 transition ease-in-out duration-150">
-                            <i class="fas fa-arrow-left mr-2"></i>
-                            Kembali ke Daftar Unit
-                        </a>
-                    </div>
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-8">
+
+            <x-card>
+                <div class="p-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">Dokumentasi Alur Kerja Unit Kerja</h3>
+                    <p class="text-gray-600">Halaman ini menjelaskan proses pengelolaan unit kerja, dari pembuatan unit baru, pengeditan, hingga penghapusan, serta bagaimana struktur organisasi dikelola.</p>
+                </div>
+            </x-card>
+
+            <x-card>
+                <div class="p-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Flowchart Alur Kerja</h3>
+                    <p class="text-gray-600 mb-6">Flowchart ini merinci keseluruhan proses utama dalam pengelolaan data unit kerja.</p>
                     <div class="p-4 bg-gray-50 rounded-lg text-center">
-                        <div class="mermaid">
-                        graph TD
-                            A[Mulai] --> B{Akses Menu<br>Manajemen Unit};
-                            B --> C[Sistem Menampilkan<br>Daftar Unit Kerja];
-                            C --> D{Pilih Aksi};
-                            D --> E[Tambah Unit Baru];
-                            D --> F[Edit Unit];
-                            D --> G[Hapus Unit];
+                        <pre class="mermaid">
+graph TD
+    classDef start fill:#28a745,stroke:#333,stroke-width:2px,color:#fff;
+    classDef end fill:#dc3545,stroke:#333,stroke-width:2px,color:#fff;
+    classDef page fill:#EBF5FB,stroke:#3498DB,color:#2874A6,stroke-width:1px;
+    classDef action fill:#FEF9E7,stroke:#F1C40F,color:#B7950B,stroke-width:1px;
+    classDef process fill:#E8F8F5,stroke:#1ABC9C,color:#148F77,stroke-width:1px;
+    classDef decision fill:#FDEDEC,stroke:#C0392B,color:#A93226,stroke-width:1px;
 
-                            E --> H[Isi Form Data Unit<br>(Nama, Induk Unit, dll)];
-                            H --> I{Validasi Data};
-                            I -- Valid --> J[Simpan Unit Baru ke Database];
-                            I -- Tidak Valid --> K[Tampilkan Pesan Error];
-                            J --> C;
-                            K --> H;
+    A[Mulai]:::start --> B["<i class='fa fa-building'></i> Menu Manajemen Unit"]:::page;
+    B --> C["<i class='fa fa-list-ul'></i> Daftar Unit Kerja"]:::page;
+    C --> D{Pilih Aksi}:::decision;
 
-                            F --> L[Pilih Unit yang Akan Diubah];
-                            L --> M[Ubah Data pada Form];
-                            M --> N{Validasi Data};
-                            N -- Valid --> O[Update Data Unit di Database];
-                            N -- Tidak Valid --> P[Tampilkan Pesan Error];
-                            O --> C;
-                            P --> M;
+    subgraph "Aksi Utama"
+        D -- Tambah --> E["<i class='fa fa-plus-circle'></i> Tambah Unit Baru"]:::action;
+        D -- Edit --> F["<i class='fa fa-edit'></i> Edit Unit"]:::action;
+        D -- Hapus --> G["<i class='fa fa-trash'></i> Hapus Unit"]:::action;
+    end
 
-                            G --> Q[Pilih Unit yang Akan Dihapus];
-                            Q --> R{Konfirmasi Hapus};
-                            R -- Ya --> S{Pengecekan Ketergantungan<br>(e.g. Pegawai di Unit tsb)};
-                            R -- Tidak --> C;
-                            S -- Ada Ketergantungan --> T[Tampilkan Pesan Error<br>Hapus Gagal];
-                            S -- Tidak Ada Ketergantungan --> U[Hapus Data Unit dari Database];
-                            T --> C;
-                            U --> C;
-                            C --> V[Selesai];
+    subgraph "Proses Tambah/Edit"
+        E --> H["<i class='fa fa-keyboard'></i> Isi Form<br>(Nama, Induk Unit, Kepala Unit)"];
+        F --> H;
+        H --> I{Validasi Data}:::decision;
+        I -- Valid --> J["<i class='fa fa-save'></i> Simpan/Update Unit"]:::process;
+        I -- Tidak Valid --> K["<i class='fa fa-exclamation-triangle'></i> Tampilkan Error"]:::process;
+        J --> C;
+        K --> H;
+    end
 
+    subgraph "Proses Hapus"
+        G --> L{Konfirmasi Hapus}:::decision;
+        L -- Ya --> M{Cek Ketergantungan<br>(Pegawai/Jabatan/Sub-Unit)}:::decision;
+        L -- Tidak --> C;
+        M -- Ada Ketergantungan --> N["<i class='fa fa-ban'></i> Hapus Gagal<br>Tampilkan Error"]:::process;
+        M -- Tidak Ada --> O["<i class='fa fa-database'></i> Hapus Unit dari DB"]:::process;
+        N --> C;
+        O --> C;
+    end
 
-                            style A fill:#28a745,stroke:#333,stroke-width:2px,color:#fff
-                            style V fill:#dc3545,stroke:#333,stroke-width:2px,color:#fff
-                            style C fill:#17a2b8,stroke:#333,stroke-width:2px,color:#fff
-                            style J fill:#4CAF50,stroke:#333,stroke-width:2px,color:#fff
-                            style O fill:#4CAF50,stroke:#333,stroke-width:2px,color:#fff
-                            style U fill:#4CAF50,stroke:#333,stroke-width:2px,color:#fff
+    C --> Z[Selesai]:::end;
+
+                        </pre>
+                    </div>
+                </div>
+            </x-card>
+
+            <x-card>
+                <div class="p-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Deskripsi Alur Kerja</h3>
+                    <div class="prose max-w-none text-gray-700 space-y-4">
+                        <div>
+                            <h4 class="font-semibold text-gray-800">1. Akses & Tampilan Utama</h4>
+                            <p>Admin mengakses menu <strong>Manajemen Unit</strong> untuk melihat daftar semua unit kerja yang ada dalam sistem. Tampilan utama menyajikan daftar unit dalam struktur hierarkis (jika memungkinkan) atau dalam bentuk tabel.</p>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-800">2. Tambah Unit Kerja</h4>
+                            <p>Admin dapat membuat unit kerja baru dengan mengisi formulir yang berisi informasi:</p>
+                             <ul class="list-disc list-inside ml-4 space-y-2">
+                                <li><strong>Nama Unit</strong>: Nama resmi dari unit kerja.</li>
+                                <li><strong>Induk Unit</strong>: Memilih unit kerja yang menjadi atasan dari unit baru ini, untuk membentuk struktur organisasi.</li>
+                                <li><strong>Kepala Unit</strong>: Menunjuk seorang pegawai sebagai kepala unit kerja tersebut.</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-800">3. Edit Unit Kerja</h4>
+                            <p>Informasi unit kerja yang sudah ada dapat diubah. Proses ini mirip dengan proses penambahan, di mana admin dapat memperbarui nama, induk, atau kepala unit.</p>
+                        </div>
+                         <div>
+                            <h4 class="font-semibold text-gray-800">4. Hapus Unit Kerja</h4>
+                            <p>Sebelum menghapus sebuah unit, sistem melakukan validasi penting untuk menjaga integritas data:</p>
+                             <ul class="list-disc list-inside ml-4 space-y-2">
+                                <li><strong>Pemeriksaan Ketergantungan</strong>: Sistem akan memeriksa apakah masih ada sub-unit, jabatan, atau pegawai yang terikat pada unit tersebut.</li>
+                                <li><strong>Pencegahan Penghapusan</strong>: Jika ada ketergantungan yang ditemukan, proses penghapusan akan dibatalkan dan sistem akan memberikan pesan error yang informatif. Unit hanya bisa dihapus jika sudah tidak memiliki "tanggungan".</li>
+                            </ul>
                         </div>
                     </div>
                 </div>
+            </x-card>
 
-                <div class="p-6 bg-white border-b border-gray-200">
-                     <h3 class="text-2xl font-bold text-gray-800 mb-4">Deskripsi Alur Kerja</h3>
-                    <dl class="row">
-                        <dt class="col-sm-3">1. Akses Menu</dt>
-                        <dd class="col-sm-9">Superadmin atau Admin mengakses menu "Manajemen Unit" dari sidebar navigasi untuk memulai proses pengelolaan unit kerja.</dd>
-
-                        <dt class="col-sm-3">2. Tampilan Daftar Unit</dt>
-                        <dd class="col-sm-9">Sistem akan menampilkan halaman yang berisi daftar semua unit kerja yang sudah terdaftar, biasanya dalam format tabel yang informatif.</dd>
-
-                        <dt class="col-sm-3">3. Pilihan Aksi</dt>
-                        <dd class="col-sm-9">Pada halaman daftar unit, tersedia beberapa tombol aksi:</dd>
-                        <dd class="col-sm-9 offset-sm-3">
-                            <ul>
-                                <li><b>Tambah Unit Baru:</b> Untuk membuat unit kerja baru.</li>
-                                <li><b>Edit:</b> Untuk mengubah data unit kerja yang sudah ada.</li>
-                                <li><b>Hapus:</b> Untuk menghapus unit kerja dari sistem.</li>
-                            </ul>
-                        </dd>
-
-                        <dt class="col-sm-3">4. Proses Tambah Unit</dt>
-                        <dd class="col-sm-9">Saat memilih "Tambah Unit", pengguna akan diarahkan ke form pembuatan unit. Setelah mengisi data dan menyimpan, sistem akan memvalidasi input. Jika valid, unit baru akan tersimpan dan daftar unit akan diperbarui. Jika tidak, pesan kesalahan akan ditampilkan.</dd>
-
-                        <dt class="col-sm-3">5. Proses Edit Unit</dt>
-                        <dd class="col-sm-9">Pengguna memilih unit yang ingin diubah dan mengklik tombol "Edit". Form akan terisi dengan data unit saat ini. Setelah mengubah data, sistem akan melakukan validasi sebelum menyimpan perubahan.</dd>
-
-                        <dt class="col-sm-3">6. Proses Hapus Unit</dt>
-                        <dd class="col-sm-9">Setelah memilih "Hapus" pada unit tertentu, sistem akan meminta konfirmasi. Sebelum benar-benar menghapus, sistem akan memeriksa apakah ada data lain yang bergantung pada unit tersebut (misalnya, pegawai yang terdaftar di unit itu). Jika ada, penghapusan akan dibatalkan untuk menjaga integritas data. Jika tidak ada, unit akan dihapus.</dd>
-
-                        <dt class="col-sm-3">7. Selesai</dt>
-                        <dd class="col-sm-9">Semua proses (tambah, edit, hapus) akan berakhir dengan sistem menampilkan kembali daftar unit kerja yang telah diperbarui.</dd>
-                    </dl>
-                </div>
-            </div>
         </div>
     </div>
 
     @push('scripts')
-    <script type="module">
-        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
-        mermaid.initialize({
-            startOnLoad: true,
-            fontFamily: 'inherit',
-            theme: 'base',
-            themeVariables: {
-                primaryColor: '#ffffff',
-                primaryTextColor: '#333',
-                primaryBorderColor: '#e5e7eb',
-                lineColor: '#6b7280',
-                textColor: '#374151',
-                fontSize: '14px',
-            }
-        });
-    </script>
+        <script type="module">
+            import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+            mermaid.initialize({
+                startOnLoad: true,
+                fontFamily: 'inherit',
+                theme: 'base',
+                themeVariables: {
+                    primaryColor: '#ffffff',
+                    primaryTextColor: '#333',
+                    primaryBorderColor: '#e5e7eb',
+                    lineColor: '#6b7280',
+                    textColor: '#374151',
+                    fontSize: '14px',
+                }
+            });
+        </script>
     @endpush
 </x-app-layout>

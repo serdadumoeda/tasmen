@@ -1,8 +1,13 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Manajemen Resource Pool Cerdas') }}
-        </h2>
+        <div class="flex justify-between items-center">
+            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+                {{ __('Manajemen Resource Pool Cerdas') }}
+            </h2>
+            <a href="{{ route('resource-pool.workflow') }}" class="inline-flex items-center px-4 py-2 bg-blue-500 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition ease-in-out duration-150 shadow-md hover:shadow-lg transform hover:scale-105">
+                <i class="fas fa-project-diagram mr-2"></i> {{ __('Lihat Alur Kerja') }}
+            </a>
+        </div>
     </x-slot>
 
     <div class="py-12 bg-gray-50"> {{-- Latar belakang konsisten --}}

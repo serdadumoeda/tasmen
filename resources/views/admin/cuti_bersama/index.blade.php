@@ -13,9 +13,14 @@
                         <h1 class="text-xl font-bold text-gray-800 flex items-center">
                             <i class="fas fa-calendar-alt mr-2 text-indigo-600"></i> Daftar Tanggal Cuti Bersama
                         </h1>
-                        <a href="{{ route('admin.cuti-bersama.create') }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700">
-                            <i class="fas fa-plus-circle mr-2"></i> Tambah Tanggal
-                        </a>
+                        <div class="flex items-center space-x-2">
+                            <a href="{{ route('admin.cuti-bersama.workflow') }}" class="inline-flex items-center px-4 py-2 bg-blue-500 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-600">
+                                <i class="fas fa-project-diagram mr-2"></i> Alur Kerja
+                            </a>
+                            <a href="{{ route('admin.cuti-bersama.create') }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700">
+                                <i class="fas fa-plus-circle mr-2"></i> Tambah Tanggal
+                            </a>
+                        </div>
                     </div>
 
                     @if(session('success'))
