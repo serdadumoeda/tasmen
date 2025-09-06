@@ -77,6 +77,7 @@ class WorkloadAnalysisController extends Controller
                       ->whereBetween('end_date', [$startDate, $endDate]);
                 }
             }]);
+            return $query;
         };
 
         // --- Chart Data Calculation (ALL subordinates) ---
