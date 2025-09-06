@@ -41,7 +41,7 @@ graph TD
     end
 
     subgraph "Proses Tambah/Edit"
-        D --> I["<i class='fa fa-keyboard'></i> Isi Form Data"];
+        D --> I["<i class='fa fa-keyboard'></i> Isi Form Data"]:::page;
         E --> I;
         I --> J{Validasi Data?}:::decision;
         J -- Valid --> K["<i class='fa fa-save'></i> Simpan/Update Data"]:::process;
