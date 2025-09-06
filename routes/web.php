@@ -83,6 +83,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('users/hierarchy', [UserController::class, 'hierarchy'])->name('users.hierarchy');
     Route::get('users/modern', [UserController::class, 'modern'])->name('users.modern');
+    Route::get('users/workflow', [UserController::class, 'showWorkflow'])->name('users.workflow');
 
     // Custom routes for user management
     Route::get('/users', [UserController::class, 'index'])->name('users.index');
