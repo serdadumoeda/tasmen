@@ -552,4 +552,10 @@ class UserController extends Controller
 
         return redirect()->route('admin.users.leave-balance.edit', $user)->with('success', 'Sisa cuti tahun lalu berhasil diperbarui.');
     }
+
+    public function showWorkflow()
+    {
+        $this->authorize('viewAny', User::class);
+        return view('users.workflow');
+    }
 }
