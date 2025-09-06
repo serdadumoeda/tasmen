@@ -28,15 +28,18 @@
                 <div class="p-6 text-gray-900">
 
                     <!-- Filter and Search Form -->
-                    <form action="{{ route('adhoc-tasks.index') }}" method="GET" class="mb-6">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 items-center">
-                            <div class="sm:col-span-2 md:col-span-2">
-                                <label for="search" class="sr-only">Cari</label>
+                    <form action="{{ route('adhoc-tasks.index') }}" method="GET" class="mb-6 p-4 bg-gray-50 rounded-lg border">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+
+                            {{-- Kolom Pencarian --}}
+                            <div class="lg:col-span-2">
+                                <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Cari Tugas</label>
                                 <input type="text" name="search" id="search" placeholder="Cari judul atau deskripsi..." value="{{ request('search') }}" class="block w-full rounded-lg border-gray-300 shadow-sm text-sm">
                             </div>
 
+                            {{-- Kolom Status --}}
                             <div>
-                                <label for="task_status_id" class="sr-only">Status</label>
+                                <label for="task_status_id" class="block text-sm font-medium text-gray-700 mb-1">Status Tugas</label>
                                 <select name="task_status_id" id="task_status_id" class="block w-full rounded-lg border-gray-300 shadow-sm text-sm">
                                     <option value="">Semua Status</option>
                                     @foreach($statuses as $status)
@@ -44,8 +47,10 @@
                                     @endforeach
                                 </select>
                             </div>
+
+                            {{-- Kolom Prioritas --}}
                             <div>
-                                <label for="priority_level_id" class="sr-only">Prioritas</label>
+                                <label for="priority_level_id" class="block text-sm font-medium text-gray-700 mb-1">Prioritas</label>
                                 <select name="priority_level_id" id="priority_level_id" class="block w-full rounded-lg border-gray-300 shadow-sm text-sm">
                                     <option value="">Semua Prioritas</option>
                                     @foreach($priorities as $priority)
@@ -53,27 +58,143 @@
                                     @endforeach
                                 </select>
                             </div>
-                            <div>
-                                <label for="start_date" class="sr-only">Tanggal Mulai</label>
-                                <input type="date" name="start_date" id="start_date" value="{{ request('start_date') }}" class="block w-full rounded-lg border-gray-300 shadow-sm text-sm" title="Tanggal Mulai">
-                            </div>
-                            <div>
-                                <label for="end_date" class="sr-only">Tanggal Selesai</label>
-                                <input type="date" name="end_date" id="end_date" value="{{ request('end_date') }}" class="block w-full rounded-lg border-gray-300 shadow-sm text-sm" title="Tanggal Selesai">
-                            </div>
-                            <div>
-                                <label for="report_status" class="sr-only">Status Laporan</label>
-                                <select name="report_status" id="report_status" class="block w-full rounded-lg border-gray-300 shadow-sm text-sm" title="Status untuk Laporan Cetak">
-                                    <option value="all">Cetak Semua Status</option>
-                                    <option value="completed" selected>Cetak Selesai</option>
-                                    <option value="pending">Cetak Belum Selesai</option>
+
+                            {{-- Kolom Filter Personel --}}
+                             @if(Auth::user()->canManageUsers())
+                            <div class="lg:col-span-2">
+                                <label for="personnel_id" class="block text-sm font-medium text-gray-700 mb-1">Filter Personel</label>
+                                <select name="personnel_id" id="personnel_id" class="block w-full rounded-lg border-gray-300 shadow-sm text-sm">
+                                    <option value="">Semua Personel</option>
+                                    @foreach($subordinates as $subordinate)
+                                        <option value="{{ $subordinate->id }}" @selected(request('personnel_id') == $subordinate->id)>{{ $subordinate->name }}</option>
+                                    @endforeach
                                 </select>
                             </div>
+                            @endif
 
-                            @if(Auth::user()->canManageUsers())
-                            <div class="md:col-span-2">
-                                <label for="personnel_id" class="sr-only">Filter Personel</label>
-                                <select name="personnel_id" id="personnel_id" class="block w-full rounded-lg border-gray-300 shadow-sm text-sm">
+                            {{-- Kolom Opsi Laporan --}}
+                            <div class="lg:col-span-2 p-4 bg-green-50 border border-green-200 rounded-lg">
+                                <p class="block text-sm font-medium text-gray-800 mb-2">Opsi Cetak Laporan</p>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <label for="start_date" class="block text-xs font-medium text-gray-600 mb-1">Tanggal Mulai</label>
+                                        <input type="date" name="start_date" id="start_date" value="{{ request('start_date') }}" class="block w-full rounded-lg border-gray-300 shadow-sm text-sm">
+                                    </div>
+                                     <div>
+                                        <label for="end_date" class="block text-xs font-medium text-gray-600 mb-1">Tanggal Selesai</label>
+                                        <input type="date" name="end_date" id="end_date" value="{{ request('end_date') }}" class="block w-full rounded-lg border-gray-300 shadow-sm text-sm">
+                                    </div>
+                                    <div>
+                                        <label for="report_status" class="block text-xs font-medium text-gray-600 mb-1">Status Laporan</label>
+                                        <select name="report_status" id="report_status" class="block w-full rounded-lg border-gray-300 shadow-sm text-sm">
+                                            <option value="all">Cetak Semua Status</option>
+                                            <option value="completed" selected>Cetak Selesai</option>
+                                            <option value="pending">Cetak Belum Selesai</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 flex items-center justify-between">
+                            <a href="#" id="print-report-btn" target="_blank" class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700">
+                                <i class="fas fa-print mr-2"></i> Cetak Laporan
+                            </a>
+                            <div class="flex items-center gap-4">
+                                <div class="flex items-center gap-2">
+                                    <label for="sort_by" class="text-sm font-medium text-gray-700">Urutkan:</label>
+                                    <select name="sort_by" id="sort_by" class="rounded-lg border-gray-300 shadow-sm text-sm" onchange="this.form.submit()">
+                                        <option value="deadline" @selected(request('sort_by', 'deadline') == 'deadline')>Deadline</option>
+                                        <option value="created_at" @selected(request('sort_by', 'created_at') == 'created_at')>Tanggal Dibuat</option>
+                                    </select>
+                                </div>
+                                <a href="{{ route('adhoc-tasks.index') }}" class="px-4 py-2 bg-gray-600 text-white rounded-lg text-sm hover:bg-gray-700">Reset</a>
+                                <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700">Filter</button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <div class="space-y-6"> {{-- Meningkatkan spasi antar kartu --}}
+                        @forelse ($assignedTasks as $task)
+                            <div class="block p-6 border border-gray-200 rounded-xl bg-white shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 ease-in-out"> {{-- Kartu tugas lebih besar, rounded-xl, shadow, dan efek hover --}}
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <p class="font-bold text-xl text-indigo-700 mb-2">{{ $task->title }}</p> {{-- Ukuran teks lebih besar --}}
+                                        <div class="text-sm text-gray-600 space-x-3"> {{-- Warna teks lebih gelap, spasi lebih baik --}}
+                                            <span class="inline-flex items-center"><i class="far fa-calendar-alt text-gray-400 mr-1"></i> Deadline: {{ \Carbon\Carbon::parse($task->deadline)->format('d M Y') }}</span>
+                                            <span class="inline-flex items-center"><i class="far fa-clock text-gray-400 mr-1"></i> Estimasi: {{ $task->estimated_hours }} jam</span>
+                                            <span class="inline-flex items-center"><i class="fas fa-users text-gray-400 mr-1"></i> Ditugaskan ke:
+                                                @foreach($task->assignees as $assignee)
+                                                    <span class="font-medium text-gray-800">{{ $assignee->name }}{{ !$loop->last ? ',' : '' }}</span>
+                                                @endforeach
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-3 flex-shrink-0"> {{-- Spasi tombol --}}
+                                        <a href="{{ route('adhoc-tasks.edit', $task) }}" class="inline-flex items-center px-3 py-1.5 bg-indigo-500 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150 shadow-sm hover:shadow-md"> {{-- Tombol Detail/Edit lebih menonjol --}}
+                                            <i class="fas fa-edit mr-1"></i> Detail/Edit
+                                        </a>
+                                        {{-- Jika ada tombol delete atau complete, bisa ditambahkan di sini --}}
+                                    </div>
+                                </div>
+                                <div class="mt-4"> {{-- Margin atas lebih besar --}}
+                                    <div class="flex justify-between mb-2 items-center"> {{-- Menambahkan items-center --}}
+                                        <span class="text-base font-semibold text-blue-700">Progress</span> {{-- Lebih tebal --}}
+                                        <span class="text-lg font-bold text-blue-700">{{ $task->progress }}%</span> {{-- Ukuran dan ketebalan teks lebih besar --}}
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-3"> {{-- Tinggi progress bar lebih besar --}}
+                                        <div class="bg-blue-600 h-3 rounded-full shadow-inner" style="width: {{ $task->progress }}%"></div> {{-- Shadow inner pada progress bar --}}
+                                    </div>
+                                </div>
+                            </div>
+                        @empty
+                            <div class="bg-gray-50 p-6 rounded-xl shadow-md text-center py-10"> {{-- Menyesuaikan tampilan jika tidak ada tugas --}}
+                                <p class="text-gray-500 text-lg">Tidak ada tugas harian yang cocok dengan kriteria Anda.</p>
+                                <a href="{{ route('adhoc-tasks.index') }}" class="mt-4 text-sm text-indigo-600 hover:underline">Hapus Filter</a>
+                            </div>
+                        @endforelse
+                    </div>
+
+                    <div class="mt-8">
+                        {{ $assignedTasks->links() }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @push('scripts')
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const printBtn = document.getElementById('print-report-btn');
+                const startDateInput = document.getElementById('start_date');
+                const endDateInput = document.getElementById('end_date');
+                const statusInput = document.getElementById('report_status');
+
+                function updatePrintLink() {
+                    const baseUrl = "{{ route('adhoc-tasks.print-report') }}";
+                    const startDate = startDateInput.value;
+                    const endDate = endDateInput.value;
+                    const status = statusInput.value;
+
+                    const params = new URLSearchParams();
+                    if (startDate) params.append('start_date', startDate);
+                    if (endDate) params.append('end_date', endDate);
+                    if (status) params.append('status', status);
+
+                    printBtn.href = `${baseUrl}?${params.toString()}`;
+                }
+
+                // Initial update
+                updatePrintLink();
+
+                // Update link when any of the inputs change
+                startDateInput.addEventListener('change', updatePrintLink);
+                endDateInput.addEventListener('change', updatePrintLink);
+                statusInput.addEventListener('change', updatePrintLink);
+            });
+        </script>
+    @endpush
+</x-app-layout>
                                     <option value="">Semua Personel</option>
                                     @foreach($subordinates as $subordinate)
                                         <option value="{{ $subordinate->id }}" @selected(request('personnel_id') == $subordinate->id)>{{ $subordinate->name }}</option>
