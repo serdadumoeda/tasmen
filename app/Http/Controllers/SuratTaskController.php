@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Surat;
 use App\Models\Task;
+use App\Models\TaskStatus;
+use App\Models\PriorityLevel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -17,6 +19,10 @@ class SuratTaskController extends Controller
      */
     public function create(Surat $surat)
     {
+        // Find default status and priority
+        $defaultStatus = TaskStatus::where('key', 'pending')->first();
+        $defaultPriority = PriorityLevel::where('name', 'Medium')->first();
+
         // Create a new Task
         $task = new Task();
 
@@ -37,9 +43,13 @@ class SuratTaskController extends Controller
         // Link the task back to the source letter
         $task->surat_id = $surat->id;
 
-        // Set an initial status and priority
-        $task->status = 'pending';
-        $task->priority = 'medium';
+        // Set an initial status and priority using the new relational IDs
+        if ($defaultStatus) {
+            $task->task_status_id = $defaultStatus->id;
+        }
+        if ($defaultPriority) {
+            $task->priority_level_id = $defaultPriority->id;
+        }
 
         $task->save();
 
