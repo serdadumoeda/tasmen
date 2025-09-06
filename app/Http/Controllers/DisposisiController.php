@@ -9,9 +9,12 @@ use App\Notifications\SuratDisposisiNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class DisposisiController extends Controller
 {
+    use AuthorizesRequests;
+
     public function store(Request $request, Surat $surat)
     {
         $validated = $request->validate([
