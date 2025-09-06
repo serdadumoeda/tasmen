@@ -154,4 +154,9 @@ class ApiKeyController extends Controller
     {
         return view('admin.api_keys.workflow');
     }
+
+    public function showQueryHelperWorkflow()
+    {
+        return view('admin.api_keys.query_helper_workflow');
+    }
 }

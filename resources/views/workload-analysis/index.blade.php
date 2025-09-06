@@ -17,14 +17,6 @@
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg"> {{-- Shadow dan rounded-lg konsisten --}}
                 <div class="p-6 bg-white border-b border-gray-200">
 
-                    <!-- Chart Section -->
-                    <div class="mb-8 p-4 border rounded-lg bg-gray-50 shadow-inner">
-                        <h3 class="text-lg font-bold text-gray-800 mb-4">Perbandingan Beban Kerja Tim (Estimasi Jam)</h3>
-                        <div class="h-64">
-                            <canvas id="workloadChart"></canvas>
-                        </div>
-                    </div>
-
                     @if (session('success'))
                         <div class="mb-6 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg relative shadow-md" role="alert"> {{-- Styling alert konsisten --}}
                             <div class="flex items-center">
