@@ -8,7 +8,7 @@
                 <div class="page-title-box">
                     <div class="float-end">
                         <ol class="breadcrumb">
-                            <li class="breadcrumb-item"><a href="{{ route('home') }}">Dashboard</a></li>
+                            <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Dashboard</a></li>
                             <li class="breadcrumb-item"><a href="{{ route('admin.units.index') }}">Manajemen Unit</a></li>
                             <li class="breadcrumb-item active">Alur Kerja</li>
                         </ol>
