@@ -5,9 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class ResourcePoolController extends Controller
 {
+    use AuthorizesRequests;
+
     /**
      * Menampilkan halaman manajemen resource pool.
      */
