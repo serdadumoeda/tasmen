@@ -197,4 +197,93 @@ class PerformanceCalculatorService
             $currentUserToSave = $allUsers->get($currentUserToSave->atasan_id);
         }
     }
+
+    /**
+     * Get a detailed breakdown of performance calculation components for a single user.
+     * This is intended for display/transparency purposes.
+     */
+    public function getPerformanceCalculationDetails(User $user): array
+    {
+        $settings = $this->getSettings();
+        $details = [];
+
+        // --- IKI Calculation Details ---
+        $allTasks = $user->tasks;
+        if ($allTasks->isEmpty()) {
+            return [
+                'iki_formula' => $settings['iki_formula'] ?? 'N/A',
+                'iki_calculation' => 'Tidak ada tugas untuk dinilai.',
+                'iki_result' => 0,
+                'nkf_formula' => 'N/A',
+                'nkf_calculation' => 'Tidak ada IKI untuk dinilai.',
+                'nkf_result' => 0,
+            ];
+        }
+
+        $totalWeight = 0;
+        $weightedProgressSum = 0;
+        foreach ($allTasks as $task) {
+            $priorityName = $task->priorityLevel->name ?? 'medium';
+            $weight = $this->getPriorityWeight($priorityName);
+            $totalWeight += $weight;
+            $weightedProgressSum += ($task->progress / 100) * $weight;
+        }
+        $baseScore = ($totalWeight > 0) ? ($weightedProgressSum / $totalWeight) : 0;
+
+        $totalEstimatedHours = $allTasks->sum('estimated_hours');
+        $timeLogs = TimeLog::whereIn('task_id', $allTasks->pluck('id'))->where('user_id', $user->id)->whereNotNull('end_time')->get();
+        $totalActualHours = $timeLogs->sum('duration_in_minutes') / 60;
+        $efficiencyFactor = ($totalEstimatedHours > 0 && $totalActualHours > 0) ? ($totalEstimatedHours / $totalActualHours) : 1.0;
+
+        $minEfficiency = (float)($settings['min_efficiency_factor'] ?? 0.9);
+        $maxEfficiency = (float)($settings['max_efficiency_factor'] ?? 1.25);
+        $cappedEfficiencyFactor = max($minEfficiency, min($efficiencyFactor, $maxEfficiency));
+
+        $ikiFormula = $settings['iki_formula'] ?? 'base_score * capped_efficiency_factor';
+        $ikiResult = $this->expressionLanguage->evaluate($ikiFormula, [
+            'base_score' => $baseScore,
+            'efficiency_factor' => $efficiencyFactor,
+            'capped_efficiency_factor' => $cappedEfficiencyFactor,
+        ]);
+
+        $details['iki_formula'] = $ikiFormula;
+        $details['iki_components'] = [
+            'base_score' => round($baseScore, 3),
+            'efficiency_factor' => round($efficiencyFactor, 3),
+            'capped_efficiency_factor' => round($cappedEfficiencyFactor, 3),
+        ];
+        $details['iki_result'] = round($ikiResult, 3);
+
+        // --- NKF Calculation Details ---
+        $individualScore = $ikiResult;
+
+        if (!$user->isManager() || $user->bawahan()->count() == 0) {
+            $nkfFormula = $settings['nkf_formula_staf'] ?? 'individual_score';
+            $nkfResult = $this->expressionLanguage->evaluate($nkfFormula, ['individual_score' => $individualScore]);
+            $details['nkf_formula'] = $nkfFormula;
+            $details['nkf_components'] = ['individual_score' => round($individualScore, 3)];
+        } else {
+            $managerialScore = $user->bawahan()->pluck('final_performance_value')->avg();
+
+            $primaryRole = $user->roles->sortBy('level')->first();
+            $roleKey = $primaryRole ? strtolower($primaryRole->name) : 'default';
+            $weight = (float)($settings['managerial_weight_' . $roleKey] ?? 0.5);
+
+            $nkfFormula = $settings['nkf_formula_pimpinan'] ?? '(individual_score * (1 - weight)) + (managerial_score * weight)';
+            $nkfResult = $this->expressionLanguage->evaluate($nkfFormula, [
+                'individual_score' => $individualScore,
+                'managerial_score' => $managerialScore,
+                'weight' => $weight,
+            ]);
+            $details['nkf_formula'] = $nkfFormula;
+            $details['nkf_components'] = [
+                'individual_score' => round($individualScore, 3),
+                'managerial_score' => round($managerialScore, 3),
+                'weight' => $weight,
+            ];
+        }
+        $details['nkf_result'] = round($nkfResult, 3);
+
+        return $details;
+    }
 }

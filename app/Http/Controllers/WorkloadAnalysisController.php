@@ -165,12 +165,16 @@ class WorkloadAnalysisController extends Controller
         $adhocTasks = $user->tasks()->whereNull('project_id')->get();
         $projectTasks = $user->tasks()->whereNotNull('project_id')->get()->groupBy('project.name');
 
+        $calculator = app(\App\Services\PerformanceCalculatorService::class);
+        $performanceDetails = $calculator->getPerformanceCalculationDetails($user);
+
         return view('workload-analysis.show', [
             'user' => $user,
             'adhocTasks' => $adhocTasks,
             'projectTasks' => $projectTasks,
             'specialAssignments' => $user->specialAssignments,
             'settings' => $settings,
+            'performanceDetails' => $performanceDetails,
         ]);
     }
 
