@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Services\PageTitleService;
 use App\Services\BreadcrumbService;
+use Carbon\Carbon;
 
 class WorkloadAnalysisController extends Controller
 {
@@ -15,42 +16,106 @@ class WorkloadAnalysisController extends Controller
 
     public function index(Request $request)
     {
+        $this->authorize('viewAny', User::class);
         $manager = Auth::user();
         $search = $request->input('search');
-        $highlightUserId = $request->input('highlight_user_id');
+        $period = $request->input('period', 'all'); // Default to 'all'
 
-        if (!$manager->isTopLevelManager()) {
-            abort(403, 'Anda tidak memiliki hak akses untuk halaman ini.');
+        // --- Date Period Calculation ---
+        $startDate = null;
+        $endDate = null;
+        switch ($period) {
+            case 'weekly':
+                $startDate = Carbon::now()->startOfWeek();
+                $endDate = Carbon::now()->endOfWeek();
+                break;
+            case 'monthly':
+                $startDate = Carbon::now()->startOfMonth();
+                $endDate = Carbon::now()->endOfMonth();
+                break;
+            case 'quarterly':
+                $startDate = Carbon::now()->startOfQuarter();
+                $endDate = Carbon::now()->endOfQuarter();
+                break;
+            case 'semester':
+                // Assuming semester 1 is Jan-Jun, semester 2 is Jul-Dec
+                $currentMonth = Carbon::now()->month;
+                if ($currentMonth <= 6) {
+                    $startDate = Carbon::now()->startOfYear();
+                    $endDate = Carbon::now()->startOfYear()->addMonths(5)->endOfMonth();
+                } else {
+                    $startDate = Carbon::now()->startOfYear()->addMonths(6);
+                    $endDate = Carbon::now()->endOfYear();
+                }
+                break;
+            case 'yearly':
+                $startDate = Carbon::now()->startOfYear();
+                $endDate = Carbon::now()->endOfYear();
+                break;
         }
 
-        // Dapatkan query dasar untuk bawahan
+        // --- Subordinates Query ---
         if ($manager->isSuperAdmin()) {
             $subordinatesQuery = User::where('id', '!=', $manager->id);
         } else {
-            // Replikasi logika dari getAllSubordinates untuk mendapatkan query builder
             $subordinateUnitIds = $manager->unit ? $manager->unit->getAllSubordinateUnitIds() : [];
             $subordinatesQuery = User::whereIn('unit_id', $subordinateUnitIds)->where('id', '!=', $manager->id);
         }
 
-        // Terapkan filter pencarian jika ada
         if ($search) {
             $subordinatesQuery->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($search) . '%']);
         }
 
-        // --- Chart Data Preparation ---
-        // Clone the query before pagination to get all subordinates for the chart
-        $allSubordinatesForChart = (clone $subordinatesQuery)->with('tasks')->get();
+        // Eager load tasks with deadline filter if a period is selected
+        $subordinatesQuery->with(['tasks' => function ($query) use ($startDate, $endDate) {
+            if ($startDate && $endDate) {
+                $query->whereBetween('deadline', [$startDate, $endDate]);
+            }
+        }, 'specialAssignments' => function ($query) use ($startDate, $endDate) {
+            if ($startDate && $endDate) {
+                $query->where('status', '!=', 'SELESAI') // or filter by dates if they exist
+                      ->whereBetween('end_date', [$startDate, $endDate]);
+            }
+        }]);
 
-        $chartData = $allSubordinatesForChart->mapWithKeys(function ($user) {
-            // Use accessors from User model if they exist, otherwise calculate here
-            $totalHours = $user->tasks->sum('estimated_hours');
-            return [$user->name => $totalHours];
-        });
-
-        // Ambil hasil dengan paginasi dan pertahankan query string
         $subordinates = $subordinatesQuery->paginate(20)->withQueryString();
-        
-        return view('workload-analysis.index', compact('manager', 'subordinates', 'search', 'highlightUserId', 'chartData'));
+
+        // --- Workload & Chart Data Calculation ---
+        $workloadData = [];
+        $chartData = [];
+
+        // Use the paginated results for calculation to avoid double queries
+        foreach ($subordinates as $user) {
+            $totalTaskHours = $user->tasks->sum('estimated_hours');
+
+            // For periodic analysis, use effective hours. For 'all', use a standard.
+            if ($startDate && $endDate) {
+                $effectiveHours = $user->getEffectiveWorkingHours($startDate, $endDate);
+                $workloadPercentage = ($effectiveHours > 0) ? ($totalTaskHours / $effectiveHours) * 100 : 0;
+            } else {
+                // Fallback for 'all' - shows total commitment, not capacity
+                $effectiveHours = null; // Not applicable
+                $workloadPercentage = null; // Not applicable
+            }
+
+            $workloadData[$user->id] = [
+                'total_hours' => $totalTaskHours,
+                'effective_hours' => $effectiveHours,
+                'percentage' => $workloadPercentage,
+                'active_sk_count' => $user->specialAssignments->count(),
+            ];
+
+            $chartData[$user->name] = $totalTaskHours;
+        }
+
+        return view('workload-analysis.index', compact(
+            'manager',
+            'subordinates',
+            'search',
+            'chartData',
+            'workloadData',
+            'period'
+        ));
     }
 
     /**
