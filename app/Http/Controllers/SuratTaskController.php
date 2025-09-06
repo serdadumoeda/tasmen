@@ -26,9 +26,6 @@ class SuratTaskController extends Controller
                              "Perihal: " . $surat->perihal . "\n\n" .
                              "Silakan lihat detail surat untuk informasi lebih lanjut.";
 
-        // Set the creator of the task
-        $task->creator_id = Auth::id();
-
         // Check if the letter is associated with a project and link it
         if ($surat->suratable_type === 'App\\Models\\Project' && $surat->suratable_id) {
             $task->project_id = $surat->suratable_id;
