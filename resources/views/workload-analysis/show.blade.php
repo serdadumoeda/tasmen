@@ -45,6 +45,14 @@
                                     <li><span class="font-semibold">{{ ucfirst(str_replace('_', ' ', $key)) }}:</span> {{ $value }}</li>
                                     @endforeach
                                 </ul>
+                                <div class="mt-3 pt-3 border-t text-xs text-gray-600">
+                                    <p class="font-bold mb-1">Interpretasi IKI:</p>
+                                    <ul class="list-disc list-inside">
+                                        <li><strong class="text-gray-800">IKI > 1.0:</strong> Sangat efisien (progres lebih tinggi dari usaha).</li>
+                                        <li><strong class="text-gray-800">IKI ≈ 1.0:</strong> Sesuai ekspektasi (progres sebanding dengan usaha).</li>
+                                        <li><strong class="text-gray-800">IKI < 1.0:</strong> Kurang efisien (progres lebih rendah dari usaha).</li>
+                                    </ul>
+                                </div>
                             </div>
 
                             <!-- Kolom NKF & Predikat -->
@@ -60,6 +68,14 @@
                                     <li><span class="font-semibold">{{ ucfirst(str_replace('_', ' ', $key)) }}:</span> {{ $value }}</li>
                                     @endforeach
                                 </ul>
+                                <div class="mt-3 pt-3 border-t text-xs text-gray-600">
+                                     <p class="font-bold mb-1">Interpretasi Rating Hasil Kerja (berdasarkan NKF):</p>
+                                    <ul class="list-disc list-inside">
+                                        <li>Jika NKF &ge; {{ $settings['rating_threshold_high'] ?? '1.15' }} &rarr; <strong class="text-green-600">Diatas Ekspektasi</strong></li>
+                                        <li>Jika NKF &ge; {{ $settings['rating_threshold_medium'] ?? '0.90' }} &rarr; <strong class="text-blue-600">Sesuai Ekspektasi</strong></li>
+                                        <li>Jika NKF &lt; {{ $settings['rating_threshold_medium'] ?? '0.90' }} &rarr; <strong class="text-red-600">Dibawah Ekspektasi</strong></li>
+                                    </ul>
+                                </div>
 
                                 <h4 class="font-bold text-gray-800 mb-2 pt-3 border-t">3. Penentuan Predikat</h4>
                                 <p class="text-xs text-gray-600 mb-2">Predikat final adalah gabungan dari <strong>Rating Hasil Kerja</strong> (berdasarkan NKF) dan <strong>Penilaian Perilaku Kerja</strong> (dari atasan).</p>
