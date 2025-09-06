@@ -101,6 +101,9 @@ class WorkloadAnalysisController extends Controller
             } else {
                 $effectiveHours = null;
                 $workloadPercentage = null;
+                $internalHours = $user->internal_tasks_hours;
+                $externalHours = $user->external_tasks_hours;
+                $totalTaskHours = $internalHours + $externalHours; // Recalculate total for 'all'
             }
 
             $workloadData[$user->id] = [
@@ -108,6 +111,9 @@ class WorkloadAnalysisController extends Controller
                 'effective_hours' => $effectiveHours,
                 'percentage' => $workloadPercentage,
                 'active_sk_count' => $user->specialAssignments->count(),
+                // Add these for the 'all' view
+                'internal_hours' => $internalHours ?? 0,
+                'external_hours' => $externalHours ?? 0,
             ];
         }
 
