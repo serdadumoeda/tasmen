@@ -61,6 +61,14 @@
                                 <label for="end_date" class="sr-only">Tanggal Selesai</label>
                                 <input type="date" name="end_date" id="end_date" value="{{ request('end_date') }}" class="block w-full rounded-lg border-gray-300 shadow-sm text-sm" title="Tanggal Selesai">
                             </div>
+                            <div>
+                                <label for="report_status" class="sr-only">Status Laporan</label>
+                                <select name="report_status" id="report_status" class="block w-full rounded-lg border-gray-300 shadow-sm text-sm" title="Status untuk Laporan Cetak">
+                                    <option value="all">Cetak Semua Status</option>
+                                    <option value="completed" selected>Cetak Selesai</option>
+                                    <option value="pending">Cetak Belum Selesai</option>
+                                </select>
+                            </div>
 
                             @if(Auth::user()->canManageUsers())
                             <div class="md:col-span-2">
@@ -146,15 +154,18 @@
                 const printBtn = document.getElementById('print-report-btn');
                 const startDateInput = document.getElementById('start_date');
                 const endDateInput = document.getElementById('end_date');
+                const statusInput = document.getElementById('report_status');
 
                 function updatePrintLink() {
                     const baseUrl = "{{ route('adhoc-tasks.print-report') }}";
                     const startDate = startDateInput.value;
                     const endDate = endDateInput.value;
+                    const status = statusInput.value;
 
                     const params = new URLSearchParams();
                     if (startDate) params.append('start_date', startDate);
                     if (endDate) params.append('end_date', endDate);
+                    if (status) params.append('status', status);
 
                     printBtn.href = `${baseUrl}?${params.toString()}`;
                 }
@@ -162,9 +173,10 @@
                 // Initial update
                 updatePrintLink();
 
-                // Update link when dates change
+                // Update link when any of the inputs change
                 startDateInput.addEventListener('change', updatePrintLink);
                 endDateInput.addEventListener('change', updatePrintLink);
+                statusInput.addEventListener('change', updatePrintLink);
             });
         </script>
     @endpush
