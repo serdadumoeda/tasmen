@@ -146,6 +146,37 @@
                                                     <span><i class="fas fa-file-signature mr-2 text-gray-500"></i>SK Aktif</span>
                                                     <strong>{{ $activeSkCount }}</strong>
                                                 </div>
+                                            @else
+                                                {{-- Tampilan "Semua" / Fallback --}}
+                                                @php
+                                                    $internalHours = $workloadData[$user->id]['internal_hours'];
+                                                    $externalHours = $workloadData[$user->id]['external_hours'];
+                                                    $totalAllTimeHours = $internalHours + $externalHours;
+                                                    $internalPercent = $totalAllTimeHours > 0 ? ($internalHours / $totalAllTimeHours) * 100 : 0;
+                                                    $externalPercent = $totalAllTimeHours > 0 ? ($externalHours / $totalAllTimeHours) * 100 : 0;
+                                                @endphp
+                                                <div class="flex items-center mb-2">
+                                                    <i class="fas fa-hourglass-start mr-2 text-blue-500"></i>
+                                                    <strong class="text-base">Total: {{ $totalAllTimeHours }} Jam</strong>
+                                                </div>
+                                                <div class="w-full bg-gray-200 rounded-full h-4 mb-2 overflow-hidden shadow-inner">
+                                                    <div class="bg-blue-600 h-4 text-xs font-medium text-blue-100 text-center p-0.5 leading-none" style="width: {{ $internalPercent }}%" title="Tugas Dalam Unit ({{ round($internalPercent) }}%)"></div>
+                                                    <div class="bg-yellow-500 h-4 text-xs font-medium text-yellow-100 text-center p-0.5 leading-none" style="width: {{ $externalPercent }}%" title="Tugas Luar Unit ({{ round($externalPercent) }}%)"></div>
+                                                </div>
+                                                <ul class="space-y-1 text-xs">
+                                                    <li class="flex items-center justify-between">
+                                                        <span><i class="fas fa-building-user mr-2 text-blue-600"></i>Tugas Dalam Unit</span>
+                                                        <strong>{{ $internalHours }} Jam ({{ round($internalPercent) }}%)</strong>
+                                                    </li>
+                                                    <li class="flex items-center justify-between">
+                                                        <span><i class="fas fa-people-arrows mr-2 text-yellow-500"></i>Tugas Luar Unit (Bantuan)</span>
+                                                        <strong>{{ $externalHours }} Jam ({{ round($externalPercent) }}%)</strong>
+                                                    </li>
+                                                    <li class="flex items-center justify-between pt-1 mt-1 border-t">
+                                                        <span><i class="fas fa-file-signature mr-2 text-gray-500"></i>SK Aktif</span>
+                                                        <strong>{{ $activeSkCount }}</strong>
+                                                    </li>
+                                                </ul>
                                             @endif
                                         </td>
                                         <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-700">

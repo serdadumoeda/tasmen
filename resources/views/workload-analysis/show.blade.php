@@ -14,7 +14,7 @@
     <div class="py-12 bg-gray-50">
         <div class="max-w-screen-2xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
                     <div class="bg-blue-50 p-4 rounded-lg shadow">
                         <h3 class="text-lg font-semibold text-blue-800">Total Jam Kegiatan</h3>
                         <p class="text-3xl font-bold text-blue-900">{{ $user->total_project_hours }} Jam</p>
@@ -26,6 +26,18 @@
                     <div class="bg-purple-50 p-4 rounded-lg shadow">
                         <h3 class="text-lg font-semibold text-purple-800">SK Aktif</h3>
                         <p class="text-3xl font-bold text-purple-900">{{ $user->active_sk_count }}</p>
+                    </div>
+                    <!-- Performance Predicate Explanation Card -->
+                    <div class="bg-yellow-50 p-4 rounded-lg shadow">
+                        <h3 class="text-lg font-semibold text-yellow-800">Predikat Kinerja (SKP)</h3>
+                        <p class="text-3xl font-bold text-yellow-900">{{ $user->performance_predicate }}</p>
+                        <div class="text-xs text-yellow-700 mt-2">
+                            <p>Berdasarkan matriks:</p>
+                            <ul class="list-disc list-inside ml-2">
+                                <li><strong>Hasil Kerja:</strong> {{ $user->work_result_rating }}</li>
+                                <li><strong>Perilaku Kerja:</strong> {{ $user->work_behavior_rating ?? 'Sesuai Ekspektasi' }}</li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
 
