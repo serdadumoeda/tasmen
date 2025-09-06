@@ -8,9 +8,12 @@ use App\Models\ApprovalWorkflowStep;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class ApprovalWorkflowController extends Controller
 {
+    use AuthorizesRequests;
+
     public function index()
     {
         $workflows = ApprovalWorkflow::withCount('steps')->orderBy('name')->get();
