@@ -2,7 +2,6 @@
     <x-slot name="header">
         <div class="flex justify-between items-center">
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                {{-- Force re-submit --}}
                 {{ __('Dasbor Kinerja & Beban Kerja Tim') }}
             </h2>
             <x-secondary-button :href="route('workload.analysis.workflow')">
@@ -12,13 +11,13 @@
         </div>
     </x-slot>
 
-    <div class="py-12 bg-gray-50"> {{-- Latar belakang konsisten --}}
+    <div class="py-12 bg-gray-50">
         <div class="max-w-full mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg"> {{-- Shadow dan rounded-lg konsisten --}}
+            <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
                 <div class="p-6 bg-white border-b border-gray-200">
 
                     @if (session('success'))
-                        <div class="mb-6 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg relative shadow-md" role="alert"> {{-- Styling alert konsisten --}}
+                        <div class="mb-6 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg relative shadow-md" role="alert">
                             <div class="flex items-center">
                                 <i class="fas fa-check-circle mr-3 text-green-500"></i>
                                 <span class="block sm:inline">{{ session('success') }}</span>
@@ -28,7 +27,7 @@
 
                     <!-- Chart Section -->
                     <div class="mb-8 p-4 border rounded-lg bg-gray-50 shadow-inner">
-                        <h3 class="text-lg font-bold text-gray-800 mb-4">Perbandingan Beban Kerja Tim (Estimasi Jam)</h3>
+                        <h3 class="text-lg font-bold text-gray-800 mb-4">Perbandingan Beban Kerja Tim (Estimasi Jam @if($period !== 'all') - {{ ucfirst($period) }} @endif)</h3>
                         <div class="h-64">
                             <canvas id="workloadChart"></canvas>
                         </div>
@@ -66,8 +65,8 @@
                     </div>
 
                     <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200 border border-gray-200 rounded-lg"> {{-- Border pada tabel, rounded-lg --}}
-                            <thead class="bg-gray-100"> {{-- Header tabel lebih menonjol --}}
+                        <table class="min-w-full divide-y divide-gray-200 border border-gray-200 rounded-lg">
+                            <thead class="bg-gray-100">
                                 <tr>
                                     <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider rounded-tl-lg">
                                         <i class="fas fa-user-circle mr-2"></i> Pegawai / Jabatan
@@ -86,35 +85,32 @@
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody class="bg-white divide-y divide-gray-100"> {{-- Divider lebih halus --}}
+                            <tbody class="bg-white divide-y divide-gray-100">
                                 @forelse ($subordinates as $user)
-                                    @php
-                                        $highlightClass = isset($highlightUserId) && $user->id == $highlightUserId ? 'bg-yellow-100 border-l-4 border-yellow-400' : '';
-                                    @endphp
-                                    <tr id="user-row-{{ $user->id }}" class="hover:bg-gray-50 transition-colors duration-150 {{ $highlightClass }}"> {{-- ID unik untuk baris --}}
+                                    <tr id="user-row-{{ $user->id }}" class="hover:bg-gray-50 transition-colors duration-150">
                                         <td class="px-4 py-4 whitespace-nowrap">
                                             <a href="{{ route('workload.analysis.show', $user) }}" class="text-sm font-medium text-indigo-600 hover:text-indigo-900 hover:underline">
                                                 <div class="flex items-center"><i class="fas fa-user mr-2 text-gray-500"></i> {{ $user->name }}</div>
                                             </a>
-                                            <div class="text-xs text-gray-500 ml-5">{{ $user->role }}</div>
+                                            <div class="text-xs text-gray-500 ml-5">{{ $user->jabatan->name ?? 'N/A' }}</div>
                                         </td>
                                         <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
                                             @php
                                                 $userData = $workloadData[$user->id];
-                                                $totalHours = $userData['total_hours'];
-                                                $effectiveHours = $userData['effective_hours'];
-                                                $percentage = $userData['percentage'];
                                                 $activeSkCount = $userData['active_sk_count'];
                                             @endphp
 
-                                            @if($period !== 'all' && !is_null($effectiveHours))
+                                            @if($period !== 'all')
                                                 {{-- Tampilan Periodik --}}
+                                                @php
+                                                    $totalHours = $userData['total_hours'];
+                                                    $effectiveHours = $userData['effective_hours'];
+                                                    $percentage = $userData['percentage'];
+                                                    $color = 'text-green-500';
+                                                    if ($percentage > 75) $color = 'text-yellow-500';
+                                                    if ($percentage > 100) $color = 'text-red-500';
+                                                @endphp
                                                 <div class="flex items-center mb-2">
-                                                    @php
-                                                        $color = 'text-green-500';
-                                                        if ($percentage > 75) $color = 'text-yellow-500';
-                                                        if ($percentage > 100) $color = 'text-red-500';
-                                                    @endphp
                                                     <i class="fas fa-tachometer-alt mr-2 {{ $color }}"></i>
                                                     <strong class="text-base {{ str_replace('text-', 'text-', $color) }}">{{ round($percentage) }}%</strong>
                                                 </div>
@@ -135,17 +131,6 @@
                                                         <strong>{{ $activeSkCount }}</strong>
                                                     </li>
                                                 </ul>
-                                            @else
-                                                {{-- Tampilan "Semua" / Fallback --}}
-                                                <div class="flex items-center mb-2">
-                                                    <i class="fas fa-hourglass-start mr-2 text-blue-500"></i>
-                                                    <strong class="text-base">Total: {{ $totalHours }} Jam</strong>
-                                                </div>
-                                                <p class="text-xs text-gray-500">Menampilkan total estimasi jam dari semua tugas yang belum selesai.</p>
-                                                <div class="flex items-center justify-between pt-1 mt-1 border-t text-xs">
-                                                    <span><i class="fas fa-file-signature mr-2 text-gray-500"></i>SK Aktif</span>
-                                                    <strong>{{ $activeSkCount }}</strong>
-                                                </div>
                                             @else
                                                 {{-- Tampilan "Semua" / Fallback --}}
                                                 @php
@@ -194,7 +179,7 @@
                                             <span id="predicate-wrapper-{{ $user->id }}">
                                                 @php
                                                     $predicate = $user->performance_predicate;
-                                                    $colorClass = 'bg-blue-200 text-blue-900'; // Default untuk Baik
+                                                    $colorClass = 'bg-blue-200 text-blue-900';
                                                     if ($predicate === 'Sangat Baik') $colorClass = 'bg-green-200 text-green-900';
                                                     if ($predicate === 'Butuh Perbaikan') $colorClass = 'bg-yellow-200 text-yellow-900';
                                                     if ($predicate === 'Sangat Kurang') $colorClass = 'bg-red-200 text-red-900';
@@ -205,7 +190,6 @@
                                             </span>
                                         </td>
                                         <td class="px-4 py-4 whitespace-nowrap">
-                                            {{-- PERBAIKAN: Gunakan @can directive untuk otorisasi yang bersih --}}
                                             @can('rateBehavior', $user)
                                                 <form id="form-rate-{{ $user->id }}" class="form-rating" action="{{ route('workload.updateBehavior', $user) }}" method="POST">
                                                     @csrf
@@ -216,7 +200,7 @@
                                                             <option value="Sesuai Ekspektasi" @if(is_null($user->work_behavior_rating) || $user->work_behavior_rating == 'Sesuai Ekspektasi') selected @endif>Sesuai Ekspektasi</option>
                                                             <option value="Dibawah Ekspektasi" @if($user->work_behavior_rating == 'Dibawah Ekspektasi') selected @endif>Dibawah Ekspektasi</option>
                                                         </select>
-                                                        <button type="submit" class="btn-submit-rating inline-flex justify-center items-center py-2 px-4 border border-transparent shadow-md text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition ease-in-out duration-150 transform hover:scale-105">
+                                                        <button type="submit" class="btn-submit-rating inline-flex justify-center items-center py-2 px-4 border border-transparent shadow-md text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
                                                             <i class="fas fa-save mr-2"></i> Simpan
                                                         </button>
                                                     </div>
@@ -232,9 +216,7 @@
                                 @empty
                                     <tr>
                                         <td colspan="5" class="px-6 py-8 whitespace-nowrap text-center text-lg text-gray-500 bg-gray-50 rounded-lg shadow-md">
-                                            <i class="fas fa-users-slash fa-3x text-gray-400 mb-4"></i>
                                             <p>Tidak ada bawahan yang cocok dengan pencarian Anda.</p>
-                                            <p class="text-sm text-gray-400 mt-2">Coba gunakan kata kunci lain atau reset pencarian.</p>
                                         </td>
                                     </tr>
                                 @endforelse
@@ -242,7 +224,6 @@
                         </table>
                     </div>
 
-                    <!-- Paginasi -->
                     <div class="mt-8">
                         {{ $subordinates->links() }}
                     </div>
@@ -326,9 +307,7 @@ document.addEventListener('DOMContentLoaded', function () {
             event.preventDefault();
 
             const button = form.querySelector('.btn-submit-rating');
-            const originalButtonHtml = button.innerHTML;
-            button.innerHTML = ''; // Clear content for spinner
-            button.classList.add('loading');
+            button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Menyimpan...';
             button.disabled = true;
 
             const action = form.getAttribute('action');
@@ -345,9 +324,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     'X-CSRF-TOKEN': csrfToken,
                     'Accept': 'application/json',
                     'X-Requested-With': 'XMLHttpRequest',
-                    'Content-Type': 'application/json' // Kirim sebagai JSON
+                    'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(bodyData) // Ubah objek menjadi string JSON
+                body: JSON.stringify(bodyData)
             })
             .then(response => {
                 if (!response.ok) {
@@ -358,18 +337,14 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(data => {
                 if (data.success) {
                     updateRow(data.user);
-                    showNotification('success', `Penilaian untuk ${data.user.name} berhasil disimpan.`);
-                } else {
-                    showNotification('error', 'Gagal menyimpan penilaian.');
+                    // No need for separate notification function if we use a global event bus or similar
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                showNotification('error', 'Terjadi kesalahan. Silakan coba lagi.');
             })
             .finally(() => {
-                button.innerHTML = originalButtonHtml;
-                button.classList.remove('loading');
+                button.innerHTML = '<i class="fas fa-save mr-2"></i> Simpan';
                 button.disabled = false;
             });
         });
@@ -377,85 +352,21 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function updateRow(userData) {
         const userId = userData.id;
-
-        // Update Predicate
         const predicateSpan = document.getElementById(`predicate-${userId}`);
-        const predicateWrapper = document.getElementById(`predicate-wrapper-${userId}`);
-        if (predicateSpan && predicateWrapper) {
+        if (predicateSpan) {
             predicateSpan.textContent = userData.performance_predicate;
-
-            // Update color class
             let colorClass = 'bg-blue-200 text-blue-900';
             if (userData.performance_predicate === 'Sangat Baik') colorClass = 'bg-green-200 text-green-900';
             if (userData.performance_predicate === 'Butuh Perbaikan') colorClass = 'bg-yellow-200 text-yellow-900';
             if (userData.performance_predicate === 'Sangat Kurang') colorClass = 'bg-red-200 text-red-900';
             predicateSpan.className = `px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full ${colorClass} shadow-sm`;
         }
-
-        // Update Work Result Rating
         const workResultSpan = document.getElementById(`work-result-${userId}`);
-        if (workResultSpan) {
-            workResultSpan.textContent = userData.work_result_rating;
-        }
-
-        // Update NKF (Nilai Kinerja Final)
+        if (workResultSpan) workResultSpan.textContent = userData.work_result_rating;
         const nkfSpan = document.getElementById(`nkf-${userId}`);
-        if (nkfSpan) {
-            nkfSpan.textContent = parseFloat(userData.final_performance_value).toFixed(2);
-        }
-
-        // Update IKI (Indeks Kinerja Individu)
+        if (nkfSpan) nkfSpan.textContent = parseFloat(userData.final_performance_value).toFixed(2);
         const ikiSpan = document.getElementById(`iki-${userId}`);
-        if (ikiSpan) {
-            ikiSpan.textContent = parseFloat(userData.individual_performance_index).toFixed(2);
-        }
-    }
-
-    function showNotification(type, message) {
-        const notificationArea = document.querySelector('.max-w-full.mx-auto');
-        if (!notificationArea) return;
-
-        let bgColor = 'bg-green-100';
-        let borderColor = 'border-green-400';
-        let textColor = 'text-green-700';
-        let icon = 'fa-check-circle';
-
-        if (type === 'error') {
-            bgColor = 'bg-red-100';
-            borderColor = 'border-red-400';
-            textColor = 'text-red-700';
-            icon = 'fa-times-circle';
-        }
-
-        const notificationHtml = `
-            <div class="mb-6 ${bgColor} border ${borderColor} ${textColor} px-4 py-3 rounded-lg relative shadow-md" role="alert" style="display: none;">
-                <div class="flex items-center">
-                    <i class="fas ${icon} mr-3"></i>
-                    <span class="block sm:inline">${message}</span>
-                </div>
-            </div>
-        `;
-
-        // Hapus notifikasi lama jika ada
-        const oldNotification = document.querySelector('.custom-notification');
-        if(oldNotification) oldNotification.remove();
-
-        const newDiv = document.createElement('div');
-        newDiv.className = 'custom-notification';
-        newDiv.innerHTML = notificationHtml;
-
-        notificationArea.insertBefore(newDiv, notificationArea.firstChild);
-        const newNotification = newDiv.querySelector('[role="alert"]');
-
-        // Simple fade in
-        newNotification.style.display = 'block';
-
-        // Fade out after 3 seconds
-        setTimeout(() => {
-            newNotification.style.transition = 'opacity 0.5s ease';
-            newNotification.style.opacity = '0';
-            setTimeout(() => newNotification.parentElement.remove(), 500);
-        }, 3000);
+        if (ikiSpan) ikiSpan.textContent = parseFloat(userData.individual_performance_index).toFixed(2);
     }
 });
 </script>
