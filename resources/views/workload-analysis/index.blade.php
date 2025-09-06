@@ -34,9 +34,36 @@
                         </div>
                     @endif
 
+                    <!-- Chart Section -->
+                    <div class="mb-8 p-4 border rounded-lg bg-gray-50 shadow-inner">
+                        <h3 class="text-lg font-bold text-gray-800 mb-4">Perbandingan Beban Kerja Tim (Estimasi Jam)</h3>
+                        <div class="h-64">
+                            <canvas id="workloadChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Period Filter -->
+                    <div class="mb-6">
+                        <div class="flex items-center justify-center space-x-2 bg-gray-100 p-2 rounded-lg">
+                            @php
+                                $currentPeriod = request('period', 'all');
+                                $baseClasses = 'px-4 py-2 text-sm font-semibold rounded-md transition-colors duration-200';
+                                $activeClasses = 'bg-indigo-600 text-white shadow-md';
+                                $inactiveClasses = 'bg-white text-gray-700 hover:bg-indigo-100 border border-gray-200';
+                            @endphp
+                            <a href="{{ route('workload.analysis', ['period' => 'all']) }}" class="{{ $baseClasses }} {{ $currentPeriod == 'all' ? $activeClasses : $inactiveClasses }}">Semua</a>
+                            <a href="{{ route('workload.analysis', ['period' => 'weekly']) }}" class="{{ $baseClasses }} {{ $currentPeriod == 'weekly' ? $activeClasses : $inactiveClasses }}">Mingguan</a>
+                            <a href="{{ route('workload.analysis', ['period' => 'monthly']) }}" class="{{ $baseClasses }} {{ $currentPeriod == 'monthly' ? $activeClasses : $inactiveClasses }}">Bulanan</a>
+                            <a href="{{ route('workload.analysis', ['period' => 'quarterly']) }}" class="{{ $baseClasses }} {{ $currentPeriod == 'quarterly' ? $activeClasses : $inactiveClasses }}">Triwulanan</a>
+                            <a href="{{ route('workload.analysis', ['period' => 'semester']) }}" class="{{ $baseClasses }} {{ $currentPeriod == 'semester' ? $activeClasses : $inactiveClasses }}">Semester</a>
+                            <a href="{{ route('workload.analysis', ['period' => 'yearly']) }}" class="{{ $baseClasses }} {{ $currentPeriod == 'yearly' ? $activeClasses : $inactiveClasses }}">Tahunan</a>
+                        </div>
+                    </div>
+
                     <!-- Form Pencarian -->
                     <div class="mb-6">
                         <form action="{{ route('workload.analysis') }}" method="GET">
+                             <input type="hidden" name="period" value="{{ $currentPeriod }}">
                             <div class="relative">
                                 <input type="text" name="search" placeholder="Cari nama pegawai..." value="{{ $search ?? '' }}" class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
                                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -81,34 +108,53 @@
                                         </td>
                                         <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
                                             @php
-                                                $internalHours = $user->internal_tasks_hours;
-                                                $externalHours = $user->external_tasks_hours;
-                                                $totalHours = $internalHours + $externalHours;
-                                                $internalPercent = $totalHours > 0 ? ($internalHours / $totalHours) * 100 : 0;
-                                                $externalPercent = $totalHours > 0 ? ($externalHours / $totalHours) * 100 : 0;
+                                                $userData = $workloadData[$user->id];
+                                                $totalHours = $userData['total_hours'];
+                                                $effectiveHours = $userData['effective_hours'];
+                                                $percentage = $userData['percentage'];
+                                                $activeSkCount = $userData['active_sk_count'];
                                             @endphp
-                                            <div class="flex items-center mb-2">
-                                                <i class="fas fa-hourglass-start mr-2 text-blue-500"></i>
-                                                <strong class="text-base">Total: {{ $totalHours }} Jam</strong>
-                                            </div>
-                                            <div class="w-full bg-gray-200 rounded-full h-4 mb-2 overflow-hidden shadow-inner">
-                                                <div class="bg-blue-600 h-4 text-xs font-medium text-blue-100 text-center p-0.5 leading-none" style="width: {{ $internalPercent }}%" title="Tugas Dalam Unit ({{ round($internalPercent) }}%)"></div>
-                                                <div class="bg-yellow-500 h-4 text-xs font-medium text-yellow-100 text-center p-0.5 leading-none" style="width: {{ $externalPercent }}%" title="Tugas Luar Unit ({{ round($externalPercent) }}%)"></div>
-                                            </div>
-                                            <ul class="space-y-1 text-xs">
-                                                <li class="flex items-center justify-between">
-                                                    <span><i class="fas fa-building-user mr-2 text-blue-600"></i>Tugas Dalam Unit</span>
-                                                    <strong>{{ $internalHours }} Jam ({{ round($internalPercent) }}%)</strong>
-                                                </li>
-                                                <li class="flex items-center justify-between">
-                                                    <span><i class="fas fa-people-arrows mr-2 text-yellow-500"></i>Tugas Luar Unit (Bantuan)</span>
-                                                    <strong>{{ $externalHours }} Jam ({{ round($externalPercent) }}%)</strong>
-                                                </li>
-                                                <li class="flex items-center justify-between pt-1 mt-1 border-t">
+
+                                            @if($period !== 'all' && !is_null($effectiveHours))
+                                                {{-- Tampilan Periodik --}}
+                                                <div class="flex items-center mb-2">
+                                                    @php
+                                                        $color = 'text-green-500';
+                                                        if ($percentage > 75) $color = 'text-yellow-500';
+                                                        if ($percentage > 100) $color = 'text-red-500';
+                                                    @endphp
+                                                    <i class="fas fa-tachometer-alt mr-2 {{ $color }}"></i>
+                                                    <strong class="text-base {{ str_replace('text-', 'text-', $color) }}">{{ round($percentage) }}%</strong>
+                                                </div>
+                                                <div class="w-full bg-gray-200 rounded-full h-2.5 shadow-inner">
+                                                    <div class="{{ str_replace('text-', 'bg-', $color) }} h-2.5 rounded-full" style="width: {{ min(100, $percentage) }}%"></div>
+                                                </div>
+                                                <ul class="space-y-1 text-xs mt-2">
+                                                    <li class="flex items-center justify-between">
+                                                        <span><i class="fas fa-tasks mr-2 text-gray-400"></i>Jam Tugas</span>
+                                                        <strong>{{ $totalHours }} Jam</strong>
+                                                    </li>
+                                                    <li class="flex items-center justify-between">
+                                                        <span><i class="fas fa-calendar-check mr-2 text-gray-400"></i>Jam Efektif</span>
+                                                        <strong>{{ $effectiveHours }} Jam</strong>
+                                                    </li>
+                                                    <li class="flex items-center justify-between pt-1 mt-1 border-t">
+                                                        <span><i class="fas fa-file-signature mr-2 text-gray-500"></i>SK Aktif</span>
+                                                        <strong>{{ $activeSkCount }}</strong>
+                                                    </li>
+                                                </ul>
+                                            @else
+                                                {{-- Tampilan "Semua" / Fallback --}}
+                                                <div class="flex items-center mb-2">
+                                                    <i class="fas fa-hourglass-start mr-2 text-blue-500"></i>
+                                                    <strong class="text-base">Total: {{ $totalHours }} Jam</strong>
+                                                </div>
+                                                <p class="text-xs text-gray-500">Menampilkan total estimasi jam dari semua tugas yang belum selesai.</p>
+                                                <div class="flex items-center justify-between pt-1 mt-1 border-t text-xs">
                                                     <span><i class="fas fa-file-signature mr-2 text-gray-500"></i>SK Aktif</span>
-                                                    <strong>{{ $user->active_sk_count }}</strong>
-                                                </li>
-                                            </ul>
+                                                    <strong>{{ $activeSkCount }}</strong>
+                                                </div>
+                                            @endif
                                         </td>
                                         <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
                                             <ul class="space-y-1">
