@@ -40,7 +40,7 @@ if (count($words) >= 2) {
                     <div class="nav-item-container">
                         <x-dropdown align="left" width="60">
                             <x-slot name="trigger">
-                                <button class="nav-icon-link inline-flex items-center justify-center text-white focus:outline-none transition duration-150 ease-in-out {{ (request()->routeIs(['global.dashboard', 'adhoc-tasks.*', 'special-assignments.*', 'projects.show', 'projects.create.*'])) && !request()->routeIs('executive.summary') ? 'active' : '' }}">
+                                <button class="nav-icon-link inline-flex items-center justify-center text-white focus:outline-none transition duration-150 ease-in-out {{ (request()->routeIs(['global.dashboard', 'adhoc-tasks.*', 'special-assignments.*', 'projects.*'])) && !request()->routeIs('executive.summary') ? 'active' : '' }}">
                                     <i class="fas fa-briefcase text-xl"></i>
                                 </button>
                             </x-slot>
@@ -60,7 +60,7 @@ if (count($words) >= 2) {
                     <div class="nav-item-container">
                         <x-dropdown align="left" width="60">
                             <x-slot name="trigger">
-                                <button class="nav-icon-link inline-flex items-center justify-center text-white focus:outline-none transition duration-150 ease-in-out {{ request()->routeIs(['surat-masuk.*', 'surat-keluar.*', 'templatesurat.*', 'admin.klasifikasi.*']) ? 'active' : '' }}">
+                                <button class="nav-icon-link inline-flex items-center justify-center text-white focus:outline-none transition duration-150 ease-in-out {{ request()->routeIs(['surat-masuk.*', 'surat-keluar.*', 'templatesurat.*', 'admin.klasifikasi.*', 'arsip.*']) ? 'active' : '' }}">
                                     <i class="fas fa-envelope-open-text text-xl"></i>
                                 </button>
                             </x-slot>
@@ -91,7 +91,7 @@ if (count($words) >= 2) {
                         <div class="nav-item-container">
                             <x-dropdown align="left" width="60">
                                 <x-slot name="trigger">
-                                    <button class="nav-icon-link inline-flex items-center justify-center text-white focus:outline-none transition duration-150 ease-in-out {{ request()->routeIs(['workload.analysis', 'weekly-workload.index']) ? 'active' : '' }}">
+                                    <button class="nav-icon-link inline-flex items-center justify-center text-white focus:outline-none transition duration-150 ease-in-out {{ request()->routeIs(['workload.analysis.*', 'weekly-workload.*']) ? 'active' : '' }}">
                                         <i class="fas fa-chart-pie text-xl"></i>
                                     </button>
                                 </x-slot>
@@ -134,7 +134,7 @@ if (count($words) >= 2) {
                         <div class="nav-item-container">
                             <x-dropdown align="left" width="60">
                                 <x-slot name="trigger">
-                                    <button class="nav-icon-link inline-flex items-center justify-center text-white focus:outline-none transition duration-150 ease-in-out {{ request()->routeIs(['admin.settings.*', 'admin.api_keys.*', 'admin.activities.index', 'templatesurat.*']) ? 'active' : '' }}">
+                                    <button class="nav-icon-link inline-flex items-center justify-center text-white focus:outline-none transition duration-150 ease-in-out {{ request()->routeIs(['admin.settings.*', 'admin.api_keys.*', 'admin.activities.index', 'admin.approval-workflows.*', 'admin.cuti-bersama.*']) ? 'active' : '' }}">
                                         <i class="fas fa-cogs text-xl"></i>
                                     </button>
                                 </x-slot>
