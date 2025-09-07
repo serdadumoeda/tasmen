@@ -102,14 +102,6 @@
     <div x-data="projectDetail()">
         <div class="py-12 bg-gray-50"> {{-- Pastikan latar belakang halaman konsisten --}}
             <div class="max-w-screen-2xl mx-auto sm:px-6 lg:px-8 space-y-8">
-                <div class="mb-4">
-                    <a href="javascript:history.back()" class="inline-flex items-center text-sm font-semibold text-gray-600 hover:text-gray-900">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                        </svg>
-                        Kembali
-                    </a>
-                </div>
                 <div>
                     <h2 class="text-2xl font-semibold text-gray-700 mb-4">Ringkasan Kegiatan</h2>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"> {{-- Gap lebih besar --}}
@@ -171,7 +163,7 @@
                                             <select name="task_priority_id" id="task_priority_id" class="block w-full rounded-md border-gray-300 shadow-sm text-sm">
                                                 <option value="">Semua Prioritas</option>
                                                 @foreach($priorities as $priority)
-                                                    <option value="{{ $priority->id }}" @selected(request('task_priority_id') == $priority->id)>{{ $priority->name }}</option>
+                                                    <option value="{{ $priority->id }}" @selected(request('task_priority_id') == $priority->id)>{{ $priority->label }}</option>
                                                 @endforeach
                                             </select>
                                         </div>

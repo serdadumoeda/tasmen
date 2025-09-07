@@ -102,7 +102,10 @@
                 @if($filters['personnel_id'] ?? null)
                     <li>Personel: <span>{{ $personnel[$filters['personnel_id']]->name ?? 'N/A' }}</span></li>
                 @endif
-                 @if(empty(array_filter($filters)))
+                @if(request('start_date') && request('end_date'))
+                    <li>Rentang Deadline: <span>{{ \Carbon\Carbon::parse(request('start_date'))->format('d M Y') }} - {{ \Carbon\Carbon::parse(request('end_date'))->format('d M Y') }}</span></li>
+                @endif
+                 @if(empty(array_filter($filters)) && !request('start_date'))
                     <li><span>Tidak ada filter aktif</span></li>
                 @endif
             </ul>
