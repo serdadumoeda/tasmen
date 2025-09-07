@@ -301,6 +301,7 @@ Route::middleware(['auth', 'superadmin'])->prefix('admin')->name('admin.')->grou
 Route::middleware(['auth', 'can.manage.leave.settings'])->prefix('admin')->name('admin.')->group(function () {
     // Cuti Bersama Management
     Route::get('cuti-bersama/workflow', [CutiBersamaController::class, 'showWorkflow'])->name('cuti-bersama.workflow');
+    Route::post('cuti-bersama/import', [CutiBersamaController::class, 'import'])->name('cuti-bersama.import');
     Route::resource('cuti-bersama', CutiBersamaController::class)->parameters(['cuti-bersama' => 'cutiBersama']);
     // Approval Workflow Management
     Route::get('approval-workflows/workflow', [ApprovalWorkflowController::class, 'showWorkflow'])->name('approval-workflows.workflow');

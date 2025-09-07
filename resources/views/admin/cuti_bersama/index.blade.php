@@ -17,6 +17,12 @@
                             <a href="{{ route('admin.cuti-bersama.workflow') }}" class="inline-flex items-center px-4 py-2 bg-blue-500 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-600">
                                 <i class="fas fa-project-diagram mr-2"></i> Alur Kerja
                             </a>
+                            <form action="{{ route('admin.cuti-bersama.import') }}" method="POST" class="inline-block">
+                                @csrf
+                                <button type="submit" class="inline-flex items-center px-4 py-2 bg-green-500 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-600" onclick="return confirm('Apakah Anda yakin ingin mengimpor hari libur dari API? Ini akan menambahkan data baru ke database.');">
+                                    <i class="fas fa-cloud-download-alt mr-2"></i> Import dari API
+                                </button>
+                            </form>
                             <a href="{{ route('admin.cuti-bersama.create') }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700">
                                 <i class="fas fa-plus-circle mr-2"></i> Tambah Tanggal
                             </a>
