@@ -106,13 +106,12 @@ class LeaveController extends Controller
             ]);
 
         // 2. Get Collective Leaves (Cuti Bersama)
-        $collectiveLeaves = CutiBersama::where('start_date', '>=', now()->startOfYear())
-            ->where('end_date', '<=', now()->endOfYear())
+        $collectiveLeaves = CutiBersama::whereYear('date', now()->year)
             ->get()
             ->map(fn($leave) => [
-                'title' => $leave->description,
-                'start' => Carbon::parse($leave->start_date)->format('Y-m-d'),
-                'end' => Carbon::parse($leave->end_date)->addDay()->format('Y-m-d'),
+                'title' => $leave->name,
+                'start' => Carbon::parse($leave->date)->format('Y-m-d'),
+                'end' => Carbon::parse($leave->date)->addDay()->format('Y-m-d'),
                 'allDay' => true,
                 'color' => '#10B981', // Green
                 'extendedProps' => ['type' => 'collective']
