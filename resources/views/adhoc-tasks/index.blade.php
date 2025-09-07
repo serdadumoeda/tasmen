@@ -76,17 +76,6 @@
 
                         {{-- Filter Tanggal --}}
                         <div class="mt-4 pt-4 border-t grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
-                             <div>
-                                <label for="date_preset" class="block text-sm font-medium text-gray-700 mb-1">Rentang Waktu</label>
-                                <select id="date_preset" class="block w-full rounded-lg border-gray-300 shadow-sm text-sm">
-                                    <option value="">Pilih Rentang</option>
-                                    <option value="weekly">Minggu Ini</option>
-                                    <option value="monthly">Bulan Ini</option>
-                                    <option value="quarterly">Triwulan Ini</option>
-                                    <option value="semesterly">Semester Ini</option>
-                                    <option value="yearly">Tahun Ini</option>
-                                </select>
-                            </div>
                             <div>
                                 <label for="start_date" class="block text-sm font-medium text-gray-700 mb-1">Dari Tanggal</label>
                                 <input type="date" name="start_date" id="start_date" value="{{ request('start_date') }}" class="block w-full rounded-lg border-gray-300 shadow-sm text-sm">
@@ -171,22 +160,6 @@
             document.addEventListener('DOMContentLoaded', function() {
                 const printBtn = document.getElementById('print-report-btn');
                 const form = document.querySelector('form');
-                const datePreset = document.getElementById('date_preset');
-                const startDateInput = document.getElementById('start_date');
-                const endDateInput = document.getElementById('end_date');
-
-                /**
-                 * Converts a Date object to a 'YYYY-MM-DD' string, ignoring timezone.
-                 * @param {Date} date The date to convert.
-                 * @returns {string} The formatted date string.
-                 */
-                const toYMD = (date) => {
-                    if (!date) return '';
-                    const y = date.getFullYear();
-                    const m = String(date.getMonth() + 1).padStart(2, '0');
-                    const d = String(date.getDate()).padStart(2, '0');
-                    return `${y}-${m}-${d}`;
-                };
 
                 function updatePrintLink() {
                     const baseUrl = "{{ route('adhoc-tasks.print-report') }}";
@@ -194,104 +167,9 @@
                     printBtn.href = baseUrl + currentQueryString;
                 }
 
-                function setDateRange(preset) {
-                    let startDate, endDate;
-                    const now = new Date();
-
-                    switch (preset) {
-                        case 'weekly':
-                            const firstDay = new Date(now);
-                            firstDay.setDate(now.getDate() - now.getDay());
-                            startDate = firstDay;
-                            const lastDay = new Date(firstDay);
-                            lastDay.setDate(firstDay.getDate() + 6);
-                            endDate = lastDay;
-                            break;
-                        case 'monthly':
-                            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-                            endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-                            break;
-                        case 'quarterly':
-                            const quarter = Math.floor(now.getMonth() / 3);
-                            startDate = new Date(now.getFullYear(), quarter * 3, 1);
-                            endDate = new Date(now.getFullYear(), quarter * 3 + 3, 0);
-                            break;
-                        case 'semesterly':
-                             const semester = now.getMonth() < 6 ? 0 : 6;
-                             startDate = new Date(now.getFullYear(), semester, 1);
-                             endDate = new Date(now.getFullYear(), semester + 6, 0);
-                            break;
-                        case 'yearly':
-                            startDate = new Date(now.getFullYear(), 0, 1);
-                            endDate = new Date(now.getFullYear(), 11, 31);
-                            break;
-                        default:
-                            startDate = null;
-                            endDate = null;
-                    }
-                    startDateInput.value = toYMD(startDate);
-                    endDateInput.value = toYMD(endDate);
-                }
-
-                function syncDatePreset() {
-                    const startDateValue = startDateInput.value;
-                    const endDateValue = endDateInput.value;
-                    if (!startDateValue || !endDateValue) return;
-
-                    const presets = ['weekly', 'monthly', 'quarterly', 'semesterly', 'yearly'];
-
-                    for (const preset of presets) {
-                        let expectedStartDate, expectedEndDate;
-                        const now = new Date();
-
-                        switch (preset) {
-                            case 'weekly':
-                                const firstDay = new Date(now);
-                                firstDay.setDate(now.getDate() - now.getDay());
-                                expectedStartDate = toYMD(firstDay);
-                                const lastDay = new Date(firstDay);
-                                lastDay.setDate(firstDay.getDate() + 6);
-                                expectedEndDate = toYMD(lastDay);
-                                break;
-                            case 'monthly':
-                                expectedStartDate = toYMD(new Date(now.getFullYear(), now.getMonth(), 1));
-                                expectedEndDate = toYMD(new Date(now.getFullYear(), now.getMonth() + 1, 0));
-                                break;
-                            case 'quarterly':
-                                const quarter = Math.floor(now.getMonth() / 3);
-                                expectedStartDate = toYMD(new Date(now.getFullYear(), quarter * 3, 1));
-                                expectedEndDate = toYMD(new Date(now.getFullYear(), quarter * 3 + 3, 0));
-                                break;
-                            case 'semesterly':
-                                const semester = now.getMonth() < 6 ? 0 : 6;
-                                expectedStartDate = toYMD(new Date(now.getFullYear(), semester, 1));
-                                expectedEndDate = toYMD(new Date(now.getFullYear(), semester + 6, 0));
-                                break;
-                            case 'yearly':
-                                expectedStartDate = toYMD(new Date(now.getFullYear(), 0, 1));
-                                expectedEndDate = toYMD(new Date(now.getFullYear(), 11, 31));
-                                break;
-                        }
-
-                        if (startDateValue === expectedStartDate && endDateValue === expectedEndDate) {
-                            datePreset.value = preset;
-                            break;
-                        }
-                    }
-                }
-
-                if(datePreset) {
-                    datePreset.addEventListener('change', function() {
-                        setDateRange(this.value);
-                        const params = new URLSearchParams(new FormData(form));
-                        window.location.href = `{{ route('adhoc-tasks.index') }}?${params.toString()}`;
-                    });
-                }
-
                 form.addEventListener('input', updatePrintLink);
                 form.addEventListener('change', updatePrintLink);
                 updatePrintLink();
-                syncDatePreset();
             });
         </script>
     @endpush
