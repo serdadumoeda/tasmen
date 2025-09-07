@@ -29,10 +29,10 @@
 
                     <!-- Filter and Search Form -->
                     <form action="{{ route('adhoc-tasks.index') }}" method="GET" class="mb-6 p-4 bg-gray-50 rounded-lg border">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
 
                             {{-- Kolom Pencarian --}}
-                            <div class="lg:col-span-4">
+                            <div class="lg:col-span-5">
                                 <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Cari Tugas</label>
                                 <input type="text" name="search" id="search" placeholder="Cari judul atau deskripsi..." value="{{ request('search') }}" class="block w-full rounded-lg border-gray-300 shadow-sm text-sm">
                             </div>
@@ -73,6 +73,30 @@
                             @endif
 
                         </div>
+
+                        {{-- Filter Tanggal --}}
+                        <div class="mt-4 pt-4 border-t grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
+                             <div>
+                                <label for="date_preset" class="block text-sm font-medium text-gray-700 mb-1">Rentang Waktu</label>
+                                <select id="date_preset" class="block w-full rounded-lg border-gray-300 shadow-sm text-sm">
+                                    <option value="">Pilih Rentang</option>
+                                    <option value="weekly">Mingguan</option>
+                                    <option value="monthly">Bulanan</option>
+                                    <option value="quarterly">Triwulanan</option>
+                                    <option value="semesterly">Semesteran</option>
+                                    <option value="yearly">Tahunan</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="start_date" class="block text-sm font-medium text-gray-700 mb-1">Dari Tanggal</label>
+                                <input type="date" name="start_date" id="start_date" value="{{ request('start_date') }}" class="block w-full rounded-lg border-gray-300 shadow-sm text-sm">
+                            </div>
+                            <div>
+                                <label for="end_date" class="block text-sm font-medium text-gray-700 mb-1">Sampai Tanggal</label>
+                                <input type="date" name="end_date" id="end_date" value="{{ request('end_date') }}" class="block w-full rounded-lg border-gray-300 shadow-sm text-sm">
+                            </div>
+                        </div>
+
 
                         {{-- Tombol Aksi Form --}}
                         <div class="mt-6 pt-4 border-t flex items-center justify-between">
@@ -147,24 +171,65 @@
             document.addEventListener('DOMContentLoaded', function() {
                 const printBtn = document.getElementById('print-report-btn');
                 const form = document.querySelector('form');
+                const datePreset = document.getElementById('date_preset');
+                const startDateInput = document.getElementById('start_date');
+                const endDateInput = document.getElementById('end_date');
 
                 function updatePrintLink() {
                     const baseUrl = "{{ route('adhoc-tasks.print-report') }}";
-                    // Ambil semua parameter dari form filter utama
                     const formData = new FormData(form);
                     const params = new URLSearchParams(formData);
-
-                    // Hapus parameter _token jika ada (meskipun ini form GET, untuk keamanan)
                     params.delete('_token');
-
                     printBtn.href = `${baseUrl}?${params.toString()}`;
                 }
 
-                // Panggil updatePrintLink setiap kali ada perubahan pada form
+                function setDateRange(preset) {
+                    const now = new Date();
+                    let startDate, endDate;
+
+                    switch (preset) {
+                        case 'weekly':
+                            startDate = new Date(now.setDate(now.getDate() - now.getDay()));
+                            endDate = new Date(now.setDate(now.getDate() - now.getDay() + 6));
+                            break;
+                        case 'monthly':
+                            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                            endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+                            break;
+                        case 'quarterly':
+                            const quarter = Math.floor(now.getMonth() / 3);
+                            startDate = new Date(now.getFullYear(), quarter * 3, 1);
+                            endDate = new Date(now.getFullYear(), quarter * 3 + 3, 0);
+                            break;
+                        case 'semesterly':
+                             const semester = now.getMonth() < 6 ? 0 : 6;
+                             startDate = new Date(now.getFullYear(), semester, 1);
+                             endDate = new Date(now.getFullYear(), semester + 6, 0);
+                            break;
+                        case 'yearly':
+                            startDate = new Date(now.getFullYear(), 0, 1);
+                            endDate = new Date(now.getFullYear(), 11, 31);
+                            break;
+                        default:
+                            startDate = null;
+                            endDate = null;
+                    }
+
+                    startDateInput.value = startDate ? startDate.toISOString().split('T')[0] : '';
+                    endDateInput.value = endDate ? endDate.toISOString().split('T')[0] : '';
+                }
+
+                if(datePreset) {
+                    datePreset.addEventListener('change', function() {
+                        setDateRange(this.value);
+                        // Trigger change event on date inputs to update print link
+                        startDateInput.dispatchEvent(new Event('change'));
+                        endDateInput.dispatchEvent(new Event('change'));
+                    });
+                }
+
                 form.addEventListener('input', updatePrintLink);
                 form.addEventListener('change', updatePrintLink);
-
-                // Panggil sekali saat halaman dimuat untuk menginisialisasi link
                 updatePrintLink();
             });
         </script>

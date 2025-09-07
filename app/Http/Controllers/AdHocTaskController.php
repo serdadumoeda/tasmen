@@ -61,6 +61,10 @@ class AdHocTaskController extends Controller
             $query->where('priority_level_id', $request->input('priority_level_id'));
         }
 
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $query->whereBetween('deadline', [$request->start_date, $request->end_date]);
+        }
+
         $sortBy = $request->input('sort_by', 'deadline');
         $sortDir = $request->input('sort_dir', 'asc');
         if (in_array($sortBy, ['title', 'deadline', 'created_at'])) {
@@ -148,6 +152,10 @@ class AdHocTaskController extends Controller
 
         if ($request->filled('priority_level_id')) {
             $query->where('priority_level_id', $request->input('priority_level_id'));
+        }
+
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $query->whereBetween('deadline', [$request->start_date, $request->end_date]);
         }
 
         $sortBy = $request->input('sort_by', 'deadline');
