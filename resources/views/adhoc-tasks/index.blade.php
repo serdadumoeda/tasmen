@@ -80,11 +80,11 @@
                                 <label for="date_preset" class="block text-sm font-medium text-gray-700 mb-1">Rentang Waktu</label>
                                 <select id="date_preset" class="block w-full rounded-lg border-gray-300 shadow-sm text-sm">
                                     <option value="">Pilih Rentang</option>
-                                    <option value="weekly">Mingguan</option>
-                                    <option value="monthly">Bulanan</option>
-                                    <option value="quarterly">Triwulanan</option>
-                                    <option value="semesterly">Semesteran</option>
-                                    <option value="yearly">Tahunan</option>
+                                    <option value="weekly">Minggu Ini</option>
+                                    <option value="monthly">Bulan Ini</option>
+                                    <option value="quarterly">Triwulan Ini</option>
+                                    <option value="semesterly">Semester Ini</option>
+                                    <option value="yearly">Tahun Ini</option>
                                 </select>
                             </div>
                             <div>
@@ -222,9 +222,8 @@
                 if(datePreset) {
                     datePreset.addEventListener('change', function() {
                         setDateRange(this.value);
-                        // Trigger change event on date inputs to update print link
-                        startDateInput.dispatchEvent(new Event('change'));
-                        endDateInput.dispatchEvent(new Event('change'));
+                        // Submit form after setting dates
+                        form.submit();
                     });
                 }
 
