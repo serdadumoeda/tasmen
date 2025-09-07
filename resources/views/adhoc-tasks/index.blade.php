@@ -220,8 +220,9 @@
                 if(datePreset) {
                     datePreset.addEventListener('change', function() {
                         setDateRange(this.value);
-                        // Submit form after setting dates
-                        form.submit();
+                        // Construct the URL with all form parameters and redirect
+                        const params = new URLSearchParams(new FormData(form));
+                        window.location.href = `{{ route('adhoc-tasks.index') }}?${params.toString()}`;
                     });
                 }
 
