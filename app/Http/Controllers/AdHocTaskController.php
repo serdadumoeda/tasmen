@@ -110,46 +110,65 @@ class AdHocTaskController extends Controller
         ]);
     }
 
-    /**
-     * Menyimpan tugas ad-hoc baru ke database.
-     */
     public function printReport(Request $request)
     {
-        $validated = $request->validate([
-            'start_date' => 'nullable|date',
-            'end_date' => 'nullable|date|after_or_equal:start_date',
-            'status' => 'nullable|string|in:all,completed,pending',
-        ]);
-
         $user = Auth::user();
-        $startDate = $validated['start_date'] ?? now()->startOfWeek();
-        $endDate = $validated['end_date'] ?? now()->endOfWeek();
-        $statusFilter = $validated['status'] ?? 'completed';
+        $query = Task::whereNull('project_id')->with(['assignees', 'status', 'priorityLevel', 'asalSurat']);
 
-        $query = Task::whereNull('project_id')
-            ->whereHas('assignees', fn ($q) => $q->where('user_id', $user->id))
-            ->orderBy('updated_at', 'desc');
+        // === Re-use the exact same query logic from the index method ===
+        $subordinates = collect();
+        if ($user->canManageUsers()) {
+            $subordinateIds = $user->getAllSubordinateIds();
+            $subordinateIds->push($user->id);
+            $subordinates = User::whereIn('id', $subordinateIds)->orderBy('name')->get(); // This is needed for the filter check
 
-        if ($statusFilter === 'completed') {
-            $completedStatus = \App\Models\TaskStatus::where('key', 'completed')->firstOrFail();
-            $query->where('task_status_id', $completedStatus->id);
-            $query->whereBetween('updated_at', [$startDate, $endDate]); // Completion date is updated_at
-        } elseif ($statusFilter === 'pending') {
-            $completedStatus = \App\Models\TaskStatus::where('key', 'completed')->firstOrFail();
-            $query->where('task_status_id', '!=', $completedStatus->id);
-            $query->whereBetween('deadline', [$startDate, $endDate]); // Filter by deadline for pending tasks
-        } else { // 'all'
-            $query->whereBetween('deadline', [$startDate, $endDate]);
+            $query->whereHas('assignees', function ($q) use ($subordinateIds) {
+                $q->whereIn('user_id', $subordinateIds);
+            });
+        } else {
+            $query->whereHas('assignees', function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            });
         }
 
-        $tasks = $query->get();
+        if ($request->filled('search')) {
+            $query->where('title', 'like', '%' . $request->input('search') . '%');
+        }
+
+        if ($user->canManageUsers() && $request->filled('personnel_id')) {
+            $personnelId = $request->personnel_id;
+            if ($subordinates->pluck('id')->contains($personnelId)) {
+                $query->whereHas('assignees', fn ($q) => $q->where('user_id', $personnelId));
+            }
+        }
+
+        if ($request->filled('task_status_id')) {
+            $query->where('task_status_id', $request->input('task_status_id'));
+        }
+
+        if ($request->filled('priority_level_id')) {
+            $query->where('priority_level_id', $request->input('priority_level_id'));
+        }
+
+        $sortBy = $request->input('sort_by', 'deadline');
+        $sortDir = $request->input('sort_dir', 'asc');
+        if (in_array($sortBy, ['title', 'deadline', 'created_at'])) {
+            $query->orderBy($sortBy, $sortDir);
+        } else {
+            $query->latest(); // Default sort
+        }
+        // === End of re-used logic ===
+
+        $tasks = $query->get(); // Get all results, no pagination
 
         return view('adhoc-tasks.print', [
             'tasks' => $tasks,
             'user' => $user,
-            'startDate' => $startDate,
-            'endDate' => $endDate,
-            'statusFilter' => $statusFilter,
+            // Pass filter values to the view to be displayed in the report header
+            'filters' => $request->only(['search', 'task_status_id', 'priority_level_id', 'personnel_id', 'sort_by']),
+            'statuses' => \App\Models\TaskStatus::all()->keyBy('id'),
+            'priorities' => \App\Models\PriorityLevel::all()->keyBy('id'),
+            'personnel' => $subordinates->keyBy('id'),
         ]);
     }
 

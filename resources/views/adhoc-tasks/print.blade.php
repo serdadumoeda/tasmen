@@ -1,70 +1,147 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Laporan Kinerja Harian - {{ $user->name }}</title>
+    <title>Laporan Tugas Harian</title>
     <style>
-        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #333; }
-        .container { max-width: 800px; margin: auto; padding: 20px; }
-        h1, h2 { text-align: center; }
-        h1 { font-size: 1.5em; }
-        h2 { font-size: 1.2em; font-weight: normal; margin-bottom: 30px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f2; }
-        .no-print { display: none; }
-        @media print {
-            body { -webkit-print-color-adjust: exact; }
-            .no-print { display: none; }
-            .print-button { display: none; }
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            color: #333;
+            font-size: 12px;
+        }
+        .container {
+            width: 100%;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header, .footer {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+        }
+        .header p {
+            margin: 5px 0;
+            font-size: 1em;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
+            vertical-align: top;
+        }
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        .filters {
+            margin-bottom: 20px;
+            border: 1px solid #eee;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 0.9em;
+        }
+        .filters p {
+            margin: 0 0 5px 0;
+        }
+        .filters span {
+            font-weight: bold;
+        }
+        .no-data {
+            text-align: center;
+            padding: 20px;
+            font-style: italic;
         }
         .print-button {
             display: block;
-            width: 100px;
+            width: 120px;
             margin: 20px auto;
             padding: 10px;
-            background-color: #007bff;
+            background-color: #4CAF50;
             color: white;
             text-align: center;
             border: none;
             border-radius: 5px;
             cursor: pointer;
+            text-decoration: none;
+        }
+        @media print {
+            .print-button {
+                display: none;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Laporan Kinerja Harian</h1>
-        <h2>{{ $user->name }}</h2>
-        <p><strong>Periode Laporan:</strong> {{ \Carbon\Carbon::parse($startDate)->format('d M Y') }} - {{ \Carbon\Carbon::parse($endDate)->format('d M Y') }}</p>
+        <div class="header">
+            <h1>Laporan Tugas Harian</h1>
+            <p>Dicetak oleh: {{ $user->name }} pada {{ now()->format('d M Y H:i') }}</p>
+        </div>
+
+        <div class="filters">
+            <p>Filter Aktif:</p>
+            <ul>
+                @if($filters['search'] ?? null)
+                    <li>Kata Kunci: <span>{{ $filters['search'] }}</span></li>
+                @endif
+                @if($filters['task_status_id'] ?? null)
+                    <li>Status: <span>{{ $statuses[$filters['task_status_id']]->label ?? 'N/A' }}</span></li>
+                @endif
+                @if($filters['priority_level_id'] ?? null)
+                    <li>Prioritas: <span>{{ $priorities[$filters['priority_level_id']]->name ?? 'N/A' }}</span></li>
+                @endif
+                @if($filters['personnel_id'] ?? null)
+                    <li>Personel: <span>{{ $personnel[$filters['personnel_id']]->name ?? 'N/A' }}</span></li>
+                @endif
+                 @if(empty(array_filter($filters)))
+                    <li><span>Tidak ada filter aktif</span></li>
+                @endif
+            </ul>
+        </div>
 
         <table>
             <thead>
                 <tr>
-                    <th>No.</th>
-                    <th>Tanggal Selesai</th>
+                    <th style="width: 5%;">No.</th>
                     <th>Judul Tugas</th>
-                    <th>Deskripsi</th>
+                    <th style="width: 20%;">Pelaksana</th>
+                    <th style="width: 12%;">Deadline</th>
+                    <th style="width: 12%;">Status</th>
+                    <th style="width: 12%;">Prioritas</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse ($tasks as $index => $task)
                     <tr>
                         <td>{{ $index + 1 }}</td>
-                        <td>{{ $task->updated_at->format('d M Y') }}</td>
                         <td>{{ $task->title }}</td>
-                        <td>{{ $task->description ?? '-' }}</td>
+                        <td>
+                            @foreach($task->assignees as $assignee)
+                                {{ $assignee->name }}{{ !$loop->last ? ',' : '' }}
+                            @endforeach
+                        </td>
+                        <td>{{ optional($task->deadline)->format('d M Y') ?? '-' }}</td>
+                        <td>{{ $task->status->label ?? 'N/A' }}</td>
+                        <td>{{ $task->priorityLevel->name ?? 'N/A' }}</td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="4" style="text-align: center;">Tidak ada tugas yang diselesaikan pada periode ini.</td>
+                        <td colspan="6" class="no-data">Tidak ada data yang cocok dengan filter yang diterapkan.</td>
                     </tr>
                 @endforelse
             </tbody>
         </table>
 
-        <button onclick="window.print()" class="print-button">Cetak</button>
+        <a href="javascript:window.print()" class="print-button">Cetak Laporan</a>
     </div>
 </body>
 </html>

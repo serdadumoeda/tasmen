@@ -74,49 +74,24 @@
 
                         </div>
 
-                        {{-- Opsi Laporan --}}
-                        <div class="mt-6 pt-4 border-t">
-                             <div class="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
-                                <div class="md:col-span-3">
-                                    <p class="block text-sm font-medium text-gray-800 mb-2">Opsi Cetak Laporan</p>
-                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        <div>
-                                            <label for="start_date" class="block text-xs font-medium text-gray-600 mb-1">Tanggal Mulai</label>
-                                            <input type="date" name="start_date" id="start_date" value="{{ request('start_date') }}" class="block w-full rounded-lg border-gray-300 shadow-sm text-sm">
-                                        </div>
-                                         <div>
-                                            <label for="end_date" class="block text-xs font-medium text-gray-600 mb-1">Tanggal Selesai</label>
-                                            <input type="date" name="end_date" id="end_date" value="{{ request('end_date') }}" class="block w-full rounded-lg border-gray-300 shadow-sm text-sm">
-                                        </div>
-                                        <div>
-                                            <label for="report_status" class="block text-xs font-medium text-gray-600 mb-1">Status Laporan</label>
-                                            <select name="report_status" id="report_status" class="block w-full rounded-lg border-gray-300 shadow-sm text-sm">
-                                                <option value="all">Cetak Semua Status</option>
-                                                <option value="completed" selected>Cetak Selesai</option>
-                                                <option value="pending">Cetak Belum Selesai</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="flex items-center">
-                                     <a href="#" id="print-report-btn" target="_blank" class="w-full text-center px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700">
-                                        <i class="fas fa-print mr-2"></i> Cetak
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-
                         {{-- Tombol Aksi Form --}}
-                        <div class="mt-6 pt-4 border-t flex items-center justify-end gap-4">
-                            <div class="flex items-center gap-2">
-                                <label for="sort_by" class="text-sm font-medium text-gray-700">Urutkan:</label>
-                                <select name="sort_by" id="sort_by" class="rounded-lg border-gray-300 shadow-sm text-sm" onchange="this.form.submit()">
-                                    <option value="deadline" @selected(request('sort_by', 'deadline') == 'deadline')>Deadline</option>
-                                    <option value="created_at" @selected(request('sort_by', 'created_at') == 'created_at')>Tanggal Dibuat</option>
-                                </select>
+                        <div class="mt-6 pt-4 border-t flex items-center justify-between">
+                            {{-- Tombol Cetak dipindah ke sini --}}
+                            <a href="#" id="print-report-btn" target="_blank" class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 shadow-sm">
+                                <i class="fas fa-print mr-2"></i>
+                                <span>Cetak Laporan</span>
+                            </a>
+                            <div class="flex items-center justify-end gap-4">
+                                <div class="flex items-center gap-2">
+                                    <label for="sort_by" class="text-sm font-medium text-gray-700">Urutkan:</label>
+                                    <select name="sort_by" id="sort_by" class="rounded-lg border-gray-300 shadow-sm text-sm" onchange="this.form.submit()">
+                                        <option value="deadline" @selected(request('sort_by', 'deadline') == 'deadline')>Deadline</option>
+                                        <option value="created_at" @selected(request('sort_by', 'created_at') == 'created_at')>Tanggal Dibuat</option>
+                                    </select>
+                                </div>
+                                <a href="{{ route('adhoc-tasks.index') }}" class="px-4 py-2 bg-gray-600 text-white rounded-lg text-sm hover:bg-gray-700">Reset</a>
+                                <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700">Filter</button>
                             </div>
-                            <a href="{{ route('adhoc-tasks.index') }}" class="px-4 py-2 bg-gray-600 text-white rounded-lg text-sm hover:bg-gray-700">Reset</a>
-                            <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700">Filter</button>
                         </div>
                     </form>
 
@@ -171,31 +146,26 @@
         <script>
             document.addEventListener('DOMContentLoaded', function() {
                 const printBtn = document.getElementById('print-report-btn');
-                const startDateInput = document.getElementById('start_date');
-                const endDateInput = document.getElementById('end_date');
-                const statusInput = document.getElementById('report_status');
+                const form = document.querySelector('form');
 
                 function updatePrintLink() {
                     const baseUrl = "{{ route('adhoc-tasks.print-report') }}";
-                    const startDate = startDateInput.value;
-                    const endDate = endDateInput.value;
-                    const status = statusInput.value;
+                    // Ambil semua parameter dari form filter utama
+                    const formData = new FormData(form);
+                    const params = new URLSearchParams(formData);
 
-                    const params = new URLSearchParams();
-                    if (startDate) params.append('start_date', startDate);
-                    if (endDate) params.append('end_date', endDate);
-                    if (status) params.append('status', status);
+                    // Hapus parameter _token jika ada (meskipun ini form GET, untuk keamanan)
+                    params.delete('_token');
 
                     printBtn.href = `${baseUrl}?${params.toString()}`;
                 }
 
-                // Initial update
-                updatePrintLink();
+                // Panggil updatePrintLink setiap kali ada perubahan pada form
+                form.addEventListener('input', updatePrintLink);
+                form.addEventListener('change', updatePrintLink);
 
-                // Update link when any of the inputs change
-                startDateInput.addEventListener('change', updatePrintLink);
-                endDateInput.addEventListener('change', updatePrintLink);
-                statusInput.addEventListener('change', updatePrintLink);
+                // Panggil sekali saat halaman dimuat untuk menginisialisasi link
+                updatePrintLink();
             });
         </script>
     @endpush
