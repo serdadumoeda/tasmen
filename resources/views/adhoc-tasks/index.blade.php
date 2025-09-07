@@ -175,6 +175,19 @@
                 const startDateInput = document.getElementById('start_date');
                 const endDateInput = document.getElementById('end_date');
 
+                /**
+                 * Converts a Date object to a 'YYYY-MM-DD' string, ignoring timezone.
+                 * @param {Date} date The date to convert.
+                 * @returns {string} The formatted date string.
+                 */
+                const toYMD = (date) => {
+                    if (!date) return '';
+                    const y = date.getFullYear();
+                    const m = String(date.getMonth() + 1).padStart(2, '0');
+                    const d = String(date.getDate()).padStart(2, '0');
+                    return `${y}-${m}-${d}`;
+                };
+
                 function updatePrintLink() {
                     const baseUrl = "{{ route('adhoc-tasks.print-report') }}";
                     const currentQueryString = window.location.search;
@@ -182,13 +195,17 @@
                 }
 
                 function setDateRange(preset) {
-                    const now = new Date();
                     let startDate, endDate;
+                    const now = new Date();
 
                     switch (preset) {
                         case 'weekly':
-                            startDate = new Date(now.setDate(now.getDate() - now.getDay()));
-                            endDate = new Date(now.setDate(now.getDate() - now.getDay() + 6));
+                            const firstDay = new Date(now);
+                            firstDay.setDate(now.getDate() - now.getDay());
+                            startDate = firstDay;
+                            const lastDay = new Date(firstDay);
+                            lastDay.setDate(firstDay.getDate() + 6);
+                            endDate = lastDay;
                             break;
                         case 'monthly':
                             startDate = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -212,18 +229,8 @@
                             startDate = null;
                             endDate = null;
                     }
-
-                    startDateInput.value = startDate ? startDate.toISOString().split('T')[0] : '';
-                    endDateInput.value = endDate ? endDate.toISOString().split('T')[0] : '';
-                }
-
-                if(datePreset) {
-                    datePreset.addEventListener('change', function() {
-                        setDateRange(this.value);
-                        // Construct the URL with all form parameters and redirect
-                        const params = new URLSearchParams(new FormData(form));
-                        window.location.href = `{{ route('adhoc-tasks.index') }}?${params.toString()}`;
-                    });
+                    startDateInput.value = toYMD(startDate);
+                    endDateInput.value = toYMD(endDate);
                 }
 
                 function syncDatePreset() {
@@ -234,32 +241,35 @@
                     const presets = ['weekly', 'monthly', 'quarterly', 'semesterly', 'yearly'];
 
                     for (const preset of presets) {
-                        const now = new Date(); // Re-initialize 'now' each loop to prevent mutation
                         let expectedStartDate, expectedEndDate;
+                        const now = new Date();
 
                         switch (preset) {
                             case 'weekly':
-                                const firstDay = new Date(now.setDate(now.getDate() - now.getDay()));
-                                expectedStartDate = firstDay.toISOString().split('T')[0];
-                                expectedEndDate = new Date(firstDay.setDate(firstDay.getDate() + 6)).toISOString().split('T')[0];
+                                const firstDay = new Date(now);
+                                firstDay.setDate(now.getDate() - now.getDay());
+                                expectedStartDate = toYMD(firstDay);
+                                const lastDay = new Date(firstDay);
+                                lastDay.setDate(firstDay.getDate() + 6);
+                                expectedEndDate = toYMD(lastDay);
                                 break;
                             case 'monthly':
-                                expectedStartDate = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-                                expectedEndDate = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+                                expectedStartDate = toYMD(new Date(now.getFullYear(), now.getMonth(), 1));
+                                expectedEndDate = toYMD(new Date(now.getFullYear(), now.getMonth() + 1, 0));
                                 break;
                             case 'quarterly':
                                 const quarter = Math.floor(now.getMonth() / 3);
-                                expectedStartDate = new Date(now.getFullYear(), quarter * 3, 1).toISOString().split('T')[0];
-                                expectedEndDate = new Date(now.getFullYear(), quarter * 3 + 3, 0).toISOString().split('T')[0];
+                                expectedStartDate = toYMD(new Date(now.getFullYear(), quarter * 3, 1));
+                                expectedEndDate = toYMD(new Date(now.getFullYear(), quarter * 3 + 3, 0));
                                 break;
                             case 'semesterly':
                                 const semester = now.getMonth() < 6 ? 0 : 6;
-                                expectedStartDate = new Date(now.getFullYear(), semester, 1).toISOString().split('T')[0];
-                                expectedEndDate = new Date(now.getFullYear(), semester + 6, 0).toISOString().split('T')[0];
+                                expectedStartDate = toYMD(new Date(now.getFullYear(), semester, 1));
+                                expectedEndDate = toYMD(new Date(now.getFullYear(), semester + 6, 0));
                                 break;
                             case 'yearly':
-                                expectedStartDate = new Date(now.getFullYear(), 0, 1).toISOString().split('T')[0];
-                                expectedEndDate = new Date(now.getFullYear(), 11, 31).toISOString().split('T')[0];
+                                expectedStartDate = toYMD(new Date(now.getFullYear(), 0, 1));
+                                expectedEndDate = toYMD(new Date(now.getFullYear(), 11, 31));
                                 break;
                         }
 
@@ -268,6 +278,14 @@
                             break;
                         }
                     }
+                }
+
+                if(datePreset) {
+                    datePreset.addEventListener('change', function() {
+                        setDateRange(this.value);
+                        const params = new URLSearchParams(new FormData(form));
+                        window.location.href = `{{ route('adhoc-tasks.index') }}?${params.toString()}`;
+                    });
                 }
 
                 form.addEventListener('input', updatePrintLink);
