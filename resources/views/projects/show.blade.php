@@ -171,7 +171,7 @@
                                             <select name="task_priority_id" id="task_priority_id" class="block w-full rounded-md border-gray-300 shadow-sm text-sm">
                                                 <option value="">Semua Prioritas</option>
                                                 @foreach($priorities as $priority)
-                                                    <option value="{{ $priority->id }}" @selected(request('task_priority_id') == $priority->id)>{{ $priority->label }}</option>
+                                                    <option value="{{ $priority->id }}" @selected(request('task_priority_id') == $priority->id)>{{ $priority->name }}</option>
                                                 @endforeach
                                             </select>
                                         </div>
