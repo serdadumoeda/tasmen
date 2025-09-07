@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use App\Models\TaskStatus;
-use App\Enums\TaskStatusKey;
 
 class TaskStatusSeeder extends Seeder
 {
@@ -18,10 +17,10 @@ class TaskStatusSeeder extends Seeder
         DB::table('task_statuses')->truncate();
 
         $statuses = [
-            ['key' => TaskStatusKey::PENDING->value, 'label' => 'Menunggu'],
-            ['key' => TaskStatusKey::IN_PROGRESS->value, 'label' => 'Dikerjakan'],
-            ['key' => TaskStatusKey::FOR_REVIEW->value, 'label' => 'Perlu Direview'],
-            ['key' => TaskStatusKey::COMPLETED->value, 'label' => 'Selesai'],
+            ['key' => 'pending', 'label' => 'Menunggu'],
+            ['key' => 'in_progress', 'label' => 'Dikerjakan'],
+            ['key' => 'for_review', 'label' => 'Perlu Direview'],
+            ['key' => 'completed', 'label' => 'Selesai'],
         ];
 
         foreach ($statuses as $status) {
