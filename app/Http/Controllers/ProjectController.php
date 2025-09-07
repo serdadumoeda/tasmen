@@ -530,8 +530,31 @@ class ProjectController extends Controller
             ];
         });
 
+        // Get National Holidays and Collective Leaves as background events
+        $nationalHolidays = \App\Models\NationalHoliday::whereYear('date', now()->year)
+            ->get()
+            ->map(fn($holiday) => [
+                'title' => $holiday->name,
+                'start' => $holiday->date->format('Y-m-d'),
+                'allDay' => true,
+                'color' => '#EF4444', // Red
+                'display' => 'background',
+            ]);
+
+        $collectiveLeaves = \App\Models\CutiBersama::whereYear('date', now()->year)
+            ->get()
+            ->map(fn($leave) => [
+                'title' => $leave->name,
+                'start' => $leave->date->format('Y-m-d'),
+                'allDay' => true,
+                'color' => '#10B981', // Green
+                'display' => 'background',
+            ]);
+
+        $finalEvents = $events->concat($nationalHolidays)->concat($collectiveLeaves);
+
         if ($project->start_date && $project->end_date) {
-            $events->prepend([
+            $finalEvents->prepend([
                 'id' => 'project_duration',
                 'title' => 'Durasi Proyek',
                 'start' => $project->start_date->format('Y-m-d'),
@@ -541,7 +564,7 @@ class ProjectController extends Controller
             ]);
         }
 
-        return response()->json($events);
+        return response()->json($finalEvents);
     }
 
     public function showWorkflow(PageTitleService $pageTitleService, BreadcrumbService $breadcrumbService)

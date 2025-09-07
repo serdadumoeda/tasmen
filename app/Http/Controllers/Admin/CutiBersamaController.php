@@ -4,7 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\CutiBersama;
+use App\Models\NationalHoliday;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
+use Carbon\Carbon;
 
 class CutiBersamaController extends Controller
 {
@@ -60,5 +63,55 @@ class CutiBersamaController extends Controller
     public function showWorkflow()
     {
         return view('admin.cuti_bersama.workflow');
+    }
+
+    public function import(Request $request)
+    {
+        $year = $request->input('year', Carbon::now()->year);
+        $response = Http::get("https://libur.deno.dev/api?year={$year}");
+
+        if ($response->failed()) {
+            return back()->with('error', 'Gagal mengambil data dari API hari libur.');
+        }
+
+        $holidays = $response->json();
+        $importedCutiBersama = 0;
+        $importedNationalHolidays = 0;
+        $skippedCount = 0;
+
+        if (is_null($holidays)) {
+            return back()->with('error', 'Gagal memproses data dari API. Data tidak valid.');
+        }
+
+        foreach ($holidays as $holiday) {
+            // Basic validation for the holiday data structure
+            if (!isset($holiday['date']) || !isset($holiday['name'])) {
+                $skippedCount++;
+                continue;
+            }
+
+            $isCutiBersama = str_contains(strtolower($holiday['name']), 'cuti bersama');
+
+            if ($isCutiBersama) {
+                CutiBersama::updateOrCreate(
+                    ['date' => $holiday['date']],
+                    ['name' => $holiday['name'], 'description' => $holiday['name']]
+                );
+                $importedCutiBersama++;
+            } else {
+                NationalHoliday::updateOrCreate(
+                    ['date' => $holiday['date']],
+                    ['name' => $holiday['name']]
+                );
+                $importedNationalHolidays++;
+            }
+        }
+
+        $message = "Impor berhasil. {$importedCutiBersama} Cuti Bersama dan {$importedNationalHolidays} Hari Libur Nasional ditambahkan/diperbarui untuk tahun {$year}.";
+        if ($skippedCount > 0) {
+            $message .= " {$skippedCount} data dilewati karena format tidak valid.";
+        }
+
+        return redirect()->route('admin.cuti_bersama.index')->with('success', $message);
     }
 }
