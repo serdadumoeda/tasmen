@@ -53,8 +53,8 @@
                                 <label for="priority_level_id" class="block text-sm font-medium text-gray-700 mb-1">Prioritas</label>
                                 <select name="priority_level_id" id="priority_level_id" class="block w-full rounded-lg border-gray-300 shadow-sm text-sm">
                                     <option value="">Semua Prioritas</option>
-                                    @foreach($priorities as $priority)
-                                        <option value="{{ $priority->id }}" @selected(request('priority_level_id') == $priority->id)>{{ $priority->label }}</option>
+                                    @foreach($priorityLevels as $priority)
+                                        <option value="{{ $priority->id }}" @selected(request('priority_level_id') == $priority->id)>{{ $priority->name }}</option>
                                     @endforeach
                                 </select>
                             </div>

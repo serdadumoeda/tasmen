@@ -69,9 +69,14 @@ class AdHocTaskController extends Controller
 
         $assignedTasks = $query->paginate(10)->withQueryString();
         $statuses = \App\Models\TaskStatus::all();
-        $priorities = \App\Models\PriorityLevel::all();
+        $priorityLevels = \App\Models\PriorityLevel::all();
 
-        return view('adhoc-tasks.index', compact('assignedTasks', 'subordinates', 'statuses', 'priorities'));
+        return view('adhoc-tasks.index', [
+            'assignedTasks' => $assignedTasks,
+            'subordinates' => $subordinates,
+            'statuses' => $statuses,
+            'priorityLevels' => $priorityLevels,
+        ]);
     }
 
     /**
