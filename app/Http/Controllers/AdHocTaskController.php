@@ -62,7 +62,8 @@ class AdHocTaskController extends Controller
         }
 
         if ($request->filled('start_date') && $request->filled('end_date')) {
-            $query->whereBetween('deadline', [$request->start_date, $request->end_date]);
+            $query->whereDate('deadline', '>=', $request->start_date)
+                  ->whereDate('deadline', '<=', $request->end_date);
         }
 
         $sortBy = $request->input('sort_by', 'deadline');
@@ -155,7 +156,8 @@ class AdHocTaskController extends Controller
         }
 
         if ($request->filled('start_date') && $request->filled('end_date')) {
-            $query->whereBetween('deadline', [$request->start_date, $request->end_date]);
+            $query->whereDate('deadline', '>=', $request->start_date)
+                  ->whereDate('deadline', '<=', $request->end_date);
         }
 
         $sortBy = $request->input('sort_by', 'deadline');
