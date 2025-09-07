@@ -226,9 +226,54 @@
                     });
                 }
 
+                function syncDatePreset() {
+                    const startDateValue = startDateInput.value;
+                    const endDateValue = endDateInput.value;
+                    if (!startDateValue || !endDateValue) return;
+
+                    const presets = ['weekly', 'monthly', 'quarterly', 'semesterly', 'yearly'];
+
+                    for (const preset of presets) {
+                        const now = new Date(); // Re-initialize 'now' each loop to prevent mutation
+                        let expectedStartDate, expectedEndDate;
+
+                        switch (preset) {
+                            case 'weekly':
+                                const firstDay = new Date(now.setDate(now.getDate() - now.getDay()));
+                                expectedStartDate = firstDay.toISOString().split('T')[0];
+                                expectedEndDate = new Date(firstDay.setDate(firstDay.getDate() + 6)).toISOString().split('T')[0];
+                                break;
+                            case 'monthly':
+                                expectedStartDate = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+                                expectedEndDate = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+                                break;
+                            case 'quarterly':
+                                const quarter = Math.floor(now.getMonth() / 3);
+                                expectedStartDate = new Date(now.getFullYear(), quarter * 3, 1).toISOString().split('T')[0];
+                                expectedEndDate = new Date(now.getFullYear(), quarter * 3 + 3, 0).toISOString().split('T')[0];
+                                break;
+                            case 'semesterly':
+                                const semester = now.getMonth() < 6 ? 0 : 6;
+                                expectedStartDate = new Date(now.getFullYear(), semester, 1).toISOString().split('T')[0];
+                                expectedEndDate = new Date(now.getFullYear(), semester + 6, 0).toISOString().split('T')[0];
+                                break;
+                            case 'yearly':
+                                expectedStartDate = new Date(now.getFullYear(), 0, 1).toISOString().split('T')[0];
+                                expectedEndDate = new Date(now.getFullYear(), 11, 31).toISOString().split('T')[0];
+                                break;
+                        }
+
+                        if (startDateValue === expectedStartDate && endDateValue === expectedEndDate) {
+                            datePreset.value = preset;
+                            break;
+                        }
+                    }
+                }
+
                 form.addEventListener('input', updatePrintLink);
                 form.addEventListener('change', updatePrintLink);
                 updatePrintLink();
+                syncDatePreset();
             });
         </script>
     @endpush
