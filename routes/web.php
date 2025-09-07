@@ -124,9 +124,6 @@ Route::middleware(['auth'])->group(function () {
         ->except(['show'])
         ->parameters(['budget-items' => 'budgetItem']);
 
-    Route::resource('special-assignments', SpecialAssignmentController::class)->except(['show']);
-    Route::get('/special-assignments/workflow', [SpecialAssignmentController::class, 'showWorkflow'])->name('special-assignments.workflow');
-
     // Rute untuk Ad-Hoc Tasks (Tugas Harian)
     Route::prefix('adhoc-tasks')->name('adhoc-tasks.')->group(function() {
         Route::get('/', [AdHocTaskController::class, 'index'])->name('index');
@@ -139,6 +136,9 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/{task}', [TaskController::class, 'update'])->name('update');
         Route::delete('/{task}', [TaskController::class, 'destroy'])->name('destroy');
     });
+
+    Route::resource('special-assignments', SpecialAssignmentController::class)->except(['show']);
+    Route::get('/special-assignments/workflow', [SpecialAssignmentController::class, 'showWorkflow'])->name('special-assignments.workflow');
 
     Route::post('/tasks/{task}/approve', [\App\Http\Controllers\TaskController::class, 'approve'])->name('tasks.approve')->middleware('auth');
     Route::post('/tasks/{task}/quick-complete', [\App\Http\Controllers\TaskController::class, 'quickComplete'])->name('tasks.quick-complete')->middleware('auth');

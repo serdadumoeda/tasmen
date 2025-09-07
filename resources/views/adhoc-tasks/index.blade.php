@@ -177,10 +177,8 @@
 
                 function updatePrintLink() {
                     const baseUrl = "{{ route('adhoc-tasks.print-report') }}";
-                    const formData = new FormData(form);
-                    const params = new URLSearchParams(formData);
-                    params.delete('_token');
-                    printBtn.href = `${baseUrl}?${params.toString()}`;
+                    const currentQueryString = window.location.search;
+                    printBtn.href = baseUrl + currentQueryString;
                 }
 
                 function setDateRange(preset) {

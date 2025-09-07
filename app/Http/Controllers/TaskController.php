@@ -13,7 +13,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Notification;
 use App\Notifications\TaskRequiresApproval;
-use App\Enums\TaskStatusKey;
 use App\Models\SubTask;
 use App\Models\Unit; // Tambahkan model Unit
 use App\Services\BreadcrumbService;
@@ -37,7 +36,7 @@ class TaskController extends Controller
         ]);
 
         // Get the default status for a new task
-        $defaultStatus = \App\Models\TaskStatus::where('key', TaskStatusKey::PENDING->value)->first();
+        $defaultStatus = \App\Models\TaskStatus::where('key', 'pending')->first();
 
         $task = $project->tasks()->create([
             'title' => $validated['title'],
@@ -129,9 +128,9 @@ class TaskController extends Controller
         if($task->project_id){
             $user = auth()->user();
             // Jika progress 100% dan status sebelumnya BUKAN 'completed', jalankan alur persetujuan.
-            if ((int)$validated['progress'] === 100 && $task->status->key !== TaskStatusKey::COMPLETED->value) {
-                $forReviewStatus = \App\Models\TaskStatus::where('key', TaskStatusKey::FOR_REVIEW->value)->first();
-                $completedStatus = \App\Models\TaskStatus::where('key', TaskStatusKey::COMPLETED->value)->first();
+            if ((int)$validated['progress'] === 100 && $task->status->key !== 'completed') {
+                $forReviewStatus = \App\Models\TaskStatus::where('key', 'for_review')->first();
+                $completedStatus = \App\Models\TaskStatus::where('key', 'completed')->first();
 
                 if ($user->id !== $task->project->leader_id && $user->id !== $task->project->owner_id) {
                     $task->task_status_id = $forReviewStatus->id;
@@ -195,7 +194,7 @@ class TaskController extends Controller
         // Otorisasi: Hanya user yang berhak bisa menyetujui
         $this->authorize('approve', $task);
 
-        $completedStatus = \App\Models\TaskStatus::where('key', TaskStatusKey::COMPLETED->value)->firstOrFail();
+        $completedStatus = \App\Models\TaskStatus::where('key', 'completed')->firstOrFail();
 
         // Setujui tugasnya
         $task->update([
@@ -212,7 +211,7 @@ class TaskController extends Controller
         $this->authorize('update', $task);
 
         $validated = $request->validate([
-            'status' => ['required', 'string', Rule::in(array_column(TaskStatusKey::cases(), 'value'))],
+            'status' => ['required', 'string', 'exists:task_statuses,key'],
         ]);
 
         $newStatusKey = $validated['status'];
@@ -220,9 +219,9 @@ class TaskController extends Controller
         
         $task->task_status_id = $newStatus->id;
 
-        if ($newStatus->key === TaskStatusKey::COMPLETED->value) {
+        if ($newStatus->key === 'completed') {
             $task->progress = 100;
-        } elseif ($newStatus->key === TaskStatusKey::PENDING->value) {
+        } elseif ($newStatus->key === 'pending') {
             $task->progress = 0;
         }
         // The arbitrary "90" has been removed. Progress should be recalculated
@@ -297,7 +296,7 @@ class TaskController extends Controller
     {
         $this->authorize('update', $task);
 
-        $completedStatus = \App\Models\TaskStatus::where('key', TaskStatusKey::COMPLETED->value)->firstOrFail();
+        $completedStatus = \App\Models\TaskStatus::where('key', 'completed')->firstOrFail();
 
         // Don't do anything if the task is already complete
         if ($task->task_status_id === $completedStatus->id) {
