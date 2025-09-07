@@ -3,9 +3,10 @@
 @php
     $baseClasses = 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full';
     $colorClasses = '';
-    $displayText = \Illuminate\Support\Str::title(str_replace('_', ' ', $status));
+    $statusValue = is_object($status) ? $status->value : $status;
+    $displayText = \Illuminate\Support\Str::title(str_replace('_', ' ', $statusValue));
 
-    switch (strtolower($status)) {
+    switch (strtolower($statusValue)) {
         case 'approved':
         case 'completed':
         case 'selesai':
@@ -29,7 +30,7 @@
         case 'approved_by_supervisor':
         case 'aktif':
             $colorClasses = 'bg-blue-100 text-blue-800';
-            if ($status === 'approved_by_supervisor') {
+            if ($statusValue === 'approved_by_supervisor') {
                 $displayText = 'Disetujui Atasan';
             }
             break;
