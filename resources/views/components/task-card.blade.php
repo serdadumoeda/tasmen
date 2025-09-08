@@ -46,15 +46,6 @@
         </div>
     </div>
 
-    {{-- Task Description --}}
-    @if($task->description)
-    <div class="mt-2 pt-2 border-t border-gray-100">
-        <p class="text-sm text-gray-600">
-            {{ Str::limit($task->description, 180) }}
-        </p>
-    </div>
-    @endif
-
     {{-- Progress Bar --}}
     <div class="mt-2">
         <div class="flex justify-between mb-1 items-center">

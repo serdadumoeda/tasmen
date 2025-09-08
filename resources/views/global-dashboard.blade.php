@@ -105,7 +105,11 @@
                     <!-- Daftar Kegiatan -->
                     @forelse ($allProjects as $project)
                         @php
-                            $completionPercentage = ($project->tasks_count > 0) ? round(($project->completed_tasks_count / $project->tasks_count) * 100) : 0;
+                            // Kalkulasi ini bisa dipindahkan ke model jika sering digunakan
+                            $totalTasks = $project->tasks->count();
+                            $completedTasks = $project->tasks->where('status', 'completed')->count();
+                            $completionPercentage = ($totalTasks > 0) ? round(($completedTasks / $totalTasks) * 100) : 0;
+                            // Menggunakan status dinamis dari model Project
                             $statusInfo = $project->status;
                             $statusClass = $project->getStatusColorClassAttribute();
                         @endphp
@@ -120,15 +124,12 @@
                              <p class="text-sm text-gray-500 mb-3">
                                 <i class="fas fa-crown mr-2 text-gray-400"></i>Pemilik: <span class="font-medium text-gray-700">{{ $project->owner->name }}</span>
                             </p>
-                            <p class="text-sm text-gray-600 mb-4 border-l-4 border-gray-200 pl-3">
-                                {{ Str::limit($project->description, 150) }}
-                            </p>
                             <div class="w-full bg-gray-200 rounded-full h-2.5">
                                 <div class="bg-indigo-600 h-2.5 rounded-full" style="width: {{ $completionPercentage }}%"></div>
                             </div>
                             <div class="flex justify-between text-xs text-gray-500 mt-1">
                                 <span>Progress: {{ $completionPercentage }}%</span>
-                                <span>{{ $project->completed_tasks_count }} / {{ $project->tasks_count }} Tugas Selesai</span>
+                                <span>{{ $completedTasks }} / {{ $totalTasks }} Tugas Selesai</span>
                             </div>
                         </a>
                     @empty
