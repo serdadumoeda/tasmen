@@ -40,7 +40,11 @@
                         </div>
 
                         <div class="flex justify-end">
-                            <a href="{{ route('admin.units.edit', $unit) }}" class="mr-4 inline-flex items-center px-4 py-2 bg-gray-200 border border-transparent rounded-md font-semibold text-xs text-gray-800 uppercase tracking-widest hover:bg-gray-300">Batal</a>
+                            @if(isset($user) && $user)
+                                <a href="{{ route('users.edit', $user) }}" class="mr-4 inline-flex items-center px-4 py-2 bg-gray-200 border border-transparent rounded-md font-semibold text-xs text-gray-800 uppercase tracking-widest hover:bg-gray-300">Batal</a>
+                            @else
+                                <a href="{{ route('admin.units.edit', $unit) }}" class="mr-4 inline-flex items-center px-4 py-2 bg-gray-200 border border-transparent rounded-md font-semibold text-xs text-gray-800 uppercase tracking-widest hover:bg-gray-300">Batal</a>
+                            @endif
                             <button type="submit" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700">Simpan Perubahan</button>
                         </div>
                     </form>
