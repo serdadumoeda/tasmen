@@ -455,49 +455,6 @@ class User extends Authenticatable
         return $validParentRolesMap[$subordinateRole] ?? null;
     }
 
-    /**
-     * Get the list of available roles for assignment.
-     *
-     * @return array
-     */
-    public static function getAvailableRoles(): array
-    {
-        // This could also query the roles table, but a static list is fine for now.
-        return ['Staf', 'Sub Koordinator', 'Koordinator', 'Eselon IV', 'Eselon III', 'Eselon II', 'Eselon I', 'Menteri', 'Superadmin'];
-    }
-
-    /**
-     * Recalculate and save the user's role based on their current Jabatan.
-     *
-     * @param User $user
-     * @return void
-     */
-    public static function recalculateAndSaveRole(User $user): void
-    {
-        $user->load('jabatan');
-
-        $newRoleName = 'Staf'; // Default to 'Staf' if no specific role is found
-
-        if ($user->jabatan && $user->jabatan->role) {
-            $newRoleName = $user->jabatan->role;
-        }
-
-        // Find the role model by name
-        $newRole = Role::where('name', $newRoleName)->first();
-
-        if ($newRole) {
-            // Sync the new role, replacing any old ones.
-            $user->roles()->sync([$newRole->id]);
-        } else {
-            // If the role from Jabatan is not found in the roles table,
-            // default to Staf as a fallback.
-            $stafRole = Role::where('name', 'Staf')->first();
-            if ($stafRole) {
-                $user->roles()->sync([$stafRole->id]);
-            }
-        }
-    }
-
     public function leaveRequests() { return $this->hasMany(LeaveRequest::class); }
     public function leaveBalances() { return $this->hasMany(LeaveBalance::class); }
 
