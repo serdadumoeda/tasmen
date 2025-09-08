@@ -147,12 +147,13 @@ class OrganizationalDataImporterService
 
         // Priority 2: If no structural role, infer from unit depth.
         if (!$roleName) {
+            // The `ancestors()` method includes the unit itself, so the depth count is 1-based.
             $depth = $unit->ancestors()->count();
             $roleName = match ($depth) {
-                1 => 'Eselon I',
-                2 => 'Eselon II',
-                3 => 'Koordinator',
-                4 => 'Sub Koordinator',
+                2 => 'Eselon I',
+                3 => 'Eselon II',
+                4 => 'Koordinator',
+                5 => 'Sub Koordinator',
                 default => 'Staf',
             };
         }

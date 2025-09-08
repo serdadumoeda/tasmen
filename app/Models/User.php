@@ -463,6 +463,7 @@ class User extends Authenticatable
      */
     public static function syncRoleFromUnit(User $user): void
     {
+        $user->load('unit'); // Explicitly reload the relationship to prevent using stale data.
         if (!$user->unit) {
             $stafRole = Role::where('name', 'Staf')->first();
             if ($stafRole) {
