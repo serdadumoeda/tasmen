@@ -253,6 +253,8 @@ Route::middleware(['auth', 'superadmin'])->prefix('admin')->name('admin.')->grou
     Route::get('units/workflow', [UnitController::class, 'showWorkflow'])->name('units.workflow');
     Route::resource('units', UnitController::class);
     Route::post('units/{unit}/jabatans', [UnitController::class, 'storeJabatan'])->name('units.jabatans.store');
+    Route::get('jabatans/{jabatan}/edit', [UnitController::class, 'editJabatan'])->name('jabatans.edit');
+    Route::put('jabatans/{jabatan}', [UnitController::class, 'updateJabatan'])->name('jabatans.update');
     Route::delete('jabatans/{jabatan}', [UnitController::class, 'destroyJabatan'])->name('jabatans.destroy');
 
     // User Import Routes
