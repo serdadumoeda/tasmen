@@ -16,15 +16,13 @@
     </div>
 
     @if (Auth::user()->canManageUsers())
-        <div>
-            <label for="assignees" class="block font-semibold text-sm text-gray-700 mb-1">Tugaskan Kepada <span class="text-red-500">*</span></label>
-            {{-- MODIFIKASI: Ganti kelas menjadi tom-select-multiple --}}
-            <select name="assignees[]" id="assignees" class="tom-select-multiple" multiple required placeholder="Pilih anggota tim...">
-                @php
-                    $assignedUserIds = old('assignees', isset($task) ? $task->assignees->pluck('id')->all() : []);
-                @endphp
+        <div class="relative z-20">
+            <label for="assignees" class="block font-semibold text-sm text-gray-700 mb-1">
+                <i class="fas fa-users-line mr-2 text-gray-500"></i> Ditugaskan Kepada <span class="text-red-500">*</span>
+            </label>
+            <select name="assignees[]" id="assignees" class="block mt-1 w-full tom-select-multiple" multiple required placeholder="Pilih Anggota Tim...">
                 @foreach ($assignableUsers as $member)
-                    <option value="{{ $member->id }}" @selected(in_array($member->id, $assignedUserIds))>
+                    <option value="{{ $member->id }}" @selected(in_array($member->id, old('assignees', (isset($task) && $task->assignees) ? $task->assignees->pluck('id')->all() : [])))>
                         {{ $member->name }}
                     </option>
                 @endforeach

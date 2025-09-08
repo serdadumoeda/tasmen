@@ -118,4 +118,45 @@
             </div>
         </div>
     </div>
+
+    <x-slot name="styles">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.min.css">
+        <style>
+            .ts-control {
+                border-radius: 0.5rem;
+                border-color: #d1d5db;
+                padding: 0.5rem 0.75rem;
+            }
+            .ts-control .item {
+                background-color: #4f46e5;
+                color: white;
+                border-radius: 0.25rem;
+                font-weight: 500;
+                padding: 0.25rem 0.5rem;
+                margin: 0.125rem;
+            }
+        </style>
+    </x-slot>
+
+    @push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (document.getElementById('penerima_id')) {
+                new TomSelect('#penerima_id',{
+                    plugins: ['remove_button'],
+                    create: false,
+                    placeholder: 'Pilih satu atau lebih tujuan...'
+                });
+            }
+            if (document.getElementById('tembusan_id')) {
+                new TomSelect('#tembusan_id',{
+                    plugins: ['remove_button'],
+                    create: false,
+                    placeholder: 'Pilih satu atau lebih tembusan...'
+                });
+            }
+        });
+    </script>
+    @endpush
 </x-app-layout>
