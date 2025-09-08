@@ -13,7 +13,6 @@ return new class extends Migration
     {
         Schema::table('jabatans', function (Blueprint $table) {
             $table->string('role')->nullable()->after('name');
-            $table->boolean('can_manage_users')->default(false)->after('role');
         });
     }
 
@@ -24,7 +23,6 @@ return new class extends Migration
     {
         Schema::table('jabatans', function (Blueprint $table) {
             $table->dropColumn('role');
-            $table->dropColumn('can_manage_users');
         });
     }
 };
