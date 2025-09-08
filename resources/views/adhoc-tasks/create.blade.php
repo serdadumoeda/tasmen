@@ -38,7 +38,7 @@
         </div>
     </div>
 
-    @push('styles')
+    <x-slot name="styles">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.min.css">
     <style>
         .ts-control {
@@ -80,7 +80,7 @@
             color: #1e3a8a; /* indigo-900 */
         }
     </style>
-    @endpush
+    </x-slot>
 
     @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
