@@ -66,16 +66,13 @@
                                         @endif
                                     </p>
                                 </div>
-                                <div class="flex items-center space-x-4">
-                                    <a href="{{ route('admin.jabatans.edit', $jabatan) }}" class="text-indigo-600 hover:text-indigo-900 text-sm font-medium">Edit</a>
-                                    @if(!$jabatan->user_id)
-                                        <form action="{{ route('admin.jabatans.destroy', $jabatan) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus jabatan ini?');">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="text-red-500 hover:text-red-700 text-sm font-medium">Hapus</button>
-                                        </form>
-                                    @endif
-                                </div>
+                                @if(!$jabatan->user_id)
+                                    <form action="{{ route('admin.jabatans.destroy', $jabatan) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus jabatan ini?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="text-red-500 hover:text-red-700 text-sm font-medium">Hapus</button>
+                                    </form>
+                                @endif
                             </li>
                         @empty
                             <li class="text-center text-gray-500 py-4">Belum ada jabatan yang didefinisikan untuk unit ini.</li>

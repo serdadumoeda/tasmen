@@ -213,22 +213,16 @@ class UnitController extends Controller
         return back()->with('success', 'Jabatan berhasil ditambahkan.');
     }
 
-    /**
-     * Menampilkan form untuk mengedit jabatan.
-     */
     public function editJabatan(\App\Models\Jabatan $jabatan)
     {
         $unit = $jabatan->unit;
         $this->authorize('update', $unit);
-
         $availableRoles = User::getAvailableRoles();
+        $user = $jabatan->user; // Pass user to view if it exists
 
-        return view('admin.jabatans.edit', compact('jabatan', 'unit', 'availableRoles'));
+        return view('admin.jabatans.edit', compact('jabatan', 'unit', 'user', 'availableRoles'));
     }
 
-    /**
-     * Memperbarui data jabatan.
-     */
     public function updateJabatan(Request $request, \App\Models\Jabatan $jabatan)
     {
         $unit = $jabatan->unit;
@@ -246,15 +240,11 @@ class UnitController extends Controller
         $jabatan->role = $validated['role'];
         $jabatan->save();
 
-        // Jika role jabatan berubah dan ada pengguna yang menempatinya, update role pengguna tersebut.
-        if ($oldRole !== $validated['role'] && $jabatan->user_id) {
-            $jabatan->load('user'); // Eager load user relationship
-            if($jabatan->user) {
-                User::recalculateAndSaveRole($jabatan->user);
-            }
+        if ($oldRole !== $validated['role'] && $jabatan->user) {
+            User::recalculateAndSaveRole($jabatan->user);
         }
 
-        return redirect()->route('admin.units.edit', $unit)->with('success', 'Jabatan berhasil diperbarui.');
+        return back()->with('success', 'Jabatan berhasil diperbarui.');
     }
 
     public function destroyJabatan(\App\Models\Jabatan $jabatan)
