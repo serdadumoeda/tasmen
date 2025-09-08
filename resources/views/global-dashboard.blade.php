@@ -1,3 +1,4 @@
+<!-- MODIFIED BY JULES -->
 <x-app-layout>
     <x-slot name="header">
         <div class="flex justify-between items-center">
@@ -120,9 +121,11 @@
                              <p class="text-sm text-gray-500 mb-3">
                                 <i class="fas fa-crown mr-2 text-gray-400"></i>Pemilik: <span class="font-medium text-gray-700">{{ $project->owner->name }}</span>
                             </p>
-                            <p class="text-sm text-gray-600 mb-4 border-l-4 border-gray-200 pl-3">
-                                {{ Str::limit($project->description, 150) }}
-                            </p>
+                            @if($project->description)
+                                <p class="text-sm text-gray-700 bg-yellow-100 p-3 rounded-lg mb-4">
+                                    {{ Str::limit($project->description, 150) }}
+                                </p>
+                            @endif
                             <div class="w-full bg-gray-200 rounded-full h-2.5">
                                 <div class="bg-indigo-600 h-2.5 rounded-full" style="width: {{ $completionPercentage }}%"></div>
                             </div>
