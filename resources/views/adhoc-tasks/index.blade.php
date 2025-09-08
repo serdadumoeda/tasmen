@@ -130,13 +130,6 @@
                                         </a>
                                     </div>
                                 </div>
-                                @if($task->description)
-                                    <div class="mt-4 pt-4 border-t border-gray-100">
-                                        <p class="text-sm text-gray-700">
-                                            {{ Str::limit($task->description, 200) }}
-                                        </p>
-                                    </div>
-                                @endif
                                 <div class="mt-4">
                                     <div class="flex justify-between mb-2 items-center">
                                         <span class="text-base font-semibold text-blue-700">Progress</span>

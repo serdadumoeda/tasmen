@@ -87,19 +87,14 @@
                                 <x-status-badge :status="$project->status" />
                             </div>
                             <p class="text-sm text-gray-600">Ketua: {{ $project->leader->name }}</p>
+                            {{-- The budget sum is now eager-loaded via withSum for efficiency. --}}
                             <p class="text-sm text-gray-500">Anggaran: Rp. {{ number_format($project->budget_items_sum_total_cost ?? 0, 0, ',', '.') }}</p>
-                            @if($project->description)
-                                <p class="text-sm text-gray-500 mt-2 mb-3 border-l-4 border-gray-200 pl-3">
-                                    {{ Str::limit($project->description, 100) }}
-                                </p>
-                            @endif
-                            @php
-                                $progress = ($project->tasks_count > 0) ? round(($project->completed_tasks_count / $project->tasks_count) * 100) : 0;
-                            @endphp
                             <div class="w-full bg-gray-200 h-2 mt-3 rounded-full">
-                                <div class="bg-cyan-600 h-2 rounded-full" style="width: {{ $progress }}%"></div>
+                                {{-- Use the `progress` accessor from the Project model. --}}
+                                <div class="bg-cyan-600 h-2 rounded-full" style="width: {{ $project->progress }}%"></div>
                             </div>
-                            <p class="text-sm text-right text-gray-500 mt-1">{{ $project->completed_tasks_count }} / {{ $project->tasks_count }} Tugas</p>
+                            {{-- Use the eager-loaded tasks relationship for counts. --}}
+                            <p class="text-sm text-right text-gray-500 mt-1">{{ $project->tasks->where('status', 'completed')->count() }} / {{ $project->tasks->count() }} Tugas</p>
                         </a>
                     @endforeach
                 @else

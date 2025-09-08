@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Schema;
 use App\Services\OrganizationalDataImporterService;
 use App\Models\Role;
 use App\Models\User;
@@ -22,13 +23,7 @@ class OrganizationalDataSeeder extends Seeder
     {
         $this->command->info('--- Starting Organizational Data Seeding ---');
 
-        $dbDriver = DB::connection()->getDriverName();
-
-        if ($dbDriver === 'mysql') {
-            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
-        } elseif ($dbDriver === 'pgsql') {
-            DB::statement("SET session_replication_role = 'replica';");
-        }
+        Schema::disableForeignKeyConstraints();
 
         // Truncate tables for a clean slate
         User::truncate();
@@ -53,12 +48,7 @@ class OrganizationalDataSeeder extends Seeder
             $importer->processData($data);
         });
         
-        // Re-enable foreign key checks
-        if ($dbDriver === 'mysql') {
-            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
-        } elseif ($dbDriver === 'pgsql') {
-            DB::statement("SET session_replication_role = 'origin';");
-        }
+        Schema::enableForeignKeyConstraints();
         
         // Create a default Super Admin user
         $superAdminRole = Role::where('name', 'Superadmin')->first();
