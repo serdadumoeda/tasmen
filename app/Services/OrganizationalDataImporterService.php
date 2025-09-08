@@ -103,6 +103,11 @@ class OrganizationalDataImporterService
             'Unit Kerja Koordinator', 'Unit Kerja Sub Koordinator'
         ];
 
+        // Determine the type based on "Jenis Jabatan". Default to Fungsional.
+        $unitType = (isset($item->{'Jenis Jabatan'}) && $item->{'Jenis Jabatan'} === 'Struktural')
+            ? 'Struktural'
+            : 'Fungsional';
+
         $parentUnitId = null;
         $lastUnit = null;
 
@@ -110,15 +115,12 @@ class OrganizationalDataImporterService
             $unitName = trim($item->{$field} ?? '');
             if (empty($unitName)) continue;
 
-            $cacheKey = $parentUnitId . '_' . $unitName;
-            if (isset($this->unitCache[$cacheKey])) {
-                $unit = Unit::find($this->unitCache[$cacheKey]);
-            } else {
-                $unit = Unit::firstOrCreate(
-                    ['name' => $unitName, 'parent_unit_id' => $parentUnitId]
-                );
-                $this->unitCache[$cacheKey] = $unit->id;
-            }
+            // Use updateOrCreate to ensure the type is set, even if the unit already exists.
+            $unit = Unit::updateOrCreate(
+                ['name' => $unitName, 'parent_unit_id' => $parentUnitId],
+                ['type' => $unitType]
+            );
+
             $parentUnitId = $unit->id;
             $lastUnit = $unit;
         }

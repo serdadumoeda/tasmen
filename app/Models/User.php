@@ -475,16 +475,19 @@ class User extends Authenticatable
         $newRoleName = 'Staf'; // Default role
 
         if ($isHeadOfUnit) {
+            // The `ancestors()` method includes the unit itself, so the depth count is off by 1.
+            // A top-level unit has 1 ancestor (itself). A child of it has 2, and so on.
+            // We adjust the depth check to match this 1-based index.
             $depth = $user->unit->ancestors()->count();
             $isStruktural = $user->unit->type === 'Struktural';
 
             $newRoleName = match (true) {
-                $depth === 1 => 'Eselon I',
-                $depth === 2 => 'Eselon II',
-                $depth === 3 && $isStruktural => 'Eselon III',
-                $depth === 3 && !$isStruktural => 'Koordinator',
-                $depth === 4 && $isStruktural => 'Eselon IV',
-                $depth === 4 && !$isStruktural => 'Sub Koordinator',
+                $depth === 2 => 'Eselon I', // Level 1 parent + self = 2
+                $depth === 3 => 'Eselon II', // Level 2 parents + self = 3
+                $depth === 4 && $isStruktural => 'Eselon III',
+                $depth === 4 && !$isStruktural => 'Koordinator',
+                $depth === 5 && $isStruktural => 'Eselon IV',
+                $depth === 5 && !$isStruktural => 'Sub Koordinator',
                 default => 'Staf',
             };
         }
