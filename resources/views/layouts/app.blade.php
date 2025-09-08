@@ -54,7 +54,7 @@
         @include('partials.about-us-modal') 
 
         <footer class="w-full text-center py-4 bg-gray-100 border-t border-gray-200 text-gray-500 text-sm">
-            &copy; Pusdatik - <span class="font-bold text-indigo-700">PSI 2025</span>
+            &copy; Pusdatik - <span class="font-bold text-indigo-700">ABS 2025</span>
         </footer>
     </div>
 
