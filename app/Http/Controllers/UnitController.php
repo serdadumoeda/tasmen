@@ -117,13 +117,13 @@ class UnitController extends Controller
             if ($oldKepalaUnitId) {
                 $oldKepala = \App\Models\User::find($oldKepalaUnitId);
                 if ($oldKepala) {
-                    \App\Models\User::recalculateAndSaveRole($oldKepala);
+                    \App\Models\User::syncRoleFromUnit($oldKepala);
                 }
             }
             if ($newKepalaUnitId) {
                 $newKepala = \App\Models\User::find($newKepalaUnitId);
                 if ($newKepala) {
-                    \App\Models\User::recalculateAndSaveRole($newKepala);
+                    \App\Models\User::syncRoleFromUnit($newKepala);
                 }
             }
         }
