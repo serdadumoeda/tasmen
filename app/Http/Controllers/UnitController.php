@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Delegation;
 use App\Models\Jabatan;
 use App\Models\User;
+use App\Models\Role;
 use Illuminate\Validation\ValidationException;
 
 class UnitController extends Controller
@@ -109,13 +110,15 @@ class UnitController extends Controller
         // Fetch users eligible for delegation (same role level as the unit's expected head role)
         $eligibleDelegates = collect();
         if (!$unit->kepala_unit_id) {
-            // Use the same logic as for the main dropdown to find the expected role
-            $expectedRoleForDelegation = $unit->getExpectedHeadRole();
-            if ($expectedRoleForDelegation) {
-                // Correctly query the roles relationship
-                $eligibleDelegates = User::whereHas('roles', function ($query) use ($expectedRoleForDelegation) {
-                    $query->where('name', $expectedRoleForDelegation);
-                })->orderBy('name')->get();
+            $expectedRoleName = $unit->getExpectedHeadRole();
+            if ($expectedRoleName) {
+                // More direct query to ensure correctness
+                $role = Role::where('name', $expectedRoleName)->first();
+                if ($role) {
+                    $eligibleDelegates = User::whereHas('roles', function ($query) use ($role) {
+                        $query->where('role_id', $role->id);
+                    })->orderBy('name')->get();
+                }
             }
         }
 
