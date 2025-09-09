@@ -16,13 +16,13 @@
                         <!-- Nama Jabatan -->
                         <div class="mb-4">
                             <label for="name" class="block text-sm font-medium text-gray-700">Nama Jabatan</label>
-                            <input type="text" name="name" id="name" value="{{ old('name', $jabatan->name) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                            <input type="text" name="name" id="name" value="{{ old('name', $jabatan->name) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required>
                         </div>
 
                         <!-- Role Jabatan -->
                         <div class="mb-4">
                             <label for="role" class="block text-sm font-medium text-gray-700">Peran (Role)</label>
-                            <select name="role" id="role" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                            <select name="role" id="role" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required>
                                 @foreach($availableRoles as $role)
                                     <option value="{{ $role }}" @selected(old('role', $jabatan->role) == $role)>
                                         {{ $role }}
