@@ -98,6 +98,13 @@ class OrganizationalDataImporterService
 
     private function getOrCreateUnit(object $item): ?Unit
     {
+        // First, ensure the root "Kementerian" unit exists.
+        $rootUnitName = 'Kementerian Ketenagakerjaan';
+        $rootUnit = Unit::firstOrCreate(
+            ['name' => $rootUnitName, 'parent_unit_id' => null],
+            ['type' => 'Struktural']
+        );
+
         $unitFields = [
             'Unit Kerja Eselon I', 'Unit Kerja Eselon II',
             'Unit Kerja Koordinator', 'Unit Kerja Sub Koordinator'
@@ -108,8 +115,9 @@ class OrganizationalDataImporterService
             ? 'Struktural'
             : 'Fungsional';
 
-        $parentUnitId = null;
-        $lastUnit = null;
+        // Start the hierarchy from the root unit.
+        $parentUnitId = $rootUnit->id;
+        $lastUnit = $rootUnit; // Default to root unit if no other is specified.
 
         foreach ($unitFields as $field) {
             $unitName = trim($item->{$field} ?? '');
@@ -147,12 +155,13 @@ class OrganizationalDataImporterService
 
         // Priority 2: If no structural role, infer from unit depth.
         if (!$roleName) {
-            // The `ancestors()` method includes the unit itself, so the depth count is 1-based.
+            // The `ancestors()` method includes the unit itself. With the root 'Kementerian' unit, depths are shifted by 1.
+            // Depth 1: Kementerian, Depth 2: Eselon I, etc.
             $depth = $unit->ancestors()->count();
             $roleName = match ($depth) {
                 2 => 'Eselon I',
                 3 => 'Eselon II',
-                4 => 'Koordinator',
+                4 => 'Koordinator', // Ananto Wijoyo's unit will now have depth 4.
                 5 => 'Sub Koordinator',
                 default => 'Staf',
             };
