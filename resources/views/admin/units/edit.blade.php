@@ -48,6 +48,58 @@
                 </div>
             </div>
 
+            {{-- Card for Temporary Head (Plt./Plh.) Assignment --}}
+            @if(!$unit->kepala_unit_id)
+            <div class="mt-8 bg-yellow-50 border-2 border-yellow-200 overflow-hidden shadow-xl sm:rounded-lg">
+                <div class="p-6">
+                    <h3 class="text-lg font-semibold text-yellow-800 mb-2">
+                        <i class="fas fa-user-clock mr-2"></i>Jabatan Kepala Unit Kosong
+                    </h3>
+                    <p class="text-sm text-yellow-700 mb-4">
+                        Unit ini tidak memiliki kepala definitif. Anda dapat menunjuk Pelaksana Tugas (Plt.) atau Pelaksana Harian (Plh.) untuk mengisi posisi ini sementara.
+                    </p>
+                    <form action="{{ route('admin.units.delegation.store', $unit) }}" method="POST">
+                        @csrf
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            {{-- User Selection --}}
+                            <div>
+                                <label for="delegation_user_id" class="block text-sm font-medium text-gray-700">Pilih Pengguna <span class="text-red-500">*</span></label>
+                                <select name="user_id" id="delegation_user_id" class="mt-1 block w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500" required>
+                                    <option value="">-- Pilih Pengguna --</option>
+                                    @foreach($usersInUnit as $user)
+                                        <option value="{{ $user->id }}">{{ $user->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                             {{-- Type Selection --}}
+                            <div>
+                                <label for="delegation_type" class="block text-sm font-medium text-gray-700">Tipe <span class="text-red-500">*</span></label>
+                                <select name="type" id="delegation_type" class="mt-1 block w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500" required>
+                                    <option value="Plt">Plt (Pelaksana Tugas)</option>
+                                    <option value="Plh">Plh (Pelaksana Harian)</option>
+                                </select>
+                            </div>
+                            {{-- Start Date --}}
+                            <div>
+                                <label for="delegation_start_date" class="block text-sm font-medium text-gray-700">Tanggal Mulai <span class="text-red-500">*</span></label>
+                                <input type="date" name="start_date" id="delegation_start_date" class="mt-1 block w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500" required>
+                            </div>
+                            {{-- End Date --}}
+                            <div>
+                                <label for="delegation_end_date" class="block text-sm font-medium text-gray-700">Tanggal Selesai <span class="text-red-500">*</span></label>
+                                <input type="date" name="end_date" id="delegation_end_date" class="mt-1 block w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500" required>
+                            </div>
+                        </div>
+                        <div class="flex justify-end mt-6">
+                            <button type="submit" class="inline-flex items-center px-5 py-2.5 bg-yellow-500 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 transition ease-in-out duration-150 shadow-md">
+                                <i class="fas fa-user-plus mr-2"></i> Tetapkan Pejabat Sementara
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            @endif
+
             {{-- Card for Jabatan Management --}}
             <div class="mt-8 bg-white overflow-hidden shadow-xl sm:rounded-lg">
                 <div class="p-6 bg-white border-b border-gray-200">
