@@ -101,6 +101,23 @@ function form_textarea($label, $name, $user, $is_required = false) {
             <select name="jabatan_id" id="jabatan_id" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300" disabled><option value="">-- Pilih Unit Kerja Terakhir --</option></select>
             <p class="text-xs text-gray-500 mt-1">Jika dikosongkan, pengguna harus melengkapi profil saat login pertama.</p>
         </div>
+
+        @if($user->jabatan)
+        <div class="p-4 mt-4 bg-indigo-50 border border-indigo-200 rounded-lg">
+            <h4 class="font-semibold text-gray-800">Jabatan Saat Ini</h4>
+            <p class="text-sm text-gray-600">
+                <span class="font-medium">{{ $user->jabatan->name }}</span>
+            </p>
+            <p class="text-sm text-gray-500">
+                Peran: <span class="font-semibold">{{ $user->jabatan->role ?? 'Belum Diatur' }}</span>
+            </p>
+            <div class="mt-3">
+                <a href="{{ url('/admin/jabatans/' . $user->jabatan->id . '/edit') }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-25 transition ease-in-out duration-150">
+                    <i class="fas fa-pencil-alt mr-2"></i> Edit Jabatan & Peran
+                </a>
+            </div>
+        </div>
+        @endif
         <div class="mb-4">
             <label for="atasan_id" class="block font-semibold text-sm text-gray-700 mb-1">Atasan Langsung</label>
             <select name="atasan_id" id="atasan_id" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300">

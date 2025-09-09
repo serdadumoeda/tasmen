@@ -82,12 +82,25 @@
                     <form action="{{ route('admin.units.jabatans.store', $unit) }}" method="POST" class="border-t border-gray-200 pt-6">
                         @csrf
                         <h4 class="font-semibold text-lg text-gray-800 mb-4">Tambah Jabatan Baru</h4>
-                        <div class="grid grid-cols-1 gap-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {{-- Nama Jabatan --}}
                             <div>
-                                <label for="jabatan_name" class="block text-sm font-medium text-gray-700">Nama Jabatan Fungsional <span class="text-red-500 font-bold">*</span></label>
+                                <label for="jabatan_name" class="block text-sm font-medium text-gray-700">Nama Jabatan <span class="text-red-500 font-bold">*</span></label>
                                 <input type="text" name="name" id="jabatan_name" class="mt-1 block w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" placeholder="e.g., Pranata Komputer Muda" required>
-                                <p class="mt-1 text-xs text-gray-500">Ini adalah titel fungsional yang melekat pada pegawai, bukan peran struktural.</p>
+                            </div>
+                            {{-- Role Jabatan --}}
+                            <div>
+                                <label for="jabatan_role" class="block text-sm font-medium text-gray-700">Peran (Role) <span class="text-red-500 font-bold">*</span></label>
+                                <select name="role" id="jabatan_role" class="mt-1 block w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" required>
+                                    @php
+                                        // We need the list of roles here. We can get it from the User model.
+                                        $availableRoles = \App\Models\User::getAvailableRoles();
+                                    @endphp
+                                    <option value="">-- Pilih Peran --</option>
+                                    @foreach($availableRoles as $role)
+                                        <option value="{{ $role }}">{{ $role }}</option>
+                                    @endforeach
+                                </select>
                             </div>
                         </div>
                         <div class="mt-4">

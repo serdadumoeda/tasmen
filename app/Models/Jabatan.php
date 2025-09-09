@@ -16,6 +16,7 @@ class Jabatan extends Model
         'unit_id',
         'user_id',
         'can_manage_users',
+        'role',
     ];
 
     protected $casts = [
