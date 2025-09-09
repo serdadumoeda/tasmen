@@ -207,18 +207,16 @@ class Unit extends Model
      */
     public function getExpectedHeadRole(): ?string
     {
-        // The depth is the number of ancestors. This is 0-indexed.
-        // Root (Kementerian) has depth 0. Its children have depth 1, and so on.
+        // The depth is the number of ancestors, which is 1-based (root is 1).
         $depth = $this->ancestors()->count();
 
-        // A unit at a given depth is headed by an official of the corresponding role level.
-        // e.g., A unit at depth 1 (Eselon I unit) is headed by an 'Eselon I' official.
+        // Mapping from hierarchy depth to the expected role name for the HEAD of that unit.
         $roleMap = [
-            0 => 'Menteri',          // Depth 0 (Root) is headed by a Menteri.
-            1 => 'Eselon I',        // Depth 1 (Child of Root) is headed by an Eselon I.
-            2 => 'Eselon II',       // Depth 2 is headed by an Eselon II.
-            3 => 'Koordinator',     // Depth 3 is headed by a Koordinator.
-            4 => 'Sub Koordinator', // Depth 4 is headed by a Sub Koordinator.
+            1 => 'Menteri',          // A unit with depth 1 (root) is headed by a Menteri.
+            2 => 'Eselon I',        // A unit with depth 2 is headed by an Eselon I.
+            3 => 'Eselon II',       // A unit with depth 3 is headed by an Eselon II.
+            4 => 'Koordinator',     // A unit with depth 4 is headed by a Koordinator.
+            5 => 'Sub Koordinator', // A unit with depth 5 is headed by a Sub Koordinator.
         ];
 
         return $roleMap[$depth] ?? null;
