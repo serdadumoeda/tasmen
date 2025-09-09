@@ -64,14 +64,17 @@
                             {{-- User Selection --}}
                             <div>
                                 <label for="delegation_user_id" class="block text-sm font-medium text-gray-700">Pilih Pengguna <span class="text-red-500">*</span></label>
-                                <select name="user_id" id="delegation_user_id" class="mt-1 block w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500" required>
+                                <select name="user_id" id="delegation_user_id" class="mt-1 block w-full rounded-lg shadow-sm border-gray-300 @error('user_id') border-red-500 @enderror focus:border-indigo-500 focus:ring-indigo-500" required>
                                     <option value="">-- Pilih Pengguna --</option>
                                     @forelse($eligibleDelegates as $user)
-                                        <option value="{{ $user->id }}">{{ $user->name }}</option>
+                                        <option value="{{ $user->id }}" {{ old('user_id') == $user->id ? 'selected' : '' }}>{{ $user->name }}</option>
                                     @empty
-                                        <option value="" disabled>Tidak ada pengguna dengan level yang sama ditemukan.</option>
+                                        <option value="" disabled>Tidak ada pengguna dengan level peran yang sama ditemukan.</option>
                                     @endforelse
                                 </select>
+                                @error('user_id')
+                                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
                             </div>
                              {{-- Type Selection --}}
                             <div>
