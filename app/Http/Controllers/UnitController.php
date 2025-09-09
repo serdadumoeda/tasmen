@@ -223,7 +223,6 @@ class UnitController extends Controller
 
     public function updateJabatan(Request $request, \App\Models\Jabatan $jabatan)
     {
-        // Mendapatkan unit dari relasi jabatan
         $unit = $jabatan->unit;
         $this->authorize('update', $unit);
 
@@ -243,7 +242,9 @@ class UnitController extends Controller
             \App\Models\User::recalculateAndSaveRole($jabatan->user);
         }
 
-        // Menggunakan variabel $unit yang sudah didapatkan
+        // Get the unit from the jabatan relationship before redirecting
+        $unit = $jabatan->unit;
+
         return redirect()->route('admin.units.edit', $unit)->with('success', 'Jabatan berhasil diperbarui.');
     }
 
