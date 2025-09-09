@@ -256,7 +256,7 @@ Route::middleware(['auth', 'superadmin'])->prefix('admin')->name('admin.')->grou
     Route::post('units/{unit}/jabatans', [UnitController::class, 'storeJabatan'])->name('units.jabatans.store');
 
     // Refactored to use JabatanController
-    Route::resource('jabatans', JabatanController::class)->except(['show']);
+    Route::resource('jabatans', JabatanController::class)->except(['show', 'edit', 'update']);
 
     // User Import Routes
     Route::get('/users/import', [UserController::class, 'showImportForm'])->name('users.import.show');
