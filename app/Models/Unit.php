@@ -190,4 +190,42 @@ class Unit extends Model
             return $ancestor->ancestors()->count() === 2;
         });
     }
+
+    /**
+     * Recursive relationship to get all parent units.
+     * This is used for efficient hierarchy traversal.
+     */
+    public function parentUnitRecursive()
+    {
+        return $this->parentUnit()->with('parentUnitRecursive');
+    }
+
+    /**
+     * Determines the expected role for the head of this unit based on its hierarchy level.
+     *
+     * @return string|null The name of the role, or null if no specific role is mapped.
+     */
+    public function getExpectedHeadRole(): ?string
+    {
+        // Mapping from hierarchy level (depth) to the expected role name.
+        // Level 0 = Top level (no parent)
+        $roleMap = [
+            0 => 'Eselon I',
+            1 => 'Eselon II',
+            2 => 'Koordinator',
+            3 => 'Sub Koordinator',
+        ];
+
+        $level = 0;
+        $current = $this;
+
+        // Traverse up the hierarchy to determine the level.
+        // This is efficient if 'parentUnitRecursive' has been eager-loaded.
+        while ($current && $current->parentUnit) {
+            $level++;
+            $current = $current->parentUnit;
+        }
+
+        return $roleMap[$level] ?? null;
+    }
 }

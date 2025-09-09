@@ -74,18 +74,47 @@ class UnitController extends Controller
     public function edit(Unit $unit)
     {
         $this->authorize('update', $unit);
+
+        // Eager load relationships for efficiency
+        $unit->load('jabatans.user', 'users', 'approvalWorkflow', 'parentUnitRecursive');
+
         $units = Unit::where('id', '!=', $unit->id)->orderBy('name')->get();
-        $unit->load('jabatans.user', 'users', 'approvalWorkflow');
-        $usersInUnit = $unit->users()->orderBy('name')->get();
         $workflows = ApprovalWorkflow::orderBy('name')->get();
 
-        // Fetch users eligible for delegation (same level as the unit)
+        // Determine the required role for the head of this unit.
+        $expectedRole = $unit->getExpectedHeadRole();
+
+        // Base query for users in the current unit.
+        $potentialHeadsQuery = $unit->users();
+
+        if ($expectedRole) {
+            // Filter users by the expected role.
+            $potentialHeadsQuery->where(function ($query) use ($expectedRole, $unit) {
+                $query->whereHas('roles', function ($subQuery) use ($expectedRole) {
+                    $subQuery->where('name', $expectedRole);
+                });
+
+                // Always include the current head of the unit, even if their role doesn't match.
+                if ($unit->kepala_unit_id) {
+                    $query->orWhere('id', $unit->kepala_unit_id);
+                }
+            });
+        } else {
+            // If no specific role is expected for this level, only show the current head.
+            $potentialHeadsQuery->where('id', $unit->kepala_unit_id ?? 0);
+        }
+
+        $usersInUnit = $potentialHeadsQuery->orderBy('name')->get();
+
+        // Fetch users eligible for delegation (same role level as the unit's expected head role)
         $eligibleDelegates = collect();
         if (!$unit->kepala_unit_id) {
-            $unitLevel = $unit->level;
-            if ($unitLevel) {
-                $eligibleDelegates = User::whereHas('jabatan', function ($query) use ($unitLevel) {
-                    $query->where('role', $unitLevel);
+            // Use the same logic as for the main dropdown to find the expected role
+            $expectedRoleForDelegation = $unit->getExpectedHeadRole();
+            if ($expectedRoleForDelegation) {
+                // Correctly query the roles relationship
+                $eligibleDelegates = User::whereHas('roles', function ($query) use ($expectedRoleForDelegation) {
+                    $query->where('name', $expectedRoleForDelegation);
                 })->orderBy('name')->get();
             }
         }
@@ -205,8 +234,6 @@ class UnitController extends Controller
         $user->delete();
     }
 
-
-
     public function getChildren(Unit $unit)
     {
         $children = $unit->childUnits()->orderBy('name')->get(['id', 'name']);
@@ -237,18 +264,6 @@ class UnitController extends Controller
         return view('admin.units.workflow');
     }
 
-    private function getRoleLevelNumber(string $roleName): int
-    {
-        return match ($roleName) {
-            'Menteri' => 0,
-            'Eselon I' => 1,
-            'Eselon II' => 2,
-            'Koordinator' => 3,
-            'Sub Koordinator' => 4,
-            default => 99,
-        };
-    }
-
     public function storeUnitDelegation(Request $request, Unit $unit)
     {
         $this->authorize('update', $unit);
@@ -260,13 +275,12 @@ class UnitController extends Controller
             'end_date' => 'required|date|after_or_equal:start_date',
         ]);
 
-        $userToDelegate = User::with('jabatan')->findOrFail($validated['user_id']);
-        $unitLevelNumber = $this->getRoleLevelNumber($unit->level);
-        $userLevelNumber = $userToDelegate->jabatan ? $this->getRoleLevelNumber($userToDelegate->jabatan->role) : 99;
+        $userToDelegate = User::with('roles')->findOrFail($validated['user_id']);
+        $expectedRole = $unit->getExpectedHeadRole();
 
-        if ($userLevelNumber !== $unitLevelNumber) {
+        if (!$expectedRole || !$userToDelegate->hasRole($expectedRole)) {
             throw ValidationException::withMessages([
-                'user_id' => 'Pengguna yang didelegasikan harus memiliki level jabatan yang sama persis.',
+                'user_id' => 'Pengguna yang didelegasikan harus memiliki peran yang sama persis (' . $expectedRole . ') dengan jabatan yang kosong.',
             ]);
         }
 
