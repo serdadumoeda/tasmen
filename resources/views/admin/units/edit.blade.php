@@ -133,8 +133,9 @@
                         @endforelse
                     </ul>
 
-                    <form action="{{ route('admin.units.jabatans.store', $unit) }}" method="POST" class="border-t border-gray-200 pt-6">
+                    <form action="{{ route('admin.jabatans.store') }}" method="POST" class="border-t border-gray-200 pt-6">
                         @csrf
+                        <input type="hidden" name="unit_id" value="{{ $unit->id }}">
                         <h4 class="font-semibold text-lg text-gray-800 mb-4">Tambah Jabatan Baru</h4>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {{-- Nama Jabatan --}}
