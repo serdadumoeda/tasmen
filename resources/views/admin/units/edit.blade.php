@@ -66,7 +66,7 @@
                                 <label for="delegation_user_id" class="block text-sm font-medium text-gray-700">Pilih Pengguna <span class="text-red-500">*</span></label>
                                 <select name="user_id" id="delegation_user_id" class="mt-1 block w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500" required>
                                     <option value="">-- Pilih Pengguna --</option>
-                                    @foreach($usersInUnit as $user)
+                                    @foreach($allUsers as $user)
                                         <option value="{{ $user->id }}">{{ $user->name }}</option>
                                     @endforeach
                                 </select>

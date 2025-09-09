@@ -77,9 +77,10 @@ class UnitController extends Controller
         $units = Unit::where('id', '!=', $unit->id)->orderBy('name')->get();
         $unit->load('jabatans.user', 'users', 'approvalWorkflow');
         $usersInUnit = $unit->users()->orderBy('name')->get();
+        $allUsers = User::orderBy('name')->get(); // Fetch all users for delegation dropdown
         $workflows = ApprovalWorkflow::orderBy('name')->get();
 
-        return view('admin.units.edit', compact('unit', 'units', 'usersInUnit', 'workflows'));
+        return view('admin.units.edit', compact('unit', 'units', 'usersInUnit', 'allUsers', 'workflows'));
     }
 
     public function update(Request $request, Unit $unit)
