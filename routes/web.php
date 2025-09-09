@@ -230,6 +230,7 @@ use App\Http\Controllers\Admin\ApprovalWorkflowController;
 use App\Http\Controllers\Admin\DelegationController;
 use App\Http\Controllers\Api\UnitApiController;
 use App\Http\Controllers\UnitController;
+use App\Http\Controllers\Admin\JabatanController;
 
 require __DIR__.'/auth.php';
 
@@ -253,9 +254,9 @@ Route::middleware(['auth', 'superadmin'])->prefix('admin')->name('admin.')->grou
     Route::get('units/workflow', [UnitController::class, 'showWorkflow'])->name('units.workflow');
     Route::resource('units', UnitController::class);
     Route::post('units/{unit}/jabatans', [UnitController::class, 'storeJabatan'])->name('units.jabatans.store');
-    Route::get('jabatans/{jabatan}/edit', [UnitController::class, 'editJabatan'])->name('admin.jabatans.edit');
-    Route::put('jabatans/{jabatan}', [UnitController::class, 'updateJabatan'])->name('admin.jabatans.update');
-    Route::delete('jabatans/{jabatan}', [UnitController::class, 'destroyJabatan'])->name('jabatans.destroy');
+
+    // Refactored to use JabatanController
+    Route::resource('jabatans', JabatanController::class)->except(['show']);
 
     // User Import Routes
     Route::get('/users/import', [UserController::class, 'showImportForm'])->name('users.import.show');

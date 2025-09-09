@@ -190,77 +190,7 @@ class UnitController extends Controller
         $user->delete();
     }
 
-    public function storeJabatan(Request $request, Unit $unit)
-    {
-        $this->authorize('update', $unit);
 
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'can_manage_users' => ['nullable', 'boolean'],
-            'role' => ['required', 'string', Rule::in(\App\Models\User::getAvailableRoles())],
-        ]);
-
-        $dataToCreate = [
-            'name' => $validated['name'],
-            'can_manage_users' => $request->has('can_manage_users'),
-            'role' => $validated['role'],
-        ];
-
-        $unit->jabatans()->create($dataToCreate);
-
-        return back()->with('success', 'Jabatan berhasil ditambahkan.');
-    }
-
-    public function editJabatan(\App\Models\Jabatan $jabatan)
-    {
-        $unit = $jabatan->unit;
-        $this->authorize('update', $unit);
-        $availableRoles = \App\Models\User::getAvailableRoles();
-        $user = $jabatan->user; // Pass user to view if it exists
-
-        return view('admin.jabatans.edit', compact('jabatan', 'unit', 'user', 'availableRoles'));
-    }
-
-    public function updateJabatan(Request $request, \App\Models\Jabatan $jabatan)
-    {
-        $unit = $jabatan->unit;
-        $this->authorize('update', $unit);
-
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255', Rule::unique('jabatans')->ignore($jabatan->id)],
-            'can_manage_users' => ['nullable', 'boolean'],
-            'role' => ['required', 'string', Rule::in(\App\Models\User::getAvailableRoles())],
-        ]);
-
-        $oldRole = $jabatan->role;
-        $jabatan->name = $validated['name'];
-        $jabatan->can_manage_users = $request->has('can_manage_users');
-        $jabatan->role = $validated['role'];
-        $jabatan->save();
-
-        if ($oldRole !== $validated['role'] && $jabatan->user) {
-            \App\Models\User::recalculateAndSaveRole($jabatan->user);
-        }
-
-        // Get the unit from the jabatan relationship before redirecting
-        $unit = $jabatan->unit;
-
-        return redirect()->route('admin.units.edit', $unit)->with('success', 'Jabatan berhasil diperbarui.');
-    }
-
-    public function destroyJabatan(\App\Models\Jabatan $jabatan)
-    {
-        $unit = $jabatan->unit;
-        $this->authorize('update', $unit);
-
-        if ($jabatan->user_id) {
-            return back()->with('error', 'Tidak dapat menghapus jabatan yang masih diisi oleh pengguna.');
-        }
-
-        $jabatan->delete();
-
-        return back()->with('success', 'Jabatan berhasil dihapus.');
-    }
 
     public function getChildren(Unit $unit)
     {
