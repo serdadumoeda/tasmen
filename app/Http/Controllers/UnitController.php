@@ -25,15 +25,13 @@ class UnitController extends Controller
     {
         $this->authorize('viewAny', Unit::class);
         
-        // PENTING: Perbaiki eager loading di sini.
-        // Kita perlu secara eksplisit memuat relasi yang akan digunakan di view
-        // untuk setiap level hierarki.
+        // Eager load relationships for efficiency
         $units = Unit::with([
-            'kepalaUnit',
+            'kepalaUnit', // Definitive head
+            'jabatans.delegations.user', // Delegated head
             'parentUnit',
             'childrenRecursive' => function ($query) {
-                // Muat relasi-relasi yang dibutuhkan untuk anak-anak
-                $query->with('kepalaUnit', 'parentUnit');
+                $query->with('kepalaUnit', 'jabatans.delegations.user', 'parentUnit');
             }
         ])
         ->whereNull('parent_unit_id')
