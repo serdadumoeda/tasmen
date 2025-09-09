@@ -9,8 +9,6 @@ use Illuminate\Validation\Rule;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use App\Services\PageTitleService;
 use App\Services\BreadcrumbService;
-use App\Models\Role;
-use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
