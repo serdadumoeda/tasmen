@@ -64,49 +64,6 @@ class JabatanController extends Controller
         return redirect()->route('admin.units.edit', $unit)->with('success', 'Jabatan berhasil ditambahkan.');
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Jabatan $jabatan)
-    {
-        $unit = $jabatan->unit;
-        // The authorization might need to be adapted depending on the policy.
-        // Assuming authorization is based on the unit.
-        $this->authorize('update', $unit);
-
-        $availableRoles = User::getAvailableRoles();
-        $user = $jabatan->user;
-
-        return view('admin.jabatans.edit', compact('jabatan', 'unit', 'user', 'availableRoles'));
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Jabatan $jabatan)
-    {
-        $unit = $jabatan->unit;
-        $this->authorize('update', $unit);
-
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255', Rule::unique('jabatans')->ignore($jabatan->id)],
-            'can_manage_users' => ['nullable', 'boolean'],
-            'role' => ['required', 'string', Rule::in(User::getAvailableRoles())],
-        ]);
-
-        $oldRole = $jabatan->role;
-        $jabatan->name = $validated['name'];
-        $jabatan->can_manage_users = $request->has('can_manage_users');
-        $jabatan->role = $validated['role'];
-        $jabatan->save();
-
-        if ($oldRole !== $validated['role'] && $jabatan->user) {
-            User::recalculateAndSaveRole($jabatan->user);
-        }
-
-        // Redirect to the jabatans index page with a success message.
-        return redirect()->route('admin.jabatans.index')->with('success', 'Jabatan berhasil diperbarui.');
-    }
 
     /**
      * Remove the specified resource from storage.
