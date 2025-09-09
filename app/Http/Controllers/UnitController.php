@@ -77,10 +77,20 @@ class UnitController extends Controller
         $units = Unit::where('id', '!=', $unit->id)->orderBy('name')->get();
         $unit->load('jabatans.user', 'users', 'approvalWorkflow');
         $usersInUnit = $unit->users()->orderBy('name')->get();
-        $allUsers = User::orderBy('name')->get(); // Fetch all users for delegation dropdown
         $workflows = ApprovalWorkflow::orderBy('name')->get();
 
-        return view('admin.units.edit', compact('unit', 'units', 'usersInUnit', 'allUsers', 'workflows'));
+        // Fetch users eligible for delegation (same level as the unit)
+        $eligibleDelegates = collect();
+        if (!$unit->kepala_unit_id) {
+            $unitLevel = $unit->level;
+            if ($unitLevel) {
+                $eligibleDelegates = User::whereHas('jabatan', function ($query) use ($unitLevel) {
+                    $query->where('role', $unitLevel);
+                })->orderBy('name')->get();
+            }
+        }
+
+        return view('admin.units.edit', compact('unit', 'units', 'usersInUnit', 'eligibleDelegates', 'workflows'));
     }
 
     public function update(Request $request, Unit $unit)
@@ -227,6 +237,18 @@ class UnitController extends Controller
         return view('admin.units.workflow');
     }
 
+    private function getRoleLevelNumber(string $roleName): int
+    {
+        return match ($roleName) {
+            'Menteri' => 0,
+            'Eselon I' => 1,
+            'Eselon II' => 2,
+            'Koordinator' => 3,
+            'Sub Koordinator' => 4,
+            default => 99,
+        };
+    }
+
     public function storeUnitDelegation(Request $request, Unit $unit)
     {
         $this->authorize('update', $unit);
@@ -238,13 +260,13 @@ class UnitController extends Controller
             'end_date' => 'required|date|after_or_equal:start_date',
         ]);
 
-        $userToDelegate = User::with('jabatan.unit')->findOrFail($validated['user_id']);
-        $unitLevel = $unit->getLevelNumber();
-        $userLevel = $userToDelegate->jabatan ? $userToDelegate->jabatan->unit->getLevelNumber() : 99; // 99 for staf/no unit
+        $userToDelegate = User::with('jabatan')->findOrFail($validated['user_id']);
+        $unitLevelNumber = $this->getRoleLevelNumber($unit->level);
+        $userLevelNumber = $userToDelegate->jabatan ? $this->getRoleLevelNumber($userToDelegate->jabatan->role) : 99;
 
-        if ($userLevel > $unitLevel) {
+        if ($userLevelNumber !== $unitLevelNumber) {
             throw ValidationException::withMessages([
-                'user_id' => 'Pengguna yang didelegasikan harus memiliki level jabatan yang setara atau lebih tinggi.',
+                'user_id' => 'Pengguna yang didelegasikan harus memiliki level jabatan yang sama persis.',
             ]);
         }
 
