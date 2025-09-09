@@ -254,7 +254,6 @@ Route::middleware(['auth', 'superadmin'])->prefix('admin')->name('admin.')->grou
     Route::get('units/workflow', [UnitController::class, 'showWorkflow'])->name('units.workflow');
     Route::post('units/{unit}/delegation', [UnitController::class, 'storeUnitDelegation'])->name('units.delegation.store');
     Route::resource('units', UnitController::class);
-    Route::post('units/{unit}/jabatans', [UnitController::class, 'storeJabatan'])->name('units.jabatans.store');
 
     // Refactored to use JabatanController
     Route::resource('jabatans', JabatanController::class)->except(['show', 'edit', 'update']);
