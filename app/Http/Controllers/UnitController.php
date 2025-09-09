@@ -197,7 +197,7 @@ class UnitController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'can_manage_users' => ['nullable', 'boolean'],
-            'role' => ['required', 'string', Rule::in(User::getAvailableRoles())],
+            'role' => ['required', 'string', Rule::in(\App\Models\User::getAvailableRoles())],
         ]);
 
         $dataToCreate = [
@@ -215,7 +215,7 @@ class UnitController extends Controller
     {
         $unit = $jabatan->unit;
         $this->authorize('update', $unit);
-        $availableRoles = User::getAvailableRoles();
+        $availableRoles = \App\Models\User::getAvailableRoles();
         $user = $jabatan->user; // Pass user to view if it exists
 
         return view('admin.jabatans.edit', compact('jabatan', 'unit', 'user', 'availableRoles'));
@@ -229,7 +229,7 @@ class UnitController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255', Rule::unique('jabatans')->ignore($jabatan->id)],
             'can_manage_users' => ['nullable', 'boolean'],
-            'role' => ['required', 'string', Rule::in(User::getAvailableRoles())],
+            'role' => ['required', 'string', Rule::in(\App\Models\User::getAvailableRoles())],
         ]);
 
         $oldRole = $jabatan->role;
@@ -239,7 +239,7 @@ class UnitController extends Controller
         $jabatan->save();
 
         if ($oldRole !== $validated['role'] && $jabatan->user) {
-            User::recalculateAndSaveRole($jabatan->user);
+            \App\Models\User::recalculateAndSaveRole($jabatan->user);
         }
 
         return back()->with('success', 'Jabatan berhasil diperbarui.');
