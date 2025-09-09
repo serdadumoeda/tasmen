@@ -11,6 +11,10 @@ use App\Services\PageTitleService;
 use App\Services\BreadcrumbService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Delegation;
+use App\Models\Jabatan;
+use App\Models\User;
+use Illuminate\Validation\ValidationException;
 
 class UnitController extends Controller
 {
@@ -220,5 +224,54 @@ class UnitController extends Controller
         $breadcrumbService->add('Manajemen Unit', route('admin.units.index'));
         $breadcrumbService->add('Alur Kerja');
         return view('admin.units.workflow');
+    }
+
+    public function storeUnitDelegation(Request $request, Unit $unit)
+    {
+        $this->authorize('update', $unit);
+
+        $validated = $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'type' => 'required|in:Plt,Plh',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+        ]);
+
+        $userToDelegate = User::with('jabatan.unit')->findOrFail($validated['user_id']);
+        $unitLevel = $unit->getLevelNumber();
+        $userLevel = $userToDelegate->jabatan ? $userToDelegate->jabatan->unit->getLevelNumber() : 99; // 99 for staf/no unit
+
+        if ($userLevel > $unitLevel) {
+            throw ValidationException::withMessages([
+                'user_id' => 'Pengguna yang didelegasikan harus memiliki level jabatan yang setara atau lebih tinggi.',
+            ]);
+        }
+
+        // Find or create the "Kepala" Jabatan for this unit.
+        $kepalaJabatan = Jabatan::firstOrCreate(
+            [
+                'name' => 'Kepala ' . $unit->name,
+                'unit_id' => $unit->id,
+            ],
+            [
+                'role' => $unit->level ?? 'Staf'
+            ]
+        );
+
+        // Check if there's already a definitive head for this position
+        if ($kepalaJabatan->user_id) {
+             return back()->with('error', 'Jabatan Kepala Unit ini sudah memiliki pejabat definitif.');
+        }
+
+        Delegation::create([
+            'jabatan_id' => $kepalaJabatan->id,
+            'user_id' => $validated['user_id'],
+            'type' => $validated['type'],
+            'start_date' => $validated['start_date'],
+            'end_date' => $validated['end_date'],
+            'created_by' => Auth::id(),
+        ]);
+
+        return redirect()->route('admin.units.edit', $unit)->with('success', 'Delegasi untuk Kepala Unit berhasil dibuat.');
     }
 }
