@@ -224,31 +224,31 @@ class Unit extends Model
 
     /**
      * Get the displayable head of the unit, accounting for delegations.
+     * This accessor is resilient to inconsistencies in Jabatan naming.
      *
      * @return User|null
      */
     public function getDisplayableHeadAttribute(): ?User
     {
-        // If there is a definitive head, they are the one.
+        // Priority 1: Return the definitive head if one is assigned.
         if ($this->kepalaUnit) {
+            $this->kepalaUnit->is_delegate = false;
             return $this->kepalaUnit;
         }
 
-        // If the head position is vacant, check for an active delegation.
-        // We assume the head position is named 'Kepala ' + the unit's name.
-        $kepalaJabatan = $this->jabatans()
-                              ->where('name', 'Kepala ' . $this->name)
-                              ->first();
-
-        if ($kepalaJabatan) {
-            // Find the first active delegation for this specific position.
-            $activeDelegation = $kepalaJabatan->delegations()
-                                              ->active()
-                                              ->first();
+        // Priority 2: Find an active delegation within any of this unit's jabatans.
+        // This is resilient to cases where the 'Kepala' jabatan name is inconsistent in the DB.
+        // We use the eager-loaded relationships for efficiency.
+        foreach ($this->jabatans as $jabatan) {
+            // Find the first active delegation for this position.
+            $activeDelegation = $jabatan->delegations->first(function ($delegation) {
+                $today = \Carbon\Carbon::today();
+                return $delegation->start_date <= $today && $delegation->end_date >= $today;
+            });
 
             if ($activeDelegation && $activeDelegation->user) {
-                // If a delegation is found, return the delegated user.
-                // Add temporary attributes to mark them as a delegate for the view.
+                // If an active delegation is found, return the delegated user.
+                // We add temporary attributes to the user model for display purposes in the view.
                 $delegatedUser = $activeDelegation->user;
                 $delegatedUser->is_delegate = true;
                 $delegatedUser->delegation_type = $activeDelegation->type;
@@ -256,7 +256,7 @@ class Unit extends Model
             }
         }
 
-        // If no definitive head and no active delegation, return null.
+        // Priority 3: If no definitive head and no active delegation, the position is vacant.
         return null;
     }
 }
