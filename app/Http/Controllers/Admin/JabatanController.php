@@ -104,8 +104,8 @@ class JabatanController extends Controller
             User::recalculateAndSaveRole($jabatan->user);
         }
 
-        // Redirect back to the unit's edit page for a consistent user experience.
-        return redirect()->route('admin.units.edit', $unit)->with('success', 'Jabatan berhasil diperbarui.');
+        // Redirect to the jabatans index page with a success message.
+        return redirect()->route('admin.jabatans.index')->with('success', 'Jabatan berhasil diperbarui.');
     }
 
     /**
