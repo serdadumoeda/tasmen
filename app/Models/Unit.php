@@ -221,4 +221,42 @@ class Unit extends Model
 
         return $roleMap[$depth] ?? null;
     }
+
+    /**
+     * Get the displayable head of the unit, accounting for delegations.
+     *
+     * @return User|null
+     */
+    public function getDisplayableHeadAttribute(): ?User
+    {
+        // If there is a definitive head, they are the one.
+        if ($this->kepalaUnit) {
+            return $this->kepalaUnit;
+        }
+
+        // If the head position is vacant, check for an active delegation.
+        // We assume the head position is named 'Kepala ' + the unit's name.
+        $kepalaJabatan = $this->jabatans()
+                              ->where('name', 'Kepala ' . $this->name)
+                              ->first();
+
+        if ($kepalaJabatan) {
+            // Find the first active delegation for this specific position.
+            $activeDelegation = $kepalaJabatan->delegations()
+                                              ->active()
+                                              ->first();
+
+            if ($activeDelegation && $activeDelegation->user) {
+                // If a delegation is found, return the delegated user.
+                // Add temporary attributes to mark them as a delegate for the view.
+                $delegatedUser = $activeDelegation->user;
+                $delegatedUser->is_delegate = true;
+                $delegatedUser->delegation_type = $activeDelegation->type;
+                return $delegatedUser;
+            }
+        }
+
+        // If no definitive head and no active delegation, return null.
+        return null;
+    }
 }

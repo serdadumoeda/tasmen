@@ -42,4 +42,9 @@ class Jabatan extends Model
     {
         return $this->hasMany(Jabatan::class, 'parent_id');
     }
+
+    public function delegations(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Delegation::class);
+    }
 }

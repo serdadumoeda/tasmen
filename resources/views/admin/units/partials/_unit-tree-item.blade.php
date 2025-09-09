@@ -18,7 +18,17 @@
 
         {{-- Kepala Unit --}}
         <div class="w-1/4 text-sm text-gray-600">
-            {{ $unit->kepalaUnit->name ?? '---' }}
+            @php $displayableHead = $unit->displayable_head; @endphp
+            @if($displayableHead)
+                {{ $displayableHead->name }}
+                @if($displayableHead->is_delegate)
+                    <span class="ml-2 px-2 py-0.5 bg-yellow-200 text-yellow-800 text-xs font-bold rounded-full">
+                        {{ $displayableHead->delegation_type }}
+                    </span>
+                @endif
+            @else
+                <span class="text-gray-400 italic">--- Kosong ---</span>
+            @endif
         </div>
 
         {{-- Unit Atasan --}}
