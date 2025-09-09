@@ -207,25 +207,18 @@ class Unit extends Model
      */
     public function getExpectedHeadRole(): ?string
     {
-        // Mapping from hierarchy level (depth) to the expected role name.
-        // Level 0 = Top level (no parent)
+        // The depth is the number of ancestors, which is 1-based (root is 1).
+        $depth = $this->ancestors()->count();
+
+        // Mapping from hierarchy depth to the expected role name for the HEAD of that unit.
         $roleMap = [
-            0 => 'Eselon I',
-            1 => 'Eselon II',
-            2 => 'Koordinator',
-            3 => 'Sub Koordinator',
+            1 => 'Menteri',          // A unit with depth 1 (root) is headed by a Menteri.
+            2 => 'Eselon I',        // A unit with depth 2 is headed by an Eselon I.
+            3 => 'Eselon II',       // A unit with depth 3 is headed by an Eselon II.
+            4 => 'Koordinator',     // A unit with depth 4 is headed by a Koordinator.
+            5 => 'Sub Koordinator', // A unit with depth 5 is headed by a Sub Koordinator.
         ];
 
-        $level = 0;
-        $current = $this;
-
-        // Traverse up the hierarchy to determine the level.
-        // This is efficient if 'parentUnitRecursive' has been eager-loaded.
-        while ($current && $current->parentUnit) {
-            $level++;
-            $current = $current->parentUnit;
-        }
-
-        return $roleMap[$level] ?? null;
+        return $roleMap[$depth] ?? null;
     }
 }
