@@ -118,9 +118,11 @@ class TaskController extends Controller
             'assignees' => 'nullable|array',
             'assignees.*' => 'exists:users,id',
             'file_upload' => 'nullable|' . config('tasmen.file_uploads.tasks.rules'),
+            'is_outside_office_hours' => 'nullable|boolean',
         ]);
 
         $task->fill($validated);
+        $task->is_outside_office_hours = $request->has('is_outside_office_hours');
 
         // --- LOGIKA ALUR PERSETUJUAN (jika tugas proyek) ---
         // Eager load status to check its key

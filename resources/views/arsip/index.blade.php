@@ -82,12 +82,8 @@
                                 </select>
                             </div>
                             <div>
-                                <label for="start_date" class="block text-sm font-medium text-gray-700">Rentang Tanggal</label>
-                                <div class="flex items-center space-x-2 mt-1">
-                                    <input type="date" name="start_date" id="start_date" value="{{ request('start_date') }}" class="block w-full rounded-md border-gray-300 shadow-sm">
-                                    <span>-</span>
-                                    <input type="date" name="end_date" id="end_date" value="{{ request('end_date') }}" class="block w-full rounded-md border-gray-300 shadow-sm">
-                                </div>
+                                <label for="date_range" class="block text-sm font-medium text-gray-700">Rentang Tanggal</label>
+                                <input type="text" name="date_range" id="date_range" value="{{ request('date_range') }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="Pilih rentang tanggal...">
                             </div>
                         </div>
                         <div class="mt-4 flex justify-end space-x-2">
@@ -170,6 +166,15 @@
             document.getElementById('select-all').addEventListener('change', function(event) {
                 document.querySelectorAll('.surat-checkbox').forEach(function(checkbox) {
                     checkbox.checked = event.target.checked;
+                });
+            });
+
+            document.addEventListener('DOMContentLoaded', function() {
+                flatpickr("#date_range", {
+                    mode: "range",
+                    dateFormat: "Y-m-d",
+                    altInput: true,
+                    altFormat: "d M Y",
                 });
             });
         </script>

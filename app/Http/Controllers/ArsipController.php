@@ -28,11 +28,15 @@ class ArsipController extends Controller
         }
 
         // Filter by date range
-        if ($request->filled('start_date')) {
-            $query->whereDate('tanggal_surat', '>=', $request->input('start_date'));
-        }
-        if ($request->filled('end_date')) {
-            $query->whereDate('tanggal_surat', '<=', $request->input('end_date'));
+        if ($request->filled('date_range')) {
+            $dates = explode(' to ', $request->input('date_range'));
+            if (count($dates) > 0) {
+                $startDate = trim($dates[0]);
+                $endDate = isset($dates[1]) ? trim($dates[1]) : $startDate;
+
+                $query->whereDate('tanggal_surat', '>=', $startDate)
+                      ->whereDate('tanggal_surat', '<=', $endDate);
+            }
         }
 
         // Filter by classification
