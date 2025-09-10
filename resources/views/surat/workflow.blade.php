@@ -17,7 +17,6 @@
                 </a>
             </div>
 
-            <!-- Intro Card -->
             <x-card>
                 <div class="p-6">
                     <h3 class="text-xl font-bold text-gray-800 mb-2">Dokumentasi Alur Kerja Pencatatan Surat</h3>
@@ -25,7 +24,6 @@
                 </div>
             </x-card>
 
-            <!-- Flowchart -->
             <x-card>
                 <div class="p-6">
                     <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Flowchart Alur Kerja</h3>
@@ -40,26 +38,26 @@ graph TD
     classDef end fill:#F2F3F4,stroke:#99A3A4,color:#616A6B,stroke-width:1px;
 
     subgraph "Tahap 1: Pencatatan"
-        A1["<i class='fas fa-user'></i> Pengguna"]:::action -- Klik 'Unggah Surat Baru' --> A2["<i class='fas fa-upload'></i> Form Unggah Surat"]:::page;
-        A2 -- Isi Form --> A3{"<i class='fas fa-check-double'></i> Validasi Sistem"}:::decision;
+        A1["<i class='fa fa-user'></i> Pengguna"]:::action -- Klik 'Unggah Surat Baru' --> A2["<i class='fa fa-upload'></i> Form Unggah Surat"]:::page;
+        A2 -- Isi Form --> A3{"<i class='fa fa-check-double'></i> Validasi Sistem"}:::decision;
         A3 -- Gagal --> A2;
-        A3 -- Sukses --> A4["<i class='fas fa-save'></i> Surat Tercatat<br>Status: 'Draft'"]:::process;
+        A3 -- Sukses --> A4["<i class='fa fa-save'></i> Surat Tercatat<br>Status: 'Draft'"]:::process;
     end
 
     subgraph "Tahap 2: Tindak Lanjut"
-        B1["<i class='fas fa-file-alt'></i> Buka Halaman Detail Surat"]:::page --> B2{"<i class='fas fa-question-circle'></i> Perlu Tindak Lanjut?"}:::decision;
-        B2 -- Ya --> B3["<i class='fas fa-random'></i> Pilih Aksi"]:::action;
-        B3 -- Buat Disposisi --> B4["<i class='fas fa-paper-plane'></i> Sistem membuat disposisi"]:::process;
-        B3 -- Jadikan Tugas --> B5["<i class='fas fa-tasks'></i> Sistem membuat tugas baru"]:::process;
+        A4 --> B1["<i class='fa fa-file-alt'></i> Buka Halaman Detail Surat"]:::page;
+        B1 --> B2{"<i class='fa fa-question-circle'></i> Perlu Tindak Lanjut?"}:::decision;
+        B2 -- Ya --> B3["<i class='fa fa-random'></i> Pilih Aksi"]:::action;
+        B3 -- Buat Disposisi --> B4["<i class='fa fa-paper-plane'></i> Sistem membuat disposisi"]:::process;
+        B3 -- Jadikan Tugas --> B5["<i class='fa fa-tasks'></i> Sistem membuat tugas baru"]:::process;
         B4 --> B6["Status Surat diubah menjadi 'Dikirim'"]:::process;
         B5 --> B7["Status Surat diubah menjadi 'Disetujui'"]:::process;
     end
 
     subgraph "Tahap 3: Selesai"
-        C1["<i class='fas fa-archive'></i> Surat selesai diproses<br>dan siap diarsipkan"]:::end;
+        C1["<i class='fa fa-archive'></i> Surat selesai diproses<br>dan siap diarsipkan"]:::end;
     end
 
-    A4 --> B1;
     B2 -- Tidak --> C1;
     B6 --> C1;
     B7 --> C1;
@@ -68,7 +66,6 @@ graph TD
                 </div>
             </x-card>
 
-            <!-- Penjelasan Detail -->
             <x-card>
                 <div class="p-6">
                     <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Deskripsi Detail Alur Kerja</h3>
