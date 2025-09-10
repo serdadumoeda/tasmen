@@ -53,7 +53,7 @@
                 </div>
 
                 {{-- Main Content for Surat List --}}
-                <div class="lg:col-span-3 bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="lg:col-span-3 bg-white shadow-sm sm:rounded-lg">
                     <div class="p-6 text-gray-900">
                         {{-- Filter Form --}}
                         <form action="{{ route('arsip.index') }}" method="GET" class="mb-8 p-4 bg-gray-50 rounded-lg border">
