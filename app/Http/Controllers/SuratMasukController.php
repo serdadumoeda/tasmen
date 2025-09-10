@@ -61,24 +61,22 @@ class SuratMasukController extends Controller
         }
 
         // --- AUTOMATIC DISPOSITION ---
-        // Automatically create a disposition to the head of the user's unit.
+        // Automatically create a disposition to the acting head of the user's unit (definitive or Plt./Plh.).
         $user->load('unit');
-        if ($user->unit && $user->unit->kepala_unit_id) {
-            $kepalaUnitId = $user->unit->kepala_unit_id;
+        if ($user->unit) {
+            $actingHead = $user->unit->getActingHead();
+            if ($actingHead) {
+                $disposisi = Disposisi::create([
+                    'surat_id' => $surat->id,
+                    'pengirim_id' => $user->id,
+                    'penerima_id' => $actingHead->id,
+                    'instruksi' => 'Mohon arahan dan petunjuk selanjutnya.',
+                    'tanggal_disposisi' => now(),
+                ]);
 
-            $disposisi = Disposisi::create([
-                'surat_id' => $surat->id,
-                'pengirim_id' => $user->id,
-                'penerima_id' => $kepalaUnitId,
-                'instruksi' => 'Mohon arahan dan petunjuk selanjutnya.',
-                'tanggal_disposisi' => now(),
-            ]);
-
-            // Notify the unit head
-            $kepalaUnit = User::find($kepalaUnitId);
-            if ($kepalaUnit) {
-                // Assuming SuratDisposisiNotification exists and accepts a Disposisi object.
-                $kepalaUnit->notify(new SuratDisposisiNotification($disposisi));
+                // Notify the acting unit head
+                // The actingHead object is already a User model instance.
+                $actingHead->notify(new SuratDisposisiNotification($disposisi));
             }
         }
         // --- END AUTOMATIC DISPOSITION ---
