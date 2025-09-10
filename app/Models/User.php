@@ -278,7 +278,10 @@ class User extends Authenticatable
         }
 
         $unitIds = $this->unit->getAllSubordinateUnitIds();
-        return User::whereIn('unit_id', $unitIds)->pluck('id');
+        // Also include the current user's own unit ID to fetch colleagues
+        $unitIds[] = $this->unit->id;
+
+        return User::whereIn('unit_id', array_unique($unitIds))->pluck('id');
     }
     
     public function getAllSubordinates($includeSelf = false)
