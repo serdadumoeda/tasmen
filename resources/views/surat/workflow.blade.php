@@ -27,7 +27,7 @@
             <x-card>
                 <div class="p-6">
                     <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Flowchart Alur Kerja</h3>
-                    <p class="text-gray-600 mb-6">Flowchart ini merinci langkah-langkah dari pengunggahan hingga tindak lanjut surat.</p>
+                    <p class="text-gray-600 mb-6">Flowchart ini merinci langkah-langkah dari pengunggahan hingga tindak lanjut surat, meniru sintaks yang sudah terbukti berjalan.</p>
                     <div class="p-4 bg-gray-50 rounded-lg text-center">
                         <pre class="mermaid">
 graph TD
@@ -45,22 +45,22 @@ graph TD
     end
 
     subgraph "Tahap 2: Tindak Lanjut"
-        A4 --> B1["<i class='fa fa-file-alt'></i> Buka Halaman Detail Surat"]:::page;
+        B1["<i class='fa fa-file-alt'></i> Buka Halaman Detail Surat"]:::page;
         B1 --> B2{"<i class='fa fa-question-circle'></i> Perlu Tindak Lanjut?"}:::decision;
         B2 -- Ya --> B3["<i class='fa fa-random'></i> Pilih Aksi"]:::action;
         B3 -- Buat Disposisi --> B4["<i class='fa fa-paper-plane'></i> Sistem membuat disposisi"]:::process;
         B3 -- Jadikan Tugas --> B5["<i class='fa fa-tasks'></i> Sistem membuat tugas baru"]:::process;
-        B4 --> B6["Status Surat diubah menjadi 'Dikirim'"]:::process;
-        B5 --> B7["Status Surat diubah menjadi 'Disetujui'"]:::process;
     end
 
-    subgraph "Tahap 3: Selesai"
-        C1["<i class='fa fa-archive'></i> Surat selesai diproses<br>dan siap diarsipkan"]:::end;
+    subgraph "Tahap 3: Perubahan Status & Selesai"
+        B4 --> C1["Status Surat diubah menjadi 'Dikirim'"]:::process;
+        B5 --> C2["Status Surat diubah menjadi 'Disetujui'"]:::process;
+        B2 -- Tidak --> C3["<i class='fa fa-archive'></i> Surat selesai diproses<br>dan siap diarsipkan"]:::end;
+        C1 --> C3;
+        C2 --> C3;
     end
 
-    B2 -- Tidak --> C1;
-    B6 --> C1;
-    B7 --> C1;
+    A4 --> B1;
                         </pre>
                     </div>
                 </div>
