@@ -36,7 +36,7 @@
                             </div>
                         @elseif ($surat->final_pdf_path)
                             <h3 class="text-lg font-bold text-gray-800 mb-4">Dokumen Surat</h3>
-                            <iframe src="{{ Illuminate\Support\Facades\Storage::url($surat->final_pdf_path) }}" class="w-full h-screen rounded-lg border"></iframe>
+                            <iframe src="{{ route('surat-keluar.show-pdf', $surat) }}" class="w-full h-screen rounded-lg border"></iframe>
                         @elseif ($surat->lampiran->isNotEmpty())
                              @php $lampiran = $surat->lampiran->first(); @endphp
                             <h3 class="text-lg font-bold text-gray-800 mb-4">Lampiran Surat</h3>
