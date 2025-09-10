@@ -237,4 +237,15 @@ class SuratKeluarController extends Controller
         $breadcrumbService->add('Alur Kerja');
         return view('suratkeluar.workflow');
     }
+
+    public function showPdf(Surat $surat)
+    {
+        $this->authorize('view', $surat);
+
+        if (!$surat->final_pdf_path || !Storage::disk('public')->exists($surat->final_pdf_path)) {
+            abort(404, 'File PDF final tidak ditemukan.');
+        }
+
+        return Storage::disk('public')->response($surat->final_pdf_path);
+    }
 }
