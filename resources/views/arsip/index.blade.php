@@ -40,7 +40,7 @@
                         <ul class="space-y-2">
                             @forelse($berkasList as $berkas)
                                 <li class="flex items-center justify-between p-2 rounded-md hover:bg-gray-100">
-                                    <a href="#" class="flex items-center text-sm text-gray-700 hover:text-indigo-600">
+                                    <a href="{{ route('arsip.berkas.show', $berkas) }}" class="flex items-center text-sm text-gray-700 hover:text-indigo-600">
                                         <i class="fas fa-folder text-yellow-500 mr-3"></i>
                                         <span>{{ $berkas->name }} ({{ $berkas->surat()->count() }})</span>
                                     </a>
@@ -71,14 +71,6 @@
                                             {{ $item->kode }} - {{ $item->deskripsi }}
                                         </option>
                                     @endforeach
-                                </select>
-                            </div>
-                            <div>
-                                <label for="jenis" class="block text-sm font-medium text-gray-700">Jenis Surat</label>
-                                <select name="jenis" id="jenis" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                                    <option value="">Semua Jenis</option>
-                                    <option value="masuk" @selected(request('jenis') == 'masuk')>Masuk</option>
-                                    <option value="keluar" @selected(request('jenis') == 'keluar')>Keluar</option>
                                 </select>
                             </div>
                             <div>
@@ -118,7 +110,6 @@
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nomor Surat</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Perihal</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jenis</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Klasifikasi</th>
                                     <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
                                 </tr>
@@ -130,17 +121,12 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $surat->nomor_surat }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{{ $surat->perihal }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $surat->tanggal_surat->format('d M Y') }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $surat->jenis == 'masuk' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800' }}">
-                                                {{ ucfirst($surat->jenis) }}
-                                            </span>
-                                        </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ optional($surat->klasifikasi)->kode }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            @if ($surat->final_pdf_path && Storage::disk('public')->exists($surat->final_pdf_path))
-                                                 <a href="{{ route('surat-keluar.download', $surat) }}" class="text-indigo-600 hover:text-indigo-900">Unduh</a>
+                                            @if ($surat->file_path)
+                                                <a href="{{ route('surat.download', $surat) }}" class="text-indigo-600 hover:text-indigo-900">Unduh</a>
                                             @else
-                                                 <span class="text-gray-400">N/A</span>
+                                                <span class="text-gray-400">N/A</span>
                                             @endif
                                         </td>
                                     </tr>
