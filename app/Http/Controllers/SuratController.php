@@ -124,6 +124,8 @@ class SuratController extends Controller
 
         $task->assignees()->attach(Auth::id());
 
+    $task->load('status');
+
         $surat->status = 'disetujui';
         $surat->save();
 
