@@ -19,8 +19,39 @@
                     <div class="mb-4">
                         <h3 class="text-lg font-bold">{{ $berkas->name }}</h3>
                         <p class="text-sm text-gray-600">{{ $berkas->description }}</p>
-                        <p class="text-xs text-gray-500 mt-1">Dibuat pada: {{ $berkas->created_at->format('d M Y') }} | Jumlah Surat: {{ $berkas->surat->count() }}</p>
+                        <p class="text-xs text-gray-500 mt-1">Dibuat pada: {{ $berkas->created_at->format('d M Y') }} | Jumlah Surat: {{ $suratList->total() }}</p>
                     </div>
+
+                    <!-- Filter Form -->
+                    <form action="{{ route('arsip.berkas.show', $berkas) }}" method="GET" class="mb-8 p-4 bg-gray-50 rounded-lg border">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div>
+                                <label for="keyword" class="block text-sm font-medium text-gray-700">Kata Kunci</label>
+                                <input type="text" name="keyword" id="keyword" value="{{ request('keyword') }}" placeholder="Perihal atau Nomor Surat" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                            </div>
+                            <div>
+                                <label for="klasifikasi_id" class="block text-sm font-medium text-gray-700">Klasifikasi</label>
+                                <select name="klasifikasi_id" id="klasifikasi_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                                    <option value="">Semua Klasifikasi</option>
+                                    @foreach ($klasifikasi as $item)
+                                        <option value="{{ $item->id }}" @selected(request('klasifikasi_id') == $item->id)>
+                                            {{ $item->kode }} - {{ $item->deskripsi }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div>
+                                <label for="date_range" class="block text-sm font-medium text-gray-700">Rentang Tanggal</label>
+                                <input type="text" name="date_range" id="date_range" value="{{ request('date_range') }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="Pilih rentang tanggal...">
+                            </div>
+                        </div>
+                        <div class="mt-4 flex justify-end space-x-2">
+                            <a href="{{ route('arsip.berkas.show', $berkas) }}" class="px-4 py-2 bg-gray-600 text-white rounded-md text-xs hover:bg-gray-700">Reset</a>
+                            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md text-xs hover:bg-blue-700">
+                                <i class="fas fa-search mr-1"></i> Cari
+                            </button>
+                        </div>
+                    </form>
 
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
@@ -34,7 +65,7 @@
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
-                                @forelse ($berkas->surat as $surat)
+                                @forelse ($suratList as $surat)
                                     <tr>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $surat->nomor_surat }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{{ $surat->perihal }}</td>
@@ -55,6 +86,10 @@
                                 @endforelse
                             </tbody>
                         </table>
+                    </div>
+
+                    <div class="mt-6">
+                        {{ $suratList->links() }}
                     </div>
                 </div>
             </div>
