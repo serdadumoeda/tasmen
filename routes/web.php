@@ -217,6 +217,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/arsip', [ArsipController::class, 'index'])->name('arsip.index');
     Route::get('/arsip/workflow', [ArsipController::class, 'showWorkflow'])->name('arsip.workflow');
     Route::post('/arsip/berkas', [ArsipController::class, 'storeBerkas'])->name('arsip.berkas.store');
+    Route::get('/arsip/berkas/{berkas}', [ArsipController::class, 'showBerkas'])->name('arsip.berkas.show');
     Route::post('/arsip/berkas/add-surat', [ArsipController::class, 'addSuratToBerkas'])->name('arsip.berkas.add-surat');
 
 });

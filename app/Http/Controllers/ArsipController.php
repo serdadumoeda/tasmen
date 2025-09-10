@@ -44,10 +44,6 @@ class ArsipController extends Controller
             $query->where('klasifikasi_id', $request->input('klasifikasi_id'));
         }
 
-        // Filter by type
-        if ($request->filled('jenis')) {
-            $query->where('jenis', $request->input('jenis'));
-        }
 
         $suratList = $query->paginate(25)->withQueryString();
         $klasifikasi = KlasifikasiSurat::orderBy('kode')->get();
@@ -94,5 +90,19 @@ class ArsipController extends Controller
         $breadcrumbService->add('Arsip Digital', route('arsip.index'));
         $breadcrumbService->add('Alur Kerja');
         return view('arsip.workflow');
+    }
+
+    public function showBerkas(Berkas $berkas)
+    {
+        // Authorize that the user owns the Berkas
+        if ($berkas->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $berkas->load(['surat' => function ($query) {
+            $query->with('klasifikasi')->latest();
+        }]);
+
+        return view('arsip.show_berkas', compact('berkas'));
     }
 }
