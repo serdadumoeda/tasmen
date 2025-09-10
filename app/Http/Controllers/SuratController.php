@@ -114,8 +114,8 @@ class SuratController extends Controller
      */
     public function makeTask(Request $request, Surat $surat)
     {
-        $defaultStatus = \App\Models\TaskStatus::where('key', 'pending')->first();
-        $defaultPriority = \App\Models\PriorityLevel::where('name', 'Normal')->first();
+        $defaultStatus = \App\Models\TaskStatus::where('key', 'pending')->firstOrFail();
+        $defaultPriority = \App\Models\PriorityLevel::where('name', 'Normal')->firstOrFail();
 
         $task = Task::create([
             'title' => $surat->perihal,
