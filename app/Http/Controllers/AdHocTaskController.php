@@ -195,6 +195,7 @@ class AdHocTaskController extends Controller
             'estimated_hours' => 'required|numeric|min:0.1',
             'priority_level_id' => 'required|exists:priority_levels,id',
             'file_upload' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx,xls,xlsx|max:2048',
+            'is_outside_office_hours' => 'nullable|boolean',
         ]);
         
         $assigneeIds = [];
@@ -209,6 +210,7 @@ class AdHocTaskController extends Controller
 
         $task = new Task();
         $task->fill($validated);
+        $task->is_outside_office_hours = $request->has('is_outside_office_hours');
         $task->task_status_id = $defaultStatus->id;
         $task->progress = 0;
         $task->project_id = null; // Menandakan ini tugas ad-hoc

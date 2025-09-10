@@ -112,8 +112,15 @@
                         @forelse ($assignedTasks as $task)
                             <div class="block p-6 border border-gray-200 rounded-xl bg-white shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 ease-in-out">
                                 <div class="flex justify-between items-start">
-                                    <div>
-                                        <p class="font-bold text-xl text-indigo-700 mb-2">{{ $task->title }}</p>
+                                    <div class="flex-grow">
+                                        <div class="flex items-center mb-2">
+                                            <p class="font-bold text-xl text-indigo-700">{{ $task->title }}</p>
+                                            @if($task->is_outside_office_hours)
+                                                <span class="ml-3 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800" title="Tugas ini ditandai sebagai pekerjaan di luar jam kerja normal.">
+                                                    <i class="fas fa-moon mr-1.5"></i> Luar Jam Kerja
+                                                </span>
+                                            @endif
+                                        </div>
                                         <div class="text-sm text-gray-600 space-x-3">
                                             <span class="inline-flex items-center"><i class="far fa-calendar-alt text-gray-400 mr-1"></i> Deadline: {{ \Carbon\Carbon::parse($task->deadline)->format('d M Y') }}</span>
                                             <span class="inline-flex items-center"><i class="far fa-clock text-gray-400 mr-1"></i> Estimasi: {{ $task->estimated_hours }} jam</span>
