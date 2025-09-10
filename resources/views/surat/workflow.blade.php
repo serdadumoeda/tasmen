@@ -41,14 +41,14 @@ graph TD
 
     subgraph "Tahap 1: Pencatatan"
         A1["<i class='fa fa-user'></i> Pengguna"]:::action -->|Klik 'Unggah Surat Baru'| A2["<i class='fa fa-upload'></i> Form Unggah Surat"]:::page;
-        A2 -- Isi Perihal, Tanggal &<br>Upload File --> A3{<i class='fa fa-check-double'></i> Validasi Sistem}:::decision;
+        A2 -- "Isi Perihal, Tanggal &<br>Upload File" --> A3{<i class='fa fa-check-double'></i> Validasi Sistem}:::decision;
         A3 -- Gagal --> A2;
         A3 -- Sukses --> A4["<i class='fa fa-save'></i> Surat Tercatat<br>Status: 'Draft'"]:::process;
     end
 
     subgraph "Tahap 2: Tindak Lanjut"
         B1["<i class='fa fa-file-alt'></i> Buka Halaman Detail Surat"]:::page --> B2{<i class='fa fa-question-circle'></i> Perlu Tindak Lanjut?}:::decision;
-        B2 -- Ya --> B3["<i class='fa fa-random'></i> Pilih Aksi"];
+        B2 -- "Ya" --> B3["<i class='fa fa-random'></i> Pilih Aksi"];
         B3 --> B4["<i class='fa fa-paper-plane'></i> Buat Disposisi"]:::action;
         B3 --> B5["<i class='fa fa-tasks'></i> Jadikan Tugas"]:::action;
         B4 --> B6["Status Surat diubah menjadi<br>'Dikirim'"]:::process;
@@ -60,7 +60,7 @@ graph TD
     end
 
     A4 --> B1;
-    B2 -- Tidak --> C1;
+    B2 -- "Tidak" --> C1;
     B6 --> C1;
     B7 --> C1;
 
