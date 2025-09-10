@@ -38,6 +38,7 @@ class SuratController extends Controller
     {
         $validated = $request->validate([
             'perihal' => 'required|string|max:255',
+            'nomor_surat' => 'nullable|string|max:255|unique:surat,nomor_surat',
             'tanggal_surat' => 'required|date',
             'file' => 'required|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:10240', // Max 10MB
         ]);
@@ -46,6 +47,7 @@ class SuratController extends Controller
 
         Surat::create([
             'perihal' => $validated['perihal'],
+            'nomor_surat' => $validated['nomor_surat'] ?? null,
             'tanggal_surat' => $validated['tanggal_surat'],
             'file_path' => $path,
             'status' => 'draft',

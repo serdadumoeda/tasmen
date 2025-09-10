@@ -20,17 +20,23 @@
                     <form action="{{ route('surat.store') }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         <div class="space-y-6">
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div class="md:col-span-2">
                                     <label for="perihal" class="block font-semibold text-sm text-gray-700 mb-1">Perihal Surat <span class="text-red-500">*</span></label>
                                     <input type="text" name="perihal" id="perihal" value="{{ old('perihal') }}" class="mt-1 block w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500" required autofocus>
                                     @error('perihal') <p class="text-sm text-red-600 mt-2">{{ $message }}</p> @enderror
                                 </div>
                                 <div>
-                                    <label for="tanggal_surat" class="block font-semibold text-sm text-gray-700 mb-1">Tanggal Dokumen Surat <span class="text-red-500">*</span></label>
-                                    <input type="date" name="tanggal_surat" id="tanggal_surat" value="{{ old('tanggal_surat', date('Y-m-d')) }}" class="mt-1 block w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500" required>
-                                    @error('tanggal_surat') <p class="text-sm text-red-600 mt-2">{{ $message }}</p> @enderror
+                                    <label for="nomor_surat" class="block font-semibold text-sm text-gray-700 mb-1">Nomor Surat (Opsional)</label>
+                                    <input type="text" name="nomor_surat" id="nomor_surat" value="{{ old('nomor_surat') }}" class="mt-1 block w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500">
+                                    @error('nomor_surat') <p class="text-sm text-red-600 mt-2">{{ $message }}</p> @enderror
                                 </div>
+                            </div>
+
+                            <div>
+                                <label for="tanggal_surat" class="block font-semibold text-sm text-gray-700 mb-1">Tanggal Dokumen Surat <span class="text-red-500">*</span></label>
+                                <input type="date" name="tanggal_surat" id="tanggal_surat" value="{{ old('tanggal_surat', date('Y-m-d')) }}" class="mt-1 block w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500" required>
+                                @error('tanggal_surat') <p class="text-sm text-red-600 mt-2">{{ $message }}</p> @enderror
                             </div>
 
                             <div>
