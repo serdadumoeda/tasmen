@@ -22,9 +22,19 @@ use App\Http\Controllers\PeminjamanRequestController;
 use App\Http\Controllers\WeeklyWorkloadController;
 use App\Http\Controllers\BudgetRealizationController;
 use App\Http\Controllers\NotificationController;
-
-
-
+use App\Http\Controllers\SuratController;
+use App\Http\Controllers\DisposisiController;
+use App\Http\Controllers\SuratVerificationController;
+use App\Http\Controllers\ArsipController;
+use App\Http\Controllers\Admin\ApiKeyController;
+use App\Http\Controllers\Admin\CutiBersamaController;
+use App\Http\Controllers\Admin\ApprovalWorkflowController;
+use App\Http\Controllers\Admin\DelegationController;
+use App\Http\Controllers\Api\UnitApiController;
+use App\Http\Controllers\UnitController;
+use App\Http\Controllers\Admin\JabatanController;
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 
 
 Route::get('/', function () {
@@ -34,8 +44,6 @@ Route::get('/', function () {
 
 Route::get('/get-users-by-unit/{unitId}', [UserController::class, 'getUsersByUnitFromId'])->name('users.by-unit');
 
-use App\Models\User;
-use Illuminate\Support\Facades\Auth;
 
 Route::middleware(['auth'])->group(function () {
     // Rute default setelah login adalah Beranda baru.
@@ -196,38 +204,27 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/profile/complete', [CompleteProfileController::class, 'store'])->name('profile.complete.store');
 
     // --- UNIFIED SURAT ROUTES ---
-    // Renamed from surat-masuk to surat, and pointing to the new unified SuratController
-    Route::get('/surat/workflow', [\App\Http\Controllers\SuratController::class, 'showWorkflow'])->name('surat.workflow');
-    Route::resource('surat', \App\Http\Controllers\SuratController::class)->only(['index', 'create', 'store', 'show', 'destroy']);
-    Route::get('/surat/{surat}/download', [\App\Http\Controllers\SuratController::class, 'download'])->name('surat.download');
+    Route::get('/surat/workflow', [SuratController::class, 'showWorkflow'])->name('surat.workflow');
+    Route::resource('surat', SuratController::class)->only(['index', 'create', 'store', 'show', 'destroy']);
+    Route::get('/surat/{surat}/download', [SuratController::class, 'download'])->name('surat.download');
+    Route::get('/surat/{surat}/make-task', [SuratController::class, 'makeTask'])->name('surat.make-task');
 
     // Disposition routes, attached to the unified surat
-    Route::get('/surat/{surat}/disposisi/lacak', [\App\Http\Controllers\DisposisiController::class, 'lacak'])->name('disposisi.lacak');
-    Route::post('/surat/{surat}/disposisi', [\App\Http\Controllers\DisposisiController::class, 'store'])->name('disposisi.store');
+    Route::get('/disposisi/{surat}/lacak', [DisposisiController::class, 'lacak'])->name('disposisi.lacak');
+    Route::post('/surat/{surat}/disposisi', [DisposisiController::class, 'store'])->name('disposisi.store');
+
+    // Route for the digital archive
+    Route::get('/arsip', [ArsipController::class, 'index'])->name('arsip.index');
+    Route::get('/arsip/workflow', [ArsipController::class, 'showWorkflow'])->name('arsip.workflow');
+    Route::post('/arsip/berkas', [ArsipController::class, 'storeBerkas'])->name('arsip.berkas.store');
+    Route::post('/arsip/berkas/add-surat', [ArsipController::class, 'addSuratToBerkas'])->name('arsip.berkas.add-surat');
 
 });
-
-use App\Http\Controllers\Admin\ApiKeyController;
-use App\Http\Controllers\Admin\CutiBersamaController;
-use App\Http\Controllers\Admin\ApprovalWorkflowController;
-use App\Http\Controllers\Admin\DelegationController;
-use App\Http\Controllers\Api\UnitApiController;
-use App\Http\Controllers\UnitController;
-use App\Http\Controllers\Admin\JabatanController;
 
 require __DIR__.'/auth.php';
 
 // Public route for letter verification
-Route::get('/surat/verify/{id}', [\App\Http\Controllers\SuratVerificationController::class, 'verify'])->name('surat.verify');
-
-// Route to create a task from a letter
-Route::get('/surat/{surat}/make-task', [\App\Http\Controllers\SuratController::class, 'makeTask'])->name('surat.make-task')->middleware('auth');
-
-// Route for the digital archive
-Route::get('/arsip', [\App\Http\Controllers\ArsipController::class, 'index'])->name('arsip.index')->middleware('auth');
-Route::get('/arsip/workflow', [\App\Http\Controllers\ArsipController::class, 'showWorkflow'])->name('arsip.workflow')->middleware('auth');
-Route::post('/arsip/berkas', [\App\Http\Controllers\ArsipController::class, 'storeBerkas'])->name('arsip.berkas.store')->middleware('auth');
-Route::post('/arsip/berkas/add-surat', [\App\Http\Controllers\ArsipController::class, 'addSuratToBerkas'])->name('arsip.berkas.add-surat')->middleware('auth');
+Route::get('/surat/verify/{id}', [SuratVerificationController::class, 'verify'])->name('surat.verify');
 
 // API routes for units, accessible without authentication
 Route::get('/api/units/eselon-i', [UnitApiController::class, 'getEselonIUnits']);
