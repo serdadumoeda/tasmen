@@ -4,8 +4,8 @@
 <p class="text-sm text-gray-600 mb-4">Berikut adalah daftar surat yang menjadi dasar pelaksanaan kegiatan ini. Anda dapat menambahkan atau mengubahnya melalui halaman "Edit Kegiatan".</p>
 
 @can('create', App\Models\Surat::class)
-  {{-- This link assumes the SuratKeluarController@create method can handle these query parameters --}}
-  <a href="{{ route('surat-keluar.create', ['suratable_type' => 'App\Models\Project', 'suratable_id' => $project->id]) }}" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white font-semibold text-sm rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition ease-in-out duration-150 mb-4">
+  {{-- The feature to link mail to a project is not fully implemented. This now points to the general create page. --}}
+  <a href="{{ route('surat.create') }}" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white font-semibold text-sm rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition ease-in-out duration-150 mb-4">
     <i class="fas fa-plus-circle mr-2"></i> Buat Surat Baru
   </a>
 @endcan
@@ -35,11 +35,7 @@
                 </span>
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-              @if ($s->jenis == 'keluar')
-                <a href="{{ route('surat-keluar.show', $s->id) }}" class="text-indigo-600 hover:text-indigo-900">Detail</a>
-              @else
-                <a href="{{ route('surat-masuk.show', $s->id) }}" class="text-indigo-600 hover:text-indigo-900">Detail</a>
-              @endif
+              <a href="{{ route('surat.show', $s->id) }}" class="text-indigo-600 hover:text-indigo-900">Detail</a>
             </td>
           </tr>
         @empty
