@@ -6,6 +6,7 @@ use App\Models\KlasifikasiSurat;
 use App\Models\Surat;
 use App\Models\User;
 use Carbon\Carbon;
+use App\Exceptions\UnitCodeNotFoundException;
 use Illuminate\Support\Facades\DB;
 
 class NomorSuratService
@@ -19,7 +20,7 @@ class NomorSuratService
      * @param KlasifikasiSurat $klasifikasi The classification chosen for the letter.
      * @param User $pembuat The user creating the letter, used to find the work unit.
      * @return string The generated letter number.
-     * @throws \Exception If the user does not have a unit with a code.
+     * @throws UnitCodeNotFoundException If the user does not have a unit with a code.
      */
     public function generate(KlasifikasiSurat $klasifikasi, User $pembuat): string
     {
@@ -33,7 +34,10 @@ class NomorSuratService
             $unitCode = $pembuat->unit->kode ?? null;
 
             if (!$unitCode) {
-                throw new \Exception("User's unit or unit code not found.");
+                if (!$pembuat->unit) {
+                    throw new UnitCodeNotFoundException("Profil Anda tidak terasosiasi dengan unit kerja manapun. Silakan hubungi administrator.");
+                }
+                throw new UnitCodeNotFoundException("Kode untuk unit kerja Anda ({$pembuat->unit->name}) tidak ditemukan. Silakan hubungi administrator.");
             }
 
             $romanMonth = $this->toRoman($month);

@@ -7,6 +7,7 @@ use App\Models\Surat;
 use App\Models\TemplateSurat;
 use App\Models\User;
 use App\Models\LampiranSurat;
+use App\Exceptions\UnitCodeNotFoundException;
 use App\Models\Setting;
 use App\Services\NomorSuratService;
 use App\Services\Tte\TteManager;
@@ -80,8 +81,12 @@ class SuratKeluarController extends Controller
         $validated = $request->validate(array_merge($baseRules, $specificRules));
 
         // --- Automatic Numbering ---
-        $klasifikasi = KlasifikasiSurat::find($validated['klasifikasi_id']);
-        $nomorSurat = $nomorSuratService->generate($klasifikasi, Auth::user());
+        try {
+            $klasifikasi = KlasifikasiSurat::find($validated['klasifikasi_id']);
+            $nomorSurat = $nomorSuratService->generate($klasifikasi, Auth::user());
+        } catch (UnitCodeNotFoundException $e) {
+            return back()->withInput()->with('error', $e->getMessage());
+        }
         // --- End Automatic Numbering ---
 
         $suratData = [
