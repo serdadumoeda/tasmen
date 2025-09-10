@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Surat;
+use App\Models\Task;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -18,7 +19,6 @@ class SuratController extends Controller
      */
     public function index()
     {
-        // Display a unified list of all letters, newest first.
         $suratItems = Surat::with('pembuat')->latest()->paginate(15);
         return view('surat.index', ['surat' => $suratItems]);
     }
@@ -42,7 +42,6 @@ class SuratController extends Controller
             'file' => 'required|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:10240', // Max 10MB
         ]);
 
-        // Use the 'local' disk which is configured for private storage.
         $path = $request->file('file')->store('surat_files', 'local');
 
         Surat::create([
@@ -63,7 +62,7 @@ class SuratController extends Controller
     {
         $surat->load(['pembuat', 'disposisi' => function ($query) {
             $query->with(['pengirim', 'penerima', 'tembusanUsers', 'children' => function($q) {
-                $q->with('penerima', 'tembusanUsers', 'children'); // Recursive eager loading
+                $q->with('penerima', 'tembusanUsers', 'children');
             }]);
         }]);
 
@@ -90,15 +89,10 @@ class SuratController extends Controller
      */
     public function destroy(Surat $surat)
     {
-        // We might want to add authorization here later, e.g.,
-        // $this->authorize('delete', $surat);
-
         if ($surat->file_path) {
             Storage::disk('local')->delete($surat->file_path);
         }
-
         $surat->delete();
-
         return redirect()->route('surat.index')->with('success', 'Surat berhasil dihapus.');
     }
 
@@ -110,7 +104,6 @@ class SuratController extends Controller
         if (!$surat->file_path || !Storage::disk('local')->exists($surat->file_path)) {
             return back()->with('error', 'File tidak ditemukan.');
         }
-
         return Storage::disk('local')->download($surat->file_path);
     }
 
@@ -119,21 +112,18 @@ class SuratController extends Controller
      */
     public function makeTask(Request $request, Surat $surat)
     {
-        // Create a new ad-hoc task
-        $task = \App\Models\Task::create([
+        $task = Task::create([
             'title' => $surat->perihal,
             'description' => 'Tugas ini dibuat berdasarkan surat dengan perihal: ' . $surat->perihal . '. Lihat surat terlampir untuk detail.',
             'creator_id' => Auth::id(),
-            'status_id' => 1, // Assuming 1 is 'To Do' or 'Baru'
+            'status_id' => 1, // Assuming 1 is 'To Do'
             'priority_id' => 2, // Assuming 2 is 'Normal'
-            'due_date' => now()->addDays(7), // Default due date
+            'due_date' => now()->addDays(7),
             'surat_id' => $surat->id,
         ]);
 
-        // Assign the current user to the task by default
         $task->assignees()->attach(Auth::id());
 
-        // Update the letter's status
         $surat->status = 'Ditugaskan';
         $surat->save();
 

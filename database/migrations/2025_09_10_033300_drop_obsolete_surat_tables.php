@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        Schema::dropIfExists('lampiran_surat');
         Schema::dropIfExists('template_surat');
     }
 
@@ -24,6 +25,16 @@ return new class extends Migration
             $table->string('judul');
             $table->text('deskripsi')->nullable();
             $table->longText('konten');
+            $table->timestamps();
+        });
+
+        Schema::create('lampiran_surat', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('surat_id')->constrained('surat')->onDelete('cascade');
+            $table->string('nama_file');
+            $table->string('path_file');
+            $table->string('tipe_file')->nullable();
+            $table->unsignedInteger('ukuran_file')->nullable();
             $table->timestamps();
         });
     }

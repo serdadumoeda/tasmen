@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('perihal');
             $table->date('tanggal_surat');
             $table->enum('jenis', ['masuk', 'keluar']);
-            $table->string('status')->default('draft');
+            $table->enum('status', ['draft', 'dikirim', 'diarsipkan', 'disetujui', 'ditolak', 'perlu_revisi']);
             $table->foreignId('pembuat_id')->constrained('users');
             $table->foreignId('penyetuju_id')->nullable()->constrained('users');
             $table->longText('konten')->nullable();
