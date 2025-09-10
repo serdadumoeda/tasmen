@@ -60,6 +60,17 @@ class TaskController extends Controller
     {
         // Eager load relasi untuk efisiensi
     $task->load('assignees', 'attachments', 'project.members', 'status');
+
+    // DEFENSIVE CODING: Handle tasks that were created with a null status before the bug was fixed.
+    if (is_null($task->status)) {
+        $defaultStatus = \App\Models\TaskStatus::where('key', 'pending')->first();
+        if ($defaultStatus) {
+            $task->task_status_id = $defaultStatus->id;
+            $task->save();
+            $task->load('status'); // Reload the relationship
+        }
+    }
+
         $this->authorize('update', $task);
         
         $user = Auth::user();
