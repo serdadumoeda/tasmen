@@ -103,8 +103,8 @@ graph TD
     </div>
 
     @push('scripts')
-        <script type="module">
-            import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        <script src="https://cdn.jsdelivr.net/npm/mermaid@10.3.1/dist/mermaid.min.js"></script>
+        <script>
             mermaid.initialize({
                 startOnLoad: true,
                 fontFamily: 'inherit',
