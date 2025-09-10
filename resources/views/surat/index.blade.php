@@ -33,6 +33,7 @@
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-100">
                                 <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Nomor Surat</th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Perihal</th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Tanggal Surat</th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Diunggah Oleh</th>
@@ -43,17 +44,21 @@
                             <tbody class="bg-white divide-y divide-gray-100">
                                 @forelse ($surat as $item)
                                     <tr class="hover:bg-gray-50">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-mono">{{ $item->nomor_surat ?? 'N/A' }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ Str::limit($item->perihal, 60) }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ $item->tanggal_surat->format('d M Y') }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ $item->pembuat->name ?? 'N/A' }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                            <span class="px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full
-                                                @if($item->status == 'Baru') bg-blue-100 text-blue-800 @endif
-                                                @if($item->status == 'Didisposisikan') bg-yellow-100 text-yellow-800 @endif
-                                                @if($item->status == 'Ditugaskan') bg-purple-100 text-purple-800 @endif
-                                                @if($item->status == 'Diarsipkan') bg-gray-100 text-gray-800 @endif
-                                            ">
-                                                {{ $item->status }}
+                                            <span @class([
+                                                'px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full',
+                                                'bg-blue-100 text-blue-800' => $item->status === 'draft',
+                                                'bg-yellow-100 text-yellow-800' => $item->status === 'dikirim',
+                                                'bg-green-100 text-green-800' => $item->status === 'disetujui',
+                                                'bg-red-100 text-red-800' => $item->status === 'ditolak',
+                                                'bg-purple-100 text-purple-800' => $item->status === 'perlu_revisi',
+                                                'bg-gray-100 text-gray-800' => $item->status === 'diarsipkan',
+                                            ])>
+                                                {{ ucfirst(str_replace('_', ' ', $item->status)) }}
                                             </span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
