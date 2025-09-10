@@ -125,12 +125,14 @@ class GlobalDashboardController extends Controller
                 ->get();
 
             // 2. Get Surat Keluar awaiting approval
-            $subordinateIds = $currentUser->getAllSubordinateIds();
-            $suratKeluar = Surat::where('jenis', 'keluar')
-                ->where('status', 'draft')
-                ->whereIn('pembuat_id', $subordinateIds)
-                ->with('pembuat')
-                ->get();
+            // NOTE: This feature is temporarily disabled due to a missing 'jenis' column in the 'surat' table.
+            // $subordinateIds = $currentUser->getAllSubordinateIds();
+            // $suratKeluar = Surat::where('jenis', 'keluar')
+            //     ->where('status', 'draft')
+            //     ->whereIn('pembuat_id', $subordinateIds)
+            //     ->with('pembuat')
+            //     ->get();
+            $suratKeluar = collect();
 
             // 3. Get Peminjaman Pegawai awaiting approval
             $peminjamanRequests = PeminjamanRequest::where('approver_id', $currentUser->id)
