@@ -20,8 +20,8 @@
             <!-- Intro Card -->
             <x-card>
                 <div class="p-6">
-                    <h3 class="text-xl font-bold text-gray-800 mb-2">Dokumentasi Alur Kerja Surat</h3>
-                    <p class="text-gray-600">Halaman ini menjelaskan alur kerja baru yang disederhanakan untuk modul Surat. Konsepnya adalah surat yang sudah jadi diunggah ke dalam sistem untuk kemudian didisposisikan atau dijadikan dasar penugasan.</p>
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">Dokumentasi Alur Kerja Pencatatan Surat</h3>
+                    <p class="text-gray-600">Halaman ini menjelaskan alur kerja utama untuk modul Surat. Proses ini berfokus pada bagaimana sebuah surat yang sudah ada (misalnya, surat fisik yang dipindai atau surat digital dari eksternal) dicatat ke dalam sistem untuk kemudian ditindaklanjuti melalui disposisi atau dijadikan dasar penugasan.</p>
                 </div>
             </x-card>
 
@@ -29,6 +29,7 @@
             <x-card>
                 <div class="p-6">
                     <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Flowchart Alur Kerja</h3>
+                    <p class="text-gray-600 mb-6">Flowchart ini merinci langkah-langkah dari pengunggahan hingga tindak lanjut surat.</p>
                     <div class="p-4 bg-gray-50 rounded-lg text-center">
                         <pre class="mermaid">
 graph TD
@@ -38,20 +39,31 @@ graph TD
     classDef decision fill:#FDEDEC,stroke:#C0392B,color:#A93226,stroke-width:1px;
     classDef end fill:#F2F3F4,stroke:#99A3A4,color:#616A6B,stroke-width:1px;
 
-    A["<i class='fa fa-user'></i> Pengguna"]:::action -->|Klik 'Unggah Surat Baru'| B["<i class='fa fa-upload'></i> Form Unggah Surat"]:::page;
-    B -- Isi Perihal, Tanggal &<br>Upload File --> C{<i class='fa fa-check-double'></i> Validasi}:::decision;
-    C -- Gagal --> B;
-    C -- Sukses --> D["<i class='fa fa-save'></i> Surat Tercatat<br>Status: 'Draft'"]:::process;
-    D --> E["<i class='fa fa-file-alt'></i> Halaman Detail Surat"]:::page;
-    E --> F{<i class='fa fa-question-circle'></i> Perlu Tindak Lanjut?}:::decision;
-    F -- Ya --> G["<i class='fa fa-random'></i> Pilih Aksi"];
-    G --> H["<i class='fa fa-paper-plane'></i> Buat Disposisi"]:::action;
-    G --> I["<i class='fa fa-tasks'></i> Jadikan Tugas"]:::action;
-    H --> J["Surat Berstatus 'Dikirim'"]:::process;
-    I --> K["Surat Berstatus 'Disetujui'"]:::process;
-    J --> L["<i class='fa fa-archive'></i> Surat Diarsipkan"]:::end;
-    K --> L;
-    F -- Tidak --> L;
+    subgraph "Tahap 1: Pencatatan"
+        A1["<i class='fa fa-user'></i> Pengguna"]:::action -->|Klik 'Unggah Surat Baru'| A2["<i class='fa fa-upload'></i> Form Unggah Surat"]:::page;
+        A2 -- Isi Perihal, Tanggal &<br>Upload File --> A3{<i class='fa fa-check-double'></i> Validasi Sistem}:::decision;
+        A3 -- Gagal --> A2;
+        A3 -- Sukses --> A4["<i class='fa fa-save'></i> Surat Tercatat<br>Status: 'Draft'"]:::process;
+    end
+
+    subgraph "Tahap 2: Tindak Lanjut"
+        B1["<i class='fa fa-file-alt'></i> Buka Halaman Detail Surat"]:::page --> B2{<i class='fa fa-question-circle'></i> Perlu Tindak Lanjut?}:::decision;
+        B2 -- Ya --> B3["<i class='fa fa-random'></i> Pilih Aksi"];
+        B3 --> B4["<i class='fa fa-paper-plane'></i> Buat Disposisi"]:::action;
+        B3 --> B5["<i class='fa fa-tasks'></i> Jadikan Tugas"]:::action;
+        B4 --> B6["Status Surat diubah menjadi<br>'Dikirim'"]:::process;
+        B5 --> B7["Status Surat diubah menjadi<br>'Disetujui'"]:::process;
+    end
+
+    subgraph "Tahap 3: Selesai & Diarsipkan"
+        C1["<i class='fa fa-archive'></i> Surat Selesai Diproses"]:::end;
+    end
+
+    A4 --> B1;
+    B2 -- Tidak --> C1;
+    B6 --> C1;
+    B7 --> C1;
+
                         </pre>
                     </div>
                 </div>
@@ -60,27 +72,28 @@ graph TD
             <!-- Penjelasan Detail -->
             <x-card>
                 <div class="p-6">
-                    <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Penjelasan Detail Alur Kerja</h3>
+                    <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Deskripsi Detail Alur Kerja</h3>
                     <div class="prose max-w-none text-gray-700 space-y-4">
                         <div>
                             <h4 class="font-semibold text-gray-800">1. Pencatatan Surat</h4>
-                            <p>Proses dimulai ketika seorang pengguna perlu mencatat surat yang sudah ada (misalnya, surat fisik yang dipindai atau surat digital yang diterima dari luar sistem). Mereka mengunggah dokumen ini ke dalam aplikasi.</p>
+                            <p>Proses dimulai ketika seorang pengguna (staf atau pimpinan) perlu mencatat surat yang sudah ada ke dalam sistem untuk keterlacakan dan tindak lanjut digital.</p>
                             <ul class="list-disc list-inside ml-4 space-y-2">
-                                <li><strong>Input Data</strong>: Pengguna mengisi informasi dasar seperti Perihal dan Tanggal Surat, lalu memilih dan mengunggah file dokumen utama.</li>
-                                <li><strong>Pencatatan</strong>: Setelah berhasil diunggah, surat akan tercatat di sistem dengan status awal 'Draft' dan dapat dilihat di Daftar Surat.</li>
+                                <li><strong>Input Data</strong>: Pengguna menekan tombol "Unggah Surat Baru", kemudian mengisi informasi dasar seperti Perihal dan Tanggal Surat, serta mengunggah dokumen digital (PDF, Word, dll).</li>
+                                <li><strong>Status Awal</strong>: Setelah berhasil diunggah, surat akan tercatat di sistem dengan status awal <strong>'Draft'</strong>. Pada tahap ini, surat hanya menjadi catatan digital dan belum ditindaklanjuti.</li>
                             </ul>
                         </div>
                         <div>
-                            <h4 class="font-semibold text-gray-800">2. Tindak Lanjut</h4>
-                            <p>Dari halaman Detail Surat, pengguna dapat melakukan beberapa aksi untuk menindaklanjuti surat tersebut.</p>
+                            <h4 class="font-semibold text-gray-800">2. Proses Tindak Lanjut dari Detail Surat</h4>
+                            <p>Dari halaman Detail Surat, pengguna dapat melakukan beberapa aksi utama untuk menindaklanjuti surat tersebut.</p>
                             <ul class="list-disc list-inside ml-4 space-y-2">
-                                <li><strong>Disposisi</strong>: Jika surat perlu diketahui atau ditindaklanjuti oleh pihak lain, pengguna dapat membuat disposisi. Ini akan mengubah status surat menjadi 'Dikirim'.</li>
-                                <li><strong>Menjadikan Tugas</strong>: Jika surat tersebut memerlukan sebuah pekerjaan konkret, pengguna dapat langsung membuat tugas baru dari surat tersebut. Ini akan mengubah status surat menjadi 'Disetujui' dan menautkan tugas ke surat asalnya untuk keterlacakan.</li>
+                                <li><strong>Disposisi</strong>: Jika surat perlu diketahui atau ditindaklanjuti oleh pihak lain, pengguna dapat membuat disposisi. Aksi ini akan mengubah status surat menjadi <strong>'Dikirim'</strong>, menandakan surat sedang dalam proses sirkulasi atau disposisi.</li>
+                                <li><strong>Menjadikan Tugas</strong>: Jika surat tersebut memerlukan sebuah pekerjaan konkret dengan output yang jelas, pengguna dapat langsung membuat tugas baru dari surat tersebut. Aksi ini akan mengubah status surat menjadi <strong>'Disetujui'</strong>, yang menandakan bahwa isi surat telah disetujui dan kini menjadi dasar untuk sebuah pekerjaan. File surat juga akan otomatis terlampir pada tugas yang baru dibuat.</li>
+                                <li><strong>Tanpa Tindak Lanjut</strong>: Jika surat hanya bersifat informasional dan tidak memerlukan aksi lebih lanjut, pengguna tidak perlu melakukan apa-apa. Surat akan tetap tersimpan di sistem.</li>
                             </ul>
                         </div>
                         <div>
-                            <h4 class="font-semibold text-gray-800">3. Pengarsipan</h4>
-                            <p>Setelah semua proses tindak lanjut selesai (atau jika tidak ada tindak lanjut yang diperlukan), surat secara otomatis berfungsi sebagai arsip digital. Status akhirnya ('Dikirim', 'Disetujui', atau 'Diarsipkan' secara manual) menandakan bahwa surat telah selesai diproses.</p>
+                            <h4 class="font-semibold text-gray-800">3. Pengarsipan Otomatis</h4>
+                            <p>Setelah surat ditindaklanjuti (statusnya menjadi 'Dikirim' atau 'Disetujui'), atau jika tidak ada tindak lanjut sama sekali, surat tersebut secara otomatis dianggap sebagai arsip digital. Pengguna dapat menemukannya kembali melalui modul Arsip Digital untuk keperluan di masa depan.</p>
                         </div>
                     </div>
                 </div>
