@@ -59,7 +59,7 @@ class TaskController extends Controller
     public function edit(Task $task, BreadcrumbService $breadcrumbService, PageTitleService $pageTitleService)
     {
         // Eager load relasi untuk efisiensi
-        $task->load('assignees', 'attachments', 'project.members');
+    $task->load('assignees', 'attachments', 'project.members', 'status');
         $this->authorize('update', $task);
         
         $user = Auth::user();
