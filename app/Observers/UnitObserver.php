@@ -114,8 +114,9 @@ class UnitObserver
         $affectedUnits = $ancestors->push($unit);
 
         foreach ($affectedUnits as $affectedUnit) {
-            if ($affectedUnit->kepalaUnit) {
-                Cache::forget('subordinate_unit_ids_for_user_' . $affectedUnit->kepalaUnit->id);
+            $actingHead = $affectedUnit->getActingHead();
+            if ($actingHead) {
+                Cache::forget('subordinate_unit_ids_for_user_' . $actingHead->id);
             }
         }
     }

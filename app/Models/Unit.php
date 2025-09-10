@@ -224,31 +224,36 @@ class Unit extends Model
 
     /**
      * Get the displayable head of the unit, accounting for delegations.
-     * This accessor is resilient to inconsistencies in Jabatan naming.
      *
      * @return User|null
      */
     public function getDisplayableHeadAttribute(): ?User
     {
-        // Priority 1: Return the definitive head if one is assigned.
+        // Priority 1: Return the definitive head (kepalaUnit) if one is assigned.
         if ($this->kepalaUnit) {
             $this->kepalaUnit->is_delegate = false;
             return $this->kepalaUnit;
         }
 
-        // Priority 2: Find an active delegation within any of this unit's jabatans.
-        // This is resilient to cases where the 'Kepala' jabatan name is inconsistent in the DB.
-        // We use the eager-loaded relationships for efficiency.
-        foreach ($this->jabatans as $jabatan) {
-            // Find the first active delegation for this position.
-            $activeDelegation = $jabatan->delegations->first(function ($delegation) {
-                $today = \Carbon\Carbon::today();
-                return $delegation->start_date <= $today && $delegation->end_date >= $today;
+        // Priority 2: If the definitive head is vacant, look for an active delegation
+        // specifically for the 'Kepala' position of this unit.
+
+        // Construct the expected name for the head of unit's Jabatan.
+        $kepalaJabatanName = 'Kepala ' . $this->name;
+
+        // Find the specific 'Kepala' Jabatan from the eager-loaded collection.
+        $kepalaJabatan = $this->jabatans->firstWhere('name', $kepalaJabatanName);
+
+        // If we found the correct Jabatan, check for an active delegation.
+        if ($kepalaJabatan) {
+            $activeDelegation = $kepalaJabatan->delegations->first(function ($delegation) {
+                $today = now();
+                return $delegation->start_date->isSameDayOrBefore($today) && $delegation->end_date->isSameDayOrAfter($today);
             });
 
             if ($activeDelegation && $activeDelegation->user) {
                 // If an active delegation is found, return the delegated user.
-                // We add temporary attributes to the user model for display purposes in the view.
+                // Add temporary attributes for display purposes.
                 $delegatedUser = $activeDelegation->user;
                 $delegatedUser->is_delegate = true;
                 $delegatedUser->delegation_type = $activeDelegation->type;
@@ -258,5 +263,16 @@ class Unit extends Model
 
         // Priority 3: If no definitive head and no active delegation, the position is vacant.
         return null;
+    }
+
+    /**
+     * Get the acting head of the unit, whether definitive or temporary (Plt./Plh.).
+     * This is the single source of truth for determining who is in charge of a unit.
+     *
+     * @return User|null
+     */
+    public function getActingHead(): ?User
+    {
+        return $this->displayable_head;
     }
 }
