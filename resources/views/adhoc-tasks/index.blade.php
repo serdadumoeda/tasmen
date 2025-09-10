@@ -29,63 +29,59 @@
 
                     <!-- Filter and Search Form -->
                     <form action="{{ route('adhoc-tasks.index') }}" method="GET" class="mb-6 p-4 bg-gray-50 rounded-lg border">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-6">
 
-                            {{-- Kolom Pencarian --}}
-                            <div class="lg:col-span-5">
+                            {{-- Row 1 --}}
+                            <div class="lg:col-span-4">
                                 <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Cari Tugas</label>
                                 <input type="text" name="search" id="search" placeholder="Cari judul atau deskripsi..." value="{{ request('search') }}" class="block w-full rounded-lg border-gray-300 shadow-sm text-sm">
                             </div>
 
-                            {{-- Kolom Status --}}
                             <div>
-                                <label for="task_status_id" class="block text-sm font-medium text-gray-700 mb-1">Status Tugas</label>
+                                <label for="task_status_id" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
                                 <select name="task_status_id" id="task_status_id" class="block w-full rounded-lg border-gray-300 shadow-sm text-sm">
-                                    <option value="">Semua Status</option>
+                                    <option value="">Semua</option>
                                     @foreach($statuses as $status)
                                         <option value="{{ $status->id }}" @selected(request('task_status_id') == $status->id)>{{ $status->label }}</option>
                                     @endforeach
                                 </select>
                             </div>
 
-                            {{-- Kolom Prioritas --}}
                             <div>
                                 <label for="priority_level_id" class="block text-sm font-medium text-gray-700 mb-1">Prioritas</label>
                                 <select name="priority_level_id" id="priority_level_id" class="block w-full rounded-lg border-gray-300 shadow-sm text-sm">
-                                    <option value="">Semua Prioritas</option>
+                                    <option value="">Semua</option>
                                     @foreach($priorityLevels as $priority)
                                         <option value="{{ $priority->id }}" @selected(request('priority_level_id') == $priority->id)>{{ $priority->name }}</option>
                                     @endforeach
                                 </select>
                             </div>
 
-                            {{-- Kolom Filter Personel --}}
-                             @if(Auth::user()->canManageUsers())
-                            <div class="lg:col-span-2">
-                                <label for="personnel_id" class="block text-sm font-medium text-gray-700 mb-1">Filter Personel</label>
-                                <select name="personnel_id" id="personnel_id" class="block w-full rounded-lg border-gray-300 shadow-sm text-sm">
-                                    <option value="">Semua Personel</option>
-                                    @foreach($subordinates as $subordinate)
-                                        <option value="{{ $subordinate->id }}" @selected(request('personnel_id') == $subordinate->id)>{{ $subordinate->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
+                            {{-- Row 2 --}}
+                            @if(Auth::user()->canManageUsers())
+                                <div class="lg:col-span-3">
+                                    <label for="personnel_id" class="block text-sm font-medium text-gray-700 mb-1">Personel</label>
+                                    <select name="personnel_id" id="personnel_id" class="block w-full rounded-lg border-gray-300 shadow-sm text-sm">
+                                        <option value="">Semua Personel</option>
+                                        @foreach($subordinates as $subordinate)
+                                            <option value="{{ $subordinate->id }}" @selected(request('personnel_id') == $subordinate->id)>{{ $subordinate->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="lg:col-span-3">
+                                    <label for="date_range" class="block text-sm font-medium text-gray-700 mb-1">Rentang Deadline</label>
+                                    <input type="text" name="date_range" id="date_range" value="{{ request('date_range') }}" class="block w-full rounded-lg border-gray-300 shadow-sm text-sm" placeholder="Pilih tanggal...">
+                                </div>
+                            @else
+                                <div class="lg:col-span-6">
+                                    <label for="date_range" class="block text-sm font-medium text-gray-700 mb-1">Rentang Deadline</label>
+                                    <input type="text" name="date_range" id="date_range" value="{{ request('date_range') }}" class="block w-full rounded-lg border-gray-300 shadow-sm text-sm" placeholder="Pilih tanggal...">
+                                </div>
                             @endif
-
                         </div>
-
-                        {{-- Filter Tanggal --}}
-                        <div class="mt-4 pt-4 border-t grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
-                            <div class="md:col-span-2">
-                                <label for="date_range" class="block text-sm font-medium text-gray-700 mb-1">Rentang Tanggal (Deadline)</label>
-                                <input type="text" name="date_range" id="date_range" value="{{ request('date_range') }}" class="block w-full rounded-lg border-gray-300 shadow-sm text-sm" placeholder="Pilih rentang tanggal...">
-                            </div>
-                        </div>
-
 
                         {{-- Tombol Aksi Form --}}
                         <div class="mt-6 pt-4 border-t flex items-center justify-between">
-                            {{-- Tombol Cetak dipindah ke sini --}}
                             <a href="#" id="print-report-btn" target="_blank" class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 shadow-sm">
                                 <i class="fas fa-print mr-2"></i>
                                 <span>Cetak Laporan</span>
