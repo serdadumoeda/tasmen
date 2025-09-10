@@ -63,13 +63,16 @@
                             </div>
                              <div class="flex justify-between items-start">
                                 <span class="font-semibold text-gray-600 w-1/3">Status:</span>
-                                <span class="px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full
-                                    @if($surat->status == 'Baru') bg-blue-100 text-blue-800 @endif
-                                    @if($surat->status == 'Didisposisikan') bg-yellow-100 text-yellow-800 @endif
-                                    @if($surat->status == 'Ditugaskan') bg-purple-100 text-purple-800 @endif
-                                    @if($surat->status == 'Diarsipkan') bg-gray-100 text-gray-800 @endif
-                                ">
-                                    {{ $surat->status }}
+                                <span @class([
+                                    'px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full',
+                                    'bg-blue-100 text-blue-800' => $surat->status === 'draft',
+                                    'bg-yellow-100 text-yellow-800' => $surat->status === 'dikirim',
+                                    'bg-green-100 text-green-800' => $surat->status === 'disetujui',
+                                    'bg-red-100 text-red-800' => $surat->status === 'ditolak',
+                                    'bg-purple-100 text-purple-800' => $surat->status === 'perlu_revisi',
+                                    'bg-gray-100 text-gray-800' => $surat->status === 'diarsipkan',
+                                ])>
+                                    {{ ucfirst(str_replace('_', ' ', $surat->status)) }}
                                 </span>
                             </div>
                         </div>
