@@ -140,7 +140,6 @@
                         <nav class="-mb-px flex space-x-8" aria-label="Tabs">
                             <button @click="activeTab = 'tasks'" :class="{ 'border-indigo-500 text-indigo-600': activeTab === 'tasks', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'tasks' }" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200">Daftar Tugas</button>
                             <button @click="activeTab = 'info'" :class="{ 'border-indigo-500 text-indigo-600': activeTab === 'info', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'info' }" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200">Informasi & Aktivitas</button>
-                            <button @click="activeTab = 'surat'" :class="{ 'border-indigo-500 text-indigo-600': activeTab === 'surat', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'surat' }" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200">Persuratan</button>
                             @can('update', $project)
                                 <button @click="activeTab = 'add'" :class="{ 'border-indigo-500 text-indigo-600': activeTab === 'add', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'add' }" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200">Tambah Tugas Baru</button>
                             @endcan
@@ -304,11 +303,6 @@
                                         </ul>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                        <div x-show="activeTab === 'surat'" x-cloak>
-                            <div class="p-4">
-                                @include('projects.partials.persuratan', ['suratList' => $project->surat, 'project' => $project])
                             </div>
                         </div>
                         <div x-show="activeTab === 'add'" x-cloak>
