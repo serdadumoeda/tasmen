@@ -76,13 +76,9 @@
 
                         {{-- Filter Tanggal --}}
                         <div class="mt-4 pt-4 border-t grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
-                            <div>
-                                <label for="start_date" class="block text-sm font-medium text-gray-700 mb-1">Dari Tanggal</label>
-                                <input type="date" name="start_date" id="start_date" value="{{ request('start_date') }}" class="block w-full rounded-lg border-gray-300 shadow-sm text-sm">
-                            </div>
-                            <div>
-                                <label for="end_date" class="block text-sm font-medium text-gray-700 mb-1">Sampai Tanggal</label>
-                                <input type="date" name="end_date" id="end_date" value="{{ request('end_date') }}" class="block w-full rounded-lg border-gray-300 shadow-sm text-sm">
+                            <div class="md:col-span-2">
+                                <label for="date_range" class="block text-sm font-medium text-gray-700 mb-1">Rentang Tanggal (Deadline)</label>
+                                <input type="text" name="date_range" id="date_range" value="{{ request('date_range') }}" class="block w-full rounded-lg border-gray-300 shadow-sm text-sm" placeholder="Pilih rentang tanggal...">
                             </div>
                         </div>
 
@@ -184,6 +180,13 @@
                 form.addEventListener('input', updatePrintLink);
                 form.addEventListener('change', updatePrintLink);
                 updatePrintLink();
+
+                flatpickr("#date_range", {
+                    mode: "range",
+                    dateFormat: "Y-m-d",
+                    altInput: true,
+                    altFormat: "d M Y",
+                });
             });
         </script>
     @endpush

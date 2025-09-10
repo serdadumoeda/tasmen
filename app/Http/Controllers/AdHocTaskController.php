@@ -61,9 +61,15 @@ class AdHocTaskController extends Controller
             $query->where('priority_level_id', $request->input('priority_level_id'));
         }
 
-        if ($request->filled('start_date') && $request->filled('end_date')) {
-            $query->whereDate('deadline', '>=', $request->start_date)
-                  ->whereDate('deadline', '<=', $request->end_date);
+        if ($request->filled('date_range')) {
+            $dates = explode(' to ', $request->input('date_range'));
+            if (count($dates) > 0) {
+                $startDate = trim($dates[0]);
+                $endDate = $dates[1] ?? $startDate;
+
+                $query->whereDate('deadline', '>=', $startDate)
+                      ->whereDate('deadline', '<=', $endDate);
+            }
         }
 
         $sortBy = $request->input('sort_by', 'deadline');
@@ -155,9 +161,15 @@ class AdHocTaskController extends Controller
             $query->where('priority_level_id', $request->input('priority_level_id'));
         }
 
-        if ($request->filled('start_date') && $request->filled('end_date')) {
-            $query->whereDate('deadline', '>=', $request->start_date)
-                  ->whereDate('deadline', '<=', $request->end_date);
+        if ($request->filled('date_range')) {
+            $dates = explode(' to ', $request->input('date_range'));
+            if (count($dates) > 0) {
+                $startDate = trim($dates[0]);
+                $endDate = $dates[1] ?? $startDate;
+
+                $query->whereDate('deadline', '>=', $startDate)
+                      ->whereDate('deadline', '<=', $endDate);
+            }
         }
 
         $sortBy = $request->input('sort_by', 'deadline');
