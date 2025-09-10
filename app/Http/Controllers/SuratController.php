@@ -124,7 +124,7 @@ class SuratController extends Controller
 
         $task->assignees()->attach(Auth::id());
 
-        $surat->status = 'Ditugaskan';
+        $surat->status = 'disetujui';
         $surat->save();
 
         return redirect()->route('tasks.edit', $task)->with('success', 'Tugas berhasil dibuat dari surat. Silakan lengkapi detail tugas.');

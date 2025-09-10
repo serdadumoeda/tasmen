@@ -58,8 +58,8 @@ class DisposisiController extends Controller
         }
 
         // Update the parent letter's status
-        if ($surat->status != 'Didisposisikan') {
-            $surat->update(['status' => 'Didisposisikan']);
+        if ($surat->status != 'dikirim') {
+            $surat->update(['status' => 'dikirim']);
         }
 
         return redirect()->route('surat.show', $surat)->with('success', 'Surat berhasil didisposisikan.');
