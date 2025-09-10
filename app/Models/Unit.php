@@ -247,8 +247,8 @@ class Unit extends Model
         // If we found the correct Jabatan, check for an active delegation.
         if ($kepalaJabatan) {
             $activeDelegation = $kepalaJabatan->delegations->first(function ($delegation) {
-                $today = now();
-                return $delegation->start_date->isSameDayOrBefore($today) && $delegation->end_date->isSameDayOrAfter($today);
+                $today = now()->startOfDay();
+                return $delegation->start_date <= $today && $delegation->end_date >= $today;
             });
 
             if ($activeDelegation && $activeDelegation->user) {
