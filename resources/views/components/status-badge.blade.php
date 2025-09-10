@@ -37,8 +37,27 @@
 
         case 'on_hold':
         case 'ditunda':
+        case 'perlu_revisi':
+            $colorClasses = 'bg-purple-100 text-purple-800';
+             if ($statusValue === 'perlu_revisi') {
+                $displayText = 'Perlu Revisi';
+            }
+            break;
+
+        case 'dikirim':
+            $colorClasses = 'bg-yellow-100 text-yellow-800';
+            break;
+
         case 'draft':
-            $colorClasses = 'bg-gray-200 text-gray-800';
+            $colorClasses = 'bg-blue-100 text-blue-800';
+            break;
+
+        case 'diarsipkan':
+            $colorClasses = 'bg-gray-100 text-gray-800';
+            break;
+
+        case 'ditolak':
+            $colorClasses = 'bg-red-100 text-red-800';
             break;
 
         case 'not_started':
