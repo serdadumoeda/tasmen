@@ -105,12 +105,16 @@
         document.addEventListener('DOMContentLoaded', function() {
             // Inisialisasi TomSelect untuk semua elemen dengan kelas 'tom-select'
             document.querySelectorAll('.tom-select').forEach(element => {
-                new TomSelect(element, {
-                    plugins: ['remove_button'],
+                let config = {
                     create: false,
-                    maxItems: null,
-                    placeholder: 'Pilih Anggota Tim'
-                });
+                    placeholder: element.getAttribute('placeholder') || 'Pilih...'
+                };
+
+                if (element.multiple) {
+                    config.plugins = ['remove_button'];
+                }
+
+                new TomSelect(element, config);
             });
         });
     </script>
