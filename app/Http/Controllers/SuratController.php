@@ -48,7 +48,7 @@ class SuratController extends Controller
             'perihal' => $validated['perihal'],
             'tanggal_surat' => $validated['tanggal_surat'],
             'file_path' => $path,
-            'status' => 'Baru',
+            'status' => 'draft',
             'pembuat_id' => Auth::id(),
         ]);
 
