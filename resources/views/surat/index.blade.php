@@ -5,6 +5,10 @@
                 {{ __('Daftar Surat Tercatat') }}
             </h2>
             <div class="flex items-center space-x-2">
+                <a href="{{ route('surat.workflow') }}" class="inline-flex items-center px-4 py-2 bg-gray-200 border border-transparent rounded-lg font-semibold text-xs text-gray-800 uppercase tracking-widest hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition ease-in-out duration-150">
+                    <i class="fas fa-sitemap mr-2"></i>
+                    {{ __('Lihat Alur Kerja') }}
+                </a>
                 <a href="{{ route('surat.create') }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150 shadow-md hover:shadow-lg">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
@@ -45,17 +49,7 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ $item->tanggal_surat->format('d M Y') }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ $item->pembuat->name ?? 'N/A' }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                            <span @class([
-                                                'px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full',
-                                                'bg-blue-100 text-blue-800' => $item->status === 'draft',
-                                                'bg-yellow-100 text-yellow-800' => $item->status === 'dikirim',
-                                                'bg-green-100 text-green-800' => $item->status === 'disetujui',
-                                                'bg-red-100 text-red-800' => $item->status === 'ditolak',
-                                                'bg-purple-100 text-purple-800' => $item->status === 'perlu_revisi',
-                                                'bg-gray-100 text-gray-800' => $item->status === 'diarsipkan',
-                                            ])>
-                                                {{ ucfirst(str_replace('_', ' ', $item->status)) }}
-                                            </span>
+                                            <x-status-badge :status="$item->status" />
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                             <a href="{{ route('surat.show', $item) }}" class="text-indigo-600 hover:text-indigo-900">Detail</a>
