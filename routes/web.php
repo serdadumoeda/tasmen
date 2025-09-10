@@ -195,31 +195,15 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/profile/complete', [CompleteProfileController::class, 'create'])->name('profile.complete.create');
     Route::post('/profile/complete', [CompleteProfileController::class, 'store'])->name('profile.complete.store');
 
-    // Routes for Letter Templates
-    Route::get('/templatesurat/workflow', [\App\Http\Controllers\TemplateSuratController::class, 'showWorkflow'])->name('templatesurat.workflow');
-    Route::resource('templatesurat', \App\Http\Controllers\TemplateSuratController::class)->except(['show']);
+    // --- UNIFIED SURAT ROUTES ---
+    // Renamed from surat-masuk to surat, and pointing to the new unified SuratController
+    Route::get('/surat/workflow', [\App\Http\Controllers\SuratController::class, 'showWorkflow'])->name('surat.workflow');
+    Route::resource('surat', \App\Http\Controllers\SuratController::class)->only(['index', 'create', 'store', 'show', 'destroy']);
+    Route::get('/surat/{surat}/download', [\App\Http\Controllers\SuratController::class, 'download'])->name('surat.download');
 
-    // Routes for Outgoing Letters
-    Route::prefix('surat-keluar')->name('surat-keluar.')->group(function () {
-        Route::get('/', [\App\Http\Controllers\SuratKeluarController::class, 'index'])->name('index');
-        Route::get('/workflow', [\App\Http\Controllers\SuratKeluarController::class, 'showWorkflow'])->name('workflow');
-        Route::get('/create', [\App\Http\Controllers\SuratKeluarController::class, 'create'])->name('create');
-        Route::get('/create/from-template', [\App\Http\Controllers\SuratKeluarController::class, 'createFromTemplate'])->name('create.from-template');
-        Route::get('/create/upload', [\App\Http\Controllers\SuratKeluarController::class, 'createUpload'])->name('create.upload');
-        Route::post('/', [\App\Http\Controllers\SuratKeluarController::class, 'store'])->name('store');
-        Route::get('/{surat}', [\App\Http\Controllers\SuratKeluarController::class, 'show'])->name('show');
-        Route::delete('/{surat}', [\App\Http\Controllers\SuratKeluarController::class, 'destroy'])->name('destroy');
-        Route::post('/{surat}/approve', [\App\Http\Controllers\SuratKeluarController::class, 'approve'])->name('approve');
-        Route::get('/{surat}/download', [\App\Http\Controllers\SuratKeluarController::class, 'download'])->name('download');
-        Route::get('/{surat}/pdf', [\App\Http\Controllers\SuratKeluarController::class, 'showPdf'])->name('show-pdf');
-        Route::get('/{surat}/create-assignment', [\App\Http\Controllers\SuratKeluarController::class, 'createAssignment'])->name('create-assignment');
-    });
-
-    // Routes for Incoming Letters & Dispositions
-    Route::get('/surat-masuk/workflow', [\App\Http\Controllers\SuratMasukController::class, 'showWorkflow'])->name('surat-masuk.workflow');
-    Route::get('/disposisi/{surat}/lacak', [\App\Http\Controllers\DisposisiController::class, 'lacak'])->name('disposisi.lacak');
-    Route::resource('surat-masuk', \App\Http\Controllers\SuratMasukController::class)->only(['index', 'create', 'store', 'show', 'destroy']);
-    Route::post('/surat-masuk/{surat}/disposisi', [\App\Http\Controllers\DisposisiController::class, 'store'])->name('disposisi.store');
+    // Disposition routes, attached to the unified surat
+    Route::get('/surat/{surat}/disposisi/lacak', [\App\Http\Controllers\DisposisiController::class, 'lacak'])->name('disposisi.lacak');
+    Route::post('/surat/{surat}/disposisi', [\App\Http\Controllers\DisposisiController::class, 'store'])->name('disposisi.store');
 
     // Route for viewing attachments securely
     Route::get('/lampiran/{lampiranSurat}', [\App\Http\Controllers\LampiranController::class, 'show'])->name('lampiran.show');
@@ -239,7 +223,7 @@ require __DIR__.'/auth.php';
 Route::get('/surat/verify/{id}', [\App\Http\Controllers\SuratVerificationController::class, 'verify'])->name('surat.verify');
 
 // Route to create a task from a letter
-Route::get('/surat/{surat}/make-task', [\App\Http\Controllers\SuratTaskController::class, 'create'])->name('surat.make-task')->middleware('auth');
+Route::get('/surat/{surat}/make-task', [\App\Http\Controllers\SuratController::class, 'makeTask'])->name('surat.make-task')->middleware('auth');
 
 // Route for the digital archive
 Route::get('/arsip', [\App\Http\Controllers\ArsipController::class, 'index'])->name('arsip.index')->middleware('auth');

@@ -56,26 +56,25 @@ if (count($words) >= 2) {
                         <div class="nav-tooltip">Kerja</div>
                     </div>
 
-                    {{-- Dropdown Persuratan --}}
+                    {{-- Dropdown Surat --}}
                     <div class="nav-item-container">
                         <x-dropdown align="left" width="60">
                             <x-slot name="trigger">
-                                <button class="nav-icon-link inline-flex items-center justify-center text-white focus:outline-none transition duration-150 ease-in-out {{ request()->routeIs(['surat-masuk.*', 'surat-keluar.*', 'templatesurat.*', 'admin.klasifikasi.*', 'arsip.*']) ? 'active' : '' }}">
+                                <button class="nav-icon-link inline-flex items-center justify-center text-white focus:outline-none transition duration-150 ease-in-out {{ request()->routeIs(['surat.*', 'admin.klasifikasi.*', 'arsip.*']) ? 'active' : '' }}">
                                     <i class="fas fa-envelope-open-text text-xl"></i>
                                 </button>
                             </x-slot>
                             <x-slot name="content">
                                 <div class="px-4 py-2 text-xs text-gray-400">Surat</div>
-                                <x-dropdown-link :href="route('surat-masuk.index')">Surat Masuk</x-dropdown-link>
-                                <x-dropdown-link :href="route('surat-keluar.index')">Surat Keluar</x-dropdown-link>
-                                <div class="border-t border-gray-100"></div>
-                                <div class="px-4 py-2 text-xs text-gray-400">Manajemen</div>
-                                <x-dropdown-link :href="route('templatesurat.index')">Template Surat</x-dropdown-link>
-                                <x-dropdown-link :href="route('admin.klasifikasi.index')">Manajemen Klasifikasi</x-dropdown-link>
+                                <x-dropdown-link :href="route('surat.index')">Daftar Surat</x-dropdown-link>
                                 <x-dropdown-link :href="route('arsip.index')">Arsip Digital</x-dropdown-link>
+                                @if(Auth::user()->isSuperAdmin())
+                                <div class="border-t border-gray-100"></div>
+                                <x-dropdown-link :href="route('admin.klasifikasi.index')">Manajemen Klasifikasi</x-dropdown-link>
+                                @endif
                             </x-slot>
                         </x-dropdown>
-                        <div class="nav-tooltip">Persuratan</div>
+                        <div class="nav-tooltip">Surat</div>
                     </div>
 
                     {{-- Menu Cuti --}}

@@ -19,13 +19,11 @@ class Surat extends Model
         'nomor_surat',
         'perihal',
         'tanggal_surat',
-        'jenis',
         'status',
         'pembuat_id',
-        'penyetuju_id',
-        'konten',
-        'suratable_id',     // tambahkan ke fillable
-        'suratable_type',   // tambahkan ke fillable
+        'file_path', // Added file_path
+        'suratable_id',
+        'suratable_type',
         'klasifikasi_id',
         'collaborators',
     ];
@@ -40,19 +38,9 @@ class Surat extends Model
         return $this->belongsTo(User::class, 'pembuat_id');
     }
 
-    public function penyetuju(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'penyetuju_id');
-    }
-
     public function disposisi(): HasMany
     {
         return $this->hasMany(Disposisi::class);
-    }
-
-    public function lampiran(): HasMany
-    {
-        return $this->hasMany(LampiranSurat::class, 'surat_id');
     }
 
     /**
