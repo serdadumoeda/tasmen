@@ -79,8 +79,7 @@
                 <label for="leader_id" class="block font-semibold text-sm text-gray-700 mb-1">
                     <i class="fas fa-user-tie mr-2 text-gray-500"></i> Pimpinan Kegiatan <span class="text-red-500">*</span>
                 </label>
-                <select name="leader_id" id="leader_id" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" required>
-                    <option value="">-- Pilih Pimpinan Kegiatan --</option>
+                <select name="leader_id" id="leader_id" class="tom-select" required placeholder="Pilih Pimpinan Kegiatan...">
                     @foreach ($potentialMembers as $member)
                         <option value="{{ $member->id }}" @selected(old('leader_id', $project->leader_id ?? '') == $member->id)>
                             {{ $member->name }}{{ $member->roles->isNotEmpty() ? ' (' . $member->roles->first()->name . ')' : '' }}
