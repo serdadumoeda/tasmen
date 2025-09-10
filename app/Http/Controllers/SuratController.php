@@ -42,7 +42,8 @@ class SuratController extends Controller
             'file' => 'required|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:10240', // Max 10MB
         ]);
 
-        $path = $request->file('file')->store('surat_files', 'private');
+        // Use the 'local' disk which is configured for private storage.
+        $path = $request->file('file')->store('surat_files', 'local');
 
         Surat::create([
             'perihal' => $validated['perihal'],
@@ -93,7 +94,7 @@ class SuratController extends Controller
         // $this->authorize('delete', $surat);
 
         if ($surat->file_path) {
-            Storage::disk('private')->delete($surat->file_path);
+            Storage::disk('local')->delete($surat->file_path);
         }
 
         $surat->delete();
@@ -106,11 +107,11 @@ class SuratController extends Controller
      */
     public function download(Surat $surat)
     {
-        if (!$surat->file_path || !Storage::disk('private')->exists($surat->file_path)) {
+        if (!$surat->file_path || !Storage::disk('local')->exists($surat->file_path)) {
             return back()->with('error', 'File tidak ditemukan.');
         }
 
-        return Storage::disk('private')->download($surat->file_path);
+        return Storage::disk('local')->download($surat->file_path);
     }
 
     /**
