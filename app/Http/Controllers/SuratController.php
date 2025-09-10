@@ -112,12 +112,15 @@ class SuratController extends Controller
      */
     public function makeTask(Request $request, Surat $surat)
     {
+        $defaultStatus = \App\Models\TaskStatus::where('key', 'pending')->first();
+        $defaultPriority = \App\Models\PriorityLevel::where('name', 'Normal')->first();
+
         $task = Task::create([
             'title' => $surat->perihal,
             'description' => 'Tugas ini dibuat berdasarkan surat dengan perihal: ' . $surat->perihal . '. Lihat surat terlampir untuk detail.',
             'creator_id' => Auth::id(),
-            'status_id' => 1, // Assuming 1 is 'To Do'
-            'priority_id' => 2, // Assuming 2 is 'Normal'
+            'task_status_id' => $defaultStatus->id,
+            'priority_level_id' => $defaultPriority->id,
             'due_date' => now()->addDays(7),
             'surat_id' => $surat->id,
         ]);
