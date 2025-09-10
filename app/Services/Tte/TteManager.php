@@ -2,6 +2,7 @@
 
 namespace App\Services\Tte;
 
+use App\Models\Surat;
 use Illuminate\Support\Manager;
 
 class TteManager extends Manager implements TteProvider
