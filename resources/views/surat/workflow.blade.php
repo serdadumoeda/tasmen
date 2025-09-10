@@ -40,30 +40,29 @@ graph TD
     classDef end fill:#F2F3F4,stroke:#99A3A4,color:#616A6B,stroke-width:1px;
 
     subgraph "Tahap 1: Pencatatan"
-        A1["fa:fa-user Pengguna"]:::action -- Klik 'Unggah Surat Baru' --> A2["fa:fa-upload Form Unggah Surat"]:::page;
-        A2 -- Isi Form --> A3{"fa:fa-check-double Validasi Sistem"}:::decision;
+        A1["<i class='fas fa-user'></i> Pengguna"]:::action -- Klik 'Unggah Surat Baru' --> A2["<i class='fas fa-upload'></i> Form Unggah Surat"]:::page;
+        A2 -- Isi Form --> A3{"<i class='fas fa-check-double'></i> Validasi Sistem"}:::decision;
         A3 -- Gagal --> A2;
-        A3 -- Sukses --> A4["fa:fa-save Surat Tercatat<br>Status: 'Draft'"]:::process;
+        A3 -- Sukses --> A4["<i class='fas fa-save'></i> Surat Tercatat<br>Status: 'Draft'"]:::process;
     end
 
     subgraph "Tahap 2: Tindak Lanjut"
-        B1["fa:fa-file-alt Buka Halaman Detail Surat"]:::page --> B2{"fa:fa-question-circle Perlu Tindak Lanjut?"}:::decision;
-        B2 -- Ya --> B3["fa:fa-random Pilih Aksi"];
-        B3 -- Buat Disposisi --> B4["fa:fa-paper-plane Sistem membuat disposisi"]:::process;
-        B3 -- Jadikan Tugas --> B5["fa:fa-tasks Sistem membuat tugas baru"]:::process;
+        B1["<i class='fas fa-file-alt'></i> Buka Halaman Detail Surat"]:::page --> B2{"<i class='fas fa-question-circle'></i> Perlu Tindak Lanjut?"}:::decision;
+        B2 -- Ya --> B3["<i class='fas fa-random'></i> Pilih Aksi"]:::action;
+        B3 -- Buat Disposisi --> B4["<i class='fas fa-paper-plane'></i> Sistem membuat disposisi"]:::process;
+        B3 -- Jadikan Tugas --> B5["<i class='fas fa-tasks'></i> Sistem membuat tugas baru"]:::process;
         B4 --> B6["Status Surat diubah menjadi 'Dikirim'"]:::process;
         B5 --> B7["Status Surat diubah menjadi 'Disetujui'"]:::process;
     end
 
     subgraph "Tahap 3: Selesai"
-        C1["fa:fa-archive Surat selesai diproses<br>dan siap diarsipkan"]:::end;
+        C1["<i class='fas fa-archive'></i> Surat selesai diproses<br>dan siap diarsipkan"]:::end;
     end
 
     A4 --> B1;
     B2 -- Tidak --> C1;
     B6 --> C1;
     B7 --> C1;
-
                         </pre>
                     </div>
                 </div>
