@@ -68,10 +68,8 @@ if (count($words) >= 2) {
                                 <div class="px-4 py-2 text-xs text-gray-400">Surat</div>
                                 <x-dropdown-link :href="route('surat.index')">Daftar Surat</x-dropdown-link>
                                 <x-dropdown-link :href="route('arsip.index')">Arsip Digital</x-dropdown-link>
-                                @if(Auth::user()->isSuperAdmin())
                                 <div class="border-t border-gray-100"></div>
                                 <x-dropdown-link :href="route('admin.klasifikasi.index')">Manajemen Klasifikasi</x-dropdown-link>
-                                @endif
                             </x-slot>
                         </x-dropdown>
                         <div class="nav-tooltip">Surat</div>

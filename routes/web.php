@@ -205,8 +205,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/surat/{surat}/disposisi/lacak', [\App\Http\Controllers\DisposisiController::class, 'lacak'])->name('disposisi.lacak');
     Route::post('/surat/{surat}/disposisi', [\App\Http\Controllers\DisposisiController::class, 'store'])->name('disposisi.store');
 
-    // Route for viewing attachments securely
-    Route::get('/lampiran/{lampiranSurat}', [\App\Http\Controllers\LampiranController::class, 'show'])->name('lampiran.show');
 });
 
 use App\Http\Controllers\Admin\ApiKeyController;
