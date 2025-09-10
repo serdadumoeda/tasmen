@@ -57,7 +57,12 @@ class DisposisiController extends Controller
             Notification::send($tembusanUsers, new SuratDisposisiNotification($surat, $pengirim, true));
         }
 
-        return redirect()->route('surat-masuk.show', $surat)->with('success', 'Surat berhasil didisposisikan.');
+        // Update the parent letter's status
+        if ($surat->status != 'Didisposisikan') {
+            $surat->update(['status' => 'Didisposisikan']);
+        }
+
+        return redirect()->route('surat.show', $surat)->with('success', 'Surat berhasil didisposisikan.');
     }
 
     public function lacak(Surat $surat)
@@ -71,6 +76,6 @@ class DisposisiController extends Controller
             ->with('childrenRecursive', 'pengirim', 'penerima', 'tembusanUsers')
             ->get();
 
-        return view('suratmasuk.lacak_disposisi', compact('surat', 'disposisiTree'));
+        return view('surat.lacak_disposisi', compact('surat', 'disposisiTree'));
     }
 }
