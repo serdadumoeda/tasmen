@@ -146,4 +146,11 @@ class SuratController extends Controller
         return redirect()->route('tasks.edit', $task)->with('success', 'Tugas berhasil dibuat dari surat. Silakan lengkapi detail tugas.');
     }
 
+    /**
+     * Display the workflow page for the mail module.
+     */
+    public function showWorkflow()
+    {
+        return view('surat.workflow');
+    }
 }
