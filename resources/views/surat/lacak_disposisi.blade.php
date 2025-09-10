@@ -3,13 +3,13 @@
         <div class="flex flex-col sm:flex-row justify-between items-start gap-4">
             <div>
                 <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                    <a href="{{ route('surat-masuk.index') }}" class="text-gray-400 hover:text-gray-600">Surat Masuk</a> /
-                    <a href="{{ route('surat-masuk.show', $surat) }}" class="text-gray-400 hover:text-gray-600">Detail</a> /
+                    <a href="{{ route('surat.index') }}" class="text-gray-400 hover:text-gray-600">Daftar Surat</a> /
+                    <a href="{{ route('surat.show', $surat) }}" class="text-gray-400 hover:text-gray-600">Detail</a> /
                     <span class="font-bold">Lacak Disposisi</span>
                 </h2>
                 <p class="text-sm text-gray-500 mt-1">Hierarki alur disposisi untuk surat: "{{ $surat->perihal }}"</p>
             </div>
-            <a href="{{ route('surat-masuk.show', $surat) }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg font-semibold text-sm text-gray-700 hover:bg-gray-50 shadow-md">
+            <a href="{{ route('surat.show', $surat) }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg font-semibold text-sm text-gray-700 hover:bg-gray-50 shadow-md">
                 <i class="fas fa-arrow-left mr-2"></i> Kembali ke Detail Surat
             </a>
         </div>
