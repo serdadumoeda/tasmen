@@ -45,16 +45,9 @@
     </x-slot>
 
     <x-slot name="header">
-        <div class="flex items-center">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                {{ __('Edit Tugas: ') }} <span class="font-bold text-indigo-600">{{ $task->title }}</span>
-            </h2>
-            @if($task->is_outside_office_hours)
-                <span class="ml-4 inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800" title="Tugas ini ditandai sebagai pekerjaan di luar jam kerja normal.">
-                    <i class="fas fa-moon mr-1.5"></i> Luar Jam Kerja
-                </span>
-            @endif
-        </div>
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+            {{ __('Edit Tugas: ') }} <span class="font-bold text-indigo-600">{{ $task->title }}</span>
+        </h2>
     </x-slot>
 
     <div class="py-12 bg-gray-50"> {{-- Latar belakang konsisten --}}
@@ -166,13 +159,6 @@
                                     </label>
                                     <input type="number" step="0.5" name="estimated_hours" id="estimated_hours" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" value="{{ old('estimated_hours', $task->estimated_hours) }}" placeholder="Contoh: 2.5">
                                 </div>
-                            </div>
-
-                            <div class="mb-6">
-                                <label for="is_outside_office_hours" class="flex items-center">
-                                    <input type="checkbox" name="is_outside_office_hours" id="is_outside_office_hours" value="1" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500" @checked(old('is_outside_office_hours', $task->is_outside_office_hours))>
-                                    <span class="ml-2 text-sm text-gray-600">Tugas ini dikerjakan di luar jam kerja</span>
-                                </label>
                             </div>
                             
                             <div class="mb-6">

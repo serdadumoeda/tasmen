@@ -47,13 +47,6 @@
             <input type="number" step="0.5" name="estimated_hours" id="estimated_hours" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" value="{{ old('estimated_hours', $task->estimated_hours ?? '') }}" placeholder="Contoh: 2.5" required>
         </div>
     </div>
-
-    <div>
-        <label for="is_outside_office_hours" class="flex items-center">
-            <input type="checkbox" name="is_outside_office_hours" id="is_outside_office_hours" value="1" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500" @checked(old('is_outside_office_hours', $task->is_outside_office_hours ?? false))>
-            <span class="ml-2 text-sm text-gray-600">Tugas ini dikerjakan di luar jam kerja</span>
-        </label>
-    </div>
     
     <div>
         <label for="priority_level_id" class="block font-semibold text-sm text-gray-700 mb-1">Prioritas</label>

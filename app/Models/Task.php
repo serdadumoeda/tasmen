@@ -24,7 +24,6 @@ class Task extends Model
         'estimated_hours',
         'task_status_id',
         'priority_level_id',
-        'is_outside_office_hours',
     ];
 
     protected $casts = [
