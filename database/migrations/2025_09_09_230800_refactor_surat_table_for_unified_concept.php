@@ -15,9 +15,8 @@ return new class extends Migration
             // 1. Add file_path column
             $table->string('file_path')->nullable()->after('konten');
 
-            // 2. Modify status enum
-            $table->enum('status', ['Baru', 'Didisposisikan', 'Ditugaskan', 'Diarsipkan'])
-                  ->default('Baru')->change();
+            // 2. Modify status column
+            $table->string('status')->default('Baru')->change();
 
             // 3. Drop unnecessary columns
             $table->dropColumn('jenis');
@@ -47,8 +46,7 @@ return new class extends Migration
 
         // 3. Change the status column back to its original state in a separate call for safety.
         Schema::table('surat', function (Blueprint $table) {
-            $table->enum('status', ['draft', 'dikirim', 'diarsipkan', 'disetujui', 'ditolak', 'perlu_revisi'])
-                  ->default('draft')->change();
+            $table->string('status')->default('draft')->change();
         });
     }
 };
