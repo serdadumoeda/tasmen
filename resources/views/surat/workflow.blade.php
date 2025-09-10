@@ -20,14 +20,14 @@
             <x-card>
                 <div class="p-6">
                     <h3 class="text-xl font-bold text-gray-800 mb-2">Dokumentasi Alur Kerja Pencatatan Surat</h3>
-                    <p class="text-gray-600">Halaman ini menjelaskan alur kerja utama untuk modul Surat. Proses ini berfokus pada bagaimana sebuah surat yang sudah ada (misalnya, surat fisik yang dipindai atau surat digital dari eksternal) dicatat ke dalam sistem untuk kemudian ditindaklanjuti melalui disposisi atau dijadikan dasar penugasan.</p>
+                    <p class="text-gray-600">Halaman ini menjelaskan alur kerja utama untuk modul Surat. Proses ini berfokus pada bagaimana sebuah surat yang sudah ada (misalnya, surat fisik yang dipindai atau surat digital dari eksternal) dicatat ke dalam sistem untuk kemudian ditindaklanjuti.</p>
                 </div>
             </x-card>
 
             <x-card>
                 <div class="p-6">
-                    <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Flowchart Alur Kerja</h3>
-                    <p class="text-gray-600 mb-6">Flowchart ini merinci langkah-langkah dari pengunggahan hingga tindak lanjut surat, meniru sintaks yang sudah terbukti berjalan.</p>
+                    <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Flowchart Alur Kerja (Sederhana)</h3>
+                    <p class="text-gray-600 mb-6">Untuk menghindari bug rendering pada diagram yang kompleks, alur kerja disajikan dalam bentuk yang lebih ringkas dan linear.</p>
                     <div class="p-4 bg-gray-50 rounded-lg text-center">
                         <pre class="mermaid">
 graph TD
@@ -37,30 +37,14 @@ graph TD
     classDef decision fill:#FDEDEC,stroke:#C0392B,color:#A93226,stroke-width:1px;
     classDef end fill:#F2F3F4,stroke:#99A3A4,color:#616A6B,stroke-width:1px;
 
-    subgraph "Tahap 1: Pencatatan"
-        A1["<i class='fa fa-user'></i> Pengguna"]:::action -- Klik 'Unggah Surat Baru' --> A2["<i class='fa fa-upload'></i> Form Unggah Surat"]:::page;
-        A2 -- Isi Form --> A3{"<i class='fa fa-check-double'></i> Validasi Sistem"}:::decision;
-        A3 -- Gagal --> A2;
-        A3 -- Sukses --> A4["<i class='fa fa-save'></i> Surat Tercatat<br>Status: 'Draft'"]:::process;
-    end
-
-    subgraph "Tahap 2: Tindak Lanjut"
-        B1["<i class='fa fa-file-alt'></i> Buka Halaman Detail Surat"]:::page;
-        B1 --> B2{"<i class='fa fa-question-circle'></i> Perlu Tindak Lanjut?"}:::decision;
-        B2 -- Ya --> B3["<i class='fa fa-random'></i> Pilih Aksi"]:::action;
-        B3 -- Buat Disposisi --> B4["<i class='fa fa-paper-plane'></i> Sistem membuat disposisi"]:::process;
-        B3 -- Jadikan Tugas --> B5["<i class='fa fa-tasks'></i> Sistem membuat tugas baru"]:::process;
-    end
-
-    subgraph "Tahap 3: Perubahan Status & Selesai"
-        B4 --> C1["Status Surat diubah menjadi 'Dikirim'"]:::process;
-        B5 --> C2["Status Surat diubah menjadi 'Disetujui'"]:::process;
-        B2 -- Tidak --> C3["<i class='fa fa-archive'></i> Surat selesai diproses<br>dan siap diarsipkan"]:::end;
-        C1 --> C3;
-        C2 --> C3;
-    end
-
-    A4 --> B1;
+    A["<i class='fa fa-user'></i> Pengguna Mengunggah Surat"]:::action --> B["<i class='fa fa-save'></i> Surat Disimpan<br>Status: 'Draft'"]:::process;
+    B --> C{"<i class='fa fa-question-circle'></i> Perlu Tindak Lanjut?"}:::decision;
+    C -- Ya --> D["<i class='fa fa-random'></i> Pilih Aksi di Halaman Detail"]:::action;
+    D -- Opsi 1: Disposisi --> E["Status diubah menjadi 'Dikirim'"]:::process;
+    D -- Opsi 2: Jadikan Tugas --> F["Status diubah menjadi 'Disetujui'"]:::process;
+    C -- Tidak --> G["<i class='fa fa-archive'></i> Surat Diarsipkan"]:::end;
+    E --> G;
+    F --> G;
                         </pre>
                     </div>
                 </div>
@@ -72,24 +56,20 @@ graph TD
                     <div class="prose max-w-none text-gray-700 space-y-4">
                         <div>
                             <h4 class="font-semibold text-gray-800">1. Pencatatan Surat</h4>
-                            <p>Proses dimulai ketika seorang pengguna (staf atau pimpinan) perlu mencatat surat yang sudah ada ke dalam sistem untuk keterlacakan dan tindak lanjut digital.</p>
+                            <p>Proses dimulai ketika seorang pengguna mencatat surat yang sudah ada ke dalam sistem. Setelah diunggah, surat akan berstatus <strong>'Draft'</strong>.</p>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-800">2. Proses Tindak Lanjut</h4>
+                            <p>Dari halaman detail surat, pengguna dapat memilih untuk menindaklanjuti surat tersebut:</p>
                             <ul class="list-disc list-inside ml-4 space-y-2">
-                                <li><strong>Input Data</strong>: Pengguna menekan tombol "Unggah Surat Baru", kemudian mengisi informasi dasar seperti Perihal dan Tanggal Surat, serta mengunggah dokumen digital (PDF, Word, dll).</li>
-                                <li><strong>Status Awal</strong>: Setelah berhasil diunggah, surat akan tercatat di sistem dengan status awal <strong>'Draft'</strong>. Pada tahap ini, surat hanya menjadi catatan digital dan belum ditindaklanjuti.</li>
+                                <li><strong>Disposisi</strong>: Mengirim surat ke pengguna lain untuk diketahui atau ditindaklanjuti. Status surat akan berubah menjadi <strong>'Dikirim'</strong>.</li>
+                                <li><strong>Menjadikan Tugas</strong>: Mengubah surat menjadi sebuah tugas yang dapat dikelola. Status surat akan berubah menjadi <strong>'Disetujui'</strong>.</li>
+                                <li><strong>Tanpa Tindak Lanjut</strong>: Jika tidak ada aksi yang diambil, surat akan tetap tersimpan dan dapat diakses nanti.</li>
                             </ul>
                         </div>
                         <div>
-                            <h4 class="font-semibold text-gray-800">2. Proses Tindak Lanjut dari Detail Surat</h4>
-                            <p>Dari halaman Detail Surat, pengguna dapat melakukan beberapa aksi utama untuk menindaklanjuti surat tersebut.</p>
-                            <ul class="list-disc list-inside ml-4 space-y-2">
-                                <li><strong>Disposisi</strong>: Jika surat perlu diketahui atau ditindaklanjuti oleh pihak lain, pengguna dapat membuat disposisi. Aksi ini akan mengubah status surat menjadi <strong>'Dikirim'</strong>, menandakan surat sedang dalam proses sirkulasi atau disposisi.</li>
-                                <li><strong>Menjadikan Tugas</strong>: Jika surat tersebut memerlukan sebuah pekerjaan konkret dengan output yang jelas, pengguna dapat langsung membuat tugas baru dari surat tersebut. Aksi ini akan mengubah status surat menjadi <strong>'Disetujui'</strong>, yang menandakan bahwa isi surat telah disetujui dan kini menjadi dasar untuk sebuah pekerjaan. File surat juga akan otomatis terlampir pada tugas yang baru dibuat.</li>
-                                <li><strong>Tanpa Tindak Lanjut</strong>: Jika surat hanya bersifat informasional dan tidak memerlukan aksi lebih lanjut, pengguna tidak perlu melakukan apa-apa. Surat akan tetap tersimpan di sistem.</li>
-                            </ul>
-                        </div>
-                        <div>
-                            <h4 class="font-semibold text-gray-800">3. Pengarsipan Otomatis</h4>
-                            <p>Setelah surat ditindaklanjuti (statusnya menjadi 'Dikirim' atau 'Disetujui'), atau jika tidak ada tindak lanjut sama sekali, surat tersebut secara otomatis dianggap sebagai arsip digital. Pengguna dapat menemukannya kembali melalui modul Arsip Digital untuk keperluan di masa depan.</p>
+                            <h4 class="font-semibold text-gray-800">3. Pengarsipan</h4>
+                            <p>Semua surat yang telah selesai diproses (baik ditindaklanjuti maupun tidak) secara otomatis menjadi bagian dari arsip digital dan dapat dicari kembali melalui modul Arsip.</p>
                         </div>
                     </div>
                 </div>
