@@ -41,14 +41,14 @@ graph TD
     A["<i class='fa fa-user'></i> Pengguna"]:::action -->|Klik 'Unggah Surat Baru'| B["<i class='fa fa-upload'></i> Form Unggah Surat"]:::page;
     B -- Isi Perihal, Tanggal &<br>Upload File --> C{<i class='fa fa-check-double'></i> Validasi}:::decision;
     C -- Gagal --> B;
-    C -- Sukses --> D["<i class='fa fa-save'></i> Surat Tercatat<br>Status: 'Baru'"]:::process;
+    C -- Sukses --> D["<i class='fa fa-save'></i> Surat Tercatat<br>Status: 'Draft'"]:::process;
     D --> E["<i class='fa fa-file-alt'></i> Halaman Detail Surat"]:::page;
     E --> F{<i class='fa fa-question-circle'></i> Perlu Tindak Lanjut?}:::decision;
     F -- Ya --> G["<i class='fa fa-random'></i> Pilih Aksi"];
     G --> H["<i class='fa fa-paper-plane'></i> Buat Disposisi"]:::action;
     G --> I["<i class='fa fa-tasks'></i> Jadikan Tugas"]:::action;
-    H --> J["Surat Berstatus 'Didisposisikan'"]:::process;
-    I --> K["Surat Berstatus 'Ditugaskan'"]:::process;
+    H --> J["Surat Berstatus 'Dikirim'"]:::process;
+    I --> K["Surat Berstatus 'Disetujui'"]:::process;
     J --> L["<i class='fa fa-archive'></i> Surat Diarsipkan"]:::end;
     K --> L;
     F -- Tidak --> L;
@@ -67,20 +67,20 @@ graph TD
                             <p>Proses dimulai ketika seorang pengguna perlu mencatat surat yang sudah ada (misalnya, surat fisik yang dipindai atau surat digital yang diterima dari luar sistem). Mereka mengunggah dokumen ini ke dalam aplikasi.</p>
                             <ul class="list-disc list-inside ml-4 space-y-2">
                                 <li><strong>Input Data</strong>: Pengguna mengisi informasi dasar seperti Perihal dan Tanggal Surat, lalu memilih dan mengunggah file dokumen utama.</li>
-                                <li><strong>Pencatatan</strong>: Setelah berhasil diunggah, surat akan tercatat di sistem dengan status awal 'Baru' dan dapat dilihat di Daftar Surat.</li>
+                                <li><strong>Pencatatan</strong>: Setelah berhasil diunggah, surat akan tercatat di sistem dengan status awal 'Draft' dan dapat dilihat di Daftar Surat.</li>
                             </ul>
                         </div>
                         <div>
                             <h4 class="font-semibold text-gray-800">2. Tindak Lanjut</h4>
                             <p>Dari halaman Detail Surat, pengguna dapat melakukan beberapa aksi untuk menindaklanjuti surat tersebut.</p>
                             <ul class="list-disc list-inside ml-4 space-y-2">
-                                <li><strong>Disposisi</strong>: Jika surat perlu diketahui atau ditindaklanjuti oleh pihak lain, pengguna dapat membuat disposisi. Ini akan mengubah status surat menjadi 'Didisposisikan'.</li>
-                                <li><strong>Menjadikan Tugas</strong>: Jika surat tersebut memerlukan sebuah pekerjaan konkret, pengguna dapat langsung membuat tugas baru dari surat tersebut. Ini akan mengubah status surat menjadi 'Ditugaskan' dan menautkan tugas ke surat asalnya untuk keterlacakan.</li>
+                                <li><strong>Disposisi</strong>: Jika surat perlu diketahui atau ditindaklanjuti oleh pihak lain, pengguna dapat membuat disposisi. Ini akan mengubah status surat menjadi 'Dikirim'.</li>
+                                <li><strong>Menjadikan Tugas</strong>: Jika surat tersebut memerlukan sebuah pekerjaan konkret, pengguna dapat langsung membuat tugas baru dari surat tersebut. Ini akan mengubah status surat menjadi 'Disetujui' dan menautkan tugas ke surat asalnya untuk keterlacakan.</li>
                             </ul>
                         </div>
                         <div>
                             <h4 class="font-semibold text-gray-800">3. Pengarsipan</h4>
-                            <p>Setelah semua proses tindak lanjut selesai (atau jika tidak ada tindak lanjut yang diperlukan), surat secara otomatis berfungsi sebagai arsip digital. Status akhirnya ('Didisposisikan', 'Ditugaskan', atau 'Diarsipkan' secara manual) menandakan bahwa surat telah selesai diproses.</p>
+                            <p>Setelah semua proses tindak lanjut selesai (atau jika tidak ada tindak lanjut yang diperlukan), surat secara otomatis berfungsi sebagai arsip digital. Status akhirnya ('Dikirim', 'Disetujui', atau 'Diarsipkan' secara manual) menandakan bahwa surat telah selesai diproses.</p>
                         </div>
                     </div>
                 </div>
