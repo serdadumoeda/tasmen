@@ -15,6 +15,7 @@ class ArsipController extends Controller
     public function index(Request $request)
     {
         $query = Surat::whereIn('status', ['disetujui', 'diarsipkan'])
+            ->whereDoesntHave('berkas') // Hanya tampilkan surat yang belum ada di berkas manapun
             ->with(['klasifikasi', 'pembuat'])
             ->latest();
 
@@ -92,17 +93,41 @@ class ArsipController extends Controller
         return view('arsip.workflow');
     }
 
-    public function showBerkas(Berkas $berkas)
+    public function showBerkas(Request $request, Berkas $berkas)
     {
         // Authorize that the user owns the Berkas
         if ($berkas->user_id !== Auth::id()) {
             abort(403);
         }
 
-        $berkas->load(['surat' => function ($query) {
-            $query->with('klasifikasi')->latest();
-        }]);
+        $suratQuery = $berkas->surat()->with('klasifikasi');
 
-        return view('arsip.show_berkas', compact('berkas'));
+        // Apply filters
+        if ($request->filled('keyword')) {
+            $keyword = $request->input('keyword');
+            $suratQuery->where(function ($q) use ($keyword) {
+                $q->where('perihal', 'like', "%{$keyword}%")
+                  ->orWhere('nomor_surat', 'like', "%{$keyword}%");
+            });
+        }
+
+        if ($request->filled('klasifikasi_id')) {
+            $suratQuery->where('klasifikasi_id', $request->input('klasifikasi_id'));
+        }
+
+        if ($request->filled('date_range')) {
+            $dates = explode(' to ', $request->input('date_range'));
+            if (count($dates) > 0) {
+                $startDate = trim($dates[0]);
+                $endDate = isset($dates[1]) ? trim($dates[1]) : $startDate;
+                $suratQuery->whereDate('tanggal_surat', '>=', $startDate)
+                           ->whereDate('tanggal_surat', '<=', $endDate);
+            }
+        }
+
+        $suratList = $suratQuery->latest()->paginate(15)->withQueryString();
+        $klasifikasi = KlasifikasiSurat::orderBy('kode')->get();
+
+        return view('arsip.show_berkas', compact('berkas', 'suratList', 'klasifikasi'));
     }
 }
