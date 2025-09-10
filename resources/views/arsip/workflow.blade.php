@@ -45,7 +45,7 @@ graph TD
         A3 --> A5["<i class='fa fa-check-square'></i> Pilih Satu atau Lebih Surat"]:::action;
     end
 
-    subgraph "B. Pengelolaan & Pengisian Berkas"
+    subgraph "B. Pengelolaan dan Pengisian Berkas"
         B1["<i class='fa fa-folder-plus'></i> Buat Berkas Baru"]:::action;
         A5 -- Pilih Berkas Tujuan --> B2["<i class='fa fa-folder-open'></i> Dropdown Berkas"]:::page;
         B2 --> B3["<i class='fa fa-share-square'></i> Klik 'Masukkan ke Berkas'"]:::action;
