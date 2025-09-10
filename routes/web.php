@@ -205,6 +205,7 @@ Route::middleware(['auth'])->group(function () {
 
     // --- UNIFIED SURAT ROUTES ---
     Route::resource('surat', SuratController::class)->only(['index', 'create', 'store', 'show', 'destroy']);
+    Route::get('/surat/workflow', [SuratController::class, 'showWorkflow'])->name('surat.workflow');
     Route::get('/surat/{surat}/download', [SuratController::class, 'download'])->name('surat.download');
     Route::get('/surat/{surat}/make-task', [SuratController::class, 'makeTask'])->name('surat.make-task');
 
