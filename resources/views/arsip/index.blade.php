@@ -83,7 +83,7 @@
                             </div>
                             <div>
                                 <label for="start_date" class="block text-sm font-medium text-gray-700">Rentang Tanggal</label>
-                                <div class="flex items-center space-x-2 mt-1">
+                                <div class="flex items-center space-x-2 mt-1 flex-wrap">
                                     <input type="date" name="start_date" id="start_date" value="{{ request('start_date') }}" class="rounded-md border-gray-300 shadow-sm">
                                     <span>-</span>
                                     <input type="date" name="end_date" id="end_date" value="{{ request('end_date') }}" class="rounded-md border-gray-300 shadow-sm">
