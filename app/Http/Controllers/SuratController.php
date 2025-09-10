@@ -146,14 +146,4 @@ class SuratController extends Controller
         return redirect()->route('tasks.edit', $task)->with('success', 'Tugas berhasil dibuat dari surat. Silakan lengkapi detail tugas.');
     }
 
-    /**
-     * Display the workflow page for letters.
-     */
-    public function showWorkflow(PageTitleService $pageTitleService, BreadcrumbService $breadcrumbService)
-    {
-        $pageTitleService->setTitle('Alur Kerja Surat');
-        $breadcrumbService->add('Surat', route('surat.index'));
-        $breadcrumbService->add('Alur Kerja');
-        return view('surat.workflow');
-    }
 }
