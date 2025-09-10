@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -11,6 +12,9 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Drop the old enum check constraint if it exists (for PostgreSQL)
+        DB::statement('ALTER TABLE surat DROP CONSTRAINT IF EXISTS surat_status_check');
+
         Schema::table('surat', function (Blueprint $table) {
             // Add new file_path column
             $table->string('file_path')->nullable()->after('status');
@@ -25,14 +29,7 @@ return new class extends Migration
             if (Schema::hasColumn('surat', 'final_pdf_path')) {
                 $table->dropColumn('final_pdf_path');
             }
-
-            // Drop foreign key and column for penyetuju_id
             if (Schema::hasColumn('surat', 'penyetuju_id')) {
-                // We need to find the foreign key constraint name to drop it.
-                // It's usually 'surat_penyetuju_id_foreign', but let's be safe.
-                // A raw statement might be needed if this fails, but for now, we assume standard naming.
-                // In a fresh migration, this might not exist if the column is dropped first.
-                // Let's just drop the column. Dropping a column with a foreign key is handled by most DBs.
                 $table->dropConstrainedForeignId('penyetuju_id');
             }
         });
