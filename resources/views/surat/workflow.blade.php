@@ -101,14 +101,13 @@ graph TD
             <x-card>
                 <div class="p-6">
                     <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">3. Flowchart Fitur Tambahan</h3>
-                    <p class="text-gray-600 mb-6">Modul surat juga terintegrasi dengan modul lain dan memiliki fitur verifikasi eksternal.</p>
+                    <p class="text-gray-600 mb-6">Modul surat juga terintegrasi dengan modul lain.</p>
                     <div class="p-4 bg-gray-50 rounded-lg text-center">
                         <pre class="mermaid">
 graph TD
     classDef page fill:#EBF5FB,stroke:#3498DB,color:#2874A6;
     classDef action fill:#FEF9E7,stroke:#F1C40F,color:#B7950B;
     classDef process fill:#E8F8F5,stroke:#1ABC9C,color:#148F77;
-    classDef external fill:#FDF2E9,stroke:#E67E22,color:#AF601A;
 
     subgraph D_Flow [D. Alur Konversi ke Tugas]
         D1["<i class='fa fa-file-alt'></i> Halaman Detail Surat"]:::page --> D2["<i class='fa fa-tasks'></i> Klik 'Buat Tugas'"]:::action;
@@ -116,13 +115,6 @@ graph TD
         D3 --> D4["<i class='fa fa-edit'></i> Update Status Surat menjadi 'Disetujui'"]:::process;
         D3 --> D5["<i class='fa fa-briefcase'></i> Buat Task Baru<br>(Perihal -> Judul, File -> Lampiran)"]:::process;
         D5 --> D6["<i class='fa fa-arrow-right'></i> Redirect ke Halaman Edit Tugas"]:::page;
-    end
-
-    subgraph E_Flow [E. Alur Verifikasi Surat Eksternal]
-        E1["<i class='fa fa-qrcode'></i> Pihak Eksternal Scan QR Code<br>atau akses link verifikasi"]:::external;
-        E1 --> E2["URL: /surat/verify/{id}"]
-        E2 --> E3{"<i class='fa fa-cogs'></i> SuratVerificationController@verify"}:::process;
-        E3 --> E4["<i class='fa fa-check-circle'></i> Halaman Verifikasi<br>Menampilkan Detail Surat"]:::page;
     end
                         </pre>
                     </div>
