@@ -127,6 +127,15 @@ class SuratController extends Controller
 
         $task->assignees()->attach(Auth::id());
 
+    // Automatically attach the letter's file to the new task
+    if ($surat->file_path) {
+        $task->attachments()->create([
+            'user_id' => Auth::id(),
+            'filename' => 'Surat Asal - ' . Str::slug($surat->perihal) . '.' . pathinfo($surat->file_path, PATHINFO_EXTENSION),
+            'path' => $surat->file_path,
+        ]);
+    }
+
     $task->load('status');
 
         $surat->status = 'disetujui';
