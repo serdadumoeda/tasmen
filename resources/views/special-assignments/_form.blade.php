@@ -74,52 +74,7 @@
         </div>
 
         @if(!session('surat_id'))
-            <div class="p-4 border rounded-lg bg-gray-50/50 my-4" x-show="!{{ session('surat_id') ? 'true' : 'false' }}">
-                <div class="flex items-start">
-                    <div class="flex items-center h-5">
-                        <input id="create_sk" name="create_sk" type="checkbox" value="1"
-                               class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded"
-                               x-model="create_sk" @if(old('create_sk')) checked @endif>
-                    </div>
-                    <div class="ml-3 text-sm">
-                        <label for="create_sk" class="font-medium text-gray-800">Buatkan SK Penugasan secara otomatis?</label>
-                        <p class="text-gray-500">Jika dicentang, sistem akan men-generate Surat Keputusan (SK) resmi dan nomor surat akan dibuat secara otomatis.</p>
-                    </div>
-                </div>
-
-                <div x-show="create_sk" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform -translate-y-2" x-transition:enter-end="opacity-100 transform translate-y-0" class="mt-4">
-                    <label for="template_surat_id" class="block font-semibold text-sm text-gray-700 mb-1">Pilih Template SK <span class="text-red-600">*</span></label>
-                    <select name="template_surat_id" id="template_surat_id" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150 @error('template_surat_id') border-red-500 @enderror">
-                        <option value="">-- Pilih Template --</option>
-                        @isset($skTemplates)
-                            @foreach($skTemplates as $template)
-                                <option value="{{ $template->id }}" @selected(old('template_surat_id') == $template->id)>
-                                    {{ $template->judul }}
-                                </option>
-                            @endforeach
-                        @endisset
-                    </select>
-                    @error('template_surat_id') <span class="text-sm text-red-600 mt-1">{{ $message }}</span> @enderror
-                </div>
-
-                <div x-show="create_sk" x-transition class="mt-4">
-                    <label for="klasifikasi_id" class="block font-semibold text-sm text-gray-700 mb-1">Pilih Klasifikasi Surat <span class="text-red-600">*</span></label>
-                    <select name="klasifikasi_id" id="klasifikasi_id" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150 @error('klasifikasi_id') border-red-500 @enderror">
-                        <option value="">-- Pilih Klasifikasi --</option>
-                        @isset($klasifikasiSurat)
-                            @foreach($klasifikasiSurat as $klasifikasi)
-                                <option value="{{ $klasifikasi->id }}" @selected(old('klasifikasi_id') == $klasifikasi->id)>
-                                    {{ $klasifikasi->kode }} - {{ $klasifikasi->nama }}
-                                </option>
-                            @endforeach
-                        @endisset
-                    </select>
-                    @error('klasifikasi_id') <span class="text-sm text-red-600 mt-1">{{ $message }}</span> @enderror
-                </div>
-            </div>
-
-            <!-- Input Nomor SK manual, ditampilkan jika checkbox tidak dicentang -->
-            <div x-show="!create_sk" x-transition>
+            <div>
                 <label for="sk_number" class="block font-semibold text-sm text-gray-700 mb-1">Nomor SK (Opsional)</label>
                 <input type="text" name="sk_number" id="sk_number" value="{{ old('sk_number', $assignment->sk_number ?? '') }}" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150 @error('sk_number') border-red-500 @enderror">
                 @error('sk_number') <span class="text-sm text-red-600 mt-1">{{ $message }}</span> @enderror
