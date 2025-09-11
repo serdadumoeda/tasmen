@@ -203,6 +203,10 @@ class SpecialAssignmentController extends Controller
         }
         // --- End PDF and Surat Generation ---
 
+        if ($request->filled('berkas_id')) {
+            return redirect()->route('special-assignments.index')->with('success', 'SK Penugasan dan dokumen SK berhasil dibuat dan diarsipkan.');
+        }
+
         return redirect()->route('special-assignments.index')->with('success', 'SK Penugasan dan dokumen SK berhasil dibuat.');
     }
 
