@@ -43,9 +43,19 @@
                                 @else
                                     <div class="text-xs p-2 rounded bg-gray-100 border font-mono mb-2">
                                         @php
-                                            $iki_human_labels = collect($performanceDetails['iki_components'])->mapWithKeys(function ($value, $key) {
-                                                // Create a friendlier label from the key
-                                                return [$key => '('.ucwords(str_replace('_', ' ', $key)).')'];
+                                            $formatLabel = function($key) {
+                                                $label = $key;
+                                                if (str_starts_with($label, 'capped_')) {
+                                                    $label = str_replace('capped_', '', $label);
+                                                    $label = ucwords(str_replace('_', ' ', $label)) . ' (dibatasi)';
+                                                } else {
+                                                    $label = ucwords(str_replace('_', ' ', $label));
+                                                }
+                                                return '(' . $label . ')';
+                                            };
+
+                                            $iki_human_labels = collect($performanceDetails['iki_components'])->mapWithKeys(function ($value, $key) use ($formatLabel) {
+                                                return [$key => $formatLabel($key)];
                                             })->all();
                                             $human_iki_formula = str_replace(array_keys($iki_human_labels), array_values($iki_human_labels), $performanceDetails['iki_formula']);
                                         @endphp
@@ -79,9 +89,19 @@
                                 @else
                                     <div class="text-xs p-2 rounded bg-gray-100 border font-mono mb-2">
                                         @php
-                                            $nkf_human_labels = collect($performanceDetails['nkf_components'])->mapWithKeys(function ($value, $key) {
-                                                // Create a friendlier label from the key
-                                                return [$key => '('.ucwords(str_replace('_', ' ', $key)).')'];
+                                            $formatLabel = function($key) {
+                                                $label = $key;
+                                                if (str_starts_with($label, 'capped_')) {
+                                                    $label = str_replace('capped_', '', $label);
+                                                    $label = ucwords(str_replace('_', ' ', $label)) . ' (dibatasi)';
+                                                } else {
+                                                    $label = ucwords(str_replace('_', ' ', $label));
+                                                }
+                                                return '(' . $label . ')';
+                                            };
+
+                                            $nkf_human_labels = collect($performanceDetails['nkf_components'])->mapWithKeys(function ($value, $key) use ($formatLabel) {
+                                                return [$key => $formatLabel($key)];
                                             })->all();
                                             $human_nkf_formula = str_replace(array_keys($nkf_human_labels), array_values($nkf_human_labels), $performanceDetails['nkf_formula']);
                                         @endphp
