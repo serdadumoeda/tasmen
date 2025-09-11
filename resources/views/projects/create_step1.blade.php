@@ -82,7 +82,7 @@
                         </div>
 
                         <div class="flex items-center justify-end mt-8 border-t border-gray-200 pt-6">
-                            <a href="{{ route('projects.index') }}" class="text-sm text-gray-600 hover:text-gray-900 font-medium mr-6 transition-colors duration-200">
+                            <a href="{{ route('global.dashboard') }}" class="text-sm text-gray-600 hover:text-gray-900 font-medium mr-6 transition-colors duration-200">
                                 Batal
                             </a>
                             <button type="submit"

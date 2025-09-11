@@ -114,18 +114,8 @@ class AdHocTaskController extends Controller
         
         $priorities = \App\Models\PriorityLevel::all();
 
-        $task = new Task();
-        // Check for flashed session data to pre-fill the form
-        if (session()->has('prefill_title')) {
-            $task->title = session('prefill_title');
-        }
-        if (session()->has('prefill_start_date')) {
-            $task->start_date = session('prefill_start_date');
-        }
-
-
         return view('adhoc-tasks.create', [
-            'task' => $task,
+            'task' => new Task(),
             'assignableUsers' => $assignableUsers,
             'priorities' => $priorities,
         ]);
