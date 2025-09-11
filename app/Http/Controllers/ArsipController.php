@@ -15,8 +15,7 @@ class ArsipController extends Controller
     public function index(Request $request)
     {
         $query = Surat::whereIn('status', ['disetujui', 'diarsipkan', 'terverifikasi'])
-            ->whereDoesntHave('berkas') // Only show letters that are not in any folder yet
-            ->with(['klasifikasi', 'pembuat'])
+            ->with(['klasifikasi', 'pembuat', 'berkas']) // Eager load berkas relationship
             ->latest();
 
         // Keyword search
