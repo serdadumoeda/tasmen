@@ -94,7 +94,6 @@ graph TD
     subgraph B [Area Konten Berbasis Tab]
         B1["Tab: Daftar Tugas"]:::page
         B2["Tab: Informasi & Aktivitas"]:::page
-        B3["Tab: Persuratan"]:::page
         B4["Tab: Tambah Tugas Baru"]:::page
     end
 
@@ -115,7 +114,6 @@ graph TD
                         <ul class="list-disc list-inside space-y-2">
                             <li><strong>Tab "Daftar Tugas" (Default)</strong>: Menampilkan semua tugas dalam kegiatan. Ini adalah area kerja utama.</li>
                             <li><strong>Tab "Informasi & Aktivitas"</strong>: Menampilkan deskripsi, detail, tim, dan log aktivitas proyek.</li>
-                            <li><strong>Tab "Persuratan"</strong>: Menampilkan surat-surat yang terkait dengan kegiatan ini.</li>
                             <li><strong>Tab "Tambah Tugas Baru"</strong>: Form untuk menambah tugas baru (memerlukan izin `update`).</li>
                         </ul>
                     </div>
