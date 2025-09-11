@@ -152,17 +152,20 @@
                         </div>
 
                         <div class="mt-4 p-4 border-t flex items-center space-x-4 bg-gray-50 rounded-b-lg">
+                            @php
+                                $unarchivedExists = $suratList->contains(fn($surat) => $surat->berkas->isEmpty());
+                            @endphp
                             <label for="berkas_id" class="text-sm font-medium">Pilih Berkas:</label>
-                            <select name="berkas_id" id="berkas_id" class="rounded-md border-gray-300 shadow-sm text-sm" @if($suratList->where('berkas', 'isEmpty')->isEmpty()) disabled @endif>
+                            <select name="berkas_id" id="berkas_id" class="rounded-md border-gray-300 shadow-sm text-sm" @if(!$unarchivedExists) disabled @endif>
                                 <option value="">-- Tujuan Berkas --</option>
                                 @foreach($berkasList as $berkas)
                                     <option value="{{ $berkas->id }}">{{ $berkas->name }}</option>
                                 @endforeach
                             </select>
-                            <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-md text-xs hover:bg-indigo-700" @if($suratList->where('berkas', 'isEmpty')->isEmpty()) disabled @endif>
+                            <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-md text-xs hover:bg-indigo-700 @if(!$unarchivedExists) opacity-50 cursor-not-allowed @endif" @if(!$unarchivedExists) disabled @endif>
                                 <i class="fas fa-folder-plus mr-1"></i> Masukkan ke Berkas
                             </button>
-                            @if($suratList->where('berkas', 'isEmpty')->isEmpty() && $suratList->isNotEmpty())
+                            @if(!$unarchivedExists && $suratList->isNotEmpty())
                             <p class="text-xs text-gray-500 italic">Semua surat yang ditampilkan sudah diarsipkan.</p>
                             @endif
                         </div>
