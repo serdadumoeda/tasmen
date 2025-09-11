@@ -41,11 +41,32 @@
                                         <p><i class="fas fa-info-circle mr-1"></i> {{ $performanceDetails['iki_calculation_error'] }}</p>
                                     </div>
                                 @else
-                                    <div class="text-xs p-3 rounded bg-gray-100 border">
-                                        <p class="text-gray-700 leading-relaxed" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';">
-                                            Perhitungan IKI Anda dimulai dari <strong>Skor Dasar</strong> sebesar <strong class="text-gray-900">{{ $performanceDetails['iki_components']['base_score'] ?? 0 }}</strong>, yang merupakan rata-rata progres kerja Anda berdasarkan prioritas. Skor ini kemudian dikalikan dengan <strong>Faktor Efisiensi (dibatasi)</strong> Anda yaitu <strong class="text-gray-900">{{ $performanceDetails['iki_components']['capped_efficiency_factor'] ?? 0 }}</strong>. Dengan demikian, IKI final Anda adalah <strong class="text-red-600 text-base">{{ $performanceDetails['iki_result'] ?? 0 }}</strong>.
-                                        </p>
+                                    @php
+                                        $formatLabel = function($key, $withParentheses = false) {
+                                            $label = $key;
+                                            if (str_starts_with($label, 'capped_')) {
+                                                $label = str_replace('capped_', '', $label);
+                                                $label = ucwords(str_replace('_', ' ', $label)) . ' (dibatasi)';
+                                            } else {
+                                                $label = ucwords(str_replace('_', ' ', $label));
+                                            }
+                                            return $withParentheses ? '(' . $label . ')' : $label;
+                                        };
+
+                                        $iki_human_labels = collect($performanceDetails['iki_components'])->mapWithKeys(function ($value, $key) use ($formatLabel) {
+                                            return [$key => $formatLabel($key, true)];
+                                        })->all();
+                                        $human_iki_formula = str_replace(array_keys($iki_human_labels), array_values($iki_human_labels), $performanceDetails['iki_formula']);
+                                    @endphp
+                                    <div class="text-xs p-2 rounded bg-gray-100 border font-mono mb-2">
+                                        <p class="font-semibold">Rumus: <code class="text-red-600">{{ $human_iki_formula }}</code></p>
+                                        <p>Hasil: {{ str_replace(array_keys($performanceDetails['iki_components']), array_values($performanceDetails['iki_components']), $performanceDetails['iki_formula']) }} = <strong class="text-red-600">{{ $performanceDetails['iki_result'] }}</strong></p>
                                     </div>
+                                    <ul class="text-xs space-y-1">
+                                        @foreach($performanceDetails['iki_components'] as $key => $value)
+                                        <li><span class="font-semibold">{{ $formatLabel($key) }}:</span> {{ $value }}</li>
+                                        @endforeach
+                                    </ul>
                                 @endif
                                 <div class="mt-3 pt-3 border-t text-xs text-gray-600">
                                     <p class="font-bold mb-1">Interpretasi IKI:</p>
@@ -66,16 +87,32 @@
                                         <p><i class="fas fa-info-circle mr-1"></i> {{ $performanceDetails['nkf_calculation_error'] }}</p>
                                     </div>
                                 @else
-                                    <div class="text-xs p-3 rounded bg-gray-100 border">
-                                        <p class="text-gray-700 leading-relaxed" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';">
-                                            @if(isset($performanceDetails['nkf_components']['managerial_score']))
-                                                Sebagai seorang pimpinan, Nilai Kinerja Final (NKF) Anda dihitung dengan menggabungkan <strong>IKI Individu</strong> Anda (sebesar <strong class="text-gray-900">{{ $performanceDetails['nkf_components']['individual_score'] ?? 0 }}</strong>) dengan <strong>Rata-rata Kinerja Tim</strong> Anda (sebesar <strong class="text-gray-900">{{ $performanceDetails['nkf_components']['managerial_score'] ?? 0 }}</strong>), menggunakan bobot manajerial sebesar <strong>{{ ($performanceDetails['nkf_components']['weight'] ?? 0) * 100 }}%</strong>.
-                                            @else
-                                                Nilai Kinerja Final (NKF) Anda sama dengan <strong>IKI Individu</strong> Anda.
-                                            @endif
-                                            Hasil akhirnya, NKF Anda adalah <strong class="text-blue-600 text-base">{{ $performanceDetails['nkf_result'] ?? 0 }}</strong>.
-                                        </p>
+                                    @php
+                                        $formatLabel = function($key, $withParentheses = false) {
+                                            $label = $key;
+                                            if (str_starts_with($label, 'capped_')) {
+                                                $label = str_replace('capped_', '', $label);
+                                                $label = ucwords(str_replace('_', ' ', $label)) . ' (dibatasi)';
+                                            } else {
+                                                $label = ucwords(str_replace('_', ' ', $label));
+                                            }
+                                            return $withParentheses ? '(' . $label . ')' : $label;
+                                        };
+
+                                        $nkf_human_labels = collect($performanceDetails['nkf_components'])->mapWithKeys(function ($value, $key) use ($formatLabel) {
+                                            return [$key => $formatLabel($key, true)];
+                                        })->all();
+                                        $human_nkf_formula = str_replace(array_keys($nkf_human_labels), array_values($nkf_human_labels), $performanceDetails['nkf_formula']);
+                                    @endphp
+                                    <div class="text-xs p-2 rounded bg-gray-100 border font-mono mb-2">
+                                        <p class="font-semibold">Rumus: <code class="text-blue-600">{{ $human_nkf_formula }}</code></p>
+                                        <p>Hasil: {{ str_replace(array_keys($performanceDetails['nkf_components']), array_values($performanceDetails['nkf_components']), $performanceDetails['nkf_formula']) }} = <strong class="text-blue-600">{{ $performanceDetails['nkf_result'] }}</strong></p>
                                     </div>
+                                    <ul class="text-xs space-y-1 mb-3">
+                                        @foreach($performanceDetails['nkf_components'] as $key => $value)
+                                        <li><span class="font-semibold">{{ $formatLabel($key) }}:</span> {{ $value }}</li>
+                                        @endforeach
+                                    </ul>
                                 @endif
                                 <div class="mt-3 pt-3 border-t text-xs text-gray-600">
                                      <p class="font-bold mb-1">Interpretasi Rating Hasil Kerja (berdasarkan NKF):</p>
