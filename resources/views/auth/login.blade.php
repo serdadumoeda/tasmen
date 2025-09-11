@@ -198,7 +198,7 @@
       <div class="logo-container">
         {{-- Pastikan logo ada di public/images/logo-kemnaker.png --}}
         <img src="{{ asset('images/logo-kemnaker.png') }}" alt="Logo Kemnaker">
-        <h1>Gugus Tugas</h1>
+        <h1>TAMASYA</h1>
         <h3>KEMENTERIAN KETENAGAKERJAAN<br>REPUBLIK INDONESIA</h3>
       </div>
     </div>
