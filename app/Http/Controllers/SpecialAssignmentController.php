@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Berkas;
 use App\Models\KlasifikasiSurat;
 use App\Models\SpecialAssignment;
 use App\Models\Surat;
 use App\Models\TemplateSurat;
 use App\Models\User;
 use App\Services\NomorSuratService;
+use App\Services\SpecialAssignmentPdfGenerator;
 use Illuminate\Http\Request;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use App\Services\PageTitleService;
@@ -111,6 +113,7 @@ class SpecialAssignmentController extends Controller
         //     ->get();
 
         $klasifikasiSurat = KlasifikasiSurat::orderBy('kode')->get();
+        $berkasList = Berkas::where('user_id', auth()->id())->orderBy('name')->get();
 
         // Check for pre-filled data from the new workflow
         if (session('surat_id')) {
@@ -118,13 +121,13 @@ class SpecialAssignmentController extends Controller
             $assignment->description = session('prefill_description');
         }
 
-        return view('special-assignments.create', compact('assignment', 'assignableUsers', 'skTemplates', 'klasifikasiSurat'));
+        return view('special-assignments.create', compact('assignment', 'assignableUsers', 'skTemplates', 'klasifikasiSurat', 'berkasList'));
     }
 
     /**
      * Menyimpan SK baru ke database.
      */
-    public function store(Request $request, NomorSuratService $nomorSuratService)
+    public function store(Request $request, SpecialAssignmentPdfGenerator $pdfGenerator)
     {
         $this->authorize('create', SpecialAssignment::class);
         $user = auth()->user();
@@ -141,30 +144,21 @@ class SpecialAssignmentController extends Controller
             'members.*.role_in_sk' => ($user->canManageUsers() ? 'required|string|max:255' : 'nullable|string|max:255'),
             'sk_number' => 'nullable|string|max:255',
             'surat_id' => 'nullable|exists:surat,id', // For the new top-down flow
+            'berkas_id' => 'nullable|exists:berkas,id', // For archiving
         ]);
 
-        $dataToCreate = $request->except(['members', 'file_upload', 'create_sk', 'template_surat_id', 'klasifikasi_id', 'surat_id']);
+        $dataToCreate = $request->except(['members', 'file_upload', 'create_sk', 'template_surat_id', 'klasifikasi_id', 'surat_id', 'berkas_id']);
         $dataToCreate['creator_id'] = $user->id;
 
+        // Note: The logic for manual file_upload is being superseded by the auto-generation.
+        // We can keep it for now as a fallback if needed, but the primary flow is PDF generation.
         if ($request->hasFile('file_upload')) {
             $dataToCreate['file_path'] = $request->file('file_upload')->store('sk_files', 'public');
         }
 
         $sk = SpecialAssignment::create($dataToCreate);
 
-        // --- Logika Penautan atau Pembuatan Surat ---
-
-        // Workflow 1: Top-down (from an existing Surat)
-        if ($request->filled('surat_id')) {
-            $surat = Surat::find($validated['surat_id']);
-            if ($surat) {
-                $surat->suratable()->associate($sk);
-                $surat->save();
-                $sk->update(['sk_number' => $surat->nomor_surat]);
-            }
-        }
-
-        // --- Sinkronisasi Anggota ---
+        // --- Sinkronisasi Anggota (diperlukan sebelum generate PDF) ---
         $membersToSync = [];
         if ($user->canManageUsers()) {
             foreach ($validated['members'] as $member) {
@@ -175,7 +169,41 @@ class SpecialAssignmentController extends Controller
         }
         $sk->members()->sync($membersToSync);
 
-        return redirect()->route('special-assignments.index')->with('success', 'SK Penugasan berhasil dibuat.');
+        // --- PDF and Surat Generation ---
+        try {
+            // Generate the PDF and get its path
+            $pdfPath = $pdfGenerator->generate($sk);
+
+            // Create a new Surat record
+            $surat = new Surat([
+                'perihal' => $sk->title,
+                'tanggal_surat' => now(),
+                'status' => 'terverifikasi', // System-generated letters are auto-verified
+                'pembuat_id' => $user->id,
+                'file_path' => $pdfPath,
+            ]);
+
+            // Associate the Surat with the Special Assignment
+            $surat->suratable()->associate($sk);
+            $surat->save();
+
+            // Update the SK with the SK number from the Surat if it exists
+            if ($surat->nomor_surat) {
+                $sk->update(['sk_number' => $surat->nomor_surat]);
+            }
+
+            // --- Archive the new Surat if a Berkas is selected ---
+            if ($request->filled('berkas_id')) {
+                $surat->berkas()->attach($validated['berkas_id']);
+            }
+
+        } catch (\Exception $e) {
+            // If PDF/Surat generation fails, redirect with a warning but the SK is still created.
+            return redirect()->route('special-assignments.index')->with('warning', 'SK Penugasan berhasil dibuat, namun pembuatan dokumen SK otomatis gagal: ' . $e->getMessage());
+        }
+        // --- End PDF and Surat Generation ---
+
+        return redirect()->route('special-assignments.index')->with('success', 'SK Penugasan dan dokumen SK berhasil dibuat.');
     }
 
     /**

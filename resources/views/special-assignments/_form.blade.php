@@ -169,6 +169,26 @@
         {{-- AKHIR MODIFIKASI --}}
     </div>
 
+    <fieldset class="border p-4 rounded-md">
+        <legend class="text-lg font-semibold px-2">Pengarsipan</legend>
+        <div class="p-4">
+            <label for="berkas_id" class="block font-semibold text-sm text-gray-700 mb-1">
+                <i class="fas fa-archive mr-2 text-gray-500"></i> Simpan ke Arsip Digital (Opsional)
+            </label>
+            <select name="berkas_id" id="berkas_id" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150">
+                <option value="">-- Jangan Arsipkan --</option>
+                @isset($berkasList)
+                    @foreach($berkasList as $berkas)
+                        <option value="{{ $berkas->id }}" @selected(old('berkas_id') == $berkas->id)>
+                            {{ $berkas->name }}
+                        </option>
+                    @endforeach
+                @endisset
+            </select>
+            <p class="text-xs text-gray-500 mt-1">Pilih folder arsip digital untuk menyimpan SK ini secara otomatis.</p>
+        </div>
+    </fieldset>
+
     {{-- Bagian Tombol Simpan/Batal --}}
     <div class="flex items-center justify-end mt-8 pt-6 border-t border-gray-200"> {{-- Menambahkan border-gray-200 dan meningkatkan pt --}}
         <a href="{{ route('special-assignments.index') }}" class="text-sm text-gray-600 hover:text-gray-900 font-medium mr-6 transition-colors duration-200">Batal</a>
