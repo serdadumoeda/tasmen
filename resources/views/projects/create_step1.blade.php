@@ -55,7 +55,7 @@
                                 <label for="surat_ids" class="block font-semibold text-sm text-gray-700 mb-1">
                                     <i class="fas fa-gavel mr-2 text-gray-500"></i> Dasar Surat (Opsional)
                                 </label>
-                                <select name="surat_ids[]" id="surat_ids" multiple class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150">
+                                <select name="surat_ids[]" id="surat_ids" multiple class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150 tom-select">
                                     @foreach($suratList as $surat)
                                         <option value="{{ $surat->id }}" @selected(in_array($surat->id, old('surat_ids', [$selected_surat_id ?? ''])))>
                                             {{ $surat->nomor_surat ?? 'No. Belum Ada' }} - {{ $surat->perihal }}
@@ -98,4 +98,38 @@
             </div>
         </div>
     </div>
+
+    <x-slot name="styles">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.min.css">
+        <style>
+            .ts-control {
+                border-radius: 0.5rem;
+                border-color: #d1d5db;
+                padding: 0.5rem 0.75rem;
+            }
+            .ts-control .item {
+                background-color: #4f46e5;
+                color: white;
+                border-radius: 0.25rem;
+                font-weight: 500;
+                padding: 0.25rem 0.5rem;
+                margin: 0.125rem;
+            }
+        </style>
+    </x-slot>
+
+    @push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (document.getElementById('surat_ids')) {
+                new TomSelect('#surat_ids',{
+                    plugins: ['remove_button'],
+                    create: false,
+                    placeholder: 'Pilih satu atau lebih surat...'
+                });
+            }
+        });
+    </script>
+    @endpush
 </x-app-layout>
