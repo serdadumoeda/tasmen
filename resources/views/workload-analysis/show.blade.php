@@ -42,14 +42,19 @@
                                     </div>
                                 @else
                                     @php
-                                        $formatLabel = function($key, $withParentheses = false) {
-                                            $label = $key;
-                                            if (str_starts_with($label, 'capped_')) {
-                                                $label = str_replace('capped_', '', $label);
-                                                $label = ucwords(str_replace('_', ' ', $label)) . ' (dibatasi)';
-                                            } else {
-                                                $label = ucwords(str_replace('_', ' ', $label));
-                                            }
+                                        $labelMap = [
+                                            'base_score' => 'Nilai Dasar',
+                                            'efficiency_factor' => 'Faktor Efisiensi',
+                                            'capped_efficiency_factor' => 'Faktor Efisiensi (dibatasi)',
+                                        ];
+                                        $definitionMap = [
+                                            'base_score' => 'Rata-rata progres semua tugas Anda, dibobot berdasarkan prioritasnya.',
+                                            'efficiency_factor' => 'Perbandingan antara total jam estimasi dan total jam kerja aktual Anda.',
+                                            'capped_efficiency_factor' => 'Faktor Efisiensi yang nilainya telah disesuaikan agar berada dalam rentang yang wajar untuk keadilan.',
+                                        ];
+
+                                        $formatLabel = function($key, $withParentheses = false) use ($labelMap) {
+                                            $label = $labelMap[$key] ?? ucwords(str_replace('_', ' ', $key));
                                             return $withParentheses ? '(' . $label . ')' : $label;
                                         };
 
@@ -62,9 +67,15 @@
                                         <p class="font-semibold">Rumus: <code class="text-red-600">{{ $human_iki_formula }}</code></p>
                                         <p>Hasil: {{ str_replace(array_keys($performanceDetails['iki_components']), array_values($performanceDetails['iki_components']), $performanceDetails['iki_formula']) }} = <strong class="text-red-600">{{ $performanceDetails['iki_result'] }}</strong></p>
                                     </div>
-                                    <ul class="text-xs space-y-1">
+                                    <hr class="my-2 border-gray-200">
+                                    <ul class="text-xs space-y-2">
                                         @foreach($performanceDetails['iki_components'] as $key => $value)
-                                        <li><span class="font-semibold">{{ $formatLabel($key) }}:</span> {{ $value }}</li>
+                                        <li>
+                                            <span class="font-semibold">{{ $formatLabel($key) }}:</span> {{ $value }}
+                                            @if(isset($definitionMap[$key]))
+                                                <p class="text-gray-500 italic pl-2"><small>{{ $definitionMap[$key] }}</small></p>
+                                            @endif
+                                        </li>
                                         @endforeach
                                     </ul>
                                 @endif
@@ -88,14 +99,19 @@
                                     </div>
                                 @else
                                     @php
-                                        $formatLabel = function($key, $withParentheses = false) {
-                                            $label = $key;
-                                            if (str_starts_with($label, 'capped_')) {
-                                                $label = str_replace('capped_', '', $label);
-                                                $label = ucwords(str_replace('_', ' ', $label)) . ' (dibatasi)';
-                                            } else {
-                                                $label = ucwords(str_replace('_', ' ', $label));
-                                            }
+                                        $labelMap = [
+                                            'individual_score' => 'IKI Individu',
+                                            'managerial_score' => 'Rata-rata Kinerja Tim',
+                                            'weight' => 'Bobot Manajerial'
+                                        ];
+                                        $definitionMap = [
+                                            'individual_score' => 'Skor IKI yang menjadi dasar perhitungan NKF.',
+                                            'managerial_score' => 'Rata-rata nilai kinerja dari tim yang Anda pimpin.',
+                                            'weight' => 'Bobot pengaruh antara kinerja individu dan kinerja tim.'
+                                        ];
+
+                                        $formatLabel = function($key, $withParentheses = false) use ($labelMap) {
+                                            $label = $labelMap[$key] ?? ucwords(str_replace('_', ' ', $key));
                                             return $withParentheses ? '(' . $label . ')' : $label;
                                         };
 
@@ -108,9 +124,15 @@
                                         <p class="font-semibold">Rumus: <code class="text-blue-600">{{ $human_nkf_formula }}</code></p>
                                         <p>Hasil: {{ str_replace(array_keys($performanceDetails['nkf_components']), array_values($performanceDetails['nkf_components']), $performanceDetails['nkf_formula']) }} = <strong class="text-blue-600">{{ $performanceDetails['nkf_result'] }}</strong></p>
                                     </div>
-                                    <ul class="text-xs space-y-1 mb-3">
+                                    <hr class="my-2 border-gray-200">
+                                    <ul class="text-xs space-y-2 mb-3">
                                         @foreach($performanceDetails['nkf_components'] as $key => $value)
-                                        <li><span class="font-semibold">{{ $formatLabel($key) }}:</span> {{ $value }}</li>
+                                        <li>
+                                            <span class="font-semibold">{{ $formatLabel($key) }}:</span> {{ $value }}
+                                            @if(isset($definitionMap[$key]))
+                                                <p class="text-gray-500 italic pl-2"><small>{{ $definitionMap[$key] }}</small></p>
+                                            @endif
+                                        </li>
                                         @endforeach
                                     </ul>
                                 @endif
