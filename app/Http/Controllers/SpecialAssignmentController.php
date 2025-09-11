@@ -103,10 +103,12 @@ class SpecialAssignmentController extends Controller
         }
 
         // Ambil template surat yang relevan untuk SK Penugasan.
-        $skTemplates = TemplateSurat::where('judul', 'LIKE', '%SK%')
-            ->orWhere('judul', 'LIKE', '%Penugasan%')
-            ->orWhere('deskripsi', 'LIKE', '%Penugasan%')
-            ->get();
+        // NOTE: This feature is temporarily disabled because the TemplateSurat model does not exist.
+        $skTemplates = collect();
+        // $skTemplates = TemplateSurat::where('judul', 'LIKE', '%SK%')
+        //     ->orWhere('judul', 'LIKE', '%Penugasan%')
+        //     ->orWhere('deskripsi', 'LIKE', '%Penugasan%')
+        //     ->get();
 
         $klasifikasiSurat = KlasifikasiSurat::orderBy('kode')->get();
 
