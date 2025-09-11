@@ -22,7 +22,6 @@ class DatabaseSeeder extends Seeder
             LeaveTypesSeeder::class,
             TaskStatusSeeder::class,
             PriorityLevelSeeder::class,
-            ProjectSeeder::class,
         ]);
 
         // Panggil PerformanceCalculatorService untuk memastikan data kinerja terisi
