@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use App\Services\PageTitleService;
 use App\Services\BreadcrumbService;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
 class SpecialAssignmentController extends Controller
@@ -98,117 +99,126 @@ class SpecialAssignmentController extends Controller
         $assignableUsers = collect();
         if ($user->canManageUsers()) {
             $subordinateIds = $user->getAllSubordinateIds();
-            $subordinateIds[] = $user->id;
+            $subordinateIds->push($user->id); // Menggunakan push untuk menambahkan ID user saat ini
             $assignableUsers = User::whereIn('id', $subordinateIds)->orderBy('name')->get();
         } else {
             $assignableUsers->push($user);
         }
 
-        // Ambil template surat yang relevan untuk SK Penugasan.
-        // NOTE: This feature is temporarily disabled because the TemplateSurat model does not exist.
-        $skTemplates = collect();
-        // $skTemplates = TemplateSurat::where('judul', 'LIKE', '%SK%')
-        //     ->orWhere('judul', 'LIKE', '%Penugasan%')
-        //     ->orWhere('deskripsi', 'LIKE', '%Penugasan%')
-        //     ->get();
+        $skTemplates = TemplateSurat::where('judul', 'LIKE', '%SK%')
+            ->orWhere('judul', 'LIKE', '%Penugasan%')
+            ->orWhere('deskripsi', 'LIKE', '%Penugasan%')
+            ->get();
 
         $klasifikasiSurat = KlasifikasiSurat::orderBy('kode')->get();
-        $berkasList = Berkas::where('user_id', auth()->id())->orderBy('name')->get();
 
-        // Check for pre-filled data from the new workflow
+        // --- TAMBAHKAN BLOK INI ---
+        $berkasList = Berkas::where('user_id', Auth::id())->orderBy('name')->get();
+        // --- AKHIR BLOK ---
+
         if (session('surat_id')) {
             $assignment->title = session('prefill_title');
             $assignment->description = session('prefill_description');
         }
 
+        // --- UBAH BARIS INI ---
         return view('special-assignments.create', compact('assignment', 'assignableUsers', 'skTemplates', 'klasifikasiSurat', 'berkasList'));
     }
 
     /**
      * Menyimpan SK baru ke database.
      */
-    public function store(Request $request, SpecialAssignmentPdfGenerator $pdfGenerator)
-    {
-        $this->authorize('create', SpecialAssignment::class);
-        $user = auth()->user();
+public function store(Request $request, NomorSuratService $nomorSuratService)
+{
+    $this->authorize('create', SpecialAssignment::class);
+    $user = auth()->user();
 
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'start_date' => 'required|date',
-            'end_date' => 'nullable|date|after_or_equal:start_date',
-            'status' => 'required|in:AKTIF,SELESAI',
-            'description' => 'nullable|string',
-            'file_upload' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
-            'members' => ($user->canManageUsers() ? 'required|array' : 'nullable|array'),
-            'members.*.user_id' => ($user->canManageUsers() ? 'required|exists:users,id' : 'nullable|exists:users,id'),
-            'members.*.role_in_sk' => ($user->canManageUsers() ? 'required|string|max:255' : 'nullable|string|max:255'),
-            'sk_number' => 'nullable|string|max:255',
-            'surat_id' => 'nullable|exists:surat,id', // For the new top-down flow
-            'berkas_id' => 'nullable|exists:berkas,id', // For archiving
-        ]);
+    $validated = $request->validate([
+        'title' => 'required|string|max:255',
+        'start_date' => 'required|date',
+        'end_date' => 'nullable|date|after_or_equal:start_date',
+        'status' => 'required|in:AKTIF,SELESAI',
+        'description' => 'nullable|string',
+        'file_upload' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
+        'members' => ($user->canManageUsers() ? 'required|array' : 'nullable|array'),
+        'members.*.user_id' => ($user->canManageUsers() ? 'required|exists:users,id' : 'nullable|exists:users,id'),
+        'members.*.role_in_sk' => ($user->canManageUsers() ? 'required|string|max:255' : 'nullable|string|max:255'),
+        'create_sk' => 'sometimes|boolean',
+        'template_surat_id' => 'required_if:create_sk,1|exists:template_surat,id',
+        'klasifikasi_id' => 'required_if:create_sk,1|exists:klasifikasi_surat,id',
+        'sk_number' => 'nullable|string|max:255',
+        'surat_id' => 'nullable|exists:surat,id',
+        'berkas_id' => 'nullable|exists:berkas,id', // <-- TAMBAHKAN VALIDASI INI
+    ]);
 
-        $dataToCreate = $request->except(['members', 'file_upload', 'create_sk', 'template_surat_id', 'klasifikasi_id', 'surat_id', 'berkas_id']);
-        $dataToCreate['creator_id'] = $user->id;
+    $dataToCreate = $request->except(['members', 'file_upload', 'create_sk', 'template_surat_id', 'klasifikasi_id', 'surat_id', 'berkas_id']);
+    $dataToCreate['creator_id'] = $user->id;
 
-        // Note: The logic for manual file_upload is being superseded by the auto-generation.
-        // We can keep it for now as a fallback if needed, but the primary flow is PDF generation.
-        if ($request->hasFile('file_upload')) {
-            $dataToCreate['file_path'] = $request->file('file_upload')->store('sk_files', 'public');
+    if ($request->hasFile('file_upload')) {
+        $dataToCreate['file_path'] = $request->file('file_upload')->store('sk_files', 'public');
+    }
+
+    $sk = SpecialAssignment::create($dataToCreate);
+    $surat = null; // Inisialisasi variabel surat
+
+    if ($request->filled('surat_id')) {
+        $surat = Surat::find($validated['surat_id']);
+        if ($surat) {
+            $surat->suratable()->associate($sk);
+            $surat->save();
+            $sk->update(['sk_number' => $surat->nomor_surat]);
         }
-
-        $sk = SpecialAssignment::create($dataToCreate);
-
-        // --- Sinkronisasi Anggota (diperlukan sebelum generate PDF) ---
-        $membersToSync = [];
-        if ($user->canManageUsers()) {
-            foreach ($validated['members'] as $member) {
-                $membersToSync[$member['user_id']] = ['role_in_sk' => $member['role_in_sk']];
-            }
-        } else {
-            $membersToSync[$user->id] = ['role_in_sk' => 'Pelaksana'];
-        }
-        $sk->members()->sync($membersToSync);
-
-        // --- PDF and Surat Generation ---
+    }
+    elseif ($request->boolean('create_sk')) {
         try {
-            // Generate the PDF and get its path
-            $pdfPath = $pdfGenerator->generate($sk);
+            $template = TemplateSurat::findOrFail($validated['template_surat_id']);
+            $klasifikasi = KlasifikasiSurat::findOrFail($validated['klasifikasi_id']);
+            $nomorSurat = $nomorSuratService->generate($klasifikasi, $user);
 
-            // Create a new Surat record
             $surat = new Surat([
+                'nomor_surat' => $nomorSurat,
                 'perihal' => $sk->title,
                 'tanggal_surat' => now(),
-                'status' => 'terverifikasi', // System-generated letters are auto-verified
+                'jenis' => 'KELUAR',
+                'status' => 'DIARSIPKAN', // Langsung set status diarsipkan
                 'pembuat_id' => $user->id,
-                'file_path' => $pdfPath,
+                'konten' => $template->konten,
+                'klasifikasi_id' => $klasifikasi->id,
             ]);
 
-            // Associate the Surat with the Special Assignment
             $surat->suratable()->associate($sk);
             $surat->save();
 
-            // Update the SK with the SK number from the Surat if it exists
-            if ($surat->nomor_surat) {
-                $sk->update(['sk_number' => $surat->nomor_surat]);
-            }
-
-            // --- Archive the new Surat if a Berkas is selected ---
-            if (isset($validated['berkas_id']) && !empty($validated['berkas_id'])) {
-                $surat->berkas()->attach($validated['berkas_id']);
-            }
+            $sk->update(['sk_number' => $nomorSurat]);
 
         } catch (\Exception $e) {
-            // If PDF/Surat generation fails, redirect with a warning but the SK is still created.
-            return redirect()->route('special-assignments.index')->with('warning', 'SK Penugasan berhasil dibuat, namun pembuatan dokumen SK otomatis gagal: ' . $e->getMessage());
+            return redirect()->route('special-assignments.index')->with('success', 'SK Penugasan dibuat, namun pembuatan dokumen SK otomatis gagal: ' . $e->getMessage());
         }
-        // --- End PDF and Surat Generation ---
-
-        if ($request->filled('berkas_id')) {
-            return redirect()->route('special-assignments.index')->with('success', 'SK Penugasan dan dokumen SK berhasil dibuat dan diarsipkan.');
-        }
-
-        return redirect()->route('special-assignments.index')->with('success', 'SK Penugasan dan dokumen SK berhasil dibuat.');
     }
+
+    // --- TAMBAHKAN BLOK LOGIKA INI ---
+    if ($surat && $request->filled('berkas_id')) {
+        $berkas = Berkas::find($validated['berkas_id']);
+        if ($berkas && $berkas->user_id == $user->id) {
+            $berkas->surat()->attach($surat->id);
+            // Pastikan status surat menjadi 'diarsipkan'
+            $surat->update(['status' => 'diarsipkan']);
+        }
+    }
+    // --- AKHIR BLOK ---
+
+    $membersToSync = [];
+    if ($user->canManageUsers()) {
+        foreach ($validated['members'] as $member) {
+            $membersToSync[$member['user_id']] = ['role_in_sk' => $member['role_in_sk']];
+        }
+    } else {
+        $membersToSync[$user->id] = ['role_in_sk' => 'Pelaksana'];
+    }
+    $sk->members()->sync($membersToSync);
+
+    return redirect()->route('special-assignments.index')->with('success', 'SK Penugasan berhasil dibuat.');
+}
 
     /**
      * Menampilkan form edit SK.

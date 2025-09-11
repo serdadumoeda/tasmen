@@ -12,45 +12,34 @@ use App\Services\BreadcrumbService;
 
 class ArsipController extends Controller
 {
-    public function index(Request $request)
-    {
-        $query = Surat::whereIn('status', ['disetujui', 'diarsipkan', 'terverifikasi'])
-            ->with(['klasifikasi', 'pembuat', 'berkas']) // Eager load berkas relationship
-            ->latest();
+public function index(Request $request)
+{
+    $query = Surat::whereIn('status', ['disetujui', 'diarsipkan'])
+        // ->whereDoesntHave('berkas') // <-- HAPUS ATAU BERI KOMENTAR PADA BARIS INI
+        ->with(['klasifikasi', 'pembuat'])
+        ->latest();
 
-        // Keyword search
-        if ($request->filled('keyword')) {
-            $keyword = $request->input('keyword');
-            $query->where(function ($q) use ($keyword) {
-                $q->where('perihal', 'like', "%{$keyword}%")
-                  ->orWhere('nomor_surat', 'like', "%{$keyword}%");
-            });
-        }
+    // ... (sisa kode method index tetap sama)
 
-        // Filter by date range
-        if ($request->filled('date_range')) {
-            $dates = explode(' to ', $request->input('date_range'));
-            if (count($dates) > 0) {
-                $startDate = trim($dates[0]);
-                $endDate = isset($dates[1]) ? trim($dates[1]) : $startDate;
-
-                $query->whereDate('tanggal_surat', '>=', $startDate)
-                      ->whereDate('tanggal_surat', '<=', $endDate);
-            }
-        }
-
-        // Filter by classification
-        if ($request->filled('klasifikasi_id')) {
-            $query->where('klasifikasi_id', $request->input('klasifikasi_id'));
-        }
-
-
-        $suratList = $query->paginate(25)->withQueryString();
-        $klasifikasi = KlasifikasiSurat::orderBy('kode')->get();
-        $berkasList = Berkas::where('user_id', Auth::id())->orderBy('name')->get();
-
-        return view('arsip.index', compact('suratList', 'klasifikasi', 'berkasList'));
+    if ($request->filled('keyword')) {
+        // ...
     }
+
+    if ($request->filled('date_range')) {
+        // ...
+    }
+
+    if ($request->filled('klasifikasi_id')) {
+        // ...
+    }
+
+
+    $suratList = $query->paginate(25)->withQueryString();
+    $klasifikasi = KlasifikasiSurat::orderBy('kode')->get();
+    $berkasList = Berkas::where('user_id', Auth::id())->orderBy('name')->get();
+
+    return view('arsip.index', compact('suratList', 'klasifikasi', 'berkasList'));
+}
 
     public function storeBerkas(Request $request)
     {
