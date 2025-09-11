@@ -46,7 +46,11 @@ if (count($words) >= 2) {
                             </x-slot>
                             <x-slot name="content">
                                 <div class="px-4 py-2 text-xs text-gray-400">Kegiatan</div>
-                                <x-dropdown-link :href="route('global.dashboard')">Kegiatan</x-dropdown-link>
+                                @if(Auth::user()->isStaff())
+                                    <x-dropdown-link :href="route('staff.dashboard')" :active="request()->routeIs('staff.dashboard')">Kegiatan</x-dropdown-link>
+                                @else
+                                    <x-dropdown-link :href="route('global.dashboard')" :active="request()->routeIs('global.dashboard')">Kegiatan</x-dropdown-link>
+                                @endif
                                 <div class="border-t border-gray-100"></div>
                                 <div class="px-4 py-2 text-xs text-gray-400">Tugas</div>
                                 <x-dropdown-link :href="route('adhoc-tasks.index')">Tugas Harian</x-dropdown-link>
