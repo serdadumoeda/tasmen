@@ -7,6 +7,7 @@ use App\Http\Controllers\CommentController;
 use App\Http\Controllers\AttachmentController;
 use App\Http\Controllers\GlobalDashboardController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\StaffDashboardController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WorkloadAnalysisController;
 use App\Http\Controllers\TimeLogController;
@@ -48,6 +49,7 @@ Route::get('/get-users-by-unit/{unitId}', [UserController::class, 'getUsersByUni
 Route::middleware(['auth'])->group(function () {
     // Rute default setelah login adalah Beranda baru.
     Route::get('/dashboard', [HomeController::class, 'index'])->name('dashboard');
+    Route::get('/staff/dashboard', [StaffDashboardController::class, 'index'])->name('staff.dashboard');
     // Rute untuk daftar kegiatan (proyek)
     Route::get('/projects', [ProjectController::class, 'index'])->name('projects.index');
     Route::get('/projects/workflow', [ProjectController::class, 'showWorkflow'])->name('projects.workflow');

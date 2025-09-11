@@ -27,6 +27,11 @@ class HomeController extends Controller
             return app(ExecutiveSummaryController::class)->index($insightService);
         }
 
+        if ($user->isStaff()) {
+            // Redirect staff to their specific dashboard
+            return redirect()->route('staff.dashboard');
+        }
+
         // Forward the request to the GlobalDashboardController and return its response
         return app(GlobalDashboardController::class)->index();
     }
