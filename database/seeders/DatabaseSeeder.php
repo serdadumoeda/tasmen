@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             NationalHolidaySeeder::class,
             OrganizationalDataSeeder::class,
             UpdateUnitKodeSeeder::class,
+            LeaveTypesSeeder::class,
             TaskStatusSeeder::class,
             PriorityLevelSeeder::class,
             TaskSeeder::class,

@@ -100,7 +100,7 @@
                                 <div class="bg-cyan-600 h-2 rounded-full" style="width: {{ $progress }}%"></div>
                             </div>
                             <p class="text-sm text-right text-gray-500 mt-1">{{ $project->completed_tasks_count }} / {{ $project->tasks_count }} Tugas</p>
-                        </a>
+                        </x-card>
                     @endforeach
                 @else
                     <div class="text-center bg-white p-12 rounded-xl border border-gray-200 shadow-sm">
