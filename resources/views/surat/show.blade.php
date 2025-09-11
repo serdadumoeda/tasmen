@@ -11,9 +11,12 @@
                 <a href="{{ route('disposisi.lacak', $surat) }}" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold text-sm hover:bg-blue-700">
                     <i class="fas fa-sitemap mr-2"></i> Lacak Disposisi
                 </a>
-                <a href="{{ route('surat.make-task', $surat) }}" class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg font-semibold text-sm hover:bg-green-700">
-                    <i class="fas fa-tasks mr-2"></i> Jadikan Tugas
-                </a>
+                <form action="{{ route('surat.make-task', $surat) }}" method="POST" class="inline-block">
+                    @csrf
+                    <button type="submit" class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg font-semibold text-sm hover:bg-green-700">
+                        <i class="fas fa-tasks mr-2"></i> Jadikan Tugas
+                    </button>
+                </form>
                 <a href="{{ route('surat.make-project', $surat) }}" class="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg font-semibold text-sm hover:bg-purple-700">
                     <i class="fas fa-folder-plus mr-2"></i> Jadikan Kegiatan
                 </a>
