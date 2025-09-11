@@ -22,12 +22,7 @@ class DatabaseSeeder extends Seeder
             LeaveTypesSeeder::class,
             TaskStatusSeeder::class,
             PriorityLevelSeeder::class,
-            LeaveRequestSeeder::class,
             ProjectSeeder::class,
-            TaskSeeder::class,
-            TimeLogSeeder::class,
-            SpecialAssignmentSeeder::class,
-            AdHocTaskSeeder::class,
         ]);
 
         // Panggil PerformanceCalculatorService untuk memastikan data kinerja terisi
