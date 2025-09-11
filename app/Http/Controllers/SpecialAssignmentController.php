@@ -193,7 +193,7 @@ class SpecialAssignmentController extends Controller
             }
 
             // --- Archive the new Surat if a Berkas is selected ---
-            if ($request->filled('berkas_id')) {
+            if (isset($validated['berkas_id']) && !empty($validated['berkas_id'])) {
                 $surat->berkas()->attach($validated['berkas_id']);
             }
 
