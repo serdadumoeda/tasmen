@@ -47,6 +47,21 @@
                             </div>
                         </div>
 
+                        <div class="border-t border-gray-200 pt-6 mt-6">
+                            <label for="berkas_id" class="block font-semibold text-sm text-gray-700 mb-1">Simpan ke Arsip Digital (Opsional)</label>
+                            <select name="berkas_id" id="berkas_id" class="mt-1 block w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500">
+                                <option value="">-- Tidak diarsipkan --</option>
+                                @isset($berkasList)
+                                    @foreach($berkasList as $berkas)
+                                        <option value="{{ $berkas->id }}" @selected(old('berkas_id') == $berkas->id)>
+                                            {{ $berkas->name }}
+                                        </option>
+                                    @endforeach
+                                @endisset
+                            </select>
+                            <p class="text-xs text-gray-500 mt-1">Pilih berkas untuk langsung mengarsipkan surat ini setelah dibuat.</p>
+                        </div>
+
                         <div class="flex items-center justify-end mt-8 pt-6 border-t border-gray-200">
                             <a href="{{ route('surat.index') }}" class="text-sm font-medium text-gray-600 hover:text-gray-900 mr-4">Batal</a>
                             <button type="submit" class="inline-flex items-center px-5 py-2.5 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150 shadow-md hover:shadow-lg">

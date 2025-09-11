@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Berkas;
 use App\Models\Surat;
 use App\Models\Task;
 use App\Models\User;
@@ -19,7 +20,26 @@ class SuratController extends Controller
      */
     public function index()
     {
-        $suratItems = Surat::with('pembuat')->latest()->paginate(15);
+        $currentUser = Auth::user();
+        $query = Surat::query();
+
+        if (!$currentUser->isSuperAdmin()) {
+            // Get all user IDs in the current user's hierarchy (self + subordinates)
+            $subordinateIds = $currentUser->getAllSubordinateIds();
+            $relevantUserIds = $subordinateIds->push($currentUser->id);
+
+            $query->where(function ($q) use ($relevantUserIds) {
+                // Condition 1: Surat was created by the user or their subordinates.
+                $q->whereIn('pembuat_id', $relevantUserIds);
+
+                // Condition 2: Surat was dispositioned to the user or their subordinates.
+                $q->orWhereHas('disposisi', function ($subQuery) use ($relevantUserIds) {
+                    $subQuery->whereIn('penerima_id', $relevantUserIds);
+                });
+            });
+        }
+
+        $suratItems = $query->with('pembuat')->latest()->paginate(15);
         return view('surat.index', ['surat' => $suratItems]);
     }
 
@@ -28,7 +48,8 @@ class SuratController extends Controller
      */
     public function create()
     {
-        return view('surat.create');
+        $berkasList = Berkas::where('user_id', Auth::id())->orderBy('name')->get();
+        return view('surat.create', compact('berkasList'));
     }
 
     /**
@@ -41,11 +62,12 @@ class SuratController extends Controller
             'nomor_surat' => 'nullable|string|max:255|unique:surat,nomor_surat',
             'tanggal_surat' => 'required|date',
             'file' => 'required|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:10240', // Max 10MB
+            'berkas_id' => 'nullable|exists:berkas,id',
         ]);
 
         $path = $request->file('file')->store('surat_files', 'local');
 
-        Surat::create([
+        $surat = Surat::create([
             'perihal' => $validated['perihal'],
             'nomor_surat' => $validated['nomor_surat'] ?? null,
             'tanggal_surat' => $validated['tanggal_surat'],
@@ -53,6 +75,18 @@ class SuratController extends Controller
             'status' => 'draft',
             'pembuat_id' => Auth::id(),
         ]);
+
+        // --- Handle Archiving ---
+        if ($request->filled('berkas_id')) {
+            $berkas = Berkas::find($validated['berkas_id']);
+            // Ensure the user owns the folder
+            if ($berkas && $berkas->user_id == Auth::id()) {
+                $berkas->surat()->attach($surat->id);
+                $surat->update(['status' => 'diarsipkan']);
+                return redirect()->route('arsip.index')->with('success', 'Surat berhasil diunggah dan langsung diarsipkan.');
+            }
+        }
+        // --- End Handle Archiving ---
 
         return redirect()->route('surat.index')->with('success', 'Surat berhasil diunggah dan dicatat.');
     }
