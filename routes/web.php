@@ -208,6 +208,7 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('surat', SuratController::class)->only(['index', 'create', 'store', 'show', 'destroy']);
     Route::get('/surat/{surat}/download', [SuratController::class, 'download'])->name('surat.download');
     Route::get('/surat/{surat}/make-task', [SuratController::class, 'makeTask'])->name('surat.make-task');
+    Route::get('/surat/{surat}/make-project', [SuratController::class, 'makeProject'])->name('surat.make-project');
 
     // Disposition routes, attached to the unified surat
     Route::get('/disposisi/{surat}/lacak', [DisposisiController::class, 'lacak'])->name('disposisi.lacak');

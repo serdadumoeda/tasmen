@@ -60,7 +60,17 @@ class ProjectController extends Controller
         $pageTitleService->setTitle('Buat Kegiatan Baru');
         $suratList = Surat::orderBy('tanggal_surat', 'desc')->select('id', 'perihal', 'nomor_surat')->get();
 
-        return view('projects.create_step1', ['project' => new Project(), 'suratList' => $suratList]);
+        $project = new Project();
+        // Handle pre-filling from SuratController@makeProject
+        if (session('prefill_name')) {
+            $project->name = session('prefill_name');
+        }
+
+        return view('projects.create_step1', [
+            'project' => $project,
+            'suratList' => $suratList,
+            'selected_surat_id' => session('surat_id')
+        ]);
     }
 
     public function storeStep1(Request $request)
@@ -74,6 +84,7 @@ class ProjectController extends Controller
             'end_date' => 'nullable|date|after_or_equal:start_date',
             'surat_ids' => 'nullable|array',
             'surat_ids.*' => 'exists:surat,id',
+            'surat_id_from_flow' => 'nullable|exists:surat,id', // Validate the hidden input
         ]);
 
         $project = Project::create([
@@ -85,8 +96,13 @@ class ProjectController extends Controller
             'leader_id' => Auth::id(),
         ]);
 
-        if (!empty($validated['surat_ids'])) {
-            $suratCollection = Surat::find($validated['surat_ids']);
+        $allSuratIds = collect($validated['surat_ids'] ?? []);
+        if ($request->filled('surat_id_from_flow')) {
+            $allSuratIds->push($validated['surat_id_from_flow']);
+        }
+
+        if ($allSuratIds->isNotEmpty()) {
+            $suratCollection = Surat::find($allSuratIds->unique()->all());
             $project->surat()->saveMany($suratCollection);
         }
 

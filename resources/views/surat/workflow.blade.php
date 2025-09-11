@@ -49,11 +49,13 @@ graph TD
 
     subgraph B_Flow [B. Alur Detail & Aksi Surat]
         B1["<i class='fa fa-file-alt'></i> Halaman Detail Surat"]:::page --> B2["<i class='fa fa-paper-plane'></i> <b>Fitur Utama: Disposisi</b>"]:::action;
-        B1 --> B3["<i class='fa fa-tasks'></i> Buat Tugas dari Surat"]:::action;
+        B1 --> B3["<i class='fa fa-tasks'></i> Buat Tugas Harian"]:::action;
+        B1 --> B6["<i class='fa fa-folder-plus'></i> Buat Kegiatan Baru"]:::action;
         B1 --> B4["<i class='fa fa-download'></i> Unduh File"]:::action;
         B1 --> B5["<i class='fa fa-trash'></i> Hapus Surat"]:::action;
         B2 --> C_Flow["<i class='fa fa-share-alt'></i> C. Alur Disposisi"];
         B3 --> D_Flow["<i class='fa fa-briefcase'></i> D. Alur Konversi ke Tugas"];
+        B6 --> E_Flow["<i class='fa fa-project-diagram'></i> E. Alur Konversi ke Kegiatan"];
     end
                         </pre>
                     </div>
@@ -100,8 +102,8 @@ graph TD
             <!-- Flowchart Fitur Tambahan -->
             <x-card>
                 <div class="p-6">
-                    <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">3. Flowchart Fitur Tambahan</h3>
-                    <p class="text-gray-600 mb-6">Modul surat juga terintegrasi dengan modul lain.</p>
+                    <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">3. Flowchart Konversi Surat</h3>
+                    <p class="text-gray-600 mb-6">Surat dapat dikonversi menjadi item yang dapat ditindaklanjuti seperti Tugas Harian atau Kegiatan baru.</p>
                     <div class="p-4 bg-gray-50 rounded-lg text-center">
                         <pre class="mermaid">
 graph TD
@@ -109,12 +111,21 @@ graph TD
     classDef action fill:#FEF9E7,stroke:#F1C40F,color:#B7950B;
     classDef process fill:#E8F8F5,stroke:#1ABC9C,color:#148F77;
 
-    subgraph D_Flow [D. Alur Konversi ke Tugas]
+    subgraph D_Flow [D. Alur Konversi ke Tugas Harian]
         D1["<i class='fa fa-file-alt'></i> Halaman Detail Surat"]:::page --> D2["<i class='fa fa-tasks'></i> Klik 'Buat Tugas'"]:::action;
         D2 --> D3{"<i class='fa fa-cogs'></i> SuratController@makeTask"}:::process;
         D3 --> D4["<i class='fa fa-edit'></i> Update Status Surat menjadi 'Disetujui'"]:::process;
-        D3 --> D5["<i class='fa fa-briefcase'></i> Buat Task Baru<br>(Perihal -> Judul, File -> Lampiran)"]:::process;
+        D3 --> D5["<i class='fa fa-briefcase'></i> Buat Task Baru (project_id = null)"]:::process;
         D5 --> D6["<i class='fa fa-arrow-right'></i> Redirect ke Halaman Edit Tugas"]:::page;
+    end
+
+    subgraph E_Flow [E. Alur Konversi ke Kegiatan]
+        E1["<i class='fa fa-file-alt'></i> Halaman Detail Surat"]:::page --> E2["<i class='fa fa-folder-plus'></i> Klik 'Buat Kegiatan'"]:::action;
+        E2 --> E3{"<i class='fa fa-cogs'></i> SuratController@makeProject"}:::process;
+        E3 --> E4["<i class='fa fa-share-square'></i> Redirect ke Form Buat Kegiatan<br>dengan data terisi (nama, surat_id)"]:::page;
+        E4 -- Isi form & submit --> E5{"<i class='fa fa-cogs'></i> ProjectController@storeStep1"}:::process;
+        E5 --> E6["<i class='fa fa-link'></i> Simpan Kegiatan &<br>kaitkan dengan Surat"]:::process;
+        E6 --> E7["<i class='fa fa-arrow-right'></i> Lanjut ke Langkah 2 (Tim)"]:::page;
     end
                         </pre>
                     </div>

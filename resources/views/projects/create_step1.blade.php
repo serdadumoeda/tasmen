@@ -14,6 +14,9 @@
                 <div class="p-6 text-gray-900">
                     <form action="{{ route('projects.store.step1') }}" method="POST" x-data="{ isSubmitting: false }" @submit="isSubmitting = true">
                         @csrf
+                        @if(isset($selected_surat_id))
+                            <input type="hidden" name="surat_id_from_flow" value="{{ $selected_surat_id }}">
+                        @endif
                         
                         @if ($errors->any())
                             <div class="mb-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg shadow-md" role="alert">
@@ -38,14 +41,14 @@
                                 <label for="name" class="block font-semibold text-sm text-gray-700 mb-1">
                                     <i class="fas fa-file-signature mr-2 text-gray-500"></i> Nama Kegiatan <span class="text-red-500">*</span>
                                 </label>
-                                <input type="text" name="name" id="name" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" value="{{ old('name') }}" required autofocus>
+                                <input type="text" name="name" id="name" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" value="{{ old('name', $project->name) }}" required autofocus>
                             </div>
                             
                             <div>
                                 <label for="description" class="block font-semibold text-sm text-gray-700 mb-1">
                                     <i class="fas fa-align-left mr-2 text-gray-500"></i> Deskripsi <span class="text-red-500">*</span>
                                 </label>
-                                <textarea name="description" id="description" rows="4" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" required>{{ old('description') }}</textarea>
+                                <textarea name="description" id="description" rows="4" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" required>{{ old('description', $project->description) }}</textarea>
                             </div>
 
                             <div>
@@ -54,7 +57,7 @@
                                 </label>
                                 <select name="surat_ids[]" id="surat_ids" multiple class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150">
                                     @foreach($suratList as $surat)
-                                        <option value="{{ $surat->id }}" @selected(in_array($surat->id, old('surat_ids', [])))>
+                                        <option value="{{ $surat->id }}" @selected(in_array($surat->id, old('surat_ids', [$selected_surat_id ?? ''])))>
                                             {{ $surat->nomor_surat ?? 'No. Belum Ada' }} - {{ $surat->perihal }}
                                         </option>
                                     @endforeach

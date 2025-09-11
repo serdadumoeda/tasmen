@@ -153,4 +153,14 @@ class SuratController extends Controller
     {
         return view('surat.workflow');
     }
+
+    /**
+     * Show the form for creating a new project from a letter.
+     */
+    public function makeProject(Surat $surat)
+    {
+        return redirect()->route('projects.create.step1')
+            ->with('surat_id', $surat->id)
+            ->with('prefill_name', $surat->perihal);
+    }
 }
