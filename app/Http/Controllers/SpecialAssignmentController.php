@@ -194,6 +194,7 @@ class SpecialAssignmentController extends Controller
 
             // --- Archive the new Surat if a Berkas is selected ---
             if ($request->filled('berkas_id')) {
+                // Find the user's selected archive folder
                 $berkas = Berkas::find($validated['berkas_id']);
                 if ($berkas && $berkas->user_id == $user->id) {
                     $berkas->surat()->attach($surat->id);
