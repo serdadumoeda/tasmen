@@ -139,10 +139,6 @@ class SpecialAssignmentController extends Controller
             'members' => ($user->canManageUsers() ? 'required|array' : 'nullable|array'),
             'members.*.user_id' => ($user->canManageUsers() ? 'required|exists:users,id' : 'nullable|exists:users,id'),
             'members.*.role_in_sk' => ($user->canManageUsers() ? 'required|string|max:255' : 'nullable|string|max:255'),
-            // Validasi untuk pembuatan SK otomatis
-            'create_sk' => 'sometimes|boolean',
-            'template_surat_id' => 'required_if:create_sk,1|exists:template_surat,id',
-            'klasifikasi_id' => 'required_if:create_sk,1|exists:klasifikasi_surat,id',
             'sk_number' => 'nullable|string|max:255',
             'surat_id' => 'nullable|exists:surat,id', // For the new top-down flow
         ]);
@@ -165,34 +161,6 @@ class SpecialAssignmentController extends Controller
                 $surat->suratable()->associate($sk);
                 $surat->save();
                 $sk->update(['sk_number' => $surat->nomor_surat]);
-            }
-        }
-        // Workflow 2: Bottom-up (create a new Surat from form)
-        elseif ($request->boolean('create_sk')) {
-            try {
-                $template = TemplateSurat::findOrFail($validated['template_surat_id']);
-                $klasifikasi = KlasifikasiSurat::findOrFail($validated['klasifikasi_id']);
-
-                $nomorSurat = $nomorSuratService->generate($klasifikasi, $user);
-
-                $surat = new Surat([
-                    'nomor_surat' => $nomorSurat,
-                    'perihal' => $sk->title,
-                    'tanggal_surat' => now(),
-                    'jenis' => 'KELUAR',
-                    'status' => 'DRAFT',
-                    'pembuat_id' => $user->id,
-                    'konten' => $template->konten,
-                    'klasifikasi_id' => $klasifikasi->id,
-                ]);
-
-                $surat->suratable()->associate($sk);
-                $surat->save();
-
-                $sk->update(['sk_number' => $nomorSurat]);
-
-            } catch (\Exception $e) {
-                return redirect()->route('special-assignments.index')->with('success', 'SK Penugasan dibuat, namun pembuatan dokumen SK otomatis gagal: ' . $e->getMessage());
             }
         }
 
