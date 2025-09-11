@@ -14,7 +14,6 @@ class ArsipController extends Controller
 {
     public function index(Request $request)
     {
-        // Base query for archived letters, ensuring all relevant letters are shown.
         $query = Surat::whereIn('status', ['disetujui', 'diarsipkan', 'terverifikasi'])
             ->with(['klasifikasi', 'pembuat', 'berkas']) // Eager load berkas relationship
             ->latest();

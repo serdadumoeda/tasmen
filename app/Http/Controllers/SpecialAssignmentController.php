@@ -193,13 +193,8 @@ class SpecialAssignmentController extends Controller
             }
 
             // --- Archive the new Surat if a Berkas is selected ---
-            if ($request->filled('berkas_id')) {
-                $berkas = Berkas::find($validated['berkas_id']);
-                if ($berkas && $berkas->user_id == $user->id) {
-                    $berkas->surat()->attach($surat->id);
-                    // Update status to 'diarsipkan'
-                    $surat->update(['status' => 'diarsipkan']);
-                }
+            if (isset($validated['berkas_id']) && !empty($validated['berkas_id'])) {
+                $surat->berkas()->attach($validated['berkas_id']);
             }
 
         } catch (\Exception $e) {

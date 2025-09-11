@@ -32,7 +32,7 @@
                 }));
             },
             addMember() {
-                this.members.push({ user_id: '', role_in_sk: '' });
+                this.members.push({ user_id: '', role_in_sk: 'Anggota' });
             },
             removeMember(index) {
                 this.members.splice(index, 1);
