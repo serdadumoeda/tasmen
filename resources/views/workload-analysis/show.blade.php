@@ -42,7 +42,14 @@
                                     </div>
                                 @else
                                     <div class="text-xs p-2 rounded bg-gray-100 border font-mono mb-2">
-                                        <p class="font-semibold">Rumus: <code class="text-red-600">{{ $performanceDetails['iki_formula'] }}</code></p>
+                                        @php
+                                            $iki_human_labels = collect($performanceDetails['iki_components'])->mapWithKeys(function ($value, $key) {
+                                                // Create a friendlier label from the key
+                                                return [$key => '('.ucwords(str_replace('_', ' ', $key)).')'];
+                                            })->all();
+                                            $human_iki_formula = str_replace(array_keys($iki_human_labels), array_values($iki_human_labels), $performanceDetails['iki_formula']);
+                                        @endphp
+                                        <p class="font-semibold">Rumus: <code class="text-red-600" style="font-family: 'SFMono-Regular', Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;">{{ $human_iki_formula }}</code></p>
                                         <p>Hasil: {{ str_replace(array_keys($performanceDetails['iki_components']), array_values($performanceDetails['iki_components']), $performanceDetails['iki_formula']) }} = <strong class="text-red-600">{{ $performanceDetails['iki_result'] }}</strong></p>
                                     </div>
                                     <ul class="text-xs space-y-1">
@@ -71,7 +78,14 @@
                                     </div>
                                 @else
                                     <div class="text-xs p-2 rounded bg-gray-100 border font-mono mb-2">
-                                        <p class="font-semibold">Rumus: <code class="text-blue-600">{{ $performanceDetails['nkf_formula'] }}</code></p>
+                                        @php
+                                            $nkf_human_labels = collect($performanceDetails['nkf_components'])->mapWithKeys(function ($value, $key) {
+                                                // Create a friendlier label from the key
+                                                return [$key => '('.ucwords(str_replace('_', ' ', $key)).')'];
+                                            })->all();
+                                            $human_nkf_formula = str_replace(array_keys($nkf_human_labels), array_values($nkf_human_labels), $performanceDetails['nkf_formula']);
+                                        @endphp
+                                        <p class="font-semibold">Rumus: <code class="text-blue-600" style="font-family: 'SFMono-Regular', Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;">{{ $human_nkf_formula }}</code></p>
                                         <p>Hasil: {{ str_replace(array_keys($performanceDetails['nkf_components']), array_values($performanceDetails['nkf_components']), $performanceDetails['nkf_formula']) }} = <strong class="text-blue-600">{{ $performanceDetails['nkf_result'] }}</strong></p>
                                     </div>
                                     <ul class="text-xs space-y-1 mb-3">
