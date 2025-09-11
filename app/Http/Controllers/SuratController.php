@@ -148,36 +148,9 @@ class SuratController extends Controller
      */
     public function makeTask(Request $request, Surat $surat)
     {
-        $defaultStatus = \App\Models\TaskStatus::where('key', 'pending')->firstOrFail();
-        $defaultPriority = \App\Models\PriorityLevel::where('name', 'Normal')->firstOrFail();
-
-        $task = Task::create([
-            'title' => $surat->perihal,
-            'description' => 'Tugas ini dibuat berdasarkan surat dengan perihal: ' . $surat->perihal . '. Lihat surat terlampir untuk detail.',
-            'creator_id' => Auth::id(),
-            'task_status_id' => $defaultStatus->id,
-            'priority_level_id' => $defaultPriority->id,
-            'due_date' => now()->addDays(7),
-            'surat_id' => $surat->id,
-        ]);
-
-        $task->assignees()->attach(Auth::id());
-
-    // Automatically attach the letter's file to the new task
-    if ($surat->file_path) {
-        $task->attachments()->create([
-            'user_id' => Auth::id(),
-            'filename' => 'Surat Asal - ' . Str::slug($surat->perihal) . '.' . pathinfo($surat->file_path, PATHINFO_EXTENSION),
-            'path' => $surat->file_path,
-        ]);
-    }
-
-    $task->load('status');
-
-        $surat->status = 'disetujui';
-        $surat->save();
-
-        return redirect()->route('tasks.edit', $task)->with('success', 'Tugas berhasil dibuat dari surat. Silakan lengkapi detail tugas.');
+        return redirect()->route('adhoc-tasks.create')
+            ->with('prefill_title', $surat->perihal)
+            ->with('prefill_start_date', $surat->tanggal_surat->format('Y-m-d'));
     }
 
     /**
