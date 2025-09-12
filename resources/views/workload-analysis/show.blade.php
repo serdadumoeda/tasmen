@@ -203,14 +203,17 @@
                                                                 <p class="text-gray-500 italic text-xs pl-2">Jumlah total waktu yang tercatat di 'Time Log' untuk semua tugas.</p>
                                                             </div>
                                                             <hr>
-                                                            <div class="font-bold">
-                                                                <p>Perhitungan Akhir:</p>
-                                                                @if($totalActualHours > 0)
+                                                            @if($totalActualHours > 0)
+                                                                <div class="font-bold">
+                                                                    <p>Perhitungan Akhir:</p>
                                                                     <p class="font-mono">{{ number_format($totalEstimatedHours, 2) }} / {{ number_format($totalActualHours, 2) }} = {{ number_format($totalEstimatedHours / $totalActualHours, 3) }}</p>
-                                                                @else
-                                                                    <p class="font-mono">Tidak dapat dibagi dengan 0 jam kerja aktual.</p>
-                                                                @endif
-                                                            </div>
+                                                                </div>
+                                                            @else
+                                                                <div class="mt-2 p-2 bg-orange-100 border border-orange-300 rounded text-xs">
+                                                                    <p class="font-bold text-orange-800">Penjelasan Nilai Default:</p>
+                                                                    <p class="text-orange-700">Karena Total Jam Kerja Aktual adalah 0, perhitungan tidak dapat dilakukan. Sistem secara otomatis memberikan nilai default **1.0** (Sesuai Ekspektasi) untuk Faktor Efisiensi.</p>
+                                                                </div>
+                                                            @endif
                                                         </div>
                                                     </details>
                                                 </div>
