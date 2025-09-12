@@ -59,9 +59,8 @@ class UnitObserver
         if ($unit->isDirty('parent_unit_id')) {
             // The logic for incrementally updating a closure table is complex.
             // For simplicity and guaranteed correctness, we will rebuild the entire
-            // table on any parent_unit_id change. This is less performant on
-            // large datasets but ensures data integrity.
-            Unit::rebuildPaths();
+            // table on any parent_unit_id change using the new robust method.
+            Unit::rebuildHierarchy();
 
             // Clear all relevant caches after the rebuild
             $this->clearHierarchyCache($unit);
