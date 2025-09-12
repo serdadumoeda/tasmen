@@ -140,6 +140,38 @@
                                                     </details>
                                                 </div>
                                             @endif
+
+                                            @if($key === 'efficiency_factor')
+                                                @php
+                                                    $totalEstimatedHours = $user->tasks->sum('estimated_hours');
+                                                    $timeLogs = \App\Models\TimeLog::whereIn('task_id', $user->tasks->pluck('id'))->where('user_id', $user->id)->whereNotNull('end_time')->get();
+                                                    $totalActualHours = $timeLogs->sum('duration_in_minutes') / 60;
+                                                @endphp
+                                                <div class="mt-2 pl-2">
+                                                    <details>
+                                                        <summary class="cursor-pointer text-blue-600 font-semibold select-none">[+ Lihat Rincian Perhitungan]</summary>
+                                                        <div class="mt-2 border border-gray-200 rounded-md p-2 space-y-2">
+                                                            <div>
+                                                                <p><strong>Total Jam Estimasi:</strong> {{ number_format($totalEstimatedHours, 2) }} jam</p>
+                                                                <p class="text-gray-500 italic text-xs pl-2">Jumlah semua 'estimasi jam' dari setiap tugas.</p>
+                                                            </div>
+                                                            <div>
+                                                                <p><strong>Total Jam Kerja Aktual:</strong> {{ number_format($totalActualHours, 2) }} jam</p>
+                                                                <p class="text-gray-500 italic text-xs pl-2">Jumlah total waktu yang tercatat di 'Time Log' untuk semua tugas.</p>
+                                                            </div>
+                                                            <hr>
+                                                            <div class="font-bold">
+                                                                <p>Perhitungan Akhir:</p>
+                                                                @if($totalActualHours > 0)
+                                                                    <p class="font-mono">{{ number_format($totalEstimatedHours, 2) }} / {{ number_format($totalActualHours, 2) }} = {{ number_format($totalEstimatedHours / $totalActualHours, 3) }}</p>
+                                                                @else
+                                                                    <p class="font-mono">Tidak dapat dibagi dengan 0 jam kerja aktual.</p>
+                                                                @endif
+                                                            </div>
+                                                        </div>
+                                                    </details>
+                                                </div>
+                                            @endif
                                         </li>
                                         @endforeach
                                     </ul>
