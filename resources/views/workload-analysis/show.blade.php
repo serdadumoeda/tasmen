@@ -63,9 +63,24 @@
                                         })->all();
                                         $human_iki_formula = str_replace(array_keys($iki_human_labels), array_values($iki_human_labels), $performanceDetails['iki_formula']);
                                     @endphp
+                                    @php
+                                        // --- Robust replacement for the formula string ---
+                                        $human_iki_formula_str = $performanceDetails['iki_formula'];
+                                        $iki_human_labels_sorted = collect($iki_human_labels)->sortBy(fn($val, $key) => strlen($key) * -1);
+                                        foreach ($iki_human_labels_sorted as $key => $label) {
+                                            $human_iki_formula_str = str_replace($key, $label, $human_iki_formula_str);
+                                        }
+
+                                        // --- Robust replacement for the result string ---
+                                        $hasil_string = $performanceDetails['iki_formula'];
+                                        $components_sorted = collect($performanceDetails['iki_components'])->sortBy(fn($val, $key) => strlen($key) * -1);
+                                        foreach ($components_sorted as $key => $value) {
+                                            $hasil_string = str_replace($key, $value, $hasil_string);
+                                        }
+                                    @endphp
                                     <div class="text-xs p-2 rounded bg-gray-100 border font-mono mb-2">
-                                        <p class="font-semibold">Rumus: <code class="text-red-600">{{ $human_iki_formula }}</code></p>
-                                        <p>Hasil: {{ str_replace(array_keys($performanceDetails['iki_components']), array_values($performanceDetails['iki_components']), $performanceDetails['iki_formula']) }} = <strong class="text-red-600">{{ $performanceDetails['iki_result'] }}</strong></p>
+                                        <p class="font-semibold">Rumus: <code class="text-red-600">{{ $human_iki_formula_str }}</code></p>
+                                        <p class="font-semibold">Hasil: <code class="font-mono">{{ $hasil_string }} = <strong class="text-red-600">{{ $performanceDetails['iki_result'] }}</strong></code></p>
                                     </div>
                                     <hr class="my-2 border-gray-200">
                                     <ul class="text-xs space-y-2">
@@ -245,9 +260,24 @@
                                         })->all();
                                         $human_nkf_formula = str_replace(array_keys($nkf_human_labels), array_values($nkf_human_labels), $performanceDetails['nkf_formula']);
                                     @endphp
+                                    @php
+                                        // --- Robust replacement for the formula string ---
+                                        $human_nkf_formula_str = $performanceDetails['nkf_formula'];
+                                        $nkf_human_labels_sorted = collect($nkf_human_labels)->sortBy(fn($val, $key) => strlen($key) * -1);
+                                        foreach ($nkf_human_labels_sorted as $key => $label) {
+                                            $human_nkf_formula_str = str_replace($key, $label, $human_nkf_formula_str);
+                                        }
+
+                                        // --- Robust replacement for the result string ---
+                                        $hasil_string_nkf = $performanceDetails['nkf_formula'];
+                                        $components_sorted_nkf = collect($performanceDetails['nkf_components'])->sortBy(fn($val, $key) => strlen($key) * -1);
+                                        foreach ($components_sorted_nkf as $key => $value) {
+                                            $hasil_string_nkf = str_replace($key, $value, $hasil_string_nkf);
+                                        }
+                                    @endphp
                                     <div class="text-xs p-2 rounded bg-gray-100 border font-mono mb-2">
-                                        <p class="font-semibold">Rumus: <code class="text-blue-600">{{ $human_nkf_formula }}</code></p>
-                                        <p>Hasil: {{ str_replace(array_keys($performanceDetails['nkf_components']), array_values($performanceDetails['nkf_components']), $performanceDetails['nkf_formula']) }} = <strong class="text-blue-600">{{ $performanceDetails['nkf_result'] }}</strong></p>
+                                        <p class="font-semibold">Rumus: <code class="text-blue-600">{{ $human_nkf_formula_str }}</code></p>
+                                        <p class="font-semibold">Hasil: <code class="font-mono">{{ $hasil_string_nkf }} = <strong class="text-blue-600">{{ $performanceDetails['nkf_result'] }}</strong></code></p>
                                     </div>
                                     <hr class="my-2 border-gray-200">
                                     <ul class="text-xs space-y-2 mb-3">
