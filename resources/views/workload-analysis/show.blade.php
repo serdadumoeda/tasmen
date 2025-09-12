@@ -141,6 +141,34 @@
                                                 </div>
                                             @endif
 
+                                            @if($key === 'capped_efficiency_factor')
+                                                @php
+                                                    $original_value = $performanceDetails['iki_components']['efficiency_factor'];
+                                                    $min_limit = $settings['min_efficiency_factor'] ?? 0.9;
+                                                    $max_limit = $settings['max_efficiency_factor'] ?? 1.25;
+                                                    $logic_text = '';
+                                                    if ($original_value > $max_limit) {
+                                                        $logic_text = "Karena Nilai Asli (".number_format($original_value, 3).") lebih tinggi dari Batas Atas (".number_format($max_limit, 2)."), maka nilai yang digunakan adalah ".number_format($max_limit, 2).".";
+                                                    } elseif ($original_value < $min_limit) {
+                                                        $logic_text = "Karena Nilai Asli (".number_format($original_value, 3).") lebih rendah dari Batas Bawah (".number_format($min_limit, 2)."), maka nilai yang digunakan adalah ".number_format($min_limit, 2).".";
+                                                    } else {
+                                                        $logic_text = "Karena Nilai Asli (".number_format($original_value, 3).") berada dalam rentang wajar, maka nilai asli yang digunakan.";
+                                                    }
+                                                @endphp
+                                                <div class="mt-2 pl-2">
+                                                    <details>
+                                                        <summary class="cursor-pointer text-blue-600 font-semibold select-none">[+ Lihat Proses Pembatasan (Capping)]</summary>
+                                                        <div class="mt-2 border border-gray-200 rounded-md p-2 space-y-1">
+                                                            <p><strong>Nilai Faktor Efisiensi (Asli):</strong> {{ number_format($original_value, 3) }}</p>
+                                                            <p><strong>Batas Bawah Sistem:</strong> {{ number_format($min_limit, 2) }}</p>
+                                                            <p><strong>Batas Atas Sistem:</strong> {{ number_format($max_limit, 2) }}</p>
+                                                            <hr class="my-1">
+                                                            <p><strong>Logika:</strong> {{ $logic_text }}</p>
+                                                        </div>
+                                                    </details>
+                                                </div>
+                                            @endif
+
                                             @if($key === 'efficiency_factor')
                                                 @php
                                                     $totalEstimatedHours = $user->tasks->sum('estimated_hours');
