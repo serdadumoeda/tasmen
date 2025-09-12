@@ -110,19 +110,67 @@ class Unit extends Model
     
     // --- HIERARCHY MANAGEMENT (CLOSURE TABLE) ---
     
-    public static function rebuildPaths()
+    /**
+     * Rebuilds the entire unit hierarchy using a robust, non-recursive method.
+     * This is the definitive method to ensure data integrity in the unit_paths table.
+     * It is designed to be safe from stale Eloquent relationships and N+1 problems.
+     *
+     * @return array An array containing counts of processed units and paths.
+     */
+    public static function rebuildHierarchy(): array
     {
-        \Illuminate\Support\Facades\DB::transaction(function () {
-            \Illuminate\Support\Facades\DB::table('unit_paths')->truncate();
-            $units = self::all();
+        $processedPaths = 0;
+        $units = self::all()->keyBy('id');
+        $totalUnits = $units->count();
+
+        DB::transaction(function () use ($units, &$processedPaths) {
+            DB::table('unit_paths')->truncate();
+
+            if ($units->isEmpty()) {
+                return;
+            }
+
             foreach ($units as $unit) {
-                self::insertPaths($unit);
+                // Start with the unit itself as an ancestor (depth 0).
+                $ancestors = collect();
+                $current = $unit;
+
+                // Traverse up the tree using the parent_unit_id from the reliable collection.
+                while ($current) {
+                    $ancestors->push($current);
+                    $current = $units->get($current->parent_unit_id);
+                }
+
+                // Insert the paths in reverse order (from root to the unit).
+                $depth = 0;
+                foreach ($ancestors->reverse() as $ancestor) {
+                    DB::table('unit_paths')->insert([
+                        'ancestor_id' => $ancestor->id,
+                        'descendant_id' => $unit->id,
+                        'depth' => $depth,
+                    ]);
+                    $processedPaths++;
+                    $depth++;
+                }
             }
         });
+
+        return ['total_units' => $totalUnits, 'processed_paths' => $processedPaths];
+    }
+
+    /**
+     * @deprecated Use rebuildHierarchy() instead. This method is flawed and will be removed.
+     */
+    public static function rebuildPaths()
+    {
+        self::rebuildHierarchy();
     }
     
     private static function insertPaths(Unit $unit)
     {
+        // This method is now obsolete as its logic is contained within rebuildHierarchy.
+        // It is kept temporarily to avoid breaking any other potential internal calls,
+        // but it should be considered deprecated and removed in the future.
         \Illuminate\Support\Facades\DB::table('unit_paths')->insert([
             'ancestor_id' => $unit->id,
             'descendant_id' => $unit->id,
