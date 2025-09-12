@@ -72,8 +72,73 @@
                                         @foreach($performanceDetails['iki_components'] as $key => $value)
                                         <li>
                                             <span class="font-semibold">{{ $formatLabel($key) }}:</span> {{ $value }}
-                                            @if(isset($definitionMap[$key]))
-                                                <p class="text-gray-500 italic pl-2"><small>{{ $definitionMap[$key] }}</small></p>
+                                            <p class="text-gray-500 italic pl-2"><small>{{ $definitionMap[$key] ?? '' }}</small></p>
+
+                                            @if($key === 'base_score')
+                                                @php
+                                                    $getPriorityWeight = function($priority) {
+                                                        return match (strtolower($priority)) {
+                                                            'critical' => 4, 'high' => 3, 'medium' => 2, 'low' => 1, default => 2,
+                                                        };
+                                                    };
+                                                    $totalWeightedScore = 0;
+                                                    $totalWeight = 0;
+                                                @endphp
+                                                <div class="mt-2 pl-2 space-y-2">
+                                                    <div class="text-gray-600 p-2 rounded bg-gray-50 border border-gray-200">
+                                                        <p class="font-semibold">Legenda Bobot Prioritas:</p>
+                                                        <p>Critical: 4, High: 3, Medium: 2, Low: 1</p>
+                                                    </div>
+                                                    <details>
+                                                        <summary class="cursor-pointer text-blue-600 font-semibold select-none">[+ Lihat Rincian Perhitungan]</summary>
+                                                        <div class="mt-2 border border-gray-200 rounded-md p-2">
+                                                            <table class="min-w-full divide-y divide-gray-200">
+                                                                <thead class="bg-gray-50">
+                                                                    <tr>
+                                                                        <th class="px-2 py-1 text-left font-medium text-gray-500">Tugas</th>
+                                                                        <th class="px-2 py-1 text-center font-medium text-gray-500">Progres</th>
+                                                                        <th class="px-2 py-1 text-center font-medium text-gray-500">Bobot</th>
+                                                                        <th class="px-2 py-1 text-center font-medium text-gray-500">Skor Tertimbang</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody class="bg-white divide-y divide-gray-200">
+                                                                    @forelse($user->tasks as $task)
+                                                                        @php
+                                                                            $priorityName = $task->priorityLevel->name ?? 'medium';
+                                                                            $weight = $getPriorityWeight($priorityName);
+                                                                            $weightedScore = ($task->progress / 100) * $weight;
+                                                                            $totalWeightedScore += $weightedScore;
+                                                                            $totalWeight += $weight;
+                                                                        @endphp
+                                                                        <tr>
+                                                                            <td class="px-2 py-1 w-1/2">{{ $task->title }}</td>
+                                                                            <td class="px-2 py-1 text-center">{{ $task->progress }}%</td>
+                                                                            <td class="px-2 py-1 text-center">{{ $weight }}</td>
+                                                                            <td class="px-2 py-1 text-center">{{ number_format($weightedScore, 2) }}</td>
+                                                                        </tr>
+                                                                    @empty
+                                                                        <tr>
+                                                                            <td colspan="4" class="px-2 py-2 text-center text-gray-500">Tidak ada tugas untuk dinilai.</td>
+                                                                        </tr>
+                                                                    @endforelse
+                                                                </tbody>
+                                                                @if($user->tasks->isNotEmpty())
+                                                                <tfoot class="bg-gray-50 font-bold">
+                                                                    <tr>
+                                                                        <td colspan="2" class="px-2 py-1 text-right">Total:</td>
+                                                                        <td class="px-2 py-1 text-center">{{ $totalWeight }}</td>
+                                                                        <td class="px-2 py-1 text-center">{{ number_format($totalWeightedScore, 2) }}</td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td colspan="3" class="px-2 py-1 text-right">Nilai Dasar (Total Skor / Total Bobot):</td>
+                                                                        <td class="px-2 py-1 text-center">{{ $totalWeight > 0 ? number_format($totalWeightedScore / $totalWeight, 3) : 0 }}</td>
+                                                                    </tr>
+                                                                </tfoot>
+                                                                @endif
+                                                            </table>
+                                                        </div>
+                                                    </details>
+                                                </div>
                                             @endif
                                         </li>
                                         @endforeach
