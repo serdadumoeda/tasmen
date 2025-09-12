@@ -55,10 +55,14 @@ class WorkloadAnalysisController extends Controller
 
         // --- Base Subordinates Query ---
         if ($manager->isSuperAdmin()) {
+            // Superadmin sees everyone except themself.
             $baseSubordinatesQuery = User::where('id', '!=', $manager->id);
         } else {
-            $subordinateUnitIds = $manager->unit ? $manager->unit->getAllSubordinateUnitIds() : [];
-            $baseSubordinatesQuery = User::whereIn('unit_id', $subordinateUnitIds)->where('id', '!=', $manager->id);
+            // Use the standard, correct method for getting all subordinate IDs.
+            // This includes users in subordinate units AND the manager's own unit.
+            $subordinateIds = $manager->getAllSubordinateIds();
+            // We still need to exclude the manager themself from the list.
+            $baseSubordinatesQuery = User::whereIn('id', $subordinateIds)->where('id', '!=', $manager->id);
         }
 
         if ($search) {
