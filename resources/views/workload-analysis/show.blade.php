@@ -312,6 +312,18 @@
                                     <span class="mx-2">&darr;</span>
                                     <strong class="text-green-600">{{ $user->performance_predicate }}</strong>
                                 </div>
+                                <details class="mt-2 text-xs">
+                                    <summary class="cursor-pointer text-blue-600 font-semibold select-none">[+ Lihat Logika Penentuan Predikat]</summary>
+                                    <div class="mt-2 p-2 border rounded-md bg-gray-50 text-gray-700">
+                                        <p class="font-bold mb-1">Logika didasarkan pada matriks berikut:</p>
+                                        <ul class="space-y-1 list-disc list-inside">
+                                            <li><span class="font-semibold">Sangat Baik:</span> Jika 'Rating Hasil Kerja' <strong class="text-gray-900">Diatas Ekspektasi</strong> DAN 'Perilaku Kerja' <strong class="text-gray-900">Diatas Ekspektasi</strong>.</li>
+                                            <li><span class="font-semibold">Baik:</span> Jika 'Rating Hasil Kerja' DAN 'Perilaku Kerja' keduanya <strong class="text-gray-900">Sesuai Ekspektasi</strong> atau lebih baik (dan tidak memenuhi syarat 'Sangat Baik').</li>
+                                            <li class="font-semibold text-red-600"><span class="text-red-600">Butuh Perbaikan:</span> Jika SALAH SATU dari 'Rating Hasil Kerja' atau 'Perilaku Kerja' adalah <strong class="text-red-800">Dibawah Ekspektasi</strong>.</li>
+                                            <li><span class="font-semibold">Sangat Kurang:</span> Jika 'Rating Hasil Kerja' DAN 'Perilaku Kerja' keduanya <strong class="text-gray-900">Dibawah Ekspektasi</strong>.</li>
+                                        </ul>
+                                    </div>
+                                </details>
                             </div>
 
                         </div>
