@@ -58,6 +58,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Set trusted proxies for environments behind a reverse proxy
+        \Illuminate\Http\Request::setTrustedProxies(['*'], \Illuminate\Http\Request::HEADER_X_FORWARDED_ALL);
+
         $loader = \Illuminate\Foundation\AliasLoader::getInstance();
         $loader->alias('QrCode', \SimpleSoftwareIO\QrCode\Facades\QrCode::class);
 
