@@ -111,7 +111,10 @@ class ArsipController extends Controller
             abort(403);
         }
 
-        Surat::whereIn('id', $validated['surat_ids'])->update(['berkas_id' => $validated['berkas_id']]);
+        Surat::whereIn('id', $validated['surat_ids'])->update([
+            'berkas_id' => $validated['berkas_id'],
+            'status' => 'diarsipkan',
+        ]);
 
         return back()->with('success', count($validated['surat_ids']) . ' surat berhasil dipindahkan ke berkas "' . $berkas->name . '".');
     }
