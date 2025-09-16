@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Enums\RequestStatus;
 use App\Models\PeminjamanRequest;
 use App\Models\User;
 use Illuminate\Auth\Access\Response;
@@ -41,7 +42,7 @@ class PeminjamanRequestPolicy
     public function approve(User $user, PeminjamanRequest $peminjamanRequest): bool
     {
         // Hanya approver yang ditunjuk yang bisa menyetujui.
-        return $user->id === $peminjamanRequest->approver_id && $peminjamanRequest->status === 'pending';
+        return $user->id === $peminjamanRequest->approver_id && $peminjamanRequest->status === RequestStatus::PENDING;
     }
 
     /**
@@ -50,7 +51,7 @@ class PeminjamanRequestPolicy
     public function reject(User $user, PeminjamanRequest $peminjamanRequest): bool
     {
         // Hanya approver yang ditunjuk yang bisa menolak.
-        return $user->id === $peminjamanRequest->approver_id && $peminjamanRequest->status === 'pending';
+        return $user->id === $peminjamanRequest->approver_id && $peminjamanRequest->status === RequestStatus::PENDING;
     }
 
 
