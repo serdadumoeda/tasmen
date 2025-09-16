@@ -102,6 +102,11 @@
                         </tbody>
                     </table>
                 </div>
+
+                <!-- Pagination Links -->
+                <div class="mt-4">
+                    {{ $workloadData->links() }}
+                </div>
             </x-card>
         </div>
     </div>

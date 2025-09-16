@@ -19,26 +19,39 @@ class ResourcePoolController extends Controller
         $manager = Auth::user();
         $search = $request->input('search');
 
-        $teamMembers = $manager->getAllSubordinates();
+        if (!$manager->unit) {
+            $paginator = new \Illuminate\Pagination\LengthAwarePaginator([], 0, 15, 1, [
+                'path' => $request->url(),
+                'query' => $request->query(),
+            ]);
+            return view('resource_pool.index', [
+                'workloadData' => $paginator,
+                'search' => $search,
+            ]);
+        }
+
+        $unitIds = $manager->unit->getAllSubordinateUnitIds();
+        $unitIds[] = $manager->unit->id;
+        $teamMembersQuery = User::whereIn('unit_id', array_unique($unitIds))
+                                ->where('id', '!=', $manager->id);
 
         if ($search) {
-            $teamMembers = $teamMembers->filter(function ($member) use ($search) {
-                // Search by name (case-insensitive)
-                return stripos($member->name, $search) !== false;
-            });
+            // Case-insensitive search for name
+            $teamMembersQuery->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($search) . '%']);
         }
+
+        $paginatedMembers = $teamMembersQuery->latest('name')->paginate(15);
 
         $standardHours = config('tasmen.workload.standard_hours', 37.5);
 
-        $workloadData = $teamMembers->map(function ($member) use ($standardHours) {
-            // Hitung total jam dari tugas yang belum selesai
+        // Transform the collection within the paginator
+        $workloadItems = $paginatedMembers->getCollection()->map(function ($member) use ($standardHours) {
             $totalAssignedHours = $member->tasks()
                 ->whereHas('status', function ($q) {
                     $q->where('key', '!=', 'completed');
                 })
                 ->sum('estimated_hours');
 
-            // Hitung persentase beban kerja
             $workloadPercentage = ($standardHours > 0)
                 ? ($totalAssignedHours / $standardHours) * 100
                 : 0;
@@ -49,8 +62,17 @@ class ResourcePoolController extends Controller
             ];
         });
 
+        // Create a new paginator instance with the transformed items
+        $paginatedWorkloadData = new \Illuminate\Pagination\LengthAwarePaginator(
+            $workloadItems,
+            $paginatedMembers->total(),
+            $paginatedMembers->perPage(),
+            $paginatedMembers->currentPage(),
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
+
         return view('resource_pool.index', [
-            'workloadData' => $workloadData,
+            'workloadData' => $paginatedWorkloadData,
             'search' => $search,
         ]);
     }
