@@ -26,6 +26,7 @@ class Surat extends Model
         'suratable_type',
         'klasifikasi_id',
         'collaborators',
+        'berkas_id',
     ];
 
     protected $casts = [
@@ -68,6 +69,6 @@ class Surat extends Model
 
     public function berkas()
     {
-        return $this->belongsToMany(Berkas::class, 'berkas_surat');
+        return $this->belongsTo(Berkas::class);
     }
 }
