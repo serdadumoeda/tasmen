@@ -14,10 +14,20 @@ class ResourcePoolController extends Controller
     /**
      * Menampilkan halaman manajemen resource pool.
      */
-    public function index()
+    public function index(Request $request)
     {
         $manager = Auth::user();
+        $search = $request->input('search');
+
         $teamMembers = $manager->getAllSubordinates();
+
+        if ($search) {
+            $teamMembers = $teamMembers->filter(function ($member) use ($search) {
+                // Search by name (case-insensitive)
+                return stripos($member->name, $search) !== false;
+            });
+        }
+
         $standardHours = config('tasmen.workload.standard_hours', 37.5);
 
         $workloadData = $teamMembers->map(function ($member) use ($standardHours) {
@@ -41,6 +51,7 @@ class ResourcePoolController extends Controller
 
         return view('resource_pool.index', [
             'workloadData' => $workloadData,
+            'search' => $search,
         ]);
     }
 

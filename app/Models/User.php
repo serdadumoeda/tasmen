@@ -291,7 +291,10 @@ class User extends Authenticatable
         }
 
         $unitIds = $this->unit->getAllSubordinateUnitIds();
-        $query = User::whereIn('unit_id', $unitIds);
+        // Also include the current user's own unit ID to fetch colleagues
+        $unitIds[] = $this->unit->id;
+
+        $query = User::whereIn('unit_id', array_unique($unitIds));
 
         if (!$includeSelf) {
             $query->where('id', '!=', $this->id);
