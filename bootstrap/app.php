@@ -14,6 +14,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        $middleware->prepend(\App\Http\Middleware\TrustProxies::class);
+
         // Daftarkan middleware di sini
         $middleware->web(append: [
             \App\Http\Middleware\MarkNotificationAsRead::class,
