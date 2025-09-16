@@ -161,7 +161,8 @@ class ProjectController extends Controller
 
         $taskQuery = $project->tasks()->with(['assignees', 'comments.user', 'attachments', 'subTasks', 'status', 'priorityLevel', 'asalSurat']);
 
-        if ($user->isStaff()) {
+        // Filter tasks for staff members, but not for the project leader.
+        if ($user->isStaff() && $user->id !== $project->leader_id) {
             $taskQuery->whereHas('assignees', fn($q) => $q->where('user_id', $user->id));
         }
 
