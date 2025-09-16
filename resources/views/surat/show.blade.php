@@ -8,6 +8,11 @@
                 <p class="text-sm text-gray-500 mt-1">Perihal: {{ $surat->perihal }}</p>
             </div>
             <div class="flex items-center space-x-2">
+                @if(!$surat->berkas_id)
+                    <button onclick="openArchiveModal()" class="inline-flex items-center px-4 py-2 bg-yellow-500 text-white rounded-lg font-semibold text-sm hover:bg-yellow-600">
+                        <i class="fas fa-archive mr-2"></i> Arsipkan
+                    </button>
+                @endif
                 <a href="{{ route('disposisi.lacak', $surat) }}" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold text-sm hover:bg-blue-700">
                     <i class="fas fa-sitemap mr-2"></i> Lacak Disposisi
                 </a>
@@ -138,6 +143,37 @@
         </div>
     </div>
 
+    <!-- Archive Modal -->
+    <div id="archiveModal" class="fixed z-20 inset-0 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <form id="archiveForm" action="{{ route('arsip.berkas.move-surat') }}" method="POST">
+                    @csrf
+                    <input type="hidden" name="surat_ids[]" value="{{ $surat->id }}">
+                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900">Arsipkan Surat</h3>
+                        <p class="text-sm text-gray-600 mt-2">Pilih berkas virtual untuk mengarsipkan surat dengan perihal: "{{ $surat->perihal }}"</p>
+                        <div class="mt-4">
+                            <label for="berkas_id" class="block text-sm font-medium text-gray-700">Pilih Berkas</label>
+                            <select name="berkas_id" id="berkas_id" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                                <option value="">-- Pilih Berkas --</option>
+                                @foreach($berkasList as $berkas)
+                                    <option value="{{ $berkas->id }}">{{ $berkas->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                        <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-yellow-600 text-base font-medium text-white hover:bg-yellow-700 sm:ml-3 sm:w-auto sm:text-sm">Arsipkan</button>
+                        <button type="button" onclick="closeArchiveModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:mt-0 sm:w-auto sm:text-sm">Batal</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <x-slot name="styles">
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.min.css">
         <style>
@@ -160,6 +196,14 @@
     @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
     <script>
+        function openArchiveModal() {
+            document.getElementById('archiveModal').classList.remove('hidden');
+        }
+
+        function closeArchiveModal() {
+            document.getElementById('archiveModal').classList.add('hidden');
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             if (document.getElementById('penerima_id')) {
                 new TomSelect('#penerima_id',{
