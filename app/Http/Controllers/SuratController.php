@@ -107,6 +107,7 @@ class SuratController extends Controller
         $allUsers = User::orderBy('name')->get();
         $topLevelDisposisi = $surat->disposisi->where('parent_id', null);
         $parentDisposisi = $surat->disposisi->firstWhere('penerima_id', Auth::id());
+        $berkasList = Berkas::where('user_id', Auth::id())->orderBy('name')->get();
 
         $breadcrumbs = [
             ['title' => 'Daftar Surat', 'url' => route('surat.index')],
@@ -119,6 +120,7 @@ class SuratController extends Controller
             'topLevelDisposisi' => $topLevelDisposisi,
             'parentDisposisi' => $parentDisposisi,
             'breadcrumbs' => $breadcrumbs,
+            'berkasList' => $berkasList,
         ]);
     }
 
