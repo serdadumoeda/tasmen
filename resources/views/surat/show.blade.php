@@ -8,7 +8,11 @@
                 <p class="text-sm text-gray-500 mt-1">Perihal: {{ $surat->perihal }}</p>
             </div>
             <div class="flex items-center space-x-2">
-                @if(!$surat->berkas_id)
+                @if($surat->berkas_id)
+                    <button onclick="openArchiveModal()" class="inline-flex items-center px-4 py-2 bg-green-500 text-white rounded-lg font-semibold text-sm hover:bg-green-600">
+                        <i class="fas fa-exchange-alt mr-2"></i> Pindahkan
+                    </button>
+                @else
                     <button onclick="openArchiveModal()" class="inline-flex items-center px-4 py-2 bg-yellow-500 text-white rounded-lg font-semibold text-sm hover:bg-yellow-600">
                         <i class="fas fa-archive mr-2"></i> Arsipkan
                     </button>
@@ -153,8 +157,8 @@
                     @csrf
                     <input type="hidden" name="surat_ids[]" value="{{ $surat->id }}">
                     <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                        <h3 class="text-lg leading-6 font-medium text-gray-900">Arsipkan Surat</h3>
-                        <p class="text-sm text-gray-600 mt-2">Pilih berkas virtual untuk mengarsipkan surat dengan perihal: "{{ $surat->perihal }}"</p>
+                        <h3 class="text-lg leading-6 font-medium text-gray-900" id="archiveModalTitle">Arsipkan Surat</h3>
+                        <p class="text-sm text-gray-600 mt-2" id="archiveModalText">Pilih berkas virtual untuk mengarsipkan surat dengan perihal: "{{ $surat->perihal }}"</p>
                         <div class="mt-4">
                             <label for="berkas_id" class="block text-sm font-medium text-gray-700">Pilih Berkas</label>
                             <select name="berkas_id" id="berkas_id" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
@@ -197,7 +201,21 @@
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
     <script>
         function openArchiveModal() {
-            document.getElementById('archiveModal').classList.remove('hidden');
+            const isArchived = {{ $surat->berkas_id ? 'true' : 'false' }};
+            const modal = document.getElementById('archiveModal');
+            const title = document.getElementById('archiveModalTitle');
+            const text = document.getElementById('archiveModalText');
+            const perihal = "{{ addslashes($surat->perihal) }}";
+
+            if (isArchived) {
+                title.textContent = 'Pindahkan Surat';
+                text.textContent = `Pilih berkas tujuan baru untuk surat dengan perihal: "${perihal}"`;
+            } else {
+                title.textContent = 'Arsipkan Surat';
+                text.textContent = `Pilih berkas virtual untuk mengarsipkan surat dengan perihal: "${perihal}"`;
+            }
+
+            modal.classList.remove('hidden');
         }
 
         function closeArchiveModal() {
