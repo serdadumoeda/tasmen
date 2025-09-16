@@ -20,6 +20,17 @@
                         <i class="fas fa-check-circle mr-1"></i> Anggota (beban kerja &lt; 70%)
                     </span>.
                 </p>
+
+                <!-- Search Form -->
+                <div class="mb-4">
+                    <form action="{{ route('resource-pool.index') }}" method="GET" class="flex items-center">
+                        <input type="text" name="search" placeholder="Cari nama anggota..." class="form-input rounded-l-md w-full" value="{{ $search ?? '' }}">
+                        <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-r-md">
+                            Cari
+                        </button>
+                    </form>
+                </div>
+
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-100"> {{-- Header tabel lebih menonjol --}}
