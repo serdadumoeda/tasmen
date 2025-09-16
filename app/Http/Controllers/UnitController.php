@@ -83,8 +83,8 @@ class UnitController extends Controller
         // Determine the required role for the head of this unit.
         $expectedRole = $unit->getExpectedHeadRole();
 
-        // Base query for users in the current unit.
-        $potentialHeadsQuery = $unit->users();
+        // Query for all users, not just those in the current unit.
+        $potentialHeadsQuery = User::query();
 
         if ($expectedRole) {
             // Filter users by the expected role.
@@ -135,10 +135,8 @@ class UnitController extends Controller
             'approval_workflow_id' => ['nullable', 'exists:approval_workflows,id'],
         ]);
 
-        // Additional check to ensure the selected head is actually a member of the unit.
-        if ($request->filled('kepala_unit_id') && !$unit->users()->where('id', $request->kepala_unit_id)->exists()) {
-            return back()->withInput()->withErrors(['kepala_unit_id' => 'Pengguna yang dipilih bukan anggota unit ini.']);
-        }
+        // This validation is removed because the new head of unit can be selected from outside the current unit members.
+        // The user's unit will be updated upon assignment.
 
         $newParentId = $request->input('parent_unit_id');
         if ($newParentId) {
