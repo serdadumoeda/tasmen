@@ -157,7 +157,7 @@ class SuratController extends Controller
             'creator_id' => Auth::id(),
             'task_status_id' => $defaultStatus->id,
             'priority_level_id' => $defaultPriority->id,
-            'due_date' => now()->addDays(7),
+            'deadline' => now()->addDays(7),
             'surat_id' => $surat->id,
         ]);
 
