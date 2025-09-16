@@ -8,6 +8,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
+use App\Models\Activity;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -28,7 +29,15 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        // Record login activity
         $user = $request->user();
+        $unitName = optional($user->unit)->name ?? 'N/A';
+        $message = "{$user->name} dari unit {$unitName} telah login.";
+        Activity::create([
+            'user_id' => $user->id,
+            'type' => 'auth',
+            'description' => $message,
+        ]);
 
         if ($user->isTopLevelManager()) {
             return redirect()->route('executive.summary');
