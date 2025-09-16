@@ -81,8 +81,10 @@ class SuratController extends Controller
             $berkas = Berkas::find($validated['berkas_id']);
             // Ensure the user owns the folder
             if ($berkas && $berkas->user_id == Auth::id()) {
-                $berkas->surat()->attach($surat->id);
-                $surat->update(['status' => 'diarsipkan']);
+                $surat->update([
+                    'berkas_id' => $berkas->id,
+                    'status' => 'diarsipkan'
+                ]);
                 return redirect()->route('arsip.index')->with('success', 'Surat berhasil diunggah dan langsung diarsipkan.');
             }
         }
