@@ -34,40 +34,56 @@ graph TD
     classDef page fill:#EBF5FB,stroke:#3498DB,color:#2874A6,stroke-width:1px;
     classDef action fill:#FEF9E7,stroke:#F1C40F,color:#B7950B,stroke-width:1px;
     classDef process fill:#E8F8F5,stroke:#1ABC9C,color:#148F77,stroke-width:1px;
+    classDef modal fill:#F4ECF7,stroke:#A569BD,color:#633974,stroke-width:1px;
     classDef data fill:#FADBD8,stroke:#E74C3C,color:#B03A2E,stroke-width:1px;
-    classDef storage fill:#F2F3F4,stroke:#99A3A4,color:#616A6B,stroke-width:1px;
 
-    subgraph "A. Halaman Arsip Utama (Inbox Berkas)"
+    subgraph "A. Halaman Utama Arsip"
         A1["<i class='fa fa-user'></i> Pengguna"]:::action --> A2["<i class='fa fa-archive'></i> Halaman Arsip Digital"]:::page;
-        A2 -- Menampilkan --> A3["<i class='fa fa-envelope-open'></i> Daftar Surat<br><i>Hanya yang belum diberkaskan</i>"]:::process;
-        A3 --> A4["<i class='fa fa-search'></i> Gunakan Filter<br>(Keyword, Tanggal, Klasifikasi)"]:::action;
-        A4 --> A3;
-        A3 --> A5["<i class='fa fa-check-square'></i> Pilih Satu atau Lebih Surat"]:::action;
+        A2 -- Menampilkan --> A3["<i class='fa fa-envelope-open'></i> Daftar Semua Surat"]:::process;
+        A2 -- Menampilkan Juga --> A4["<i class='fa fa-folder'></i> Daftar Berkas Virtual"]:::process;
     end
 
-    subgraph "B. Pengelolaan dan Pengisian Berkas"
-        B1["<i class='fa fa-folder-plus'></i> Buat Berkas Baru"]:::action;
-        A5 -- Pilih Berkas Tujuan --> B2["<i class='fa fa-folder-open'></i> Dropdown Berkas"]:::page;
-        B2 --> B3["<i class='fa fa-share-square'></i> Klik 'Masukkan ke Berkas'"]:::action;
-        B3 --> B4["<i class='fa fa-link'></i> Sistem Membuat Relasi<br>Surat <--> Berkas"]:::process;
-        B4 --> B5["Surat Hilang dari<br>Daftar Arsip Utama"]:::process;
+    subgraph "B. Aksi pada Surat"
+        A3 --> B1["<i class='fa fa-exchange-alt'></i> Klik 'Pindahkan' pada Surat"]:::action;
+        B1 --> B2["<i class='fa fa-window-restore'></i> Modal Pindahkan Surat"]:::modal;
+        B2 -- Pilih Berkas & Simpan --> B3["Sistem Memperbarui<br>surat.berkas_id &<br>surat.status = 'diarsipkan'"]:::process;
     end
 
-    subgraph "C. Melihat Isi Berkas"
-        C1["<i class='fa fa-folder'></i> Klik Nama Berkas<br>di 'Daftar Berkas Virtual'"]:::action --> C2["<i class='fa fa-file-alt'></i> Halaman Detail Berkas"]:::page;
-        C2 -- Menampilkan --> C3["Daftar Surat<br><i>Hanya yang ada di dalam berkas ini</i>"]:::process;
-        C3 --> C4["<i class='fa fa-search'></i> Filter di Dalam Berkas<br>(Keyword, Tanggal, Klasifikasi)"]:::action;
-        C4 --> C3;
+    subgraph "C. Aksi pada Berkas Virtual"
+        A4 --> C1["<i class='fa fa-folder-plus'></i> Isi Form 'Buat Berkas Baru'"]:::action;
+        C1 --> C2["Sistem Membuat<br>Record Berkas Baru"]:::process;
+
+        A4 --> C3["<i class='fa fa-ellipsis-v'></i> Klik Menu '...' pada Berkas"]:::action;
+        C3 --> C4["<i class='fa fa-edit'></i> Pilih 'Edit'"]:::action;
+        C4 --> C5["<i class='fa fa-window-restore'></i> Modal Edit Berkas"]:::modal;
+        C5 -- Simpan Perubahan --> C6["Sistem Memperbarui<br>Nama/Deskripsi Berkas"]:::process;
+
+        C3 --> C7["<i class='fa fa-trash'></i> Pilih 'Hapus'"]:::action;
+        C7 -- Konfirmasi --> C8["Sistem Menghapus Berkas<br>& Mengatur surat.berkas_id = NULL<br>untuk semua surat terkait"]:::process;
     end
 
-    A2 --> B1;
-    A2 --> C1;
+    subgraph "D. Melihat Isi Berkas"
+        A4 --> D1["<i class='fa fa-folder-open'></i> Klik Nama Berkas"]:::action;
+        D1 --> D2["<i class='fa fa-file-alt'></i> Halaman Detail Berkas"]:::page;
+        D2 -- Menampilkan --> D3["Daftar Surat<br><i>Hanya yang ada di dalam berkas</i>"]:::process;
+        D3 --> B1;
+    end
+
+    subgraph "E. Aksi dari Halaman Detail Surat"
+        E1["<i class='fa fa-file-alt'></i> Halaman Detail Surat"]:::page --> E2["<i class='fa fa-archive'></i> Klik 'Arsipkan' atau 'Pindahkan'"]:::action;
+        E2 --> B2;
+    end
 
     subgraph "Sumber Data"
-        S1["Database Surat<br>Status: 'Disetujui'/'Diarsipkan'"]:::data;
-        S1 --> A2;
+        S1["Database Surat"]:::data;
+        S2["Database Berkas"]:::data;
+        S1 --> A3;
+        S2 --> A4;
+        B3 --> S1;
+        C2 --> S2;
+        C6 --> S2;
+        C8 --> S1 & S2;
     end
-
                         </pre>
                     </div>
                 </div>
@@ -78,28 +94,32 @@ graph TD
                     <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Deskripsi Alur Kerja</h3>
                     <div class="prose max-w-none text-gray-700 space-y-4">
                         <div>
-                            <h4 class="font-semibold text-gray-800">1. Halaman Arsip Digital: "Inbox" untuk Surat Selesai</h4>
-                            <p>Halaman utama Arsip Digital kini berfungsi seperti sebuah "inbox" yang hanya menampilkan surat-surat yang telah menyelesaikan siklusnya (berstatus 'Disetujui' atau 'Diarsipkan') <strong>dan belum dimasukkan ke dalam berkas manapun</strong>.</p>
-                            <ul class="list-disc list-inside ml-4 space-y-2">
-                                <li><strong>Tampilan Bersih</strong>: Pengguna hanya melihat surat-surat yang memerlukan tindakan pengarsipan, mengurangi kekacauan visual.</li>
-                                <li><strong>Pencarian</strong>: Fungsi filter (kata kunci, tanggal, klasifikasi) tetap tersedia untuk memudahkan menemukan surat yang akan diberkaskan.</li>
-                            </ul>
+                            <h4 class="font-semibold text-gray-800">1. Halaman Terpusat</h4>
+                            <p>Halaman utama Arsip Digital adalah pusat kendali Anda. Halaman ini menampilkan dua komponen utama: daftar semua surat yang relevan dan daftar berkas virtual yang telah Anda buat.</p>
                         </div>
                         <div>
-                            <h4 class="font-semibold text-gray-800">2. Pemberkasan Virtual</h4>
-                            <p>Pengguna dapat membuat "berkas" atau folder virtual pribadi untuk mengelompokkan surat-surat yang saling terkait.</p>
+                            <h4 class="font-semibold text-gray-800">2. Mengelola Berkas Virtual</h4>
+                            <p>Anda memiliki kontrol penuh atas berkas virtual Anda, yang berfungsi seperti folder untuk mengorganisir surat.</p>
                              <ul class="list-disc list-inside ml-4 space-y-2">
-                                <li><strong>Buat Berkas</strong>: Pengguna dapat membuat berkas baru kapan saja dari sidebar (misal: "Undangan Rapat Q3 2024").</li>
-                                <li><strong>Masukkan ke Berkas</strong>: Setelah memilih satu atau lebih surat dari daftar "inbox", pengguna memilih berkas tujuan dari dropdown, lalu klik "Masukkan ke Berkas".</li>
-                                <li><strong>Surat "Pindah"</strong>: Setelah berhasil dimasukkan, surat tersebut akan hilang dari daftar utama (inbox) dan hanya akan dapat diakses dari dalam berkas tersebut.</li>
+                                <li><strong>Buat Berkas</strong>: Gunakan formulir di sidebar untuk membuat berkas baru dengan nama dan deskripsi yang jelas.</li>
+                                <li><strong>Edit Berkas</strong>: Arahkan kursor ke nama berkas, klik menu "..." dan pilih "Edit" untuk mengubah nama atau deskripsinya melalui sebuah modal.</li>
+                                <li><strong>Hapus Berkas</strong>: Pilih "Hapus" dari menu yang sama. Tindakan ini akan menghapus berkas, dan semua surat di dalamnya akan otomatis kembali ke status "belum diarsipkan" tanpa terhapus.</li>
                              </ul>
                         </div>
                          <div>
-                            <h4 class="font-semibold text-gray-800">3. Mengakses Isi Berkas</h4>
+                            <h4 class="font-semibold text-gray-800">3. Mengarsipkan dan Memindahkan Surat</h4>
+                            <p>Surat dapat diarsipkan atau dipindahkan antar berkas dengan mudah dari beberapa lokasi.</p>
                              <ul class="list-disc list-inside ml-4 space-y-2">
-                                <li><strong>Halaman Detail Berkas</strong>: Mengklik nama berkas di sidebar akan membuka halaman baru yang didedikasikan untuk berkas tersebut.</li>
-                                <li><strong>Daftar Isi</strong>: Halaman ini akan menampilkan daftar semua surat yang telah dimasukkan ke dalam berkas tersebut.</li>
-                                <li><strong>Pencarian Spesifik</strong>: Di dalam halaman detail berkas, pengguna dapat melakukan pencarian dan pemfilteran lebih lanjut yang hanya berlaku untuk surat-surat di dalam berkas itu.</li>
+                                <li><strong>Dari Halaman Arsip</strong>: Setiap surat di daftar utama memiliki tombol "Pindahkan". Mengkliknya akan membuka modal untuk memilih berkas tujuan.</li>
+                                <li><strong>Dari Halaman Detail Surat</strong>: Saat Anda melihat detail sebuah surat, tersedia tombol "Arsipkan" (jika belum diarsip) atau "Pindahkan" (jika sudah diarsip) yang berfungsi sama.</li>
+                                <li><strong>Proses</strong>: Saat surat dipindahkan/diarsipkan, sistem akan mengubah `berkas_id` dan memperbarui status surat menjadi "diarsipkan".</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-800">4. Mengakses Isi Berkas</h4>
+                             <ul class="list-disc list-inside ml-4 space-y-2">
+                                <li><strong>Halaman Detail Berkas</strong>: Mengklik nama berkas di sidebar akan membawa Anda ke halaman khusus yang hanya menampilkan surat-surat di dalam berkas tersebut.</li>
+                                <li><strong>Pencarian Spesifik</strong>: Di dalam halaman detail berkas, Anda dapat melakukan pencarian dan pemfilteran lebih lanjut yang hanya berlaku untuk isi berkas itu.</li>
                             </ul>
                         </div>
                     </div>

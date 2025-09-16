@@ -51,11 +51,20 @@ graph TD
         B1["<i class='fa fa-file-alt'></i> Halaman Detail Surat"]:::page --> B2["<i class='fa fa-paper-plane'></i> <b>Fitur Utama: Disposisi</b>"]:::action;
         B1 --> B3["<i class='fa fa-tasks'></i> Buat Tugas Harian"]:::action;
         B1 --> B6["<i class='fa fa-folder-plus'></i> Buat Kegiatan Baru"]:::action;
+        B1 --> B7["<i class='fa fa-archive'></i> Arsipkan / Pindahkan"]:::action;
         B1 --> B4["<i class='fa fa-download'></i> Unduh File"]:::action;
         B1 --> B5["<i class='fa fa-trash'></i> Hapus Surat"]:::action;
         B2 --> C_Flow["<i class='fa fa-share-alt'></i> C. Alur Disposisi"];
         B3 --> D_Flow["<i class='fa fa-briefcase'></i> D. Alur Konversi ke Tugas"];
         B6 --> E_Flow["<i class='fa fa-project-diagram'></i> E. Alur Konversi ke Kegiatan"];
+        B7 --> F_Flow["<i class='fa fa-folder-open'></i> F. Alur Pengarsipan"];
+    end
+
+    subgraph F_Flow [F. Alur Pengarsipan]
+        direction LR
+        F1["Klik 'Arsipkan'/'Pindahkan'"]:::action --> F2["Modal Pilih Berkas"]:::modal;
+        F2 --> F3["Pilih Berkas & Simpan"]:::action;
+        F3 --> F4["Sistem mengubah<br>surat.berkas_id &<br>surat.status"]:::process;
     end
                         </pre>
                     </div>
