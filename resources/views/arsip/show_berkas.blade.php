@@ -71,7 +71,8 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{{ $surat->perihal }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $surat->tanggal_surat->format('d M Y') }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ optional($surat->klasifikasi)->kode }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                                            <button onclick="openMoveModal({{ json_encode($surat) }})" class="text-green-600 hover:text-green-900">Pindahkan</button>
                                             @if ($surat->file_path)
                                                 <a href="{{ route('surat.download', $surat) }}" class="text-indigo-600 hover:text-indigo-900">Unduh</a>
                                             @else
@@ -95,4 +96,51 @@
             </div>
         </div>
     </div>
+
+    <!-- Move Surat Modal -->
+    <div id="moveSuratModal" class="fixed z-10 inset-0 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <form id="moveSuratForm" action="{{ route('arsip.berkas.move-surat') }}" method="POST">
+                    @csrf
+                    <input type="hidden" name="surat_ids[]" id="move_surat_id">
+                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900">Pindahkan Surat</h3>
+                        <p class="text-sm text-gray-600 mt-2" id="move_surat_perihal"></p>
+                        <div class="mt-4">
+                            <label for="move_berkas_id" class="block text-sm font-medium text-gray-700">Pilih Berkas Tujuan</label>
+                            <select name="berkas_id" id="move_berkas_id" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                                <option value="">-- Pilih Berkas --</option>
+                                @foreach($berkasList as $berkasItem)
+                                    <option value="{{ $berkasItem->id }}">{{ $berkasItem->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                        <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 sm:ml-3 sm:w-auto sm:text-sm">Pindahkan</button>
+                        <button type="button" onclick="closeMoveModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:mt-0 sm:w-auto sm:text-sm">Batal</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    @push('scripts')
+        <script>
+            function openMoveModal(surat) {
+                const modal = document.getElementById('moveSuratModal');
+                document.getElementById('move_surat_id').value = surat.id;
+                document.getElementById('move_surat_perihal').textContent = `Anda akan memindahkan surat dengan perihal: "${surat.perihal}"`;
+                modal.classList.remove('hidden');
+            }
+
+            function closeMoveModal() {
+                const modal = document.getElementById('moveSuratModal');
+                modal.classList.add('hidden');
+            }
+        </script>
+    @endpush
 </x-app-layout>

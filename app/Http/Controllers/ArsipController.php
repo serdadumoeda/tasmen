@@ -64,7 +64,39 @@ class ArsipController extends Controller
         return back()->with('success', 'Berkas virtual berhasil dibuat.');
     }
 
-    public function addSuratToBerkas(Request $request)
+    public function updateBerkas(Request $request, Berkas $berkas)
+    {
+        // Authorize that the user owns the Berkas
+        if ($berkas->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+        ]);
+
+        $berkas->update($validated);
+
+        return back()->with('success', 'Berkas berhasil diperbarui.');
+    }
+
+    public function destroyBerkas(Berkas $berkas)
+    {
+        // Authorize that the user owns the Berkas
+        if ($berkas->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        // Set berkas_id to null for all associated surat
+        $berkas->surat()->update(['berkas_id' => null]);
+
+        $berkas->delete();
+
+        return redirect()->route('arsip.index')->with('success', 'Berkas berhasil dihapus.');
+    }
+
+    public function moveSuratToBerkas(Request $request)
     {
         $validated = $request->validate([
             'berkas_id' => 'required|exists:berkas,id',
@@ -79,9 +111,9 @@ class ArsipController extends Controller
             abort(403);
         }
 
-        $berkas->surat()->syncWithoutDetaching($validated['surat_ids']);
+        Surat::whereIn('id', $validated['surat_ids'])->update(['berkas_id' => $validated['berkas_id']]);
 
-        return back()->with('success', count($validated['surat_ids']) . ' surat berhasil ditambahkan ke berkas "' . $berkas->name . '".');
+        return back()->with('success', count($validated['surat_ids']) . ' surat berhasil dipindahkan ke berkas "' . $berkas->name . '".');
     }
 
     public function showWorkflow(PageTitleService $pageTitleService, BreadcrumbService $breadcrumbService)
@@ -126,7 +158,9 @@ class ArsipController extends Controller
 
         $suratList = $suratQuery->latest()->paginate(15)->withQueryString();
         $klasifikasi = KlasifikasiSurat::orderBy('kode')->get();
+        $berkasList = Berkas::where('user_id', Auth::id())->orderBy('name')->get();
 
-        return view('arsip.show_berkas', compact('berkas', 'suratList', 'klasifikasi'));
+
+        return view('arsip.show_berkas', compact('berkas', 'suratList', 'klasifikasi', 'berkasList'));
     }
 }

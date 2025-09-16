@@ -30,6 +30,6 @@ class Berkas extends Model
      */
     public function surat()
     {
-        return $this->belongsToMany(Surat::class, 'berkas_surat');
+        return $this->hasMany(Surat::class);
     }
 }
