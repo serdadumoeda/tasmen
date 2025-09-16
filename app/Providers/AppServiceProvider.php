@@ -11,6 +11,7 @@ use App\Http\View\Composers\BreadcrumbComposer;
 use App\Services\PageTitleService;
 use App\Services\NotificationService;
 use App\Http\View\Composers\PageTitleComposer;
+use Illuminate\Support\Facades\URL;
 
 
 use App\Models\Project;
@@ -58,6 +59,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if ($this->app->environment('production')) {
+            URL::forceScheme('https');
+        }
+
         $loader = \Illuminate\Foundation\AliasLoader::getInstance();
         $loader->alias('QrCode', \SimpleSoftwareIO\QrCode\Facades\QrCode::class);
 
