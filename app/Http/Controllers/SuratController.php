@@ -181,6 +181,9 @@ class SuratController extends Controller
         $surat->status = 'disetujui';
         $surat->save();
 
+        // Refresh the model to ensure all attributes (especially dates) are properly cast.
+        $task->refresh();
+
         return redirect()->route('tasks.edit', $task)->with('success', 'Tugas berhasil dibuat dari surat. Silakan lengkapi detail tugas.');
     }
 
