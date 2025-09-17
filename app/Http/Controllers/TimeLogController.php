@@ -59,6 +59,9 @@ class TimeLogController extends Controller
         $diffInSeconds = $runningLog->start_time->diffInSeconds($runningLog->end_time);
         $runningLog->duration_in_minutes = round($diffInSeconds / 60);
         $runningLog->save();
+
+        // RECALCULATE PROGRESS
+        $task->recalculateProgress();
         
         // Hitung ulang total waktu tercatat untuk tugas ini
         $totalMinutes = $task->timeLogs()->sum('duration_in_minutes');
@@ -107,6 +110,9 @@ class TimeLogController extends Controller
                 'end_time' => $endTime,
                 'duration_in_minutes' => $durationInMinutes,
             ]);
+
+            // RECALCULATE PROGRESS
+            $task->recalculateProgress();
 
             if ($request->wantsJson()) {
                 // Hitung ulang total waktu tercatat untuk tugas ini
