@@ -237,6 +237,7 @@ Route::get('/api/units/{parentUnit}/children', [UnitApiController::class, 'getCh
 Route::middleware(['auth', 'superadmin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('units/workflow', [UnitController::class, 'showWorkflow'])->name('units.workflow');
     Route::post('units/{unit}/delegation', [UnitController::class, 'storeUnitDelegation'])->name('units.delegation.store');
+    Route::post('units/{unit}/add-user', [UnitController::class, 'addUser'])->name('units.addUser');
     Route::resource('units', UnitController::class);
 
     // Refactored to use JabatanController

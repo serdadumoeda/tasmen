@@ -310,4 +310,34 @@ class UnitController extends Controller
 
         return redirect()->route('admin.units.edit', $unit)->with('success', 'Delegasi untuk Kepala Unit berhasil dibuat.');
     }
+
+    public function addUser(Request $request, Unit $unit)
+    {
+        $this->authorize('update', $unit);
+
+        $validated = $request->validate([
+            'user_id' => 'required|exists:users,id',
+        ]);
+
+        $user = User::findOrFail($validated['user_id']);
+
+        if ($user->jabatan) {
+            return back()->with('error', 'Pengguna ini sudah memiliki jabatan.');
+        }
+
+        DB::transaction(function () use ($user, $unit) {
+            // Create a new "Anggota Tim" Jabatan for this user
+            $jabatan = Jabatan::create([
+                'name' => 'Anggota Tim',
+                'unit_id' => $unit->id,
+                'user_id' => $user->id,
+            ]);
+
+            // Update the user's unit_id
+            $user->unit_id = $unit->id;
+            $user->save();
+        });
+
+        return redirect()->route('users.hierarchy')->with('success', 'Pengguna berhasil ditambahkan ke unit.');
+    }
 }
