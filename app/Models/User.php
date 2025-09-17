@@ -356,6 +356,30 @@ class User extends Authenticatable
 
         return $isStructuralManager || $isFunctionalManager;
     }
+
+    /**
+     * Get the user's initials from their name.
+     *
+     * @return string
+     */
+    public function getInitialsAttribute(): string
+    {
+        $name = trim($this->name);
+        $words = explode(' ', $name);
+        $firstName = $words[0] ?? '';
+        $lastName = (count($words) > 1) ? end($words) : '';
+
+        $initials = mb_substr($firstName, 0, 1);
+
+        if (!empty($lastName)) {
+            $initials .= mb_substr($lastName, 0, 1);
+        } elseif (mb_strlen($firstName) > 1) {
+            // Fallback for single-word names: use the first two letters.
+            $initials .= mb_substr($firstName, 1, 1);
+        }
+
+        return strtoupper($initials);
+    }
     
     // --- FORMULA PERHITUNGAN KINERJA (VERSI PRE-CALCULATED) ---
 
