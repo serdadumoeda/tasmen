@@ -1,15 +1,3 @@
-@php
-// Helper untuk membuat inisial dari nama pengguna
-$userName = Auth::user()->name;
-$words = explode(' ', $userName);
-$initials = '';
-if (count($words) >= 2) {
-    $initials = strtoupper(substr($words[0], 0, 1) . substr($words[count(array_keys($words)) - 1], 0, 1));
-} else {
-    $initials = strtoupper(substr($words[0], 0, 2));
-}
-@endphp
-
 {{-- Menyatukan state Alpine.js di sini untuk mengelola semua dropdown dan modal --}}
 <nav x-data="{ open: false, showAboutModal: false }" class="bg-[#00796B] border-b border-green-800">
     <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -199,7 +187,7 @@ if (count($words) >= 2) {
                     <x-dropdown align="right" width="48">
                         <x-slot name="trigger">
                             <button class="flex items-center justify-center w-10 h-10 bg-green-700/75 rounded-full text-white text-sm font-bold focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-green-800 focus:ring-white transition ease-in-out duration-150 hover:bg-green-600 shadow-md hover:shadow-lg transform hover:scale-110">
-                                {{ $initials }}
+                                {{ Auth::user()->initials }}
                             </button>
                         </x-slot>
                         <x-slot name="content">
