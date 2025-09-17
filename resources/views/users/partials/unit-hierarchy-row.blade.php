@@ -6,7 +6,7 @@
         <div class="flex-grow">
             <h4 class="font-bold text-lg text-indigo-700 flex items-center">
                 <i class="fas fa-sitemap mr-2"></i>
-                {{ $unit->name }} <span class="text-sm font-normal text-gray-500 ml-2">({{ $unit->level }})</span>
+                {{ $unit->name }}
             </h4>
         </div>
         <div class="flex items-center space-x-2 flex-shrink-0">
