@@ -10,7 +10,10 @@
             </h4>
         </div>
         <div class="flex items-center space-x-2 flex-shrink-0">
-             @can('update', $unit)
+            @can('update', $unit)
+                <button type="button" @click.stop="$dispatch('open-add-user-modal', { unitId: {{ $unit->id }} })" class="text-gray-500 hover:text-green-600 p-1 rounded-full text-xs" title="Tambah Anggota">
+                    <i class="fas fa-user-plus"></i>
+                </button>
                 <a href="{{ route('admin.units.edit', $unit) }}" class="text-gray-500 hover:text-indigo-600 p-1 rounded-full text-xs" title="Edit Unit">
                     <i class="fas fa-edit"></i>
                 </a>
@@ -51,9 +54,11 @@
             <h5 class="font-semibold text-gray-600 mt-4 mb-2 ml-1">Sub-Unit:</h5>
             <div class="space-y-4">
                 @foreach ($unit->childrenRecursive as $child)
-                    @include('users.partials.unit-hierarchy-row', ['unit' => $child, 'level' => $level + 1])
+                    @include('users.partials.unit-hierarchy-row', ['unit' => $child, 'level' => $level + 1, 'users' => $users])
                 @endforeach
             </div>
         @endif
     </div>
 </div>
+
+<x-add-user-to-unit-modal :unit="$unit" :users="$users" />

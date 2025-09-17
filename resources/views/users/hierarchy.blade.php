@@ -32,7 +32,7 @@
                     </h1>
 
                     @forelse ($units as $unit)
-                        @include('users.partials.unit-hierarchy-row', ['unit' => $unit, 'level' => 0])
+                        @include('users.partials.unit-hierarchy-row', ['unit' => $unit, 'level' => 0, 'users' => $users])
                     @empty
                         <div class="px-6 py-8 text-center text-lg text-gray-500">
                             <i class="fas fa-building-circle-exclamation fa-3x text-gray-400 mb-4"></i>

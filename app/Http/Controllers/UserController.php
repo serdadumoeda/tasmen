@@ -67,7 +67,12 @@ class UserController extends Controller
                          ->get();
         }
 
-        return view('users.hierarchy', compact('units'));
+        $users = User::where('status', 'active')
+                     ->whereDoesntHave('jabatan')
+                     ->orderBy('name')
+                     ->get();
+
+        return view('users.hierarchy', compact('units', 'users'));
     }
 
     public function modern(Request $request)
