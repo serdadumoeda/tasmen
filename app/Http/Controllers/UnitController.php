@@ -88,8 +88,8 @@ class UnitController extends Controller
 
         // If we are editing a unit under an Eselon II unit, scope the query.
         if ($eselonIIAncestor) {
-            // Get the ID of the Eselon II unit itself.
-            $unitIds = $eselonIIAncestor->descendants()->pluck('id')->toArray();
+            // Get the ID of the Eselon II unit itself and all its descendants.
+            $unitIds = $eselonIIAncestor->getAllDescendantIds();
             $unitIds[] = $eselonIIAncestor->id;
 
             // Query for users within the Eselon II unit's hierarchy.
