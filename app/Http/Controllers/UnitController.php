@@ -75,63 +75,53 @@ class UnitController extends Controller
         $this->authorize('update', $unit);
 
         // Eager load relationships for efficiency
-        $unit->load('jabatans.user', 'jabatans.delegations.user', 'users', 'approvalWorkflow', 'parentUnitRecursive');
+        $unit->load('jabatans.user', 'jabatans.delegations.user', 'users', 'approvalWorkflow', 'parentUnitRecursive', 'kepalaUnit');
 
         $units = Unit::where('id', '!=', $unit->id)->orderBy('name')->get();
         $workflows = ApprovalWorkflow::orderBy('name')->get();
 
-        // Determine the required role for the head of this unit.
-        $expectedRole = $unit->getExpectedHeadRole();
+        // --- Overhauled Logic to Find Potential Heads ---
 
-        // Find the Eselon II ancestor unit to scope the search for potential heads.
+        $potentialHeadsQuery = User::query();
+
+        // 1. Scope query to the correct Eselon II Hierarchy
         $eselonIIAncestor = $unit->getEselonIIAncestor();
-
-        // If we are editing a unit under an Eselon II unit, scope the query.
         if ($eselonIIAncestor) {
-            // Get the ID of the Eselon II unit itself and all its descendants.
-            $unitIds = $eselonIIAncestor->getAllDescendantIds();
-            $unitIds[] = $eselonIIAncestor->id;
+            $unitIdsInHierarchy = $eselonIIAncestor->getAllDescendantIds();
+            $unitIdsInHierarchy[] = $eselonIIAncestor->id;
 
-            // Query for users within the Eselon II unit's hierarchy.
-            $potentialHeadsQuery = User::whereIn('unit_id', $unitIds);
-        } else {
-            // Fallback to the old behavior if no Eselon II ancestor is found,
-            // though this case should be reviewed based on business rules.
-            $potentialHeadsQuery = User::query();
+            // 2. Find users who have a Jabatan within this hierarchy.
+            // This is the key change to address the user's feedback.
+            $potentialHeadsQuery->whereHas('jabatan', function ($q) use ($unitIdsInHierarchy) {
+                $q->whereIn('unit_id', $unitIdsInHierarchy);
+            });
         }
 
-        // Get a list of all user IDs that are already heads of other units.
+        // 3. Exclude users who are already heads of other units.
         $existingHeadIds = Unit::whereNotNull('kepala_unit_id')
             ->where('id', '!=', $unit->id)
             ->pluck('kepala_unit_id');
 
-        if ($expectedRole) {
-            // Filter users by the expected role, and exclude those already leading other units.
-            $potentialHeadsQuery->where(function ($query) use ($expectedRole, $unit, $existingHeadIds) {
-                // This sub-query finds potential new heads:
-                // they must have the expected role AND must not already be a head of another unit.
-                $query->whereHas('roles', function ($subQuery) use ($expectedRole) {
-                    $subQuery->where('name', $expectedRole);
-                })->whereNotIn('users.id', $existingHeadIds);
+        $potentialHeadsQuery->whereNotIn('users.id', $existingHeadIds);
 
-                // Always include the current head of the unit, regardless of the filters above.
-                if ($unit->kepala_unit_id) {
-                    $query->orWhere('users.id', $unit->kepala_unit_id);
-                }
-            });
-        } else {
-            // If no specific role is expected for this level, only show the current head.
-            $potentialHeadsQuery->where('id', $unit->kepala_unit_id ?? 0);
-        }
-
+        // 4. The current head of the unit should ALWAYS be in the list as an option.
+        // We will fetch the main list of candidates and then add the current head if they are not already included.
+        // This is safer than a complex 'orWhere' clause.
         $usersInUnit = $potentialHeadsQuery->orderBy('name')->get();
 
-        // Fetch users eligible for delegation (same role level as the unit's expected head role)
+        if ($unit->kepalaUnit) {
+            if (!$usersInUnit->contains($unit->kepalaUnit)) {
+                $usersInUnit->prepend($unit->kepalaUnit);
+            }
+        }
+
+        // --- End of Overhauled Logic ---
+
+        // Fetch users eligible for delegation (this logic seems separate and can remain)
         $eligibleDelegates = collect();
         if (!$unit->kepala_unit_id) {
-            $expectedRoleName = $unit->getExpectedHeadRole();
+            $expectedRoleName = $unit->getExpectedHeadRole(); // This might be deprecated by the new logic, but we'll leave it for now.
             if ($expectedRoleName) {
-                // More direct query to ensure correctness
                 $role = Role::where('name', $expectedRoleName)->first();
                 if ($role) {
                     $eligibleDelegates = User::whereHas('roles', function ($query) use ($role) {
