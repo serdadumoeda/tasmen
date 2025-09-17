@@ -222,14 +222,27 @@ class ProjectController extends Controller
         $pageTitleService->setTitle('Edit Proyek: ' . $project->name);
 
         $project->load('owner', 'members', 'tasks.status');
-        
-        $currentMembers = $project->members;
-        $referenceUser = $project->owner ?? auth()->user();
 
-        $subordinateIds = collect($referenceUser->getAllSubordinateIds());
-        $subordinateIds->push($referenceUser->id);
-        
-        $subordinates = User::whereIn('id', $subordinateIds)->get();
+        $currentMembers = $project->members;
+        $owner = $project->owner;
+        $editor = auth()->user();
+
+        // Get IDs from the owner's hierarchy
+        $ownerSubordinateIds = collect();
+        if ($owner) {
+            $ownerSubordinateIds = collect($owner->getAllSubordinateIds());
+            $ownerSubordinateIds->push($owner->id);
+        }
+
+        // Get IDs from the editor's hierarchy
+        $editorSubordinateIds = collect($editor->getAllSubordinateIds());
+        $editorSubordinateIds->push($editor->id);
+
+        // Combine hierarchies and get unique user models
+        $allPotentialIds = $ownerSubordinateIds->merge($editorSubordinateIds)->unique();
+        $subordinates = User::whereIn('id', $allPotentialIds)->get();
+
+        // The final list includes current members plus all potential subordinates
         $potentialMembers = $currentMembers->merge($subordinates)->unique('id')->sortBy('name');
 
         $loanRequests = PeminjamanRequest::where('project_id', $project->id)
@@ -237,6 +250,9 @@ class ProjectController extends Controller
             ->get()
             ->keyBy('requested_user_id');
         
+        // This is passed to the view just for reference if needed, the main logic uses $potentialMembers
+        $subordinateIds = $allPotentialIds;
+
         $taskStatuses = $project->tasks->countBy(fn($task) => $task->status->key ?? 'unknown');
         $stats = [
             'total' => $project->tasks->count(),
@@ -254,12 +270,28 @@ class ProjectController extends Controller
     {
         $this->authorize('update', $project);
 
-        $referenceUser = $project->owner ?? auth()->user();
-        $subordinateIds = collect($referenceUser->getAllSubordinateIds());
-        $subordinateIds->push($referenceUser->id);
+        $owner = $project->owner;
+        $editor = auth()->user();
 
+        // Get IDs from the owner's hierarchy
+        $ownerSubordinateIds = collect();
+        if ($owner) {
+            $ownerSubordinateIds = collect($owner->getAllSubordinateIds());
+            $ownerSubordinateIds->push($owner->id);
+        }
+
+        // Get IDs from the editor's hierarchy
+        $editorSubordinateIds = collect($editor->getAllSubordinateIds());
+        $editorSubordinateIds->push($editor->id);
+
+        // Get current members
         $existingMemberIds = $project->members()->pluck('users.id');
-        $validMemberIds = $subordinateIds->merge($existingMemberIds)->unique();
+
+        // Combine all valid IDs: owner's hierarchy, editor's hierarchy, and existing members
+        $validMemberIds = $ownerSubordinateIds
+            ->merge($editorSubordinateIds)
+            ->merge($existingMemberIds)
+            ->unique();
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255', Rule::unique('projects')->ignore($project->id)],
