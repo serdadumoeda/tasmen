@@ -367,12 +367,13 @@ class User extends Authenticatable
         $name = trim($this->name);
         $words = explode(' ', $name);
         $firstName = $words[0] ?? '';
-        $lastName = (count($words) > 1) ? end($words) : '';
+        // Get the second word, not the last word.
+        $secondName = $words[1] ?? '';
 
         $initials = mb_substr($firstName, 0, 1);
 
-        if (!empty($lastName)) {
-            $initials .= mb_substr($lastName, 0, 1);
+        if (!empty($secondName)) {
+            $initials .= mb_substr($secondName, 0, 1);
         } elseif (mb_strlen($firstName) > 1) {
             // Fallback for single-word names: use the first two letters.
             $initials .= mb_substr($firstName, 1, 1);
