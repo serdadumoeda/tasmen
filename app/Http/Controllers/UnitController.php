@@ -83,8 +83,22 @@ class UnitController extends Controller
         // Determine the required role for the head of this unit.
         $expectedRole = $unit->getExpectedHeadRole();
 
-        // Query for all users, not just those in the current unit.
-        $potentialHeadsQuery = User::query();
+        // Find the Eselon II ancestor unit to scope the search for potential heads.
+        $eselonIIAncestor = $unit->getEselonIIAncestor();
+
+        // If we are editing a unit under an Eselon II unit, scope the query.
+        if ($eselonIIAncestor) {
+            // Get the ID of the Eselon II unit itself.
+            $unitIds = $eselonIIAncestor->descendants()->pluck('id')->toArray();
+            $unitIds[] = $eselonIIAncestor->id;
+
+            // Query for users within the Eselon II unit's hierarchy.
+            $potentialHeadsQuery = User::whereIn('unit_id', $unitIds);
+        } else {
+            // Fallback to the old behavior if no Eselon II ancestor is found,
+            // though this case should be reviewed based on business rules.
+            $potentialHeadsQuery = User::query();
+        }
 
         if ($expectedRole) {
             // Filter users by the expected role.
