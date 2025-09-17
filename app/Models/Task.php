@@ -98,6 +98,22 @@ class Task extends Model
             // Jika ada sub-tugas, hitung progress berdasarkan jumlah yang selesai.
             $completedSubTasks = $subTasks->where('is_completed', true)->count();
             $this->progress = round(($completedSubTasks / $totalSubTasks) * 100);
+        } else {
+            // Jika tidak ada sub-tugas, hitung progress berdasarkan waktu tercatat vs estimasi.
+            $totalMinutesLogged = $this->timeLogs()->sum('duration_in_minutes');
+            $estimatedMinutes = ($this->estimated_hours ?? 0) * 60;
+
+            if ($estimatedMinutes > 0) {
+                $this->progress = round(($totalMinutesLogged / $estimatedMinutes) * 100);
+            } else {
+                // Jika tidak ada estimasi, progress adalah 0, kecuali jika sudah ada waktu tercatat, maka 100.
+                $this->progress = ($totalMinutesLogged > 0) ? 100 : 0;
+            }
+        }
+
+        // Pastikan progress tidak melebihi 100%.
+        if ($this->progress > 100) {
+            $this->progress = 100;
         }
         
         // Note: Automatic status change logic is removed from the model.
