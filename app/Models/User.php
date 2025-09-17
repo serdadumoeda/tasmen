@@ -277,9 +277,8 @@ class User extends Authenticatable
             return collect();
         }
 
-        // PERBAIKAN: Menggunakan metode yang lebih robust untuk mengambil ID unit turunan.
-        $unitIds = $this->unit->getAllDescendantIds();
-        // Juga sertakan ID unit pengguna saat ini untuk mengambil rekan kerja.
+        $unitIds = $this->unit->getAllSubordinateUnitIds();
+        // Also include the current user's own unit ID to fetch colleagues
         $unitIds[] = $this->unit->id;
 
         return User::whereIn('unit_id', array_unique($unitIds))->pluck('id');

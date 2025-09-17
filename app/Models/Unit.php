@@ -95,26 +95,6 @@ class Unit extends Model
     {
         return $this->descendants()->pluck('id')->toArray();
     }
-
-    /**
-     * Recursively get all descendant unit IDs using the parent-child relationship.
-     * This is a more robust alternative to the `descendants()` relationship,
-     * which can be incorrect if the `unit_paths` table is out of sync.
-     *
-     * @return array
-     */
-    public function getAllDescendantIds(): array
-    {
-        $descendantIds = [];
-
-        // Use `with('childUnits')` to prevent N+1 issues during recursion.
-        foreach ($this->childUnits()->with('childUnits')->get() as $child) {
-            $descendantIds[] = $child->id;
-            $descendantIds = array_merge($descendantIds, $child->getAllDescendantIds());
-        }
-
-        return array_unique($descendantIds);
-    }
     
     public function getLevelNumber(): int
     {
