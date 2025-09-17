@@ -12,8 +12,8 @@
             <div class="flex items-center mt-2">
                 <div class="flex -space-x-2 mr-2">
                     @foreach($task->assignees as $assignee)
-                        <div class="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs border-2 border-white"
-                             style="background-color: {{ $assignee->avatar_color }};" title="{{ $assignee->name }}">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs border-2 border-white {{ $assignee->avatar_color_classes }}"
+                             title="{{ $assignee->name }}">
                             {{ $assignee->initials }}
                         </div>
                     @endforeach

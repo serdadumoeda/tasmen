@@ -385,40 +385,34 @@ class User extends Authenticatable
     }
 
     /**
-     * Get a unique background color for the user's avatar.
+     * Get a deterministic, colorful set of Tailwind CSS classes for the user's avatar.
      *
      * @return string
      */
-    public function getAvatarColorAttribute()
+    public function getAvatarColorClassesAttribute(): string
     {
-        // Daftar warna-warna yang bagus dan profesional
         $colors = [
-            '#4285F4', // Google Blue
-            '#DB4437', // Google Red
-            '#F4B400', // Google Yellow
-            '#0F9D58', // Google Green
-            '#673AB7', // Deep Purple
-            '#E91E63', // Pink
-            '#009688', // Teal
-            '#FF5722', // Deep Orange
-            '#607D8B', // Blue Grey
-            '#03A9F4', // Light Blue
-            '#8BC34A', // Light Green
-            '#FF9800', // Orange
+            'bg-red-500 text-white',
+            'bg-yellow-500 text-white',
+            'bg-green-500 text-white',
+            'bg-blue-500 text-white',
+            'bg-indigo-500 text-white',
+            'bg-purple-500 text-white',
+            'bg-pink-500 text-white',
+            'bg-teal-500 text-white',
+            'bg-orange-500 text-white',
+            'bg-gray-500 text-white',
         ];
 
-        // Ambil karakter pertama dari nama pengguna
-        $firstChar = substr($this->name, 0, 1);
-
-        // Jika nama tidak kosong, gunakan nilai numerik dari karakter tersebut
-        // untuk memilih warna dari daftar secara konsisten.
-        if (!empty($firstChar)) {
-            $hash = ord($firstChar);
-            return $colors[$hash % count($colors)];
+        // Use the user's ID to deterministically pick a color.
+        // Using ID is better than name's first letter to ensure more color variety.
+        if ($this->id) {
+            $index = $this->id % count($colors);
+            return $colors[$index];
         }
 
-        // Warna default jika nama kosong
-        return '#CCCCCC';
+        // Fallback for users without an ID.
+        return 'bg-gray-500 text-white';
     }
 
     // --- FORMULA PERHITUNGAN KINERJA (VERSI PRE-CALCULATED) ---

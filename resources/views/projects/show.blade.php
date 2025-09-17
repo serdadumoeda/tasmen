@@ -226,8 +226,7 @@
                                             @forelse($project->members as $member)
         <li class="flex items-center space-x-3">
             {{-- Lingkaran Avatar dengan Warna Dinamis --}}
-            <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs"
-                 style="background-color: {{ $member->avatar_color }};">
+            <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs {{ $member->avatar_color_classes }}">
                 {{ $member->initials }}
             </div>
             {{-- Nama Anggota --}}
