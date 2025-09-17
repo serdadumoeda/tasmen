@@ -9,7 +9,7 @@
     <div x-show="isOpen" @click.away="isOpen = false" class="absolute right-0 z-20 w-80 mt-2 overflow-hidden bg-white rounded-md shadow-lg" x-cloak>
         <div class="py-2">
             <template x-for="notification in unread" :key="notification.id">
-                <a :href="notification.data.url" @click="markAsRead(notification.id)" class="flex items-start px-4 py-3 -mx-2 border-b hover:bg-gray-100 bg-blue-50">
+                <a :href="`{{ url('/notifications') }}/${notification.id}/read`" class="flex items-start px-4 py-3 -mx-2 border-b hover:bg-gray-100 bg-blue-50">
                     <div class="flex-shrink-0 w-10 text-center pt-1">
                         <template x-if="notification.type.includes('Leave')"><i class="fas fa-calendar-alt text-blue-500"></i></template>
                         <template x-if="notification.type.includes('Surat')"><i class="fas fa-envelope-open-text text-green-500"></i></template>
@@ -43,16 +43,6 @@
                         this.unread = data.unread;
                         this.count = data.count;
                     });
-            },
-            markAsRead(notificationId) {
-                fetch('{{ route("notifications.markAsRead") }}', {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ id: notificationId })
-                });
             }
         }
     }

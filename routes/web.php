@@ -185,6 +185,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/notifications/unread', [NotificationController::class, 'getUnread'])->name('notifications.unread');
     Route::post('/notifications/mark-as-read', [NotificationController::class, 'markAsRead'])->name('notifications.markAsRead');
+    Route::get('/notifications/{notification}/read', [\App\Http\Controllers\NotificationController::class, 'readAndRedirect'])->name('notifications.readAndRedirect');
 
     // Leave Management Module Routes
     Route::group(['prefix' => 'leaves', 'as' => 'leaves.'], function () {
