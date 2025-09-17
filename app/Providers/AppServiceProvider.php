@@ -58,9 +58,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        if ($this->app->environment('production')) {
-            \Illuminate\Support\Facades\URL::forceScheme('https');
-        }
+        // if ($this->app->environment('production')) {
+        //     \Illuminate\Support\Facades\URL::forceScheme('https');
+        // }
 
         $loader = \Illuminate\Foundation\AliasLoader::getInstance();
         $loader->alias('QrCode', \SimpleSoftwareIO\QrCode\Facades\QrCode::class);
