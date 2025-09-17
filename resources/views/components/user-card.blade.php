@@ -3,7 +3,7 @@
 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
     <div class="p-6 bg-white border-b border-gray-200">
         <div class="flex items-center">
-            <div class="flex-shrink-0 h-12 w-12 rounded-full {{ $user->avatar_color_classes }} flex items-center justify-center">
+            <div class="flex-shrink-0 h-12 w-12 rounded-full bg-gray-200 text-gray-700 flex items-center justify-center">
                 <span class="text-xl font-bold">{{ $user->initials }}</span>
             </div>
             <div class="ml-4">
