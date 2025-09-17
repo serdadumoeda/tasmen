@@ -11,6 +11,11 @@ class MarkNotificationAsRead
             $notification = $request->user()->notifications()->where('id', $request->notification_id)->first();
             if ($notification) {
                 $notification->markAsRead();
+
+                // Redirect to the URL from the notification data, if it exists
+                if (isset($notification->data['url'])) {
+                    return redirect($notification->data['url']);
+                }
             }
         }
         return $next($request);
