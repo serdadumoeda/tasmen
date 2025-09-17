@@ -12,10 +12,9 @@ export default defineConfig({
             ],
             refresh: true,
         }),
-        basicSsl()
+        basicSsl(),
     ],
     server: {
         https: true,
-        host: true,
     },
 });
