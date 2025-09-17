@@ -365,6 +365,11 @@ class User extends Authenticatable
     public function getInitialsAttribute(): string
     {
         $name = trim($this->name);
+
+        if (empty($name)) {
+            return '??';
+        }
+
         $words = explode(' ', $name);
         $firstName = $words[0] ?? '';
         // Get the second word, not the last word.
