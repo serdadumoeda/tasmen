@@ -358,6 +358,21 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the user's name without academic titles.
+     *
+     * @return string
+     */
+    public function getNamaTanpaGelarAttribute(): string
+    {
+        $name = trim($this->name);
+        $commaPosition = strpos($name, ',');
+        if ($commaPosition !== false) {
+            return trim(substr($name, 0, $commaPosition));
+        }
+        return $name;
+    }
+
+    /**
      * Get the user's initials from their name.
      *
      * @return string
