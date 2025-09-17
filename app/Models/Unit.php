@@ -99,7 +99,7 @@ class Unit extends Model
     /**
      * Recursively get all descendant unit IDs using the parent-child relationship.
      * This is a more robust alternative to the `descendants()` relationship,
-     * which relies on the potentially out-of-sync `unit_paths` table.
+     * which can be incorrect if the `unit_paths` table is out of sync.
      *
      * @return array
      */
@@ -107,18 +107,13 @@ class Unit extends Model
     {
         $descendantIds = [];
 
-        // Eager load the next level of children to make the recursion more efficient.
-        $children = $this->childUnits()->with('childUnits')->get();
-
-        foreach ($children as $child) {
-            // Add the child's ID to the list
+        // Use `with('childUnits')` to prevent N+1 issues during recursion.
+        foreach ($this->childUnits()->with('childUnits')->get() as $child) {
             $descendantIds[] = $child->id;
-
-            // Recursively get the IDs of the child's descendants and merge them
             $descendantIds = array_merge($descendantIds, $child->getAllDescendantIds());
         }
 
-        return array_unique($descendantIds); // Ensure IDs are unique
+        return array_unique($descendantIds);
     }
     
     public function getLevelNumber(): int
@@ -246,27 +241,22 @@ class Unit extends Model
      */
     public function getEselonIIAncestor(): ?Unit
     {
-        $current = $this;
+        // The depth of the unit itself relative to its own ancestors (i.e., its level in the hierarchy)
+        $selfDepth = $this->ancestors()->count();
 
-        // Traverse up the hierarchy using the parentUnit relationship.
-        // A safety limit is included to prevent infinite loops in case of data inconsistencies.
-        for ($i = 0; $i < 10; $i++) {
-            if (!$current) {
-                break;
-            }
-
-            // Check if the current unit in the traversal is at the Eselon II level.
-            if ($current->level === self::LEVEL_ESELON_II) {
-                return $current;
-            }
-
-            // Move up to the parent unit.
-            // This relies on the parentUnit relationship being loaded, which is done
-            // in the controller via `parentUnitRecursive` to avoid N+1 queries.
-            $current = $current->parentUnit;
+        // If this unit is an Eselon II unit (depth 2), return itself.
+        // Depth is 0-indexed: 0=Menteri, 1=Eselon I, 2=Eselon II
+        if ($selfDepth === 2) {
+            return $this;
         }
 
-        return null; // Return null if no Eselon II ancestor is found within the safety limit.
+        // Otherwise, find the ancestor that is at depth 2.
+        // The 'depth' in the unit_paths table is relative from the ancestor to the descendant.
+        // So we need to find an ancestor where the path from it to `this` unit has a certain depth.
+        // A more direct way is to just find an ancestor whose own depth is 2.
+        return $this->ancestors()->get()->first(function ($ancestor) {
+            return $ancestor->ancestors()->count() === 2;
+        });
     }
 
     /**
