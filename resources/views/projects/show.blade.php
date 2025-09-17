@@ -222,11 +222,19 @@
                                             </li>
                                         </ul>
                                         <h4 class="font-bold mt-4 mb-2 text-gray-800 flex items-center"><i class="fas fa-user-group mr-2 text-cyan-600"></i> Anggota:</h4>
-                                        <ul class="list-disc list-inside mt-2 text-gray-700 space-y-1 ml-4"> {{-- List indent --}}
+<ul class="space-y-3 mt-2">
                                             @forelse($project->members as $member)
-                                                <li class="flex items-center"><i class="fas fa-circle-dot text-gray-400 text-xs mr-2"></i> {{ $member->name }}</li>
+        <li class="flex items-center space-x-3">
+            {{-- Lingkaran Avatar dengan Warna Dinamis --}}
+            <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs"
+                 style="background-color: {{ $member->avatar_color }};">
+                {{ $member->initials }}
+            </div>
+            {{-- Nama Anggota --}}
+            <span class="text-sm font-medium text-gray-800">{{ $member->name }}</span>
+        </li>
                                             @empty
-                                                <p class="text-sm text-gray-500">Tidak ada anggota tim tambahan.</p>
+        <li class="text-sm text-gray-500">Tidak ada anggota tim tambahan.</li>
                                             @endforelse
                                         </ul>
                                     </div>

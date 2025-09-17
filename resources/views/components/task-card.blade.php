@@ -9,13 +9,23 @@
     <div class="flex justify-between items-start">
         <div>
             <h4 class="font-bold text-lg text-gray-800">{{ $task->title }}</h4>
-            <p class="text-sm text-gray-600">
-                Untuk: <strong>@foreach($task->assignees as $assignee){{ $assignee->name }}{{ !$loop->last ? ', ' : '' }}@endforeach</strong> 
-                | Deadline: 
-                <span class="@if($isOverdue) text-red-700 font-bold @endif">
-                    {{ $task->deadline ? \Carbon\Carbon::parse($task->deadline)->format('d M Y') : 'N/A' }}
-                </span>
-            </p>
+            <div class="flex items-center mt-2">
+                <div class="flex -space-x-2 mr-2">
+                    @foreach($task->assignees as $assignee)
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs border-2 border-white"
+                             style="background-color: {{ $assignee->avatar_color }};" title="{{ $assignee->name }}">
+                            {{ $assignee->initials }}
+                        </div>
+                    @endforeach
+                </div>
+                <p class="text-sm text-gray-600">
+                    Untuk: <strong>@foreach($task->assignees as $assignee){{ $assignee->name }}{{ !$loop->last ? ', ' : '' }}@endforeach</strong>
+                    | Deadline:
+                    <span class="@if($isOverdue) text-red-700 font-bold @endif">
+                        {{ $task->deadline ? \Carbon\Carbon::parse($task->deadline)->format('d M Y') : 'N/A' }}
+                    </span>
+                </p>
+            </div>
             @if($task->asalSurat)
                 <p class="text-xs text-gray-500 mt-1">
                     <i class="fas fa-file-import mr-1 text-gray-400"></i>
