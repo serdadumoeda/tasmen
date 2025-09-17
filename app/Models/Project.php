@@ -154,6 +154,14 @@ class Project extends Model
         return $this->hasMany(Task::class);
     }
 
+    /**
+     * Get all of the time logs for the project through the tasks.
+     */
+    public function timeLogs()
+    {
+        return $this->hasManyThrough(TimeLog::class, Task::class);
+    }
+
     public function activities()
     {
         return $this->hasMany(Activity::class)->latest();

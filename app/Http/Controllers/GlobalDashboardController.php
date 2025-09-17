@@ -80,7 +80,7 @@ class GlobalDashboardController extends Controller
                      ->withCount(['tasks', 'completedTasks'])
                      ->withSum('budgetItems', 'total_cost')
                      ->withSum('tasks', 'estimated_hours')
-                     ->withSum('tasks.timeLogs as total_logged_minutes', 'duration_in_minutes');
+                     ->withSum('timeLogs as total_logged_minutes', 'duration_in_minutes');
 
         // Get all projects matching the search criteria first.
         $projects = $projectQuery->latest()->get();
