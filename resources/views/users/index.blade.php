@@ -65,8 +65,8 @@
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex items-center">
                                         <div class="flex-shrink-0 h-10 w-10">
-                                            {{-- Use the same style as the main navigation avatar for consistency --}}
-                                            <div class="flex items-center justify-center h-10 w-10 rounded-full bg-green-700/75 text-white font-bold text-sm">
+                                            {{-- Use the new avatar_color_classes accessor to apply dynamic, consistent colors --}}
+                                            <div class="flex items-center justify-center h-10 w-10 rounded-full font-bold text-sm {{ $user->avatar_color_classes }}">
                                                 {{ $user->initials }}
                                             </div>
                                         </div>
