@@ -104,32 +104,24 @@
 
                     <!-- Daftar Kegiatan -->
                     @forelse ($allProjects as $project)
-                        @php
-                            // Kalkulasi ini bisa dipindahkan ke model jika sering digunakan
-                            $totalTasks = $project->tasks->count();
-                            $completedTasks = $project->tasks->where('status', 'completed')->count();
-                            $completionPercentage = ($totalTasks > 0) ? round(($completedTasks / $totalTasks) * 100) : 0;
-                            // Menggunakan status dinamis dari model Project
-                            $statusInfo = $project->status;
-                            $statusClass = $project->getStatusColorClassAttribute();
-                        @endphp
+                        {{-- The logic is now handled by accessors and eager loading, so the @php block is removed for cleaner code --}}
                         <a href="{{ route('projects.show', $project) }}" class="block bg-white p-6 rounded-xl shadow-lg hover:shadow-2xl transition-shadow duration-300">
                             <div class="flex justify-between items-start mb-2">
                                 <h4 class="font-bold text-lg text-gray-800">{{ $project->name }}</h4>
-                                <span class="text-xs font-semibold {{ $statusClass }} px-3 py-1 rounded-full">{{ \Illuminate\Support\Str::title(str_replace('_', ' ', $statusInfo)) }}</span>
+                                <span class="text-xs font-semibold {{ $project->status_color_class }} px-3 py-1 rounded-full">{{ \Illuminate\Support\Str::title(str_replace('_', ' ', $project->status)) }}</span>
                             </div>
                             <p class="text-sm text-gray-500 mb-1">
                                 <i class="fas fa-user-tie mr-2 text-gray-400"></i>Ketua: <span class="font-medium text-gray-700">{{ $project->leader->name }}</span>
                             </p>
                              <p class="text-sm text-gray-500 mb-3">
-                                <i class="fas fa-crown mr-2 text-gray-400"></i>Pemilik: <span class="font-medium text-gray-700">{{ $project->owner->name }}</span>
+                                <i class="fas fa-crown mr-2 text-gray-400"></i>Dibuat oleh: <span class="font-medium text-gray-700">{{ $project->owner->name }}</span>
                             </p>
                             <div class="w-full bg-gray-200 rounded-full h-2.5">
-                                <div class="bg-indigo-600 h-2.5 rounded-full" style="width: {{ $completionPercentage }}%"></div>
+                                <div class="bg-indigo-600 h-2.5 rounded-full" style="width: {{ $project->progress }}%"></div>
                             </div>
                             <div class="flex justify-between text-xs text-gray-500 mt-1">
-                                <span>Progress: {{ $completionPercentage }}%</span>
-                                <span>{{ $completedTasks }} / {{ $totalTasks }} Tugas Selesai</span>
+                                <span>Progress: {{ $project->progress }}%</span>
+                                <span>{{ $project->completed_tasks_count }} / {{ $project->tasks_count }} Tugas Selesai</span>
                             </div>
                         </a>
                     @empty
