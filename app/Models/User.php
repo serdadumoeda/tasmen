@@ -387,32 +387,6 @@ class User extends Authenticatable
         return strtoupper($initials);
     }
 
-    /**
-     * Get a deterministic, colorful set of Tailwind CSS classes for the user's avatar.
-     *
-     * @return string
-     */
-    public function getAvatarColorClassesAttribute(): string
-    {
-        $colors = [
-            'bg-red-600 text-white',
-            'bg-yellow-600 text-white',
-            'bg-green-600 text-white',
-            'bg-blue-600 text-white',
-            'bg-indigo-600 text-white',
-            'bg-purple-600 text-white',
-            'bg-pink-600 text-white',
-            'bg-teal-600 text-white',
-            'bg-orange-600 text-white',
-            'bg-gray-600 text-white',
-        ];
-
-        // Use the user's ID to deterministically pick a color.
-        $index = $this->id % count($colors);
-
-        return $colors[$index];
-    }
-    
     // --- FORMULA PERHITUNGAN KINERJA (VERSI PRE-CALCULATED) ---
 
     /**
