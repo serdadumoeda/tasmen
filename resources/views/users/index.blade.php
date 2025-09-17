@@ -65,7 +65,10 @@
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex items-center">
                                         <div class="flex-shrink-0 h-10 w-10">
-                                            <img class="h-10 w-10 rounded-full" src="https://ui-avatars.com/api/?name={{ urlencode($user->name) }}&background=random&color=fff" alt="{{ $user->name }}">
+                                            {{-- Use the same style as navigation for consistency --}}
+                                            <div class="flex items-center justify-center h-10 w-10 rounded-full bg-gray-300 text-gray-600 font-bold text-sm">
+                                                {{ $user->initials }}
+                                            </div>
                                         </div>
                                         <div class="ml-4">
                                             <div class="text-sm font-medium text-gray-900">{{ $user->name }}</div>
