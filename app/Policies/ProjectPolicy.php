@@ -47,6 +47,12 @@ class ProjectPolicy
      */
     public function create(User $user): bool
     {
+        // Explicitly deny 'Staf' role from creating projects, as per user requirements.
+        if ($user->hasRole('Staf')) {
+            return false;
+        }
+
+        // For other roles, use the existing centralized logic.
         return $user->canCreateProjects();
     }
 
