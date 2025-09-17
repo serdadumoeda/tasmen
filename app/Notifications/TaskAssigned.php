@@ -39,8 +39,8 @@ class TaskAssigned extends Notification
             'project_id' => null, // Tidak ada kegiatan
             'project_name' => null, // Tidak ada kegiatan
             'message' => "Anda mendapat tugas harian baru: '{$this->task->title}'",
-            // Arahkan ke halaman daftar tugas ad-hoc, bukan halaman edit.
-            'url' => route('adhoc-tasks.index'),
+            // Arahkan ke halaman detail tugas, yang akan dialihkan ke halaman daftar tugas ad-hoc
+            'url' => route('tasks.edit', $this->task->id),
         ];
     }
 }

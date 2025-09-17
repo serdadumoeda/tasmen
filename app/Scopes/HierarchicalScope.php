@@ -33,6 +33,9 @@ class HierarchicalScope implements Scope
                   ->orWhere('leader_id', $user->id)
                   ->orWhereHas('members', function ($subQuery) use ($user) {
                       $subQuery->where('users.id', $user->id);
+                  })
+                  ->orWhereHas('tasks.assignees', function ($subQuery) use ($user) {
+                      $subQuery->where('users.id', $user->id);
                   });
 
             // Jika pengguna adalah manajer, ia JUGA dapat melihat
