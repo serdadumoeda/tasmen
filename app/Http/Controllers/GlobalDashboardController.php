@@ -32,8 +32,14 @@ class GlobalDashboardController extends Controller
             $subordinateIds = $currentUser->getAllSubordinateIds();
             $subordinateIds->push($currentUser->id); // Sertakan diri sendiri
 
-            // Filter proyek berdasarkan siapa yang memilikinya dalam hierarki
-            $projectQuery->whereIn('owner_id', $subordinateIds);
+            // Filter: Tampilkan proyek yang dimiliki oleh hierarki ATAU di mana pengguna adalah anggota
+            $projectQuery->where(function ($query) use ($subordinateIds, $currentUser) {
+                $query->whereIn('owner_id', $subordinateIds)
+                      ->orWhereHas('members', function ($q) use ($currentUser) {
+                          $q->where('user_id', $currentUser->id);
+                      });
+            });
+
             $userQuery->whereIn('id', $subordinateIds);
         }
 
