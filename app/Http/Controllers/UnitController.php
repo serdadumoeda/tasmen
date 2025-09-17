@@ -100,6 +100,13 @@ class UnitController extends Controller
             $potentialHeadsQuery = User::query();
         }
 
+        // Exclude users who are already heads of other units.
+        $existingHeadIds = Unit::whereNotNull('kepala_unit_id')
+            ->where('id', '!=', $unit->id)
+            ->pluck('kepala_unit_id');
+
+        $potentialHeadsQuery->whereNotIn('id', $existingHeadIds);
+
         if ($expectedRole) {
             // Filter users by the expected role.
             $potentialHeadsQuery->where(function ($query) use ($expectedRole, $unit) {
