@@ -88,8 +88,8 @@ class UnitController extends Controller
 
         // If we are editing a unit under an Eselon II unit, scope the query.
         if ($eselonIIAncestor) {
-            // Get the ID of the Eselon II unit itself and all its descendants.
-            $unitIds = $eselonIIAncestor->getAllDescendantIds();
+            // Get the ID of the Eselon II unit itself.
+            $unitIds = $eselonIIAncestor->descendants()->pluck('id')->toArray();
             $unitIds[] = $eselonIIAncestor->id;
 
             // Query for users within the Eselon II unit's hierarchy.
@@ -100,23 +100,16 @@ class UnitController extends Controller
             $potentialHeadsQuery = User::query();
         }
 
-        // Get a list of all user IDs that are already heads of other units.
-        $existingHeadIds = Unit::whereNotNull('kepala_unit_id')
-            ->where('id', '!=', $unit->id)
-            ->pluck('kepala_unit_id');
-
         if ($expectedRole) {
-            // Filter users by the expected role, and exclude those already leading other units.
-            $potentialHeadsQuery->where(function ($query) use ($expectedRole, $unit, $existingHeadIds) {
-                // This sub-query finds potential new heads:
-                // they must have the expected role AND must not already be a head of another unit.
+            // Filter users by the expected role.
+            $potentialHeadsQuery->where(function ($query) use ($expectedRole, $unit) {
                 $query->whereHas('roles', function ($subQuery) use ($expectedRole) {
                     $subQuery->where('name', $expectedRole);
-                })->whereNotIn('users.id', $existingHeadIds);
+                });
 
-                // Always include the current head of the unit, regardless of the filters above.
+                // Always include the current head of the unit, even if their role doesn't match.
                 if ($unit->kepala_unit_id) {
-                    $query->orWhere('users.id', $unit->kepala_unit_id);
+                    $query->orWhere('id', $unit->kepala_unit_id);
                 }
             });
         } else {
