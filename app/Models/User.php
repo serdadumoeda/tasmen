@@ -384,6 +384,43 @@ class User extends Authenticatable
         return $initials;
     }
 
+    /**
+     * Get a unique background color for the user's avatar.
+     *
+     * @return string
+     */
+    public function getAvatarColorAttribute()
+    {
+        // Daftar warna-warna yang bagus dan profesional
+        $colors = [
+            '#4285F4', // Google Blue
+            '#DB4437', // Google Red
+            '#F4B400', // Google Yellow
+            '#0F9D58', // Google Green
+            '#673AB7', // Deep Purple
+            '#E91E63', // Pink
+            '#009688', // Teal
+            '#FF5722', // Deep Orange
+            '#607D8B', // Blue Grey
+            '#03A9F4', // Light Blue
+            '#8BC34A', // Light Green
+            '#FF9800', // Orange
+        ];
+
+        // Ambil karakter pertama dari nama pengguna
+        $firstChar = substr($this->name, 0, 1);
+
+        // Jika nama tidak kosong, gunakan nilai numerik dari karakter tersebut
+        // untuk memilih warna dari daftar secara konsisten.
+        if (!empty($firstChar)) {
+            $hash = ord($firstChar);
+            return $colors[$hash % count($colors)];
+        }
+
+        // Warna default jika nama kosong
+        return '#CCCCCC';
+    }
+
     // --- FORMULA PERHITUNGAN KINERJA (VERSI PRE-CALCULATED) ---
 
     /**
