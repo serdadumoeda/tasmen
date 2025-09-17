@@ -38,13 +38,27 @@ class Project extends Model
      */
     public function getProgressAttribute(): int
     {
-        // If the counts are already loaded via withCount, use them.
-        // This is a huge performance boost for collections.
+        // Prioritize time-based progress if data is available from eager loading
+        if (isset($this->attributes['tasks_sum_estimated_hours'])) {
+            $totalEstimatedHours = (float) $this->attributes['tasks_sum_estimated_hours'];
+
+            if ($totalEstimatedHours > 0) {
+                $totalLoggedMinutes = (int) ($this->attributes['total_logged_minutes'] ?? 0);
+                $totalLoggedHours = $totalLoggedMinutes / 60.0;
+
+                $progress = ($totalLoggedHours / $totalEstimatedHours) * 100;
+
+                // Cap progress at 100% and round it
+                return min(100, (int) round($progress));
+            }
+        }
+
+        // Fallback to task-based progress if no time estimates are set
         if (isset($this->attributes['tasks_count'])) {
             $totalTasks = (int) $this->attributes['tasks_count'];
             $completedTasks = (int) ($this->attributes['completed_tasks_count'] ?? 0);
         } else {
-            // Fallback for a single model instance.
+            // Fallback for a single model instance if not eager loaded
             $totalTasks = $this->tasks()->count();
             $completedTasks = $this->completedTasks()->count();
         }
@@ -53,7 +67,7 @@ class Project extends Model
             return 0;
         }
 
-        return round(($completedTasks / $totalTasks) * 100);
+        return (int) round(($completedTasks / $totalTasks) * 100);
     }
 
     /**

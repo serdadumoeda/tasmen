@@ -75,10 +75,12 @@ class GlobalDashboardController extends Controller
             $projectQuery->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($search) . '%']);
         }
 
-        // REFACTOR: Eager load counts for performance. This is crucial for the new progress accessor.
+        // REFACTOR: Eager load counts and sums for performance.
         $projectQuery->with(['leader'])
                      ->withCount(['tasks', 'completedTasks'])
-                     ->withSum('budgetItems', 'total_cost');
+                     ->withSum('budgetItems', 'total_cost')
+                     ->withSum('tasks', 'estimated_hours')
+                     ->withSum('tasks.timeLogs as total_logged_minutes', 'duration_in_minutes');
 
         // Get all projects matching the search criteria first.
         $projects = $projectQuery->latest()->get();
