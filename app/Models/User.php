@@ -370,9 +370,14 @@ class User extends Authenticatable
             return '??';
         }
 
-        $words = explode(' ', $name);
-        $firstName = $words[0] ?? '';
-        // Get the second word, not the last word.
+        // Use a regex to split by any whitespace and filter out empty parts.
+        $words = array_values(array_filter(preg_split('/\s+/', $name)));
+
+        if (empty($words)) {
+            return '??';
+        }
+
+        $firstName = $words[0];
         $secondName = $words[1] ?? '';
 
         $initials = mb_substr($firstName, 0, 1);
@@ -382,6 +387,11 @@ class User extends Authenticatable
         } elseif (mb_strlen($firstName) > 1) {
             // Fallback for single-word names: use the first two letters.
             $initials .= mb_substr($firstName, 1, 1);
+        }
+
+        // Final fallback to ensure a non-empty string is always returned.
+        if (empty(trim($initials))) {
+            return '??';
         }
 
         return strtoupper($initials);
