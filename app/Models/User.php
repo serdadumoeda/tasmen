@@ -358,69 +358,30 @@ class User extends Authenticatable
     }
 
     /**
-     * Get the user's initials from their name.
+     * Get the user's initials.
      *
      * @return string
      */
-    public function getInitialsAttribute(): string
+    public function getInitialsAttribute()
     {
-        $name = trim($this->name);
+        $words = explode(' ', trim($this->name));
+        $initials = '';
 
-        if (empty($name)) {
-            return '??';
+        // Ambil huruf pertama dari kata pertama
+        if (isset($words[0][0])) {
+            $initials .= strtoupper($words[0][0]);
         }
 
-        // Use a regex to split by any whitespace and filter out empty parts.
-        $words = array_values(array_filter(preg_split('/\s+/', $name)));
-
-        if (empty($words)) {
-            return '??';
+        // Ambil huruf pertama dari kata kedua (jika ada)
+        if (count($words) > 1 && isset($words[1][0])) {
+            $initials .= strtoupper($words[1][0]);
+        }
+        // Jika hanya ada satu kata, ambil dua huruf pertama dari kata itu
+        elseif (strlen($words[0]) > 1) {
+            $initials .= strtoupper($words[0][1]);
         }
 
-        $firstName = $words[0];
-        $secondName = $words[1] ?? '';
-
-        $initials = mb_substr($firstName, 0, 1);
-
-        if (!empty($secondName)) {
-            $initials .= mb_substr($secondName, 0, 1);
-        } elseif (mb_strlen($firstName) > 1) {
-            // Fallback for single-word names: use the first two letters.
-            $initials .= mb_substr($firstName, 1, 1);
-        }
-
-        // Final fallback to ensure a non-empty string is always returned.
-        if (empty(trim($initials))) {
-            return '??';
-        }
-
-        return strtoupper($initials);
-    }
-
-    /**
-     * Get a deterministic, colorful set of Tailwind CSS classes for the user's avatar.
-     *
-     * @return string
-     */
-    public function getAvatarColorClassesAttribute(): string
-    {
-        $colors = [
-            'bg-red-600 text-white',
-            'bg-yellow-600 text-white',
-            'bg-green-600 text-white',
-            'bg-blue-600 text-white',
-            'bg-indigo-600 text-white',
-            'bg-purple-600 text-white',
-            'bg-pink-600 text-white',
-            'bg-teal-600 text-white',
-            'bg-orange-600 text-white',
-            'bg-gray-600 text-white',
-        ];
-
-        // Use the user's ID to deterministically pick a color.
-        $index = $this->id % count($colors);
-
-        return $colors[$index];
+        return $initials;
     }
 
     // --- FORMULA PERHITUNGAN KINERJA (VERSI PRE-CALCULATED) ---
