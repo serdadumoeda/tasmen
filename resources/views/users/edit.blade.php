@@ -5,7 +5,7 @@
                 {{ __('Edit User: ') }} <span class="font-bold text-indigo-600">{{ $user->name }}</span>
             </h2>
             @if ($user->jabatan)
-            <a href="{{ route('users.hierarchy') }}#user-{{ $user->id }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150 transform hover:scale-105">
+            <a href="{{ route('admin.units.index') }}#user-{{ $user->id }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150 transform hover:scale-105">
                 <i class="fas fa-sitemap mr-2"></i>
                 Lihat di Hirarki
             </a>
