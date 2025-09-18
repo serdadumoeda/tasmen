@@ -37,7 +37,7 @@
         <h5 class="font-semibold text-gray-600 mb-2 ml-1">Pengguna di Unit Ini:</h5>
         <ul class="pl-6 border-l-2 border-indigo-200 space-y-2">
             @forelse($unit->users as $user)
-                <li class="flex items-center text-gray-800">
+                <li id="user-{{ $user->id }}" class="flex items-center text-gray-800 scroll-mt-20">
                     <i class="fas fa-user mr-3 text-gray-400"></i>
                     <div>
                         <span class="font-medium">{{ $user->name }}</span>
