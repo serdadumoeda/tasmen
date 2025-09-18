@@ -89,7 +89,6 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/global-dashboard', [GlobalDashboardController::class, 'index'])->name('global.dashboard');
 
-    Route::get('users/hierarchy', [UserController::class, 'hierarchy'])->name('users.hierarchy');
     Route::get('users/modern', [UserController::class, 'modern'])->name('users.modern');
     Route::get('users/workflow', [UserController::class, 'showWorkflow'])->name('users.workflow');
 
