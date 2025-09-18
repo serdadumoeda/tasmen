@@ -54,32 +54,6 @@ class UserController extends Controller
         return view('users.index', compact('users'));
     }
     
-    public function hierarchy()
-    {
-        $this->authorize('viewAny', User::class);
-        
-        $loggedInUser = Auth::user();
-
-        if ($loggedInUser->isSuperAdmin()) {
-            $units = Unit::whereNull('parent_unit_id')
-                         ->with(['users', 'childrenRecursive'])
-                         ->orderBy('name')
-                         ->get();
-        } else {
-            $units = Unit::where('id', $loggedInUser->unit_id)
-                         ->with(['users', 'childrenRecursive'])
-                         ->orderBy('name')
-                         ->get();
-        }
-
-        $users = User::where('status', 'active')
-                     ->whereDoesntHave('jabatan')
-                     ->orderBy('name')
-                     ->get();
-
-        return view('users.hierarchy', compact('units', 'users'));
-    }
-
     public function modern(Request $request)
     {
         $this->authorize('viewAny', User::class);
