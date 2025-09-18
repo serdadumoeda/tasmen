@@ -66,7 +66,7 @@
     <div class="flex items-center">
         <div class="flex-shrink-0 h-10 w-10">
 
-            {{-- AWAL PERBAIKAN: Logika untuk menampilkan foto atau inisial --}}
+            {{-- KEMBALIKAN KE KODE ASLI INI --}}
             @if ($user->profile_photo_path)
                 <img class="h-10 w-10 rounded-full object-cover" src="{{ asset('storage/' . $user->profile_photo_path) }}" alt="{{ $user->name }}">
             @else
@@ -74,7 +74,6 @@
                     {{ $user->initials }}
                 </div>
             @endif
-            {{-- AKHIR PERBAIKAN --}}
 
         </div>
         <div class="ml-4">
