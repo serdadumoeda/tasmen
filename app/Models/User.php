@@ -364,7 +364,8 @@ class User extends Authenticatable
      */
     public function getInitialsAttribute(): string
     {
-        $name = trim($this->name);
+        // Strip out academic titles and other suffixes starting with a comma.
+        $name = trim(preg_replace('/,.*$/', '', $this->name));
 
         if (empty($name)) {
             return '??';
