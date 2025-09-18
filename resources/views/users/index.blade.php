@@ -62,23 +62,27 @@
                     <tbody class="bg-white divide-y divide-gray-200">
                         @forelse ($users as $user)
                             <tr class="hover:bg-gray-50">
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center">
-                                        <div class="flex-shrink-0 h-10 w-10">
-                                            @if ($user->profile_photo_path)
-                                                <img class="h-10 w-10 rounded-full object-cover" src="{{ asset('storage/' . $user->profile_photo_path) }}" alt="{{ $user->name }}">
-                                            @else
-                                                <div class="flex items-center justify-center h-10 w-10 rounded-full font-bold text-sm {{ $user->avatar_color_classes }}">
-                                                    {{ $user->initials }}
-                                                </div>
-                                            @endif
-                                        </div>
-                                        <div class="ml-4">
-                                            <div class="text-sm font-medium text-gray-900">{{ $user->name }}</div>
-                                            <div class="text-sm text-gray-500">{{ $user->email }}</div>
-                                        </div>
-                                    </div>
-                                </td>
+<td class="px-6 py-4 whitespace-nowrap">
+    <div class="flex items-center">
+        <div class="flex-shrink-0 h-10 w-10">
+
+            {{-- AWAL PERBAIKAN: Logika untuk menampilkan foto atau inisial --}}
+            @if ($user->profile_photo_path)
+                <img class="h-10 w-10 rounded-full object-cover" src="{{ asset('storage/' . $user->profile_photo_path) }}" alt="{{ $user->name }}">
+            @else
+                <div class="flex items-center justify-center h-10 w-10 rounded-full font-bold text-sm {{ $user->avatar_color_classes }}">
+                    {{ $user->initials }}
+                </div>
+            @endif
+            {{-- AKHIR PERBAIKAN --}}
+
+        </div>
+        <div class="ml-4">
+            <div class="text-sm font-medium text-gray-900">{{ $user->name }}</div>
+            <div class="text-sm text-gray-500">{{ $user->email }}</div>
+        </div>
+    </div>
+</td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     @php
                                         // Correctly access the first role's name from the `roles` relationship

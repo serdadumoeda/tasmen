@@ -359,64 +359,70 @@ class User extends Authenticatable
 
 /**
  * Get the user's initials.
+ * VERSI FINAL: Sangat tangguh untuk berbagai format nama.
  *
  * @return string
  */
 public function getInitialsAttribute(): string
 {
-    // Membersihkan spasi di awal/akhir, dan menangani jika nama null
-    $name = trim($this->name ?? '');
+    // Bersihkan nama dari spasi berlebih dan gelar di belakang koma.
+    $name = trim(preg_replace('/,.*$/', '', $this->name ?? ''));
 
-    // 1. Jika nama kosong setelah dibersihkan, kembalikan placeholder
     if (empty($name)) {
-        return '??';
+        return '??'; // Fallback jika nama kosong atau null.
     }
 
-    $words = explode(' ', $name);
+    // Pisahkan nama menjadi beberapa kata.
+    $words = preg_split('/\s+/', $name);
 
-    // 2. Jika nama hanya satu kata, ambil dua huruf pertama
-    if (count($words) === 1) {
-        return strtoupper(mb_substr($words[0], 0, 2));
+    // Ambil huruf pertama dari kata pertama.
+    $initials = mb_substr($words[0] ?? '', 0, 1);
+
+    // Jika ada lebih dari satu kata, ambil huruf pertama dari kata terakhir.
+    if (count($words) > 1) {
+        $initials .= mb_substr(end($words), 0, 1);
+    }
+    // Jika hanya satu kata dan panjang, ambil dua huruf pertama.
+    elseif (mb_strlen($words[0]) > 1) {
+        $initials = mb_substr($words[0], 0, 2);
     }
 
-    // 3. Jika nama lebih dari satu kata, ambil inisial kata pertama dan terakhir
-    $firstNameInitial = mb_substr(reset($words), 0, 1);
-    $lastNameInitial = mb_substr(end($words), 0, 1);
-
-    return strtoupper($firstNameInitial . $lastNameInitial);
+    // Pastikan hasilnya tidak kosong, jika ya, beri fallback.
+    return empty(trim($initials)) ? '??' : strtoupper($initials);
 }
 
-    /**
-     * Get the color classes for the user's avatar.
-     *
-     * @return string
-     */
-    public function getAvatarColorClassesAttribute(): string
-    {
-        // Daftar kelas warna dengan kontras yang baik
-        $colors = [
-            'bg-red-500 text-white',
-            'bg-blue-500 text-white',
-            'bg-green-500 text-white',
-            'bg-yellow-500 text-gray-800',
-            'bg-indigo-500 text-white',
-            'bg-purple-500 text-white',
-            'bg-pink-500 text-white',
-            'bg-teal-500 text-white',
-            'bg-orange-500 text-white',
-        ];
+/**
+ * Get a deterministic, colorful set of Tailwind CSS classes for the user's avatar.
+ * VERSI FINAL: Tangguh, menggunakan ID dan fallback ke nama jika ID tidak ada.
+ *
+ * @return string
+ */
+public function getAvatarColorClassesAttribute(): string
+{
+    $colors = [
+        'bg-red-600 text-white',
+        'bg-yellow-500 text-white',
+        'bg-green-500 text-white',
+        'bg-blue-600 text-white',
+        'bg-indigo-600 text-white',
+        'bg-purple-600 text-white',
+        'bg-pink-600 text-white',
+        'bg-teal-500 text-white',
+        'bg-orange-500 text-white',
+    ];
 
-        // Jika id ada dan bukan 0, gunakan id untuk konsistensi
-        if ($this->id) {
-            $index = $this->id % count($colors);
-        } else {
-            // Fallback: Gunakan checksum dari nama untuk mendapatkan indeks acak yang konsisten
-            $hash = crc32($this->name);
-            $index = abs($hash) % count($colors);
-        }
-
-        return $colors[$index];
+    // Gunakan ID jika tersedia untuk konsistensi.
+    if (isset($this->id) && $this->id > 0) {
+        $index = $this->id % count($colors);
+    } else {
+        // Fallback jika ID tidak ada: gunakan checksum dari nama.
+        // Ini memastikan warna tetap konsisten untuk nama yang sama.
+        $hash = crc32($this->name ?? 'fallback');
+        $index = abs($hash) % count($colors);
     }
+
+    return $colors[$index];
+}
 
     // --- FORMULA PERHITUNGAN KINERJA (VERSI PRE-CALCULATED) ---
 
