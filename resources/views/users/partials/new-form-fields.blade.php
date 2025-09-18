@@ -11,6 +11,8 @@
 
 {{-- Helper function for form fields --}}
 @php
+$isCompleteProfile = ($context ?? '') === 'complete_profile';
+
 function form_input($label, $name, $user, $type = 'text', $is_required = false, $extra_attrs = '') {
     $value = old($name, $user->{$name} ?? '');
     $required_attr = $is_required ? 'required' : '';
@@ -31,7 +33,8 @@ function form_textarea($label, $name, $user, $is_required = false) {
 }
 @endphp
 
-<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+<div class="grid grid-cols-1 @if(!$isCompleteProfile) md:grid-cols-3 @endif gap-8">
+    @if(!$isCompleteProfile)
     {{-- Kolom Kiri: Informasi Pribadi --}}
     <div class="md:col-span-1">
         <h3 class="text-lg font-medium text-gray-900 border-b pb-2 mb-4">Informasi Pribadi</h3>
@@ -70,6 +73,7 @@ function form_textarea($label, $name, $user, $is_required = false) {
         {{ form_input('TMT CPNS', 'tmt_cpns', $user, 'text', false, 'placeholder="YYYY-MM-DD"') }}
         {{ form_input('TMT PNS', 'tmt_pns', $user, 'text', false, 'placeholder="YYYY-MM-DD"') }}
     </div>
+    @endif
 
     {{-- Kolom Kanan: Unit & Akses --}}
     <div class="md:col-span-1">
@@ -153,18 +157,43 @@ function form_textarea($label, $name, $user, $is_required = false) {
 
 @push('scripts')
 <script>
-$(document).ready(function() {
-    const jabatanSelect = $('#jabatan_id');
-    const unitIdInput = $('#unit_id');
-    const unitSelects = $('.unit-select');
-
+document.addEventListener('DOMContentLoaded', () => {
+    const unitSelects = document.querySelectorAll('.unit-select');
+    const jabatanSelect = document.getElementById('jabatan_id');
+    const unitIdInput = document.getElementById('unit_id'); // Assuming you have a hidden input with this id
     const selectedUnitPath = @json($selectedUnitPath ?? []);
     const oldJabatanId = '{{ old('jabatan_id', optional($user->jabatan)->id ?? '') }}';
 
-    function fetchAndPopulateJabatans(unitId, selectedId = null) {
-        jabatanSelect.prop('disabled', true).html('<option value="">-- Memuat Jabatan... --</option>');
+    const fetchJson = async (url) => {
+        try {
+            const response = await fetch(url);
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            return await response.json();
+        } catch (e) {
+            console.error("Fetch error:", e);
+            return []; // Return empty array on error
+        }
+    };
+
+    const populateSelect = (selectEl, data, placeholder) => {
+        selectEl.innerHTML = `<option value="">${placeholder}</option>`;
+        if (data.length > 0) {
+            data.forEach(item => {
+                const option = new Option(item.name, item.id);
+                selectEl.add(option);
+            });
+            selectEl.disabled = false;
+        } else {
+            selectEl.innerHTML = `<option value="">-- Tidak ada pilihan --</option>`;
+            selectEl.disabled = true;
+        }
+    };
+
+    const fetchAndPopulateJabatans = async (unitId, selectedId = null) => {
+        jabatanSelect.disabled = true;
+        jabatanSelect.innerHTML = `<option value="">-- Memuat Jabatan... --</option>`;
         if (!unitId) {
-            jabatanSelect.html('<option value="">-- Pilih Unit Kerja Terakhir --</option>');
+            jabatanSelect.innerHTML = `<option value="">-- Pilih Unit Kerja Terakhir --</option>`;
             return;
         }
 
@@ -173,127 +202,79 @@ $(document).ready(function() {
             url += `?user_id={{ $user->id }}`;
         @endif
 
-        $.ajax({
-            url: url,
-            type: 'GET',
-            success: function(data) {
-                jabatanSelect.empty().append('<option value="">-- Pilih Jabatan --</option>');
-
-                if (data.length > 0) {
-                    $.each(data, function(key, jabatan) {
-                        // Set the 'selected' property if the current jabatan id matches the old one
-                        let isSelected = (jabatan.id == selectedId);
-                        jabatanSelect.append(new Option(jabatan.name, jabatan.id, false, isSelected));
-                    });
-                }
-
-                // After populating, if a selectedId was passed, ensure it's selected.
-                // This is a fallback for cases where the initial selection might not have caught.
-                if (selectedId) {
-                    jabatanSelect.val(selectedId);
-                }
-
-                if (jabatanSelect.find('option').length <= 1) {
-                    jabatanSelect.html('<option value="">-- Tidak ada jabatan tersedia --</option>');
-                } else {
-                    jabatanSelect.prop('disabled', false);
-                }
-            },
-            error: function() {
-                jabatanSelect.html('<option value="">-- Gagal Memuat Jabatan --</option>');
-            }
-        });
-    }
-
-    function resetSubsequentSelects(level) {
-        for (let i = level; i < unitSelects.length; i++) {
-            const select = $(unitSelects[i]);
-            const placeholder = select.data('placeholder');
-            select.empty().append(new Option(placeholder, '')).prop('disabled', true);
+        const data = await fetchJson(url);
+        populateSelect(jabatanSelect, data, '-- Pilih Jabatan --');
+        if (selectedId) {
+            jabatanSelect.value = selectedId;
         }
-        jabatanSelect.empty().append('<option value="">-- Pilih Unit Kerja Terakhir --</option>').prop('disabled', true);
-    }
+    };
 
-    unitSelects.on('change', function() {
-        const selectedValue = $(this).val();
-        const currentLevel = parseInt($(this).data('level'), 10);
+    const handleUnitSelectChange = async (event) => {
+        const selectEl = event.target;
+        const unitId = selectEl.value;
+        const level = parseInt(selectEl.dataset.level, 10);
 
-        unitIdInput.val(selectedValue);
-        resetSubsequentSelects(currentLevel);
+        // Reset all subsequent dropdowns
+        for (let i = level; i < unitSelects.length; i++) {
+            const currentSelect = unitSelects[i];
+            currentSelect.innerHTML = `<option value="">${currentSelect.dataset.placeholder}</option>`;
+            currentSelect.disabled = true;
+        }
+        jabatanSelect.innerHTML = `<option value="">-- Pilih Unit Kerja Terakhir --</option>`;
+        jabatanSelect.disabled = true;
 
-        if (!selectedValue) {
-            if (currentLevel > 1) {
-                const prevSelect = $(unitSelects[currentLevel - 2]);
-                unitIdInput.val(prevSelect.val());
-            } else {
-                unitIdInput.val('');
+        if (!unitId) {
+            // If a select is cleared, fetch jabatans for the parent unit
+            if (level > 1) {
+                const parentUnitId = unitSelects[level - 2].value;
+                if(parentUnitId) await fetchAndPopulateJabatans(parentUnitId);
             }
-            fetchAndPopulateJabatans(unitIdInput.val());
             return;
         }
 
-        fetchAndPopulateJabatans(selectedValue, oldJabatanId);
+        // Fetch jabatans for the currently selected unit
+        await fetchAndPopulateJabatans(unitId, oldJabatanId);
 
-        const nextLevel = currentLevel + 1;
-        const nextSelect = $(`.unit-select[data-level='${nextLevel}']`);
-
-        if (nextSelect.length) {
-            nextSelect.prop('disabled', true).html('<option value="">-- Memuat... --</option>');
-            $.ajax({
-                url: `/api/units/${selectedValue}/children`,
-                type: 'GET',
-                success: function(data) {
-                    const placeholder = nextSelect.data('placeholder');
-                    nextSelect.empty().append(new Option(placeholder, ''));
-                    if (data.length > 0) {
-                        $.each(data, function(key, unit) {
-                            nextSelect.append(new Option(unit.name, unit.id));
-                        });
-                        nextSelect.prop('disabled', false);
-                    } else {
-                        nextSelect.html(new Option('-- Tidak ada unit bawahan --', '')).prop('disabled', true);
-                    }
-                },
-                error: function() {
-                    nextSelect.html(new Option('-- Gagal memuat data --', '')).prop('disabled', true);
-                }
-            });
+        // Fetch children for the next level dropdown
+        const nextLevel = level + 1;
+        const nextSelect = document.querySelector(`.unit-select[data-level='${nextLevel}']`);
+        if (nextSelect) {
+            nextSelect.disabled = true;
+            nextSelect.innerHTML = `<option value="">-- Memuat... --</option>`;
+            const children = await fetchJson(`/api/units/${unitId}/children`);
+            populateSelect(nextSelect, children, nextSelect.dataset.placeholder);
         }
-    });
+    };
 
-    function initializePath() {
-        if (selectedUnitPath.length === 0) return;
+    const initializeForm = async () => {
+        for (let i = 0; i < unitSelects.length; i++) {
+            const selectEl = unitSelects[i];
+            selectEl.addEventListener('change', handleUnitSelectChange);
 
-        let currentPromise = $.Deferred().resolve().promise();
-        selectedUnitPath.forEach((unitId, index) => {
-            currentPromise = currentPromise.then(() => {
-                return new Promise(resolve => {
-                    const select = $(unitSelects[index]);
-                    if(index > 0) {
-                        const observer = new MutationObserver((mutationsList, obs) => {
-                            for(const mutation of mutationsList) {
-                                if (mutation.type === 'childList' && select.find('option').length > 1) {
-                                    select.val(unitId);
-                                    obs.disconnect();
-                                    setTimeout(() => {
-                                        select.trigger('change');
-                                        resolve();
-                                    }, 50);
-                                    return;
-                                }
-                            }
-                        });
-                        observer.observe(select[0], { childList: true });
-                    } else {
-                        select.val(unitId).trigger('change');
-                        resolve();
+            if (selectedUnitPath.length > i) {
+                const unitIdToSelect = selectedUnitPath[i];
+
+                // For the first dropdown, we can set value and trigger change directly
+                if (i === 0) {
+                    selectEl.value = unitIdToSelect;
+                    await handleUnitSelectChange({ target: selectEl });
+                } else {
+                    // For subsequent dropdowns, wait for them to be populated
+                    // A simple way is to trust the chain, and set the value
+                    // The 'await' on handleUnitSelectChange should make this work sequentially
+                    const previousSelect = unitSelects[i-1];
+                    if (previousSelect.value == selectedUnitPath[i-1]) {
+                         selectEl.value = unitIdToSelect;
+                         if (selectEl.value == unitIdToSelect) { // Check if value was set
+                             await handleUnitSelectChange({ target: selectEl });
+                         }
                     }
-                });
-            });
-        });
-    }
+                }
+            }
+        }
+    };
 
-    initializePath();
+    initializeForm();
 });
 </script>
 @endpush
