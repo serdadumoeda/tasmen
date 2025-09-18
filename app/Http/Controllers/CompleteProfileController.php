@@ -21,10 +21,15 @@ class CompleteProfileController extends Controller
             return redirect()->route('dashboard');
         }
 
+        $user = Auth::user();
         $eselonIUnits = Unit::whereNull('parent_unit_id')->orderBy('name')->get();
-        $selectedUnitPath = []; // For the form partial
+        $selectedUnitPath = [];
+        // These are required by the form partial but not strictly needed for this page's logic.
+        $supervisors = collect();
+        $jabatans = collect();
 
-        return view('profile.complete', compact('eselonIUnits', 'selectedUnitPath'));
+
+        return view('profile.complete', compact('user', 'eselonIUnits', 'selectedUnitPath', 'supervisors', 'jabatans'));
     }
 
     /**
