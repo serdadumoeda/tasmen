@@ -114,45 +114,15 @@
                 <div class="p-6 bg-white border-b border-gray-200">
                     <h3 class="text-lg font-semibold text-gray-800 mb-4">Daftar Jabatan di Unit Ini</h3>
 
-                    <ul class="space-y-3 mb-6">
+                    <ul class="space-y-3 mb-6" id="jabatan-list">
                         @forelse($unit->jabatans as $jabatan)
-                            <li class="flex items-center justify-between bg-gray-50 p-4 rounded-lg hover:bg-gray-100 transition-colors duration-150">
-                                <div class="flex-grow">
-                                    <div class="flex items-center">
-                                        <p class="font-semibold text-gray-800">{{ $jabatan->name }}</p>
-                                        @if($jabatan->can_manage_users)
-                                            <span class="ml-3 text-xs font-semibold inline-flex items-center px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 border border-blue-200">
-                                                <i class="fas fa-users-cog mr-1.5 opacity-80"></i> Dapat Mengelola Pengguna
-                                            </span>
-                                        @endif
-                                    </div>
-                                    <p class="text-sm text-gray-500 mt-1">
-                                        @if($jabatan->user)
-                                            <i class="fas fa-user-check text-green-500 mr-2"></i>Diisi oleh: {{ $jabatan->user->name }}
-                                        @else
-                                            <i class="fas fa-user-clock text-yellow-500 mr-2"></i>Jabatan Kosong
-                                        @endif
-                                    </p>
-                                </div>
-                                <div class="flex items-center space-x-4 ml-4 flex-shrink-0">
-                                    <a href="{{ route('admin.jabatans.edit', $jabatan) }}" class="font-medium text-indigo-600 hover:text-indigo-800 transition-colors duration-150">Edit</a>
-                                    @if(!$jabatan->user_id)
-                                        <form action="{{ route('admin.jabatans.destroy', $jabatan) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus jabatan ini?');" class="inline-block">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="font-medium text-red-600 hover:text-red-800 transition-colors duration-150">Hapus</button>
-                                        </form>
-                                    @else
-                                         <span class="font-medium text-gray-400 cursor-not-allowed" title="Jabatan ini tidak dapat dihapus karena ada pengguna yang menempatinya.">Hapus</span>
-                                    @endif
-                                </div>
-                            </li>
+                           @include('admin.jabatans.partials._jabatan-list-item', ['jabatan' => $jabatan])
                         @empty
-                            <li class="text-center text-gray-500 py-4">Belum ada jabatan yang didefinisikan untuk unit ini.</li>
+                            <li class="text-center text-gray-500 py-4" id="no-jabatan-placeholder">Belum ada jabatan yang didefinisikan untuk unit ini.</li>
                         @endforelse
                     </ul>
 
-                    <form action="{{ route('admin.jabatans.store') }}" method="POST" class="border-t border-gray-200 pt-6">
+                    <form action="{{ route('admin.jabatans.store') }}" method="POST" class="border-t border-gray-200 pt-6" id="form-tambah-jabatan">
                         @csrf
                         <input type="hidden" name="unit_id" value="{{ $unit->id }}">
                         <h4 class="font-semibold text-lg text-gray-800 mb-4">Tambah Jabatan Baru</h4>
@@ -194,4 +164,112 @@
             </div>
         </div>
     </div>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const formTambah = document.getElementById('form-tambah-jabatan');
+    const jabatanList = document.getElementById('jabatan-list');
+
+    // Handle Add Jabatan
+    formTambah.addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+        const action = this.action;
+        const submitButton = this.querySelector('button[type="submit"]');
+        const originalButtonHtml = submitButton.innerHTML;
+
+        submitButton.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i> Menyimpan...`;
+        submitButton.disabled = true;
+
+        fetch(action, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': formData.get('_token'),
+                'Accept': 'application/json',
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Remove placeholder if it exists
+                const placeholder = document.getElementById('no-jabatan-placeholder');
+                if (placeholder) {
+                    placeholder.remove();
+                }
+                // Add new item
+                jabatanList.insertAdjacentHTML('beforeend', data.html);
+                // Reset form
+                formTambah.reset();
+                // Optional: show success toast/notification
+                alert(data.message);
+            } else {
+                // Handle validation errors or other errors
+                let errorMessages = 'Terjadi kesalahan:\n';
+                if (data.errors) {
+                    for (const key in data.errors) {
+                        errorMessages += `- ${data.errors[key].join(', ')}\n`;
+                    }
+                } else {
+                    errorMessages += data.message || 'Tidak dapat menambahkan jabatan.';
+                }
+                alert(errorMessages);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Terjadi kesalahan koneksi.');
+        })
+        .finally(() => {
+            submitButton.innerHTML = originalButtonHtml;
+            submitButton.disabled = false;
+        });
+    });
+
+    // Handle Delete Jabatan using Event Delegation
+    jabatanList.addEventListener('submit', function (e) {
+        if (e.target && e.target.classList.contains('form-delete-jabatan')) {
+            e.preventDefault();
+
+            const form = e.target;
+            const action = form.action;
+            const formData = new FormData(form);
+
+            if (confirm('Yakin ingin menghapus jabatan ini?')) {
+                fetch(action, {
+                    method: 'POST', // HTML forms don't support DELETE, so we use POST and a hidden _method field
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': formData.get('_token'),
+                        'Accept': 'application/json',
+                    },
+                    body: formData
+                })
+                .then(response => response.json().then(data => ({ status: response.status, body: data })))
+                .then(({ status, body }) => {
+                    if (body.success) {
+                        document.getElementById(`jabatan-${body.jabatan_id_placeholder || form.closest('li').id.split('-')[1]}`).remove();
+                        // Check if list is empty and add placeholder back
+                        if (jabatanList.children.length === 0) {
+                             const placeholderHtml = `<li class="text-center text-gray-500 py-4" id="no-jabatan-placeholder">Belum ada jabatan yang didefinisikan untuk unit ini.</li>`;
+                             jabatanList.insertAdjacentHTML('beforeend', placeholderHtml);
+                        }
+                        alert(body.message);
+                    } else {
+                        alert(body.message || 'Gagal menghapus jabatan.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Terjadi kesalahan koneksi saat menghapus.');
+                });
+            }
+        }
+    });
+});
+</script>
+@endpush
 </x-app-layout>

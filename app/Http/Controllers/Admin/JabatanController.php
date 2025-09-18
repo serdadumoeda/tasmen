@@ -59,7 +59,15 @@ class JabatanController extends Controller
             'role' => $validated['role'],
         ];
 
-        $unit->jabatans()->create($dataToCreate);
+        $jabatan = $unit->jabatans()->create($dataToCreate);
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Jabatan berhasil ditambahkan.',
+                'html' => view('admin.jabatans.partials._jabatan-list-item', compact('jabatan'))->render()
+            ]);
+        }
 
         return redirect()->route('admin.units.edit', $unit)->with('success', 'Jabatan berhasil ditambahkan.');
     }
@@ -98,16 +106,29 @@ class JabatanController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Jabatan $jabatan)
+    public function destroy(Request $request, Jabatan $jabatan)
     {
         $unit = $jabatan->unit;
         $this->authorize('update', $unit);
 
         if ($jabatan->user_id) {
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tidak dapat menghapus jabatan yang masih diisi oleh pengguna.'
+                ], 422);
+            }
             return back()->with('error', 'Tidak dapat menghapus jabatan yang masih diisi oleh pengguna.');
         }
 
         $jabatan->delete();
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Jabatan berhasil dihapus.'
+            ]);
+        }
 
         return back()->with('success', 'Jabatan berhasil dihapus.');
     }
