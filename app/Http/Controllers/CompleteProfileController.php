@@ -22,7 +22,8 @@ class CompleteProfileController extends Controller
         }
 
         $user = Auth::user();
-        $eselonIUnits = Unit::whereNull('parent_unit_id')->orderBy('name')->get();
+        // PERBAIKAN: Ambil semua unit dengan level 'Eselon I'
+        $eselonIUnits = Unit::where('level', 'Eselon I')->orderBy('name')->get();
         $selectedUnitPath = [];
         // These are required by the form partial but not strictly needed for this page's logic.
         $supervisors = collect();
