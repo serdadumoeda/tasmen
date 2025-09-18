@@ -359,21 +359,33 @@ class User extends Authenticatable
 
 /**
  * Get the user's initials.
- * VERSI FINAL: Sangat tangguh untuk berbagai format nama.
+ * VERSI FINAL EXTRA-KUAT: Membersihkan data nama secara agresif.
  *
  * @return string
  */
 public function getInitialsAttribute(): string
 {
-    // Bersihkan nama dari spasi berlebih dan gelar di belakang koma.
-    $name = trim(preg_replace('/,.*$/', '', $this->name ?? ''));
+    // 1. Ambil nama, pastikan tidak null.
+    $name = $this->name ?? '';
 
+    // 2. Hapus gelar atau teks apapun setelah koma.
+    $name = preg_replace('/,.*$/', '', $name);
+
+    // 3. (PENTING) Normalisasi semua jenis spasi (termasuk yang tidak terlihat) menjadi spasi tunggal.
+    $name = preg_replace('/\s+/u', ' ', $name);
+
+    // 4. (PENTING) Hapus semua karakter selain huruf, angka, dan spasi.
+    $name = preg_replace('/[^\p{L}\p{N}\s]/u', '', $name);
+
+    // 5. Trim spasi di awal/akhir setelah pembersihan.
+    $name = trim($name);
+
+    // Jika nama jadi kosong setelah dibersihkan, beri fallback.
     if (empty($name)) {
-        return '??'; // Fallback jika nama kosong atau null.
+        return '??';
     }
 
-    // Pisahkan nama menjadi beberapa kata.
-    $words = preg_split('/\s+/', $name);
+    $words = explode(' ', $name);
 
     // Ambil huruf pertama dari kata pertama.
     $initials = mb_substr($words[0] ?? '', 0, 1);
@@ -387,7 +399,7 @@ public function getInitialsAttribute(): string
         $initials = mb_substr($words[0], 0, 2);
     }
 
-    // Pastikan hasilnya tidak kosong, jika ya, beri fallback.
+    // Fallback terakhir untuk memastikan output tidak pernah kosong.
     return empty(trim($initials)) ? '??' : strtoupper($initials);
 }
 
