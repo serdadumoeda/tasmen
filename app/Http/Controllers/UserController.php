@@ -44,6 +44,11 @@ class UserController extends Controller
             });
         }
 
+        if ($request->filled('unit_id')) {
+            $unitId = $request->input('unit_id');
+            $query->where('unit_id', $unitId);
+        }
+
         $users = $query->paginate(15)->withQueryString();
 
         return view('users.index', compact('users'));
