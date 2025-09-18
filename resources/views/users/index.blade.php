@@ -70,7 +70,14 @@
             @if ($user->profile_photo_path)
                 <img class="h-10 w-10 rounded-full object-cover" src="{{ asset('storage/' . $user->profile_photo_path) }}" alt="{{ $user->name }}">
             @else
-                <div class="flex items-center justify-center h-10 w-10 rounded-full font-bold text-sm {{ $user->avatar_color_classes }}">
+                @php
+                    // Panggil accessor baru untuk mendapatkan array warna
+                    $avatarColors = $user->avatar_colors;
+                @endphp
+
+                {{-- Hapus kelas warna dari `class` dan tambahkan atribut `style` --}}
+                <div class="flex items-center justify-center h-10 w-10 rounded-full font-bold text-sm"
+                     style="background-color: {{ $avatarColors['bg'] }}; color: {{ $avatarColors['text'] }};">
                     {{ $user->initials }}
                 </div>
             @endif

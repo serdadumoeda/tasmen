@@ -404,36 +404,34 @@ public function getInitialsAttribute(): string
 }
 
 /**
- * Get a deterministic, colorful set of Tailwind CSS classes for the user's avatar.
- * VERSI FINAL: Tangguh, menggunakan ID dan fallback ke nama jika ID tidak ada.
+ * Get the background and text color for the user's avatar.
+ * VERSI FINAL: Menghasilkan kode warna HEX untuk inline style.
  *
- * @return string
+ * @return array
  */
-public function getAvatarColorClassesAttribute(): string
+public function getAvatarColorsAttribute(): array
 {
-    $colors = [
-        'bg-red-600 text-white',
-        'bg-yellow-500 text-white',
-        'bg-green-500 text-white',
-        'bg-blue-600 text-white',
-        'bg-indigo-600 text-white',
-        'bg-purple-600 text-white',
-        'bg-pink-600 text-white',
-        'bg-teal-500 text-white',
-        'bg-orange-500 text-white',
+    $colorPairs = [
+        ['bg' => '#dc2626', 'text' => '#ffffff'], // Merah
+        ['bg' => '#f97316', 'text' => '#ffffff'], // Oranye
+        ['bg' => '#d97706', 'text' => '#ffffff'], // Kuning Tua
+        ['bg' => '#16a34a', 'text' => '#ffffff'], // Hijau
+        ['bg' => '#2563eb', 'text' => '#ffffff'], // Biru
+        ['bg' => '#4f46e5', 'text' => '#ffffff'], // Indigo
+        ['bg' => '#9333ea', 'text' => '#ffffff'], // Ungu
+        ['bg' => '#db2777', 'text' => '#ffffff'], // Pink
+        ['bg' => '#0d9488', 'text' => '#ffffff'], // Teal
     ];
 
-    // Gunakan ID jika tersedia untuk konsistensi.
+    // Logika pemilihan warna tetap sama, sangat tangguh.
     if (isset($this->id) && $this->id > 0) {
-        $index = $this->id % count($colors);
+        $index = $this->id % count($colorPairs);
     } else {
-        // Fallback jika ID tidak ada: gunakan checksum dari nama.
-        // Ini memastikan warna tetap konsisten untuk nama yang sama.
         $hash = crc32($this->name ?? 'fallback');
-        $index = abs($hash) % count($colors);
+        $index = abs($hash) % count($colorPairs);
     }
 
-    return $colors[$index];
+    return $colorPairs[$index];
 }
 
     // --- FORMULA PERHITUNGAN KINERJA (VERSI PRE-CALCULATED) ---
