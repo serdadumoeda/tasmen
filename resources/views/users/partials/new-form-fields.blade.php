@@ -110,7 +110,7 @@ function form_textarea($label, $name, $user, $is_required = false) {
             <label for="atasan_id" class="block font-semibold text-sm text-gray-700 mb-1">Atasan Langsung</label>
             <select name="atasan_id" id="atasan_id" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300">
                  <option value="">-- Tidak ada --</option>
-                 @foreach($supervisors as $supervisor)
+                 @foreach($supervisors ?? [] as $supervisor)
                     <option value="{{ $supervisor->id }}" @selected(old('atasan_id', $user->atasan_id ?? '') == $supervisor->id)>{{ $supervisor->name }}</option>
                 @endforeach
             </select>

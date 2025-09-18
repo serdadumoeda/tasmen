@@ -86,6 +86,15 @@ class JabatanController extends Controller
     /**
      * Update the specified resource in storage.
      */
+    public function showJson(Jabatan $jabatan)
+    {
+        $this->authorize('update', $jabatan->unit);
+        return response()->json($jabatan);
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
     public function update(Request $request, Jabatan $jabatan)
     {
         $this->authorize('update', $jabatan->unit);
@@ -99,6 +108,14 @@ class JabatanController extends Controller
             'name' => $validated['name'],
             'can_manage_users' => $request->has('can_manage_users'),
         ]);
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Jabatan berhasil diperbarui.',
+                'html' => view('admin.jabatans.partials._jabatan-list-item', compact('jabatan'))->render()
+            ]);
+        }
 
         return redirect()->route('admin.units.edit', $jabatan->unit_id)->with('success', 'Jabatan berhasil diperbarui.');
     }
@@ -121,12 +138,14 @@ class JabatanController extends Controller
             return back()->with('error', 'Tidak dapat menghapus jabatan yang masih diisi oleh pengguna.');
         }
 
+        $jabatanId = $jabatan->id;
         $jabatan->delete();
 
         if ($request->wantsJson()) {
             return response()->json([
                 'success' => true,
-                'message' => 'Jabatan berhasil dihapus.'
+                'message' => 'Jabatan berhasil dihapus.',
+                'deleted_id' => $jabatanId
             ]);
         }
 
