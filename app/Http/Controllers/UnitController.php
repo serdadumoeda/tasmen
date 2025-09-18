@@ -38,7 +38,12 @@ class UnitController extends Controller
         ->orderBy('name')
         ->get();
 
-        return view('admin.units.index', compact('units'));
+        $users = User::where('status', 'active')
+                     ->whereDoesntHave('jabatan')
+                     ->orderBy('name')
+                     ->get();
+
+        return view('admin.units.index', compact('units', 'users'));
     }
 
     public function create()
