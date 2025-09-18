@@ -357,46 +357,34 @@ class User extends Authenticatable
         return $isStructuralManager || $isFunctionalManager;
     }
 
-    /**
-     * Get the user's initials from their name.
-     *
-     * @return string
-     */
-    public function getInitialsAttribute(): string
-    {
-        // Strip out academic titles and other suffixes starting with a comma.
-        $name = trim(preg_replace('/,.*$/', '', $this->name));
+/**
+ * Get the user's initials.
+ *
+ * @return string
+ */
+public function getInitialsAttribute(): string
+{
+    // Membersihkan spasi di awal/akhir, dan menangani jika nama null
+    $name = trim($this->name ?? '');
 
-        if (empty($name)) {
-            return '??';
-        }
-
-        // Use a regex to split by any whitespace and filter out empty parts.
-        $words = array_values(array_filter(preg_split('/\s+/', $name)));
-
-        if (empty($words)) {
-            return '??';
-        }
-
-        $firstName = $words[0];
-        $secondName = $words[1] ?? '';
-
-        $initials = mb_substr($firstName, 0, 1);
-
-        if (!empty($secondName)) {
-            $initials .= mb_substr($secondName, 0, 1);
-        } elseif (mb_strlen($firstName) > 1) {
-            // Fallback for single-word names: use the first two letters.
-            $initials .= mb_substr($firstName, 1, 1);
-        }
-
-        // Final fallback to ensure a non-empty string is always returned.
-        if (empty(trim($initials))) {
-            return '??';
-        }
-
-        return strtoupper($initials);
+    // 1. Jika nama kosong setelah dibersihkan, kembalikan placeholder
+    if (empty($name)) {
+        return '??';
     }
+
+    $words = explode(' ', $name);
+
+    // 2. Jika nama hanya satu kata, ambil dua huruf pertama
+    if (count($words) === 1) {
+        return strtoupper(mb_substr($words[0], 0, 2));
+    }
+
+    // 3. Jika nama lebih dari satu kata, ambil inisial kata pertama dan terakhir
+    $firstNameInitial = mb_substr(reset($words), 0, 1);
+    $lastNameInitial = mb_substr(end($words), 0, 1);
+
+    return strtoupper($firstNameInitial . $lastNameInitial);
+}
 
     /**
      * Get the color classes for the user's avatar.
