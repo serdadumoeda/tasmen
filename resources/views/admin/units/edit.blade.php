@@ -122,151 +122,161 @@
                         @endforelse
                     </ul>
 
-                    <form action="{{ route('admin.jabatans.store') }}" method="POST" class="border-t border-gray-200 pt-6" id="form-tambah-jabatan">
-                        @csrf
-                        <input type="hidden" name="unit_id" value="{{ $unit->id }}">
-                        <h4 class="font-semibold text-lg text-gray-800 mb-4">Tambah Jabatan Baru</h4>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {{-- Nama Jabatan --}}
-                            <div>
-                                <label for="jabatan_name" class="block text-sm font-medium text-gray-700">Nama Jabatan <span class="text-red-500 font-bold">*</span></label>
-                                <input type="text" name="name" id="jabatan_name" class="mt-1 block w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" placeholder="e.g., Pranata Komputer Muda" required>
-                            </div>
-                            {{-- Role Jabatan --}}
-                            <div>
-                                <label for="jabatan_role" class="block text-sm font-medium text-gray-700">Peran (Role) <span class="text-red-500 font-bold">*</span></label>
-                                <select name="role" id="jabatan_role" class="mt-1 block w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" required>
-                                    @php
-                                        // We need the list of roles here. We can get it from the User model.
-                                        $availableRoles = \App\Models\User::getAvailableRoles();
-                                    @endphp
-                                    <option value="">-- Pilih Peran --</option>
-                                    @foreach($availableRoles as $role)
-                                        <option value="{{ $role }}">{{ $role }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </div>
-                        <div class="mt-4">
-                             <label for="can_manage_users" class="flex items-center">
-                                <input type="checkbox" name="can_manage_users" id="can_manage_users" value="1" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500">
-                                <span class="ml-2 text-sm text-gray-600">Dapat Mengelola Pengguna (Izin Khusus)</span>
-                            </label>
-                             <p class="mt-1 text-xs text-gray-500 ml-6">Beri izin pada jabatan ini (e.g., Kabag Umum) untuk menambah/mengubah pengguna dalam lingkup unitnya.</p>
-                        </div>
-                        <div class="flex justify-end mt-6">
-                            <button type="submit" class="inline-flex items-center px-5 py-2.5 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150 shadow-md">
+                    <div class="border-t border-gray-200 pt-6">
+                        <div class="flex justify-between items-center">
+                            <h4 class="font-semibold text-lg text-gray-800">Jabatan Baru</h4>
+                            <button type="button" id="btn-add-jabatan" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700">
                                 <i class="fas fa-plus-circle mr-2"></i> Tambah Jabatan
                             </button>
                         </div>
-                    </form>
+                    </div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Jabatan Modal -->
+    <div id="jabatan-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 overflow-y-auto h-full w-full z-50 flex items-center justify-center" style="display: none;">
+        <div class="relative mx-auto p-8 border w-full max-w-2xl shadow-2xl rounded-xl bg-white">
+            <h3 id="jabatan-modal-title" class="text-2xl font-bold text-gray-800 mb-6"></h3>
+            <form id="jabatan-modal-form" action="" method="POST">
+                @csrf
+                <input type="hidden" name="_method" id="jabatan-modal-method" value="POST">
+                <input type="hidden" name="unit_id" value="{{ $unit->id }}">
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="jabatan-modal-name" class="block text-sm font-medium text-gray-700">Nama Jabatan <span class="text-red-500 font-bold">*</span></label>
+                        <input type="text" name="name" id="jabatan-modal-name" class="mt-1 block w-full rounded-lg" required>
+                    </div>
+                    <div>
+                        <label for="jabatan-modal-role" class="block text-sm font-medium text-gray-700">Peran (Role) <span class="text-red-500 font-bold">*</span></label>
+                        <select name="role" id="jabatan-modal-role" class="mt-1 block w-full rounded-lg" required>
+                            @php $availableRoles = \App\Models\User::getAvailableRoles(); @endphp
+                            <option value="">-- Pilih Peran --</option>
+                            @foreach($availableRoles as $role)
+                                <option value="{{ $role }}">{{ $role }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+                <div class="mt-6">
+                     <label for="jabatan-modal-can_manage_users" class="flex items-center">
+                        <input type="checkbox" name="can_manage_users" id="jabatan-modal-can_manage_users" value="1" class="rounded">
+                        <span class="ml-2 text-sm text-gray-600">Dapat Mengelola Pengguna (Izin Khusus)</span>
+                    </label>
+                </div>
+
+                <div class="flex items-center justify-end mt-8 pt-6 border-t">
+                    <button type="button" id="btn-cancel-modal" class="text-sm font-medium text-gray-700 mr-6">Batal</button>
+                    <button type="submit" class="inline-flex items-center px-5 py-2.5 bg-indigo-600 border rounded-md font-semibold text-xs text-white uppercase hover:bg-indigo-700">
+                        Simpan
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const formTambah = document.getElementById('form-tambah-jabatan');
     const jabatanList = document.getElementById('jabatan-list');
+    const modal = document.getElementById('jabatan-modal');
+    const modalForm = document.getElementById('jabatan-modal-form');
+    const modalTitle = document.getElementById('jabatan-modal-title');
+    const modalName = document.getElementById('jabatan-modal-name');
+    const modalRole = document.getElementById('jabatan-modal-role');
+    const modalCanManage = document.getElementById('jabatan-modal-can_manage_users');
+    const modalMethod = document.getElementById('jabatan-modal-method');
 
-    // Handle Add Jabatan
-    formTambah.addEventListener('submit', function (e) {
-        e.preventDefault();
+    const openModal = () => modal.style.display = 'flex';
+    const closeModal = () => modal.style.display = 'none';
 
-        const formData = new FormData(this);
-        const action = this.action;
-        const submitButton = this.querySelector('button[type="submit"]');
-        const originalButtonHtml = submitButton.innerHTML;
-
-        submitButton.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i> Menyimpan...`;
-        submitButton.disabled = true;
-
-        fetch(action, {
-            method: 'POST',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRF-TOKEN': formData.get('_token'),
-                'Accept': 'application/json',
-            },
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Remove placeholder if it exists
-                const placeholder = document.getElementById('no-jabatan-placeholder');
-                if (placeholder) {
-                    placeholder.remove();
-                }
-                // Add new item
-                jabatanList.insertAdjacentHTML('beforeend', data.html);
-                // Reset form
-                formTambah.reset();
-                // Optional: show success toast/notification
-                alert(data.message);
-            } else {
-                // Handle validation errors or other errors
-                let errorMessages = 'Terjadi kesalahan:\n';
-                if (data.errors) {
-                    for (const key in data.errors) {
-                        errorMessages += `- ${data.errors[key].join(', ')}\n`;
-                    }
-                } else {
-                    errorMessages += data.message || 'Tidak dapat menambahkan jabatan.';
-                }
-                alert(errorMessages);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Terjadi kesalahan koneksi.');
-        })
-        .finally(() => {
-            submitButton.innerHTML = originalButtonHtml;
-            submitButton.disabled = false;
-        });
+    document.getElementById('btn-add-jabatan').addEventListener('click', () => {
+        modalTitle.textContent = 'Tambah Jabatan Baru';
+        modalForm.action = '{{ route('admin.jabatans.store') }}';
+        modalMethod.value = 'POST';
+        modalForm.reset();
+        modalRole.disabled = false;
+        openModal();
     });
 
-    // Handle Delete Jabatan using Event Delegation
-    jabatanList.addEventListener('submit', function (e) {
-        if (e.target && e.target.classList.contains('form-delete-jabatan')) {
+    document.getElementById('btn-cancel-modal').addEventListener('click', closeModal);
+
+    jabatanList.addEventListener('click', async (e) => {
+        if (e.target.matches('a[href*="/edit"]')) {
             e.preventDefault();
+            const url = e.target.href.replace('/edit', '/json');
 
-            const form = e.target;
-            const action = form.action;
-            const formData = new FormData(form);
+            const response = await fetch(url);
+            const jabatan = await response.json();
 
+            modalTitle.textContent = 'Edit Jabatan';
+            modalForm.action = e.target.href.replace('/edit', '');
+            modalMethod.value = 'PUT';
+            modalName.value = jabatan.name;
+            modalRole.value = jabatan.role;
+            modalRole.disabled = true; // Role cannot be changed after creation
+            modalCanManage.checked = !!jabatan.can_manage_users;
+            openModal();
+        }
+
+        if (e.target.matches('.form-delete-jabatan button')) {
+            e.preventDefault();
+            const form = e.target.closest('form');
             if (confirm('Yakin ingin menghapus jabatan ini?')) {
-                fetch(action, {
-                    method: 'POST', // HTML forms don't support DELETE, so we use POST and a hidden _method field
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'X-CSRF-TOKEN': formData.get('_token'),
-                        'Accept': 'application/json',
-                    },
+                const formData = new FormData(form);
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json', 'X-CSRF-TOKEN': formData.get('_token') },
                     body: formData
-                })
-                .then(response => response.json().then(data => ({ status: response.status, body: data })))
-                .then(({ status, body }) => {
-                    if (body.success) {
-                        document.getElementById(`jabatan-${body.jabatan_id_placeholder || form.closest('li').id.split('-')[1]}`).remove();
-                        // Check if list is empty and add placeholder back
-                        if (jabatanList.children.length === 0) {
-                             const placeholderHtml = `<li class="text-center text-gray-500 py-4" id="no-jabatan-placeholder">Belum ada jabatan yang didefinisikan untuk unit ini.</li>`;
-                             jabatanList.insertAdjacentHTML('beforeend', placeholderHtml);
-                        }
-                        alert(body.message);
-                    } else {
-                        alert(body.message || 'Gagal menghapus jabatan.');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('Terjadi kesalahan koneksi saat menghapus.');
                 });
+                const data = await response.json();
+                if (response.ok && data.success) {
+                    document.getElementById(`jabatan-${data.deleted_id}`).remove();
+                    if (jabatanList.children.length === 0) {
+                        jabatanList.innerHTML = `<li class="text-center text-gray-500 py-4" id="no-jabatan-placeholder">Belum ada jabatan yang didefinisikan untuk unit ini.</li>`;
+                    }
+                    alert(data.message);
+                } else {
+                    alert(data.message || 'Gagal menghapus.');
+                }
             }
+        }
+    });
+
+    modalForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(modalForm);
+        const response = await fetch(modalForm.action, {
+            method: 'POST', // Always POST, method is spoofed by _method field
+            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json', 'X-CSRF-TOKEN': formData.get('_token') },
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+            if (modalMethod.value === 'POST') {
+                const placeholder = document.getElementById('no-jabatan-placeholder');
+                if (placeholder) placeholder.remove();
+                jabatanList.insertAdjacentHTML('beforeend', data.html);
+            } else { // PUT
+                const existingLi = document.getElementById(`jabatan-${data.html.match(/id="jabatan-(\d+)"/)[1]}`);
+                if(existingLi) existingLi.outerHTML = data.html;
+            }
+            alert(data.message);
+            closeModal();
+        } else {
+            let errorMessages = 'Terjadi kesalahan:\n';
+            if (data.errors) {
+                for (const key in data.errors) {
+                    errorMessages += `- ${data.errors[key].join(', ')}\n`;
+                }
+            } else {
+                errorMessages += data.message || 'Tidak dapat menyimpan jabatan.';
+            }
+            alert(errorMessages);
         }
     });
 });

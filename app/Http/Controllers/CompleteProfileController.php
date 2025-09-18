@@ -22,15 +22,12 @@ class CompleteProfileController extends Controller
         }
 
         $user = Auth::user();
-        // PERBAIKAN: Ambil semua unit dengan level 'Eselon I'
-        $eselonIUnits = Unit::where('level', 'Eselon I')->orderBy('name')->get();
+        // Get all Eselon I units by finding the children of the root unit.
+        $rootUnit = Unit::whereNull('parent_unit_id')->first();
+        $eselonIUnits = $rootUnit ? $rootUnit->childUnits()->orderBy('name')->get() : collect();
         $selectedUnitPath = [];
-        // These are required by the form partial but not strictly needed for this page's logic.
-        $supervisors = collect();
-        $jabatans = collect();
-
-
-        return view('profile.complete', compact('user', 'eselonIUnits', 'selectedUnitPath', 'supervisors', 'jabatans'));
+        // The form partial now handles cases where these are not passed.
+        return view('profile.complete', compact('user', 'eselonIUnits', 'selectedUnitPath'));
     }
 
     /**

@@ -241,6 +241,7 @@ Route::middleware(['auth', 'superadmin'])->prefix('admin')->name('admin.')->grou
     Route::resource('units', UnitController::class);
 
     // Refactored to use JabatanController
+    Route::get('jabatans/{jabatan}/json', [JabatanController::class, 'showJson'])->name('jabatans.json.show');
     Route::resource('jabatans', JabatanController::class)->except(['show']);
 
     // User Import Routes
