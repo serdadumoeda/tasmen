@@ -25,6 +25,15 @@
                     Kembali
                 </a>
             </div>
+
+            <!-- Search Input -->
+            <div class="mb-6 bg-white p-4 rounded-xl shadow-lg border border-gray-200">
+                <div class="flex items-center">
+                    <i class="fas fa-search text-gray-400 mr-3"></i>
+                    <input type="text" id="hierarchy-search" placeholder="Cari nama pengguna atau unit..." class="w-full border-0 focus:ring-0 text-sm">
+                </div>
+            </div>
+
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
                 <div class="p-6 bg-white border-b border-gray-200 space-y-4">
                     <h1 class="text-xl font-bold text-gray-800 flex items-center">
@@ -48,4 +57,69 @@
             </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const searchInput = document.getElementById('hierarchy-search');
+            const hierarchyContainer = document.querySelector('.p-6.bg-white');
+            const allUnits = Array.from(hierarchyContainer.querySelectorAll('.bg-gray-100.rounded-lg.border'));
+
+            searchInput.addEventListener('input', function () {
+                const searchTerm = this.value.toLowerCase().trim();
+
+                // If search is empty, show all and expand all, then exit
+                if (searchTerm === '') {
+                    allUnits.forEach(unitDiv => {
+                        unitDiv.style.display = '';
+                        const xData = unitDiv.__x.$data;
+                        if (xData && typeof xData.open !== 'undefined') {
+                            xData.open = true;
+                        }
+                    });
+                    return;
+                }
+
+                // Reverse iterate to handle children before parents
+                allUnits.slice().reverse().forEach(unitDiv => {
+                    let hasMatch = false;
+
+                    // Check unit title
+                    const unitTitle = unitDiv.querySelector('h4');
+                    if (unitTitle && unitTitle.textContent.toLowerCase().includes(searchTerm)) {
+                        hasMatch = true;
+                    }
+
+                    // Check users in this unit
+                    const usersInUnit = unitDiv.querySelectorAll('ul > li');
+                    usersInUnit.forEach(userLi => {
+                        if (userLi.textContent.toLowerCase().includes(searchTerm)) {
+                            hasMatch = true;
+                            userLi.style.display = ''; // Show matching user
+                        } else {
+                            userLi.style.display = 'none'; // Hide non-matching user
+                        }
+                    });
+
+                    // Check if any direct child unit is visible
+                    const childUnits = unitDiv.querySelectorAll(':scope > .p-4.border-t > .space-y-4 > .bg-gray-100');
+                    childUnits.forEach(childDiv => {
+                        if (childDiv.style.display !== 'none') {
+                            hasMatch = true;
+                        }
+                    });
+
+                    if (hasMatch) {
+                        unitDiv.style.display = '';
+                        // Also expand the unit to show the match
+                        const xData = unitDiv.__x.$data;
+                        if (xData && typeof xData.open !== 'undefined') {
+                            xData.open = true;
+                        }
+                    } else {
+                        unitDiv.style.display = 'none';
+                    }
+                });
+            });
+        });
+    </script>
 </x-app-layout>
