@@ -390,9 +390,9 @@ public function getInitialsAttribute(): string
     // Ambil huruf pertama dari kata pertama.
     $initials = mb_substr($words[0] ?? '', 0, 1);
 
-    // Jika ada lebih dari satu kata, ambil huruf pertama dari kata terakhir.
+    // Jika ada lebih dari satu kata, ambil huruf pertama dari kata kedua.
     if (count($words) > 1) {
-        $initials .= mb_substr(end($words), 0, 1);
+        $initials .= mb_substr($words[1], 0, 1);
     }
     // Jika hanya satu kata dan panjang, ambil dua huruf pertama.
     elseif (mb_strlen($words[0]) > 1) {
