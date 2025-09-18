@@ -242,7 +242,7 @@ Route::middleware(['auth', 'superadmin'])->prefix('admin')->name('admin.')->grou
     Route::resource('units', UnitController::class);
 
     // Refactored to use JabatanController
-    Route::resource('jabatans', JabatanController::class)->except(['show', 'edit', 'update']);
+    Route::resource('jabatans', JabatanController::class)->except(['show']);
 
     // User Import Routes
     Route::get('/users/import', [UserController::class, 'showImportForm'])->name('users.import.show');
