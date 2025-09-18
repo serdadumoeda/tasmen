@@ -136,6 +136,7 @@ function form_textarea($label, $name, $user, $is_required = false) {
         @endif
         @endcan
 
+        @if(!$isCompleteProfile)
         <div class="mb-4">
             <label for="password" class="block font-semibold text-sm text-gray-700 mb-1">Password</label>
             <input id="password" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300" type="password" name="password" autocomplete="new-password">
@@ -152,6 +153,7 @@ function form_textarea($label, $name, $user, $is_required = false) {
                 <option value="suspended" @selected(old('status', $user->status ?? '') == 'suspended')>Ditangguhkan</option>
             </select>
         </div>
+        @endif
     </div>
 </div>
 
@@ -199,7 +201,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let url = `/api/units/${unitId}/vacant-jabatans`;
         @if ($user->exists)
-            url += `?user_id={{ $user->id }}`;
+            if ('{{ $isCompleteProfile }}' !== '1') {
+                url += `?user_id={{ $user->id }}`;
+            }
         @endif
 
         const data = await fetchJson(url);
