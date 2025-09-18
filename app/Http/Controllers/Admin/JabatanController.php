@@ -66,6 +66,36 @@ class JabatanController extends Controller
 
 
     /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(Jabatan $jabatan)
+    {
+        $this->authorize('update', $jabatan->unit);
+        // No need to fetch roles here as we are not changing the role in this form.
+        return view('admin.jabatans.edit', compact('jabatan'));
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request $request, Jabatan $jabatan)
+    {
+        $this->authorize('update', $jabatan->unit);
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'can_manage_users' => ['nullable', 'boolean'],
+        ]);
+
+        $jabatan->update([
+            'name' => $validated['name'],
+            'can_manage_users' => $request->has('can_manage_users'),
+        ]);
+
+        return redirect()->route('admin.units.edit', $jabatan->unit_id)->with('success', 'Jabatan berhasil diperbarui.');
+    }
+
+    /**
      * Remove the specified resource from storage.
      */
     public function destroy(Jabatan $jabatan)
