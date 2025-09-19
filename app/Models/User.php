@@ -606,17 +606,25 @@ public function getAvatarColorsAttribute(): array
             // A top-level unit has 1 ancestor (itself). A child of it has 2, and so on.
             // We adjust the depth check to match this 1-based index.
             $depth = $user->unit->ancestors()->count();
-            $isStruktural = $user->unit->type === 'Struktural';
 
-            $newRoleName = match (true) {
-                $depth === 2 => 'Eselon I', // Level 1 parent + self = 2
-                $depth === 3 => 'Eselon II', // Level 2 parents + self = 3
-                $depth === 4 && $isStruktural => 'Eselon III',
-                $depth === 4 && !$isStruktural => 'Koordinator',
-                $depth === 5 && $isStruktural => 'Eselon IV',
-                $depth === 5 && !$isStruktural => 'Sub Koordinator',
+            $newRoleName = match ($depth) {
+                2 => 'Eselon I',
+                3 => 'Eselon II',
+                4 => 'Koordinator',
+                5 => 'Sub Koordinator',
                 default => 'Staf',
             };
+        }
+
+        // Apply structural-to-echelon mapping if applicable
+        if ($user->unit->type === 'Struktural') {
+            $roleMap = [
+                'Koordinator' => 'Eselon III',
+                'Sub Koordinator' => 'Eselon IV',
+            ];
+            if (isset($roleMap[$newRoleName])) {
+                $newRoleName = $roleMap[$newRoleName];
+            }
         }
 
         $newRole = Role::where('name', $newRoleName)->first();
