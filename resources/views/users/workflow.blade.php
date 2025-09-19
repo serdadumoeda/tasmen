@@ -17,23 +17,10 @@
                 </a>
             </div>
 
-            <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6 rounded-r-lg shadow">
-                <div class="flex">
-                    <div class="flex-shrink-0">
-                        <i class="fas fa-info-circle text-blue-500 fa-lg"></i>
-                    </div>
-                    <div class="ml-3">
-                        <p class="text-sm text-blue-700">
-                            Halaman ini berfokus pada siklus hidup pengguna (aktif, arsip, dll.). Untuk alur kerja terkait struktur organisasi, jabatan, dan penempatan pengguna, silakan lihat <a href="{{ route('admin.units.workflow') }}" class="font-bold underline hover:text-blue-900">Alur Kerja Manajemen Organisasi</a>.
-                        </p>
-                    </div>
-                </div>
-            </div>
-
             <x-card>
                 <div class="p-6">
-                    <h3 class="text-xl font-bold text-gray-800 mb-2">Dokumentasi Siklus Hidup Pengguna</h3>
-                    <p class="text-gray-600">Halaman ini berisi dokumentasi lengkap mengenai siklus hidup data pengguna di dalam sistem, mulai dari pembuatan, pembaruan, hingga pengarsipan dan penghapusan.</p>
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">Dokumentasi Alur Kerja Pengguna</h3>
+                    <p class="text-gray-600">Halaman ini berisi dokumentasi lengkap mengenai alur kerja Modul Manajemen Pengguna, mulai dari pembuatan, pembaruan, hingga pengarsipan dan penghapusan pengguna.</p>
                 </div>
             </x-card>
 

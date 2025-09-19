@@ -45,15 +45,6 @@ class TaskPolicy
     }
 
     /**
-     * Tentukan apakah pengguna dapat membuat tugas baru.
-     * Sesuai permintaan, semua pengguna bisa membuat tugas harian.
-     */
-    public function create(User $user): bool
-    {
-        return true;
-    }
-
-    /**
      * Tentukan apakah pengguna bisa mengupdate tugas.
      */
     public function update(User $user, Task $task): bool
