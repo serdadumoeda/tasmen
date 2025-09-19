@@ -118,6 +118,7 @@ class UserController extends Controller
             'unit_id' => ['required', 'exists:units,id'],
             'jabatan_name' => ['required', 'string', 'max:255'],
             'is_kepala_unit' => ['nullable', 'boolean'],
+            'can_manage_users' => ['nullable', 'boolean'],
             'atasan_id' => ['nullable', 'exists:users,id'],
             'status' => ['nullable', 'in:active,suspended'],
             'nip' => ['nullable', 'string', 'max:255', 'unique:'.User::class],
@@ -153,6 +154,7 @@ class UserController extends Controller
                 'name' => $userData['jabatan_name'],
                 'unit_id' => $userData['unit_id'],
                 'user_id' => $user->id,
+                'can_manage_users' => $request->boolean('can_manage_users'),
             ]);
 
             // Assign a default role
@@ -178,17 +180,17 @@ class UserController extends Controller
         $this->authorize('update', $user);
         $supervisors = User::where('id', '!=', $user->id)->orderBy('name')->get();
         $eselonIUnits = Unit::whereNull('parent_unit_id')->orderBy('name')->get();
-        $jabatans = Jabatan::orderBy('name')->get();
+        // $jabatans is no longer needed as it's a text input now.
 
         $selectedUnitPath = [];
         if ($user->unit) {
-            $user->load('unit');
-            $ancestors = $user->unit->ancestors()->orderBy('depth', 'asc')->get();
+            $user->load('unit.ancestors'); // Eager load ancestors
+            $ancestors = $user->unit->ancestors->sortBy('depth');
             $selectedUnitPath = $ancestors->pluck('id')->toArray();
             $selectedUnitPath[] = $user->unit->id;
         }
 
-        return view('users.edit', compact('user', 'supervisors', 'eselonIUnits', 'jabatans', 'selectedUnitPath'));
+        return view('users.edit', compact('user', 'supervisors', 'eselonIUnits', 'selectedUnitPath'));
     }
 
     public function profile(User $user)
@@ -218,6 +220,7 @@ class UserController extends Controller
             'unit_id' => ['required', 'exists:units,id'],
             'jabatan_name' => ['required', 'string', 'max:255'],
             'is_kepala_unit' => ['nullable', 'boolean'],
+            'can_manage_users' => ['nullable', 'boolean'],
             'atasan_id' => ['nullable', 'exists:users,id', 'not_in:'.$user->id],
             'status' => ['nullable', 'in:active,suspended'],
             'nip' => ['nullable', 'string', 'max:255', Rule::unique('users')->ignore($user->id)],
@@ -250,7 +253,7 @@ class UserController extends Controller
 
         DB::transaction(function () use ($user, $updateData, $request) {
             // Reset supervisor if the unit is changing
-            if ($user->unit_id !== $updateData['unit_id']) {
+            if ($user->unit_id !== (int)$updateData['unit_id']) {
                 $updateData['atasan_id'] = null;
             }
 
@@ -263,11 +266,12 @@ class UserController extends Controller
                 [
                     'name' => $updateData['jabatan_name'],
                     'unit_id' => $updateData['unit_id'],
+                    'can_manage_users' => $request->boolean('can_manage_users'),
                 ]
             );
 
             // Handle 'is_kepala_unit' logic
-            // First, if the user is currently a head of unit, nullify that
+            // First, if the user is currently a head of a unit, nullify that
             if ($user->unit && $user->unit->kepala_unit_id === $user->id) {
                 $user->unit->kepala_unit_id = null;
                 $user->unit->save();
