@@ -4,7 +4,21 @@ use App\Http\Controllers\Api\V1\ProjectApiController;
 use App\Http\Controllers\Api\V1\StatusController;
 use App\Http\Controllers\Api\V1\TaskApiController;
 use App\Http\Controllers\Api\V1\UserApiController;
+use App\Http\Controllers\Api\UnitApiController;
 use Illuminate\Support\Facades\Route;
+
+/*
+|--------------------------------------------------------------------------
+| Public API Routes (for internal UI)
+|--------------------------------------------------------------------------
+|
+| These routes are stateless and used by the frontend UI components.
+| They do not fall under the versioned API for external consumers.
+|
+*/
+Route::get('/units/eselon-i', [UnitApiController::class, 'getEselonIUnits']);
+Route::get('/units/{parentUnitId}/children', [UnitApiController::class, 'getChildUnits']);
+
 
 /*
 |--------------------------------------------------------------------------
