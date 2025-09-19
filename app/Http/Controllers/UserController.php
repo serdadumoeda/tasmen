@@ -113,6 +113,7 @@ class UserController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
+            'nik' => ['nullable', 'string', 'digits:16', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'unit_id' => ['required', 'exists:units,id'],
             'jabatan_name' => ['required', 'string', 'max:255'],
@@ -120,34 +121,56 @@ class UserController extends Controller
             'atasan_id' => ['nullable', 'exists:users,id'],
             'status' => ['nullable', 'in:active,suspended'],
             'nip' => ['required', 'string', 'max:255', 'unique:'.User::class],
+            'tempat_lahir' => ['nullable', 'string', 'max:255'],
+            'tgl_lahir' => ['required', 'date_format:Y-m-d'],
+            'alamat' => ['nullable', 'string'],
+            'jenis_kelamin' => ['nullable', 'in:L,P'],
+            'agama' => ['nullable', 'string', 'max:255'],
+            'golongan' => ['nullable', 'string', 'max:255'],
+            'eselon' => ['nullable', 'string', 'max:255'],
+            'tmt_eselon' => ['nullable', 'date_format:Y-m-d'],
+            'grade' => ['nullable', 'string', 'max:255'],
+            'no_hp' => ['nullable', 'string', 'max:255'],
+            'telepon' => ['nullable', 'string', 'max:255'],
+            'npwp' => ['nullable', 'string', 'max:255'],
+            'pendidikan_terakhir' => ['nullable', 'string', 'max:255'],
+            'pendidikan_jurusan' => ['nullable', 'string', 'max:255'],
+            'pendidikan_universitas' => ['nullable', 'string', 'max:255'],
+            'jenis_jabatan' => ['nullable', 'string', 'max:255'],
+            'tmt_cpns' => ['nullable', 'date_format:Y-m-d'],
+            'tmt_pns' => ['nullable', 'date_format:Y-m-d'],
         ]);
 
         $userData = $validated;
         $userData['password'] = Hash::make($validated['password']);
-        
+
         DB::transaction(function () use ($userData, $request) {
+            // Create the user first
             $user = User::create($userData);
 
-            Jabatan::create([
+            // Create the Jabatan and associate it with the user and unit
+            $jabatan = Jabatan::create([
                 'name' => $userData['jabatan_name'],
                 'unit_id' => $userData['unit_id'],
                 'user_id' => $user->id,
-                'role' => 'Staf', // Default role on admin creation
             ]);
 
+            // Assign a default role
             $stafRole = \App\Models\Role::where('name', 'Staf')->first();
             if ($stafRole) {
                 $user->roles()->attach($stafRole);
             }
 
+            // Handle 'is_kepala_unit'
             if ($request->boolean('is_kepala_unit') && $user->unit) {
                 $user->unit()->update(['kepala_unit_id' => $user->id]);
             }
 
-            User::recalculateAndSaveRole($user);
+            // Sync role from the unit's hierarchy expectations
+            User::syncRoleFromUnit($user);
         });
 
-        return redirect()->route('users.index')->with('success', 'User berhasil dibuat dan ditempatkan pada jabatan.');
+        return redirect()->route('users.index')->with('success', 'User berhasil dibuat dan jabatannya telah ditetapkan.');
     }
     
     public function edit(User $user)
@@ -190,6 +213,7 @@ class UserController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
+            'nik' => ['nullable', 'string', 'digits:16', Rule::unique('users', 'nik')->ignore($user->id)],
             'password' => ['nullable', 'confirmed', Rules\Password::defaults()],
             'unit_id' => ['required', 'exists:units,id'],
             'jabatan_name' => ['required', 'string', 'max:255'],
@@ -197,6 +221,24 @@ class UserController extends Controller
             'atasan_id' => ['nullable', 'exists:users,id', 'not_in:'.$user->id],
             'status' => ['nullable', 'in:active,suspended'],
             'nip' => ['required', 'string', 'max:255', Rule::unique('users')->ignore($user->id)],
+            'tempat_lahir' => ['nullable', 'string', 'max:255'],
+            'tgl_lahir' => ['required', 'date_format:Y-m-d'],
+            'alamat' => ['nullable', 'string'],
+            'jenis_kelamin' => ['nullable', 'in:L,P'],
+            'agama' => ['nullable', 'string', 'max:255'],
+            'golongan' => ['nullable', 'string', 'max:255'],
+            'eselon' => ['nullable', 'string', 'max:255'],
+            'tmt_eselon' => ['nullable', 'date_format:Y-m-d'],
+            'grade' => ['nullable', 'string', 'max:255'],
+            'no_hp' => ['nullable', 'string', 'max:255'],
+            'telepon' => ['nullable', 'string', 'max:255'],
+            'npwp' => ['nullable', 'string', 'max:255'],
+            'pendidikan_terakhir' => ['nullable', 'string', 'max:255'],
+            'pendidikan_jurusan' => ['nullable', 'string', 'max:255'],
+            'pendidikan_universitas' => ['nullable', 'string', 'max:255'],
+            'jenis_jabatan' => ['nullable', 'string', 'max:255'],
+            'tmt_cpns' => ['nullable', 'date_format:Y-m-d'],
+            'tmt_pns' => ['nullable', 'date_format:Y-m-d'],
         ]);
 
         $updateData = $validated;
@@ -207,29 +249,40 @@ class UserController extends Controller
         }
 
         DB::transaction(function () use ($user, $updateData, $request) {
+            // Reset supervisor if the unit is changing
+            if ($user->unit_id !== $updateData['unit_id']) {
+                $updateData['atasan_id'] = null;
+            }
+
+            // Update user data
             $user->update($updateData);
 
+            // Update or create the Jabatan
             $jabatan = Jabatan::updateOrCreate(
-                ['user_id' => $user->id],
+                ['user_id' => $user->id], // Find Jabatan by user_id
                 [
                     'name' => $updateData['jabatan_name'],
                     'unit_id' => $updateData['unit_id'],
-                    // If a Jabatan exists, we don't want to overwrite its role with a default.
-                    // If it's new, we default to Staf.
-                    'role' => optional($user->jabatan)->role ?? 'Staf'
                 ]
             );
 
-            if ($user->unit) {
-                if ($request->boolean('is_kepala_unit')) {
-                    $user->unit->kepala_unit_id = $user->id;
-                } elseif ($user->unit->kepala_unit_id === $user->id) {
-                    $user->unit->kepala_unit_id = null;
-                }
+            // Handle 'is_kepala_unit' logic
+            // First, if the user is currently a head of unit, nullify that
+            if ($user->unit && $user->unit->kepala_unit_id === $user->id) {
+                $user->unit->kepala_unit_id = null;
                 $user->unit->save();
             }
+            // Then, if the checkbox is checked, assign them as head of the new unit
+            if ($request->boolean('is_kepala_unit')) {
+                $newUnit = Unit::find($updateData['unit_id']);
+                if($newUnit) {
+                    $newUnit->kepala_unit_id = $user->id;
+                    $newUnit->save();
+                }
+            }
 
-            User::recalculateAndSaveRole($user);
+            // Sync role from the unit's hierarchy expectations
+            User::syncRoleFromUnit($user);
         });
 
         return redirect()->route('users.index')->with('success', 'User berhasil diperbarui.');

@@ -9,9 +9,8 @@
     </div>
 @endif
 
+{{-- Helper function for form fields --}}
 @php
-$isCompleteProfile = ($context ?? '') === 'complete_profile';
-
 function form_input($label, $name, $user, $type = 'text', $is_required = false, $extra_attrs = '') {
     $value = old($name, $user->{$name} ?? '');
     $required_attr = $is_required ? 'required' : '';
@@ -21,27 +20,60 @@ function form_input($label, $name, $user, $type = 'text', $is_required = false, 
     echo "<input id='{$name}' class='block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500' type='{$type}' name='{$name}' value='{$value}' {$required_attr} {$extra_attrs} />";
     echo "</div>";
 }
+function form_textarea($label, $name, $user, $is_required = false) {
+    $value = old($name, $user->{$name} ?? '');
+    $required_attr = $is_required ? 'required' : '';
+    $required_span = $is_required ? '<span class="text-red-500 font-bold">*</span>' : '';
+    echo "<div class='mb-4'>";
+    echo "<label for='{$name}' class='block font-semibold text-sm text-gray-700 mb-1'>{$label} {$required_span}</label>";
+    echo "<textarea id='{$name}' class='block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500' name='{$name}' {$required_attr}>{$value}</textarea>";
+    echo "</div>";
+}
 @endphp
 
-<div class="grid grid-cols-1 @if(!$isCompleteProfile) md:grid-cols-3 @endif gap-8">
-    @if(!$isCompleteProfile)
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+    {{-- Kolom Kiri: Informasi Pribadi --}}
     <div class="md:col-span-1">
         <h3 class="text-lg font-medium text-gray-900 border-b pb-2 mb-4">Informasi Pribadi</h3>
         {{ form_input('Nama Lengkap', 'name', $user, 'text', true, 'autofocus') }}
         {{ form_input('Email', 'email', $user, 'email', true) }}
+        {{ form_input('NIK', 'nik', $user, 'text', false, 'placeholder="16 digit NIK"') }}
         {{ form_input('NIP', 'nip', $user, 'text', true) }}
+        {{ form_input('Tempat Lahir', 'tempat_lahir', $user) }}
+        {{ form_input('Tgl. Lahir', 'tgl_lahir', $user, 'text', true, 'placeholder="YYYY-MM-DD"') }}
+        {{ form_textarea('Alamat', 'alamat', $user) }}
+        <div class="mb-4">
+            <label for="jenis_kelamin" class="block font-semibold text-sm text-gray-700 mb-1">Jenis Kelamin</label>
+            <select id="jenis_kelamin" name="jenis_kelamin" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500">
+                <option value="">-- Pilih --</option>
+                <option value="L" @selected(old('jenis_kelamin', $user->jenis_kelamin ?? '') == 'L')>Laki-laki</option>
+                <option value="P" @selected(old('jenis_kelamin', $user->jenis_kelamin ?? '') == 'P')>Perempuan</option>
+            </select>
+        </div>
+        {{ form_input('Agama', 'agama', $user) }}
+        {{ form_input('No. HP', 'no_hp', $user) }}
+        {{ form_input('Telepon', 'telepon', $user) }}
+        {{ form_input('NPWP', 'npwp', $user) }}
     </div>
+
+    {{-- Kolom Tengah: Informasi Kepegawaian --}}
     <div class="md:col-span-1">
         <h3 class="text-lg font-medium text-gray-900 border-b pb-2 mb-4">Informasi Kepegawaian</h3>
         {{ form_input('Golongan', 'golongan', $user) }}
         {{ form_input('Eselon', 'eselon', $user) }}
+        {{ form_input('TMT Eselon', 'tmt_eselon', $user, 'text', false, 'placeholder="YYYY-MM-DD"') }}
+        {{ form_input('Jenis Jabatan', 'jenis_jabatan', $user) }}
+        {{ form_input('Grade', 'grade', $user) }}
+        {{ form_input('Pendidikan Terakhir', 'pendidikan_terakhir', $user) }}
+        {{ form_input('Jurusan', 'pendidikan_jurusan', $user) }}
+        {{ form_input('Universitas', 'pendidikan_universitas', $user) }}
+        {{ form_input('TMT CPNS', 'tmt_cpns', $user, 'text', false, 'placeholder="YYYY-MM-DD"') }}
+        {{ form_input('TMT PNS', 'tmt_pns', $user, 'text', false, 'placeholder="YYYY-MM-DD"') }}
     </div>
-    @endif
 
+    {{-- Kolom Kanan: Unit & Akses --}}
     <div class="md:col-span-1">
-        <h3 class="text-lg font-medium text-gray-900 border-b pb-2 mb-4">Unit Kerja & Jabatan</h3>
-        <input type="hidden" name="unit_id" id="unit_id" value="{{ old('unit_id', $user->unit_id) }}">
-
+        <h3 class="text-lg font-medium text-gray-900 border-b pb-2 mb-4">Unit Kerja & Akses</h3>
         <div class="mb-4">
             <label for="eselon_i" class="block font-semibold text-sm text-gray-700 mb-1">1. Unit Eselon I</label>
             <select id="eselon_i" class="unit-select block mt-1 w-full rounded-lg shadow-sm border-gray-300" data-level="1" data-placeholder="-- Pilih Unit Eselon I --">
@@ -64,121 +96,155 @@ function form_input($label, $name, $user, $type = 'text', $is_required = false, 
             <label for="sub_koordinator" class="block font-semibold text-sm text-gray-700 mb-1">4. Sub Koordinator</label>
             <select id="sub_koordinator" class="unit-select block mt-1 w-full rounded-lg shadow-sm border-gray-300" data-level="4" data-placeholder="-- Pilih Sub Koordinator --" disabled><option value="">-- Pilih Koordinator Dahulu --</option></select>
         </div>
-
+        <input type="hidden" name="unit_id" id="unit_id" value="{{ old('unit_id', $user->unit_id ?? '') }}">
         <div class="mb-4">
             <label for="jabatan_name" class="block font-semibold text-sm text-gray-700 mb-1">5. Nama Jabatan <span class="text-red-500 font-bold">*</span></label>
-            <input type="text" name="jabatan_name" id="jabatan_name" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300" placeholder="Contoh: Analis Hukum Ahli Madya" value="{{ old('jabatan_name', optional($user->jabatan)->name) }}" required>
+            <input type="text" name="jabatan_name" id="jabatan_name" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500" value="{{ old('jabatan_name', optional($user->jabatan)->name ?? '') }}" required>
+            <p class="text-xs text-gray-500 mt-1">Jabatan akan dibuat atau diperbarui berdasarkan nama yang dimasukkan.</p>
+        </div>
+        <div class="mb-4">
+            <label for="atasan_id" class="block font-semibold text-sm text-gray-700 mb-1">Atasan Langsung</label>
+            <select name="atasan_id" id="atasan_id" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300">
+                 <option value="">-- Tidak ada --</option>
+                 @foreach($supervisors as $supervisor)
+                    <option value="{{ $supervisor->id }}" @selected(old('atasan_id', $user->atasan_id ?? '') == $supervisor->id)>{{ $supervisor->name }}</option>
+                @endforeach
+            </select>
         </div>
 
-        @if(!$isCompleteProfile)
-            <div class="mb-4">
-                <label for="atasan_id" class="block font-semibold text-sm text-gray-700 mb-1">Atasan Langsung</label>
-                <select name="atasan_id" id="atasan_id" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300">
-                     <option value="">-- Tidak ada --</option>
-                     @foreach($supervisors ?? [] as $supervisor)
-                        <option value="{{ $supervisor->id }}" @selected(old('atasan_id', $user->atasan_id ?? '') == $supervisor->id)>{{ $supervisor->name }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="mb-4">
-                <label for="password" class="block font-semibold text-sm text-gray-700 mb-1">Password</label>
-                <input id="password" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300" type="password" name="password" autocomplete="new-password">
-                @if($user->exists)<p class="text-xs text-gray-500 mt-1">Kosongkan jika tidak ingin mengubah.</p>@endif
-            </div>
-            <div class="mb-4">
-                <label for="password_confirmation" class="block font-semibold text-sm text-gray-700 mb-1">Konfirmasi Password</label>
-                <input id="password_confirmation" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300" type="password" name="password_confirmation">
-            </div>
-            <div class="mb-4">
-                <label for="status" class="block font-semibold text-sm text-gray-700 mb-1">Status</label>
-                <select name="status" id="status" required class="block mt-1 w-full rounded-lg shadow-sm border-gray-300">
-                    <option value="active" @selected(old('status', $user->status ?? 'active') == 'active')>Aktif</option>
-                    <option value="suspended" @selected(old('status', $user->status ?? '') == 'suspended')>Ditangguhkan</option>
-                </select>
-            </div>
+        @can('manageUsers', App\Models\User::class)
+        <div class="border-t my-6"></div>
+        <div class="mb-4">
+            <label for="is_kepala_unit" class="flex items-center">
+                <input type="checkbox" name="is_kepala_unit" id="is_kepala_unit" value="1" @checked(old('is_kepala_unit', $user->id && $user->unit && $user->id === $user->unit->kepala_unit_id)) class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500">
+                <span class="ml-2 text-sm text-gray-600 font-semibold">Jadikan Kepala Unit</span>
+            </label>
+            <p class="mt-1 text-xs text-gray-500 ml-6">Menetapkan pengguna ini sebagai kepala dari unit kerja mereka saat ini.</p>
+        </div>
+
+        @if ($user->exists)
+        <div class="mb-4">
+            <a href="{{ route('admin.users.leave-balance.edit', $user) }}" class="inline-flex items-center px-4 py-2 bg-slate-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-slate-700">
+                <i class="fas fa-calculator mr-2"></i> Atur Saldo Cuti
+            </a>
+            <p class="mt-1 text-xs text-gray-500">Mengatur sisa cuti tahunan dari tahun sebelumnya secara manual.</p>
+        </div>
         @endif
+        @endcan
+
+        <div class="mb-4">
+            <label for="password" class="block font-semibold text-sm text-gray-700 mb-1">Password</label>
+            <input id="password" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300" type="password" name="password" autocomplete="new-password">
+            @if($user->exists)<p class="text-xs text-gray-500 mt-1">Kosongkan jika tidak ingin mengubah.</p>@endif
+        </div>
+        <div class="mb-4">
+            <label for="password_confirmation" class="block font-semibold text-sm text-gray-700 mb-1">Konfirmasi Password</label>
+            <input id="password_confirmation" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300" type="password" name="password_confirmation">
+        </div>
+        <div class="mb-4">
+            <label for="status" class="block font-semibold text-sm text-gray-700 mb-1">Status</label>
+            <select name="status" id="status" required class="block mt-1 w-full rounded-lg shadow-sm border-gray-300">
+                <option value="active" @selected(old('status', $user->status ?? 'active') == 'active')>Aktif</option>
+                <option value="suspended" @selected(old('status', $user->status ?? '') == 'suspended')>Ditangguhkan</option>
+            </select>
+        </div>
     </div>
 </div>
 
 @push('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-    const isCompleteProfile = @json($isCompleteProfile);
+$(document).ready(function() {
+    const unitIdInput = $('#unit_id');
+    const unitSelects = $('.unit-select');
 
-    const unitSelects = document.querySelectorAll('.unit-select');
-    const unitIdInput = document.getElementById('unit_id');
-    const submitButton = document.getElementById('submit_button');
-    const jabatanNameInput = document.getElementById('jabatan_name');
+    const selectedUnitPath = @json($selectedUnitPath ?? []);
 
-    const checkFormValidity = () => {
-        if (!submitButton) return;
-        const unitIsSelected = unitIdInput.value !== '';
-        const jabatanIsFilled = jabatanNameInput.value.trim() !== '';
-        submitButton.disabled = !(unitIsSelected && jabatanIsFilled);
-    };
-
-    const fetchJson = async (url) => {
-        try {
-            const response = await fetch(url);
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            return await response.json();
-        } catch (e) {
-            console.error("Fetch error:", e);
-            return [];
-        }
-    };
-
-    const populateSelect = (selectEl, data, placeholder) => {
-        selectEl.innerHTML = `<option value="">${placeholder}</option>`;
-        if (data.length > 0) {
-            data.forEach(item => selectEl.add(new Option(item.name, item.id)));
-            selectEl.disabled = false;
-        } else {
-            selectEl.innerHTML = `<option value="">-- Tidak ada pilihan --</option>`;
-            selectEl.disabled = true;
-        }
-    };
-
-    const handleUnitSelectChange = async (event) => {
-        const selectEl = event.target;
-        const selectedUnitId = selectEl.value;
-        const level = parseInt(selectEl.dataset.level, 10);
-        let finalUnitId = '';
-
+    function resetSubsequentSelects(level) {
         for (let i = level; i < unitSelects.length; i++) {
-            const currentSelect = unitSelects[i];
-            currentSelect.innerHTML = `<option value="">${currentSelect.dataset.placeholder}</option>`;
-            currentSelect.disabled = true;
+            const select = $(unitSelects[i]);
+            const placeholder = select.data('placeholder');
+            select.empty().append(new Option(placeholder, '')).prop('disabled', true);
         }
+    }
 
-        if (selectedUnitId) {
-            finalUnitId = selectedUnitId;
-        } else if (level > 1) {
-            finalUnitId = unitSelects[level - 2].value;
-        }
+    unitSelects.on('change', function() {
+        const selectedValue = $(this).val();
+        const currentLevel = parseInt($(this).data('level'), 10);
 
-        unitIdInput.value = finalUnitId;
-        checkFormValidity();
+        unitIdInput.val(selectedValue); // Update the hidden input
+        resetSubsequentSelects(currentLevel);
 
-        if (selectedUnitId) {
-            const nextLevel = level + 1;
-            const nextSelect = document.querySelector(`.unit-select[data-level='${nextLevel}']`);
-            if (nextSelect) {
-                nextSelect.disabled = true;
-                nextSelect.innerHTML = `<option value="">-- Memuat... --</option>`;
-                const children = await fetchJson(`/api/units/${selectedUnitId}/children`);
-                populateSelect(nextSelect, children, nextSelect.dataset.placeholder);
+        if (!selectedValue) {
+            // If a select is cleared, the effective unit is the parent
+            if (currentLevel > 1) {
+                const prevSelect = $(unitSelects[currentLevel - 2]);
+                unitIdInput.val(prevSelect.val());
+            } else {
+                unitIdInput.val('');
             }
+            return;
         }
-    };
 
-    unitSelects.forEach(selectEl => {
-        selectEl.addEventListener('change', handleUnitSelectChange);
+        const nextLevel = currentLevel + 1;
+        const nextSelect = $(`.unit-select[data-level='${nextLevel}']`);
+
+        if (nextSelect.length) {
+            nextSelect.prop('disabled', true).html('<option value="">-- Memuat... --</option>');
+            $.ajax({
+                url: `/api/units/${selectedValue}/children`,
+                type: 'GET',
+                success: function(data) {
+                    const placeholder = nextSelect.data('placeholder');
+                    nextSelect.empty().append(new Option(placeholder, ''));
+                    if (data.length > 0) {
+                        $.each(data, function(key, unit) {
+                            nextSelect.append(new Option(unit.name, unit.id));
+                        });
+                        nextSelect.prop('disabled', false);
+                    } else {
+                        nextSelect.html(new Option('-- Tidak ada unit bawahan --', '')).prop('disabled', true);
+                    }
+                },
+                error: function() {
+                    nextSelect.html(new Option('-- Gagal memuat data --', '')).prop('disabled',true);
+                }
+            });
+        }
     });
 
-    if (jabatanNameInput) {
-        jabatanNameInput.addEventListener('input', checkFormValidity);
+    function initializePath() {
+        if (selectedUnitPath.length === 0) return;
+
+        let currentPromise = $.Deferred().resolve().promise();
+        selectedUnitPath.forEach((unitId, index) => {
+            currentPromise = currentPromise.then(() => {
+                return new Promise(resolve => {
+                    const select = $(unitSelects[index]);
+                    if(index > 0) {
+                        const observer = new MutationObserver((mutationsList, obs) => {
+                            for(const mutation of mutationsList) {
+                                if (mutation.type === 'childList' && select.find('option').length > 1) {
+                                    select.val(unitId);
+                                    obs.disconnect();
+                                    setTimeout(() => {
+                                        select.trigger('change');
+                                        resolve();
+                                    }, 50);
+                                    return;
+                                }
+                            }
+                        });
+                        observer.observe(select[0], { childList: true });
+                    } else {
+                        select.val(unitId).trigger('change');
+                        resolve();
+                    }
+                });
+            });
+        });
     }
+
+    initializePath();
 });
 </script>
 @endpush

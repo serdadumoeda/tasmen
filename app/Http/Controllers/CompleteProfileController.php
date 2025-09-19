@@ -21,8 +21,7 @@ class CompleteProfileController extends Controller
             return redirect()->route('dashboard');
         }
 
-        // PERBAIKAN: Ambil semua unit dengan level 'Eselon I'
-        $eselonIUnits = Unit::where('level', 'Eselon I')->orderBy('name')->get();
+        $eselonIUnits = Unit::whereNull('parent_unit_id')->orderBy('name')->get();
         $selectedUnitPath = []; // For the form partial
 
         return view('profile.complete', compact('eselonIUnits', 'selectedUnitPath'));
@@ -45,16 +44,21 @@ class CompleteProfileController extends Controller
         }
 
         DB::transaction(function () use ($validated, $user) {
+            // Create a new Jabatan for the user based on their input
             $jabatan = Jabatan::create([
                 'name' => $validated['jabatan_name'],
                 'unit_id' => $validated['unit_id'],
                 'user_id' => $user->id,
-                'role' => 'Staf', // Default role for self-completion
+                // Assign a default role since it's a self-service action
+                'role' => 'Staf',
             ]);
 
+            // Update the user's unit_id and recalculate their role based on hierarchy
             $user->unit_id = $validated['unit_id'];
             $user->save();
 
+            // This static method will set the user's main role (Eselon, etc.)
+            // based on the unit they joined, overriding the default 'Staf' if applicable.
             User::recalculateAndSaveRole($user);
         });
 
