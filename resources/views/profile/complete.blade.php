@@ -45,7 +45,7 @@
                             </div>
                             <div class="mb-4">
                                 <label for="jabatan_name" class="block font-semibold text-sm text-gray-700 mb-1">5. Nama Jabatan Anda <span class="text-red-500 font-bold">*</span></label>
-                                <input type="text" name="jabatan_name" id="jabatan_name" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300" placeholder="Contoh: Analis Hukum Ahli Madya" required disabled>
+                                <input type="text" name="jabatan_name" id="jabatan_name" required class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500" placeholder="Contoh: Analis Anggaran Ahli Pertama">
                                 <x-input-error :messages="$errors->get('jabatan_name')" class="mt-2" />
                             </div>
                             <input type="hidden" name="unit_id" id="unit_id" value="">
@@ -64,73 +64,80 @@
 
     @push('scripts')
     <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const unitSelects = document.querySelectorAll('.unit-select');
-        const unitIdInput = document.getElementById('unit_id');
-        const jabatanNameInput = document.getElementById('jabatan_name');
-        const submitButton = document.getElementById('submit_button');
+    $(document).ready(function() {
+        const unitIdInput = $('#unit_id');
+        const unitSelects = $('.unit-select');
+        const submitButton = $('#submit_button');
+        const jabatanNameInput = $('#jabatan_name');
 
-        const checkFormValidity = () => {
-            const unitIsSelected = unitIdInput.value !== '';
-            const jabatanIsFilled = jabatanNameInput.value.trim() !== '';
-            submitButton.disabled = !(unitIsSelected && jabatanIsFilled);
-        };
+        function checkFormValidity() {
+            const isUnitSelected = unitIdInput.val() !== '';
+            const isJabatanFilled = jabatanNameInput.val().trim() !== '';
+            submitButton.prop('disabled', !(isUnitSelected && isJabatanFilled));
+        }
 
-        const handleUnitSelectChange = async (event) => {
-            const selectEl = event.target;
-            const selectedUnitId = selectEl.value;
-            const level = parseInt(selectEl.dataset.level, 10);
-            let finalUnitId = '';
-
-            // Reset subsequent dropdowns
+        function resetSubsequentSelects(level) {
             for (let i = level; i < unitSelects.length; i++) {
-                const currentSelect = unitSelects[i];
-                currentSelect.innerHTML = `<option value="">${currentSelect.dataset.placeholder}</option>`;
-                currentSelect.disabled = true;
+                const select = $(unitSelects[i]);
+                const placeholder = select.data('placeholder');
+                select.empty().append(new Option(placeholder, '')).prop('disabled', true);
             }
-            jabatanNameInput.disabled = true;
-
-            if (selectedUnitId) {
-                finalUnitId = selectedUnitId;
-            } else if (level > 1) {
-                finalUnitId = unitSelects[level - 2].value;
-            }
-
-            unitIdInput.value = finalUnitId;
-            jabatanNameInput.disabled = !finalUnitId;
             checkFormValidity();
+        }
 
-            if (selectedUnitId) {
-                const nextLevel = level + 1;
-                const nextSelect = document.querySelector(`.unit-select[data-level='${nextLevel}']`);
-                if (nextSelect) {
-                    nextSelect.disabled = true;
-                    nextSelect.innerHTML = `<option value="">-- Memuat... --</option>`;
+        unitSelects.on('change', function() {
+            const selectedValue = $(this).val();
+            const currentLevel = parseInt($(this).data('level'), 10);
 
-                    try {
-                        const response = await fetch(`/api/units/${selectedUnitId}/children`);
-                        const children = await response.json();
+            unitIdInput.val(selectedValue);
+            resetSubsequentSelects(currentLevel);
 
-                        nextSelect.innerHTML = `<option value="">${nextSelect.dataset.placeholder}</option>`;
-                        if (children.length > 0) {
-                            children.forEach(item => nextSelect.add(new Option(item.name, item.id)));
-                            nextSelect.disabled = false;
-                        } else {
-                            nextSelect.innerHTML = `<option value="">-- Tidak ada unit bawahan --</option>`;
-                        }
-                    } catch (e) {
-                        console.error("Fetch error:", e);
-                        nextSelect.innerHTML = `<option value="">-- Gagal memuat data --</option>`;
-                    }
+            if (!selectedValue) {
+                if (currentLevel > 1) {
+                    const prevSelect = $(unitSelects[currentLevel - 2]);
+                    unitIdInput.val(prevSelect.val());
+                } else {
+                    unitIdInput.val('');
                 }
+                checkFormValidity();
+                return;
             }
-        };
 
-        unitSelects.forEach(selectEl => {
-            selectEl.addEventListener('change', handleUnitSelectChange);
+            checkFormValidity(); // A unit has been selected, check validity
+
+            const nextLevel = currentLevel + 1;
+            const nextSelect = $(`.unit-select[data-level='${nextLevel}']`);
+
+            if (nextSelect.length) {
+                nextSelect.prop('disabled', true).html('<option value="">-- Memuat... --</option>');
+                $.ajax({
+                    url: `/api/units/${selectedValue}/children`,
+                    type: 'GET',
+                    success: function(data) {
+                        const placeholder = nextSelect.data('placeholder');
+                        nextSelect.empty().append(new Option(placeholder, ''));
+                        if (data.length > 0) {
+                            $.each(data, function(key, unit) {
+                                nextSelect.append(new Option(unit.name, unit.id));
+                            });
+                            nextSelect.prop('disabled', false);
+                        } else {
+                            nextSelect.html(new Option('-- Tidak ada unit bawahan --', '')).prop('disabled', true);
+                        }
+                    },
+                    error: function() {
+                        nextSelect.html(new Option('-- Gagal memuat data --', '')).prop('disabled', true);
+                    }
+                });
+            }
         });
 
-        jabatanNameInput.addEventListener('input', checkFormValidity);
+        jabatanNameInput.on('input', function() {
+            checkFormValidity();
+        });
+
+        // Initial check
+        checkFormValidity();
     });
     </script>
     @endpush
