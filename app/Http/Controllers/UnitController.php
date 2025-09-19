@@ -75,7 +75,7 @@ class UnitController extends Controller
         $this->authorize('update', $unit);
 
         // Eager load relationships for efficiency
-        $unit->load('jabatans.user', 'jabatans.delegations.user', 'users', 'approvalWorkflow', 'parentUnitRecursive');
+        $unit->load('jabatans.user', 'jabatans.delegations.user', 'users.roles', 'approvalWorkflow', 'parentUnitRecursive');
 
         $units = Unit::where('id', '!=', $unit->id)->orderBy('name')->get();
         $workflows = ApprovalWorkflow::orderBy('name')->get();
