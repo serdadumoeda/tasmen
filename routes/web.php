@@ -89,6 +89,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/global-dashboard', [GlobalDashboardController::class, 'index'])->name('global.dashboard');
 
+    Route::get('users/hierarchy', [UserController::class, 'hierarchy'])->name('users.hierarchy');
     Route::get('users/modern', [UserController::class, 'modern'])->name('users.modern');
     Route::get('users/workflow', [UserController::class, 'showWorkflow'])->name('users.workflow');
 
@@ -241,8 +242,7 @@ Route::middleware(['auth', 'superadmin'])->prefix('admin')->name('admin.')->grou
     Route::resource('units', UnitController::class);
 
     // Refactored to use JabatanController
-    Route::get('jabatans/{jabatan}/json', [JabatanController::class, 'showJson'])->name('jabatans.json.show');
-    Route::resource('jabatans', JabatanController::class)->except(['show']);
+    Route::resource('jabatans', JabatanController::class)->except(['show', 'edit', 'update']);
 
     // User Import Routes
     Route::get('/users/import', [UserController::class, 'showImportForm'])->name('users.import.show');

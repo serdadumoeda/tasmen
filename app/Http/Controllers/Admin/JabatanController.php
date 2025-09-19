@@ -59,95 +59,25 @@ class JabatanController extends Controller
             'role' => $validated['role'],
         ];
 
-        $jabatan = $unit->jabatans()->create($dataToCreate);
-
-        if ($request->wantsJson()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Jabatan berhasil ditambahkan.',
-                'html' => view('admin.jabatans.partials._jabatan-list-item', compact('jabatan'))->render()
-            ]);
-        }
+        $unit->jabatans()->create($dataToCreate);
 
         return redirect()->route('admin.units.edit', $unit)->with('success', 'Jabatan berhasil ditambahkan.');
     }
 
 
     /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Jabatan $jabatan)
-    {
-        $this->authorize('update', $jabatan->unit);
-        // No need to fetch roles here as we are not changing the role in this form.
-        return view('admin.jabatans.edit', compact('jabatan'));
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function showJson(Jabatan $jabatan)
-    {
-        $this->authorize('update', $jabatan->unit);
-        return response()->json($jabatan);
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Jabatan $jabatan)
-    {
-        $this->authorize('update', $jabatan->unit);
-
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'can_manage_users' => ['nullable', 'boolean'],
-        ]);
-
-        $jabatan->update([
-            'name' => $validated['name'],
-            'can_manage_users' => $request->has('can_manage_users'),
-        ]);
-
-        if ($request->wantsJson()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Jabatan berhasil diperbarui.',
-                'html' => view('admin.jabatans.partials._jabatan-list-item', compact('jabatan'))->render()
-            ]);
-        }
-
-        return redirect()->route('admin.units.edit', $jabatan->unit_id)->with('success', 'Jabatan berhasil diperbarui.');
-    }
-
-    /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Request $request, Jabatan $jabatan)
+    public function destroy(Jabatan $jabatan)
     {
         $unit = $jabatan->unit;
         $this->authorize('update', $unit);
 
         if ($jabatan->user_id) {
-            if ($request->wantsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Tidak dapat menghapus jabatan yang masih diisi oleh pengguna.'
-                ], 422);
-            }
             return back()->with('error', 'Tidak dapat menghapus jabatan yang masih diisi oleh pengguna.');
         }
 
-        $jabatanId = $jabatan->id;
         $jabatan->delete();
-
-        if ($request->wantsJson()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Jabatan berhasil dihapus.',
-                'deleted_id' => $jabatanId
-            ]);
-        }
 
         return back()->with('success', 'Jabatan berhasil dihapus.');
     }

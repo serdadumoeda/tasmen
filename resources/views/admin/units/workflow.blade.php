@@ -2,7 +2,7 @@
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
             <i class="fas fa-sitemap mr-2"></i>
-            {{ __('Alur Kerja Manajemen Organisasi') }}
+            {{ __('Alur Kerja Manajemen Unit Kerja') }}
         </h2>
     </x-slot>
 
@@ -19,15 +19,15 @@
 
             <x-card>
                 <div class="p-6">
-                    <h3 class="text-xl font-bold text-gray-800 mb-2">Dokumentasi Alur Kerja Terpadu</h3>
-                    <p class="text-gray-600">Halaman ini menjelaskan alur kerja terpadu untuk mengelola seluruh struktur organisasi, yang mencakup Unit Kerja, Jabatan, dan penempatan Pengguna di dalamnya. Halaman utama **Manajemen Unit** adalah pusat dari semua aktivitas ini.</p>
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">Dokumentasi Alur Kerja Unit Kerja</h3>
+                    <p class="text-gray-600">Halaman ini menjelaskan proses pengelolaan unit kerja, dari pembuatan unit baru, pengeditan, hingga penghapusan, serta bagaimana struktur organisasi dikelola.</p>
                 </div>
             </x-card>
 
             <x-card>
                 <div class="p-6">
-                    <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Flowchart Alur Kerja Organisasi</h3>
-                    <p class="text-gray-600 mb-6">Flowchart ini merinci keseluruhan proses utama dalam pengelolaan struktur organisasi dari halaman utama Manajemen Unit.</p>
+                    <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Flowchart Alur Kerja</h3>
+                    <p class="text-gray-600 mb-6">Flowchart ini merinci keseluruhan proses utama dalam pengelolaan data unit kerja.</p>
                     <div class="p-4 bg-gray-50 rounded-lg text-center">
                         <pre class="mermaid">
 graph TD
@@ -35,31 +35,38 @@ graph TD
     classDef action fill:#FEF9E7,stroke:#F1C40F,color:#B7950B;
     classDef process fill:#E8F8F5,stroke:#1ABC9C,color:#148F77;
     classDef decision fill:#FDEDEC,stroke:#C0392B,color:#A93226;
-    classDef data fill:#F5EEF8,stroke:#9B59B6,color:#7D3C98;
 
-    subgraph "Manajemen Unit (Tampilan Hierarki)"
-        Start[Mulai] --> A(Buka Manajemen Unit):::page;
-        A --> B{Pilih Aksi}:::decision;
-        B -- "Tambah Unit Baru" --> C(Form Tambah Unit):::page;
-        B -- "Edit Unit" --> D(Masuk ke Halaman Edit Unit):::action;
-        B -- "Tambah Pengguna ke Unit" --> E(Buka Modal Tambah Pengguna):::action;
-        C --> F(Simpan Unit):::process --> A;
-        E --> G(Pilih Pengguna & Simpan):::process --> A;
+    subgraph sg1 [Aksi Utama]
+        A[Mulai] --> B(Menu Manajemen Unit):::page;
+        B --> C(Daftar Unit Kerja):::page;
+        C --> D{Pilih Aksi}:::decision;
+        D -- Tambah --> E(Tambah Unit Baru):::action;
+        D -- Edit --> F(Edit Unit):::action;
+        D -- Hapus --> G(Hapus Unit):::action;
     end
 
-    subgraph "Halaman Edit Unit"
-        D --> H(Daftar Jabatan di Unit Ini):::page;
-        H --> I{Pilih Aksi Jabatan}:::decision;
-        I -- "Tambah Jabatan" --> J(Isi Form Jabatan):::page --> K(Simpan Jabatan):::process --> D;
-        I -- "Edit Jabatan" --> L(Form Edit Jabatan):::page --> M(Update Jabatan):::process --> D;
+    subgraph sg2 [Proses Tambah/Edit]
+        E --> H(Isi Form Data Unit):::page;
+        F --> H;
+        H --> I{Data Valid?}:::decision;
+        I -- Ya --> J(Simpan/Update Unit):::process;
+        I -- Tidak --> K(Tampilkan Error):::process;
+        J --> C;
+        K --> H;
     end
 
-    subgraph "Manajemen Pengguna (Tampilan Daftar)"
-        X(Menu Manajemen Pengguna):::page --> Y(Daftar Pengguna):::page;
-        Y -- "Struktur Organisasi" --> A;
+    subgraph sg3 [Proses Hapus]
+        G --> L{Konfirmasi Hapus?}:::decision;
+        L -- Ya --> M{Cek Ketergantungan?}:::decision;
+        L -- Tidak --> C;
+        M -- Ada --> N(Hapus Gagal):::process;
+        M -- Tidak Ada --> O(Hapus Unit dari DB):::process;
+        N --> C;
+        O --> C;
     end
 
-    Start --> X;
+    C --> Z[Selesai];
+
                         </pre>
                     </div>
                 </div>
@@ -70,25 +77,16 @@ graph TD
                     <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Deskripsi Alur Kerja</h3>
                     <div class="prose max-w-none text-gray-700 space-y-4">
                         <div>
-                            <h4 class="font-semibold text-gray-800">1. Pusat Manajemen Organisasi</h4>
-                            <p>Menu <strong>Manajemen Unit</strong> kini menjadi pusat untuk melihat dan mengelola seluruh struktur organisasi. Halaman ini menampilkan hierarki unit kerja dalam bentuk pohon interaktif yang dapat dicari. Dari sini, Admin dapat melakukan aksi-aksi utama:</p>
-                            <ul class="list-disc list-inside ml-4 space-y-2">
-                                <li><strong>Tambah Unit Baru</strong>: Membuat unit kerja baru di tingkat paling atas.</li>
-                                <li><strong>Edit Unit</strong>: Membuka halaman detail sebuah unit untuk mengelola informasi spesifik unit tersebut serta jabatan di dalamnya.</li>
-                                <li><strong>Tambah Pengguna ke Unit</strong>: Membuka jendela modal untuk menempatkan pengguna yang belum memiliki jabatan langsung ke dalam sebuah unit.</li>
-                            </ul>
+                            <h4 class="font-semibold text-gray-800">1. Akses & Tampilan Utama</h4>
+                            <p>Admin mengakses menu <strong>Manajemen Unit</strong> untuk melihat daftar semua unit kerja yang ada dalam sistem.</p>
                         </div>
                         <div>
-                            <h4 class="font-semibold text-gray-800">2. Mengelola Jabatan di Dalam Unit</h4>
-                            <p>Setelah masuk ke halaman <strong>Edit Unit</strong>, Admin dapat mengelola daftar jabatan yang ada di dalam unit tersebut.</p>
-                             <ul class="list-disc list-inside ml-4 space-y-2">
-                                <li><strong>Tambah Jabatan</strong>: Membuat posisi atau jabatan baru yang terikat pada unit tersebut.</li>
-                                <li><strong>Edit Jabatan</strong>: Mengubah nama jabatan dan memberikan izin khusus seperti "Dapat Mengelola Pengguna".</li>
-                            </ul>
+                            <h4 class="font-semibold text-gray-800">2. Tambah & Edit Unit Kerja</h4>
+                            <p>Admin dapat membuat unit kerja baru atau mengubah yang sudah ada dengan mengisi formulir yang berisi informasi seperti Nama Unit, Induk Unit, dan Kepala Unit.</p>
                         </div>
-                        <div>
-                            <h4 class="font-semibold text-gray-800">3. Hubungan dengan Manajemen Pengguna</h4>
-                            <p>Menu <strong>Manajemen Pengguna</strong> tetap menjadi tempat utama untuk mengelola data individual pengguna (seperti NIK, NIP, profil, dll.) dalam format tabel. Untuk melihat posisi pengguna dalam struktur, tombol <strong>"Struktur Organisasi"</strong> akan mengarahkan Admin kembali ke halaman utama Manajemen Unit.</p>
+                         <div>
+                            <h4 class="font-semibold text-gray-800">3. Hapus Unit Kerja</h4>
+                            <p>Sebelum menghapus sebuah unit, sistem melakukan validasi penting untuk menjaga integritas data. Sistem akan memeriksa apakah masih ada sub-unit, jabatan, atau pegawai yang terikat pada unit tersebut. Jika ada, penghapusan akan dibatalkan.</p>
                         </div>
                     </div>
                 </div>
