@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Unit;
+use App\Models\User;
 use App\Models\Jabatan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
