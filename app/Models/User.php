@@ -607,6 +607,7 @@ public function getAvatarColorsAttribute(): array
             // We adjust the depth check to match this 1-based index.
             $depth = $user->unit->ancestors()->count();
 
+            // Determine the base functional role based on depth
             $newRoleName = match ($depth) {
                 2 => 'Eselon I',
                 3 => 'Eselon II',
@@ -616,12 +617,13 @@ public function getAvatarColorsAttribute(): array
             };
         }
 
-        // Apply structural-to-echelon mapping if applicable
+        // If the unit is 'Struktural', map functional roles to their Eselon equivalents.
         if ($user->unit->type === 'Struktural') {
             $roleMap = [
                 'Koordinator' => 'Eselon III',
                 'Sub Koordinator' => 'Eselon IV',
             ];
+            // If the current role exists in our map, transform it.
             if (isset($roleMap[$newRoleName])) {
                 $newRoleName = $roleMap[$newRoleName];
             }

@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Unit;
-use App\Models\User;
 use App\Models\Jabatan;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
@@ -22,8 +22,7 @@ class CompleteProfileController extends Controller
             return redirect()->route('dashboard');
         }
 
-        $rootUnit = Unit::whereNull('parent_unit_id')->first();
-        $eselonIUnits = $rootUnit ? $rootUnit->childUnits()->orderBy('name')->get() : collect();
+        $eselonIUnits = Unit::whereNull('parent_unit_id')->orderBy('name')->get();
         $selectedUnitPath = []; // For the form partial
 
         return view('profile.complete', compact('eselonIUnits', 'selectedUnitPath'));
@@ -51,8 +50,6 @@ class CompleteProfileController extends Controller
                 'name' => $validated['jabatan_name'],
                 'unit_id' => $validated['unit_id'],
                 'user_id' => $user->id,
-                // Assign a default role since it's a self-service action
-                'role' => 'Staf',
             ]);
 
             // Update the user's unit_id and recalculate their role based on hierarchy
@@ -60,8 +57,8 @@ class CompleteProfileController extends Controller
             $user->save();
 
             // This static method will set the user's main role (Eselon, etc.)
-            // based on the unit they joined, overriding the default 'Staf' if applicable.
-            User::recalculateAndSaveRole($user);
+            // based on the unit they joined.
+            User::syncRoleFromUnit($user);
         });
 
         return redirect()->route('dashboard')->with('success', 'Profil Anda telah berhasil diperbarui!');
