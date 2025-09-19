@@ -14,9 +14,15 @@ class UnitApiController extends Controller
         return response()->json($units);
     }
 
-    public function getChildUnits(Unit $parentUnit)
+    public function getChildUnits($parentUnitId)
     {
-        $childUnits = $parentUnit->childUnits;
+        $parentUnit = Unit::find($parentUnitId);
+
+        if (!$parentUnit) {
+            return response()->json([]);
+        }
+
+        $childUnits = $parentUnit->childUnits()->orderBy('name')->get();
         return response()->json($childUnits);
     }
 }

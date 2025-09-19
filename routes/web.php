@@ -233,7 +233,7 @@ Route::get('/surat/verify/{id}', [SuratVerificationController::class, 'verify'])
 
 // API routes for units, accessible without authentication
 Route::get('/api/units/eselon-i', [UnitApiController::class, 'getEselonIUnits']);
-Route::get('/api/units/{parentUnit}/children', [UnitApiController::class, 'getChildUnits']);
+Route::get('/api/units/{parentUnitId}/children', [UnitApiController::class, 'getChildUnits']);
 
 Route::middleware(['auth', 'superadmin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('units/workflow', [UnitController::class, 'showWorkflow'])->name('units.workflow');
