@@ -49,16 +49,21 @@ class UserPolicy
     {
         // Delegated admin with Eselon II scope
         if ($user->jabatan?->can_manage_users) {
-            $userEselonII = $user->unit?->getEselonIIAncestor();
-            $modelEselonII = $model->unit?->getEselonIIAncestor();
+            $managerEselonIIUnit = $user->unit?->getEselonIIAncestor();
 
-            // Allow if both are in the same Eselon II unit branch
-            if ($userEselonII && $modelEselonII && $userEselonII->id === $modelEselonII->id) {
-                return true;
+            if ($managerEselonIIUnit) {
+                // Get all unit IDs under the manager's Eselon II scope.
+                $authorizedUnitIds = $managerEselonIIUnit->descendants()->pluck('id');
+                $authorizedUnitIds->push($managerEselonIIUnit->id); // Include the Eselon II unit itself.
+
+                // Check if the target user's unit is within that scope.
+                if ($model->unit_id && $authorizedUnitIds->contains($model->unit_id)) {
+                    return true;
+                }
             }
         }
 
-        // Default logic: a user can edit their own subordinates.
+        // Default logic: a user can edit their own direct subordinates.
         return $model->isSubordinateOf($user);
     }
 
@@ -71,17 +76,23 @@ class UserPolicy
             return false; // Cannot deactivate self
         }
 
-        // Delegated admin with Eselon II scope can deactivate within their scope
+        // Delegated admin with Eselon II scope
         if ($user->jabatan?->can_manage_users) {
-            $userEselonII = $user->unit?->getEselonIIAncestor();
-            $modelEselonII = $model->unit?->getEselonIIAncestor();
+            $managerEselonIIUnit = $user->unit?->getEselonIIAncestor();
 
-            if ($userEselonII && $modelEselonII && $userEselonII->id === $modelEselonII->id) {
-                return true;
+            if ($managerEselonIIUnit) {
+                // Get all unit IDs under the manager's Eselon II scope.
+                $authorizedUnitIds = $managerEselonIIUnit->descendants()->pluck('id');
+                $authorizedUnitIds->push($managerEselonIIUnit->id);
+
+                // Check if the target user's unit is within that scope.
+                if ($model->unit_id && $authorizedUnitIds->contains($model->unit_id)) {
+                    return true;
+                }
             }
         }
 
-        // A manager can deactivate their own subordinates.
+        // A manager can deactivate their own direct subordinates.
         return $model->isSubordinateOf($user);
     }
 
