@@ -131,6 +131,14 @@ function form_textarea($label, $name, $user, $is_required = false) {
             <p class="mt-1 text-xs text-gray-500 ml-6">Menetapkan pengguna ini sebagai kepala dari unit kerja mereka saat ini.</p>
         </div>
 
+        {{-- Can Manage Users Checkbox --}}
+        <div class="mb-4">
+            <label for="can_manage_users" class="flex items-center">
+                <input type="checkbox" name="can_manage_users" id="can_manage_users" value="1" @checked(old('can_manage_users', optional($user->jabatan)->can_manage_users)) class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500">
+                <span class="ml-2 text-sm text-gray-600 font-semibold">Dapat Mengelola Pengguna (Izin Khusus)</span>
+            </label>
+            <p class="mt-1 text-xs text-gray-500 ml-6">Memberikan izin untuk menambah/mengubah pengguna di dalam unit kerjanya.</p>
+        </div>
 
         @if ($user->exists)
         <div class="mb-4">
