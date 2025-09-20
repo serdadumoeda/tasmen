@@ -590,36 +590,16 @@ public function getAvatarColorsAttribute(): array
      */
     public static function syncRoleFromUnit(User $user): void
     {
-        // If the user is a structural employee with a defined Eselon, their role is determined by that Eselon.
-        // We should not attempt to derive it from the unit hierarchy.
-        if ($user->jenis_jabatan === 'Struktural' && !empty($user->eselon)) {
-            $roleName = match ($user->eselon) {
-                '1-A' => 'Eselon I',
-                '2-A' => 'Eselon II',
-                '3-A' => 'Eselon III',
-                '4-A' => 'Eselon IV',
-                default => null,
-            };
-
-            if ($roleName) {
-                $newRole = Role::where('name', $roleName)->first();
-                if ($newRole) {
-                    $user->roles()->sync([$newRole->id]);
-                }
-            }
-            // If there's a structural role, we stop here.
-            return;
-        }
-
-        // The rest of the function handles functional roles or cases where the role is derived from being a unit head.
+        // Find the unit where this user is the designated head.
         $unitHeaded = Unit::where('kepala_unit_id', $user->id)->first();
 
-        // If the user is not a head of any unit, no role change is needed based on this logic.
+        // If the user is not a head of any unit, DO NOTHING.
+        // This is the critical fix to prevent non-heads from being demoted to 'Staf'.
         if (!$unitHeaded) {
             return;
         }
 
-        // The depth is the number of ancestors.
+        // The depth is the number of ancestors, which is 1-based (root is 1).
         $depth = $unitHeaded->ancestors()->count();
 
         // Determine the base functional role based on the depth of the unit they lead.
@@ -628,16 +608,16 @@ public function getAvatarColorsAttribute(): array
             3 => 'Eselon II',
             4 => 'Koordinator',
             5 => 'Sub Koordinator',
-            default => 'Staf',
+            default => 'Staf', // Fallback for heads of other units (e.g., root)
         };
 
         // If the unit is 'Struktural', map functional roles to their Eselon equivalents.
-        // This part is now less likely to be hit by structural employees with an Eselon value.
         if ($unitHeaded->type === 'Struktural') {
             $roleMap = [
                 'Koordinator' => 'Eselon III',
                 'Sub Koordinator' => 'Eselon IV',
             ];
+            // If the current role exists in our map, transform it.
             if (isset($roleMap[$newRoleName])) {
                 $newRoleName = $roleMap[$newRoleName];
             }
@@ -648,6 +628,8 @@ public function getAvatarColorsAttribute(): array
         if ($newRole) {
             $user->roles()->sync([$newRole->id]);
         } else {
+            // As a fallback, if the calculated role name doesn't exist in the roles table,
+            // we can assign 'Staf' to prevent an error, but this should be a rare case for a unit head.
             $stafRole = Role::where('name', 'Staf')->first();
             if ($stafRole) {
                 $user->roles()->sync([$stafRole->id]);
