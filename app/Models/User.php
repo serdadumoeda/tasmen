@@ -320,18 +320,13 @@ class User extends Authenticatable
             $this->load('roles');
         }
 
-        // Superadmin role has universal access, this is a fallback for UI checks.
+        // Superadmin role has universal access.
         if ($this->hasRole('Superadmin')) {
             return true;
         }
+
         // For other roles, check for the explicit permission flag.
         return $this->roles->some('can_manage_users_in_unit', true);
-    }
-
-    public function canManageLeaveSettings(): bool
-    {
-        // This permission is now fully governed by the canManageUsers logic.
-        return $this->canManageUsers();
     }
 
     public function isSuperAdmin(): bool
@@ -356,7 +351,7 @@ class User extends Authenticatable
             return true;
         }
 
-        // Fallback checks for other types of managers.
+        // Fallback checks for other types of managers (structural or functional project leads).
         $isStructuralManager = $this->hasRole(['Menteri', 'Eselon I', 'Eselon II', 'Koordinator', 'Sub Koordinator']);
         $isFunctionalManager = $this->ledProjects()->exists();
 
@@ -595,8 +590,7 @@ public function getAvatarColorsAttribute(): array
      */
     public static function syncRoleFromUnit(User $user): void
     {
-        $user->load('unit', 'roles'); // Eager load necessary relationships
-
+        $user->load('unit'); // Explicitly reload the relationship to prevent using stale data.
         if (!$user->unit) {
             $stafRole = Role::where('name', 'Staf')->first();
             if ($stafRole) {
@@ -605,48 +599,40 @@ public function getAvatarColorsAttribute(): array
             return;
         }
 
+        $isHeadOfUnit = $user->unit->kepala_unit_id === $user->id;
         $newRoleName = 'Staf'; // Default role
 
-        // New logic as per user request for Struktural units
-        if ($user->unit->type === 'Struktural' && !empty($user->eselon)) {
-            // Directly use the eselon number from the user's profile
-            $newRoleName = 'Eselon ' . $user->eselon;
-        } else {
-            // Fallback to existing logic for Fungsional units or if eselon field is empty
-            $isHeadOfUnit = $user->unit->kepala_unit_id === $user->id;
-            if ($isHeadOfUnit) {
-                // The depth is 1-based (root is 1, Eselon I is 2, etc.)
-                $depth = $user->unit->ancestors()->count();
+        if ($isHeadOfUnit) {
+            // The `ancestors()` method includes the unit itself, so the depth count is off by 1.
+            // A top-level unit has 1 ancestor (itself). A child of it has 2, and so on.
+            // We adjust the depth check to match this 1-based index.
+            $depth = $user->unit->ancestors()->count();
 
-                $newRoleName = match ($depth) {
-                    1 => 'Menteri',
-                    2 => 'Eselon I',
-                    3 => 'Eselon II',
-                    4 => 'Koordinator',
-                    5 => 'Sub Koordinator',
-                    default => 'Staf',
-                };
+            // Determine the base functional role based on depth
+            $newRoleName = match ($depth) {
+                2 => 'Eselon I',
+                3 => 'Eselon II',
+                4 => 'Koordinator',
+                5 => 'Sub Koordinator',
+                default => 'Staf',
+            };
+        }
+
+        // If the unit is 'Struktural', map functional roles to their Eselon equivalents.
+        if ($user->unit->type === 'Struktural') {
+            $roleMap = [
+                'Koordinator' => 'Eselon III',
+                'Sub Koordinator' => 'Eselon IV',
+            ];
+            // If the current role exists in our map, transform it.
+            if (isset($roleMap[$newRoleName])) {
+                $newRoleName = $roleMap[$newRoleName];
             }
         }
 
         $newRole = Role::where('name', $newRoleName)->first();
-
-        // Preserve administrative or other special roles.
-        // Get all currently assigned roles that are NOT structural/functional.
-        $specialRoles = $user->roles->filter(function ($role) {
-            // A special role is one that has specific permissions or is not a standard structural/functional role.
-            // For now, we define this as any role with `can_manage_users_in_unit` = true.
-            return $role->can_manage_users_in_unit;
-        });
-
         if ($newRole) {
-            // Add the new structural/functional role to the list of special roles.
-            $rolesToSync = $specialRoles->push($newRole)->unique('id')->pluck('id');
-            $user->roles()->sync($rolesToSync);
-        } else {
-            // If the calculated role doesn't exist, just re-sync the existing special roles
-            // to ensure nothing is lost.
-            $user->roles()->sync($specialRoles->pluck('id'));
+            $user->roles()->sync([$newRole->id]);
         }
     }
 

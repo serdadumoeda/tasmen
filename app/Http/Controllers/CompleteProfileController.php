@@ -22,9 +22,7 @@ class CompleteProfileController extends Controller
             return redirect()->route('dashboard');
         }
 
-        // Find the root unit (Kementerian) and get its direct children (Eselon I)
-        $rootUnit = Unit::whereNull('parent_unit_id')->first();
-        $eselonIUnits = $rootUnit ? $rootUnit->childUnits()->orderBy('name')->get() : collect();
+        $eselonIUnits = Unit::whereNull('parent_unit_id')->orderBy('name')->get();
         $selectedUnitPath = []; // For the form partial
 
         return view('profile.complete', compact('eselonIUnits', 'selectedUnitPath'));
