@@ -405,6 +405,11 @@ class UserController extends Controller
             return redirect()->route('users.index')->with('error', 'Tidak dapat meniru pengguna yang belum memverifikasi emailnya.');
         }
 
+        // Mencegah infinite loop dengan melarang impersonate user yang profilnya belum lengkap.
+        if (is_null($user->unit_id)) {
+            return redirect()->route('users.index')->with('error', 'Tidak dapat meniru pengguna dengan profil yang belum lengkap.');
+        }
+
         $impersonatorId = Auth::id();
         
         Auth::login($user);
