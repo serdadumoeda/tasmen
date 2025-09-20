@@ -183,7 +183,7 @@ class UserController extends Controller
         // Asumsi hanya ada satu root unit (Kementerian)
         $rootUnit = Unit::whereNull('parent_unit_id')->first();
         // Ambil anak-anaknya sebagai unit Eselon I
-        $eselonIUnits = $rootUnit ? $rootUnit->children()->orderBy('name')->get() : collect();
+        $eselonIUnits = $rootUnit ? $rootUnit->childUnits()->orderBy('name')->get() : collect();
 
         $selectedUnitPath = [];
         if ($user->unit) {
