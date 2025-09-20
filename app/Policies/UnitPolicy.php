@@ -42,7 +42,8 @@ class UnitPolicy
      */
     public function create(User $user): bool
     {
-        return false; // Hanya superadmin (ditangani di before())
+        // Allow if user is a delegated admin.
+        return $user->jabatan?->can_manage_users ?? false;
     }
 
     /**
@@ -50,7 +51,8 @@ class UnitPolicy
      */
     public function update(User $user, Unit $unit): bool
     {
-        return false; // Hanya superadmin (ditangani di before())
+        // Allow if user is a delegated admin.
+        return $user->jabatan?->can_manage_users ?? false;
     }
 
     /**
@@ -58,6 +60,7 @@ class UnitPolicy
      */
     public function delete(User $user, Unit $unit): bool
     {
-        return false; // Hanya superadmin (ditangani di before())
+        // Allow if user is a delegated admin.
+        return $user->jabatan?->can_manage_users ?? false;
     }
 }
