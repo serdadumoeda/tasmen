@@ -45,12 +45,11 @@ class UserPolicy
             $userEselonII = $user->unit?->getEselonIIAncestor();
             $modelEselonII = $model->unit?->getEselonIIAncestor();
 
-            if ($userEselonII && $modelEselonII && $userEselonII->id === $modelEselonII->id) {
-                return true;
-            }
+            return $userEselonII && $modelEselonII && $userEselonII->id === $modelEselonII->id;
+        } else {
+            // A regular manager can only view their direct subordinates.
+            return $model->isSubordinateOf($user);
         }
-
-        return $model->isSubordinateOf($user);
     }
 
     /**
