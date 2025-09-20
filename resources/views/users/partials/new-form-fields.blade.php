@@ -74,6 +74,8 @@ function form_textarea($label, $name, $user, $is_required = false) {
     {{-- Kolom Kanan: Unit & Akses --}}
     <div class="md:col-span-1">
         <h3 class="text-lg font-medium text-gray-900 border-b pb-2 mb-4">Unit Kerja & Akses</h3>
+
+        {{-- Cascading Unit Dropdowns --}}
         <div class="mb-4">
             <label for="eselon_i" class="block font-semibold text-sm text-gray-700 mb-1">1. Unit Eselon I</label>
             <select id="eselon_i" class="unit-select block mt-1 w-full rounded-lg shadow-sm border-gray-300" data-level="1" data-placeholder="-- Pilih Unit Eselon I --">
@@ -83,7 +85,6 @@ function form_textarea($label, $name, $user, $is_required = false) {
                 @endforeach
             </select>
         </div>
-
         <div class="mb-4">
             <label for="eselon_ii" class="block font-semibold text-sm text-gray-700 mb-1">2. Unit Eselon II</label>
             <select id="eselon_ii" class="unit-select block mt-1 w-full rounded-lg shadow-sm border-gray-300" data-level="2" data-placeholder="-- Pilih Unit Eselon II --" disabled><option value="">-- Pilih Unit Eselon I Dahulu --</option></select>
@@ -96,13 +97,18 @@ function form_textarea($label, $name, $user, $is_required = false) {
             <label for="sub_koordinator" class="block font-semibold text-sm text-gray-700 mb-1">4. Sub Koordinator</label>
             <select id="sub_koordinator" class="unit-select block mt-1 w-full rounded-lg shadow-sm border-gray-300" data-level="4" data-placeholder="-- Pilih Sub Koordinator --" disabled><option value="">-- Pilih Koordinator Dahulu --</option></select>
         </div>
+
+        {{-- Hidden input to store the final selected unit_id --}}
         <input type="hidden" name="unit_id" id="unit_id" value="{{ old('unit_id', $user->unit_id ?? '') }}">
+
+        {{-- Jabatan Name Text Input --}}
         <div class="mb-4">
             <label for="jabatan_name" class="block font-semibold text-sm text-gray-700 mb-1">5. Nama Jabatan <span class="text-red-500 font-bold">*</span></label>
             <input type="text" name="jabatan_name" id="jabatan_name" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500" value="{{ old('jabatan_name', optional($user->jabatan)->name ?? '') }}" required>
             <p class="text-xs text-gray-500 mt-1">Jabatan akan dibuat atau diperbarui berdasarkan nama yang dimasukkan.</p>
         </div>
 
+        {{-- Atasan Dropdown --}}
         <div class="mb-4">
             <label for="atasan_id" class="block font-semibold text-sm text-gray-700 mb-1">Atasan Langsung</label>
             <select name="atasan_id" id="atasan_id" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300">
@@ -115,6 +121,8 @@ function form_textarea($label, $name, $user, $is_required = false) {
 
         @can('manageUsers', App\Models\User::class)
         <div class="border-t my-6"></div>
+
+        {{-- Kepala Unit Checkbox --}}
         <div class="mb-4">
             <label for="is_kepala_unit" class="flex items-center">
                 <input type="checkbox" name="is_kepala_unit" id="is_kepala_unit" value="1" @checked(old('is_kepala_unit', $user->id && $user->unit && $user->id === $user->unit->kepala_unit_id)) class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500">
@@ -123,6 +131,7 @@ function form_textarea($label, $name, $user, $is_required = false) {
             <p class="mt-1 text-xs text-gray-500 ml-6">Menetapkan pengguna ini sebagai kepala dari unit kerja mereka saat ini.</p>
         </div>
 
+        {{-- Can Manage Users Checkbox --}}
         <div class="mb-4">
             <label for="can_manage_users" class="flex items-center">
                 <input type="checkbox" name="can_manage_users" id="can_manage_users" value="1" @checked(old('can_manage_users', optional($user->jabatan)->can_manage_users)) class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500">

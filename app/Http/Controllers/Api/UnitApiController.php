@@ -10,13 +10,20 @@ class UnitApiController extends Controller
 {
     public function getEselonIUnits()
     {
-        $units = Unit::where('level', Unit::LEVEL_ESELON_I)->get();
-        return response()->json($units);
+        $rootUnit = Unit::whereNull('parent_unit_id')->first();
+        $eselonIUnits = $rootUnit ? $rootUnit->childUnits()->orderBy('name')->get() : collect();
+        return response()->json($eselonIUnits);
     }
 
-    public function getChildUnits(Unit $parentUnit)
+    public function getChildUnits($parentUnitId)
     {
-        $childUnits = $parentUnit->childUnits;
+        $parentUnit = Unit::find($parentUnitId);
+
+        if (!$parentUnit) {
+            return response()->json([]);
+        }
+
+        $childUnits = $parentUnit->childUnits()->orderBy('name')->get();
         return response()->json($childUnits);
     }
 }
