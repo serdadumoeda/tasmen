@@ -315,15 +315,18 @@ class User extends Authenticatable
 
     public function canManageUsers(): bool
     {
-        // This check is now centralized in UserPolicy, but we keep this for any other
-        // part of the app that might be using it. It now checks the role flag.
+        // Superadmin role has universal access, this is a fallback for UI checks.
+        if ($this->hasRole('Superadmin')) {
+            return true;
+        }
+        // For other roles, check for the explicit permission flag.
         return $this->roles->some('can_manage_users_in_unit', true);
     }
 
     public function canManageLeaveSettings(): bool
     {
-        // Only Superadmins or users with the explicit unit management permission can manage leave settings.
-        return $this->isSuperAdmin() || $this->canManageUsers();
+        // This permission is now fully governed by the canManageUsers logic.
+        return $this->canManageUsers();
     }
 
     public function isSuperAdmin(): bool
