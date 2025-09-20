@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Check if the column exists before trying to drop it
+        // Check if the column exists before trying to drop it for safety
         if (Schema::hasColumn('jabatans', 'can_manage_users')) {
             Schema::table('jabatans', function (Blueprint $table) {
                 $table->dropColumn('can_manage_users');
