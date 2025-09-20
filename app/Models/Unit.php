@@ -235,11 +235,12 @@ class Unit extends Model
         }
 
         // If not, find the ancestor that is at the Eselon II depth.
-        // This query efficiently finds the correct ancestor in the database
-        // by counting the ancestors of each ancestor.
+        // This query uses whereHas for broad database compatibility, filtering
+        // for an ancestor that has the specific number of its own ancestors.
         return $this->ancestors()
-                    ->withCount('ancestors as ancestors_count')
-                    ->having('ancestors_count', '=', $eselonIIDepth)
+                    ->whereHas('ancestors', function ($query) {
+                        // This subquery is purely for the count, no selects needed.
+                    }, '=', $eselonIIDepth)
                     ->first();
     }
 
