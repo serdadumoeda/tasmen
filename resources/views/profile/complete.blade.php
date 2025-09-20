@@ -67,44 +67,78 @@
     $(document).ready(function() {
         const unitIdInput = $('#unit_id');
         const unitSelects = $('.unit-select');
+        const jabatanSelect = $('#jabatan_id');
         const submitButton = $('#submit_button');
-        const jabatanNameInput = $('#jabatan_name');
 
         function checkFormValidity() {
             const isUnitSelected = unitIdInput.val() !== '';
-            const isJabatanFilled = jabatanNameInput.val().trim() !== '';
-            submitButton.prop('disabled', !(isUnitSelected && isJabatanFilled));
+            const isJabatanSelected = jabatanSelect.val() !== '';
+            submitButton.prop('disabled', !(isUnitSelected && isJabatanSelected));
+        }
+
+        function resetJabatanSelect() {
+            jabatanSelect.empty().append(new Option('-- Pilih Unit Kerja Terakhir --', '')).prop('disabled', true);
         }
 
         function resetSubsequentSelects(level) {
-            for (let i = level; i < unitSelects.length; i++) {
-                const select = $(unitSelects[i]);
-                const placeholder = select.data('placeholder');
-                select.empty().append(new Option(placeholder, '')).prop('disabled', true);
+            // Reset all selects that are at a higher level than the one changed
+            for (let i = level + 1; i <= 4; i++) {
+                const select = $(`.unit-select[data-level='${i}']`);
+                if (select.length) {
+                    const placeholder = select.data('placeholder');
+                    select.empty().append(new Option(placeholder, '')).prop('disabled', true);
+                }
             }
-            checkFormValidity();
+            // Also reset the jabatan dropdown whenever a unit changes
+            resetJabatanSelect();
+        }
+
+        function fetchVacantJabatans(unitId) {
+            jabatanSelect.prop('disabled', true).html('<option value="">-- Memuat Jabatan... --</option>');
+            $.ajax({
+                url: `/api/units/${unitId}/vacant-jabatans`,
+                type: 'GET',
+                success: function(jabatans) {
+                    jabatanSelect.empty().append(new Option('-- Pilih Jabatan --', ''));
+                    if (jabatans.length > 0) {
+                        $.each(jabatans, function(key, jabatan) {
+                            jabatanSelect.append(new Option(jabatan.name, jabatan.id));
+                        });
+                        jabatanSelect.prop('disabled', false);
+                    } else {
+                        jabatanSelect.html(new Option('-- Tidak ada jabatan kosong --', '')).prop('disabled', true);
+                    }
+                    checkFormValidity();
+                },
+                error: function() {
+                    jabatanSelect.html(new Option('-- Gagal memuat jabatan --', '')).prop('disabled', true);
+                    checkFormValidity();
+                }
+            });
         }
 
         unitSelects.on('change', function() {
             const selectedValue = $(this).val();
             const currentLevel = parseInt($(this).data('level'), 10);
 
-            unitIdInput.val(selectedValue);
             resetSubsequentSelects(currentLevel);
 
             if (!selectedValue) {
-                if (currentLevel > 1) {
-                    const prevSelect = $(unitSelects[currentLevel - 2]);
-                    unitIdInput.val(prevSelect.val());
-                } else {
-                    unitIdInput.val('');
+                // If a dropdown is cleared, find the last selected parent unit
+                let lastSelectedUnitId = '';
+                for (let i = currentLevel - 1; i >= 1; i--) {
+                    const parentValue = $(`.unit-select[data-level='${i}']`).val();
+                    if (parentValue) {
+                        lastSelectedUnitId = parentValue;
+                        break;
+                    }
                 }
+                unitIdInput.val(lastSelectedUnitId);
                 checkFormValidity();
                 return;
             }
 
-            checkFormValidity(); // A unit has been selected, check validity
-
+            unitIdInput.val(selectedValue);
             const nextLevel = currentLevel + 1;
             const nextSelect = $(`.unit-select[data-level='${nextLevel}']`);
 
@@ -113,30 +147,36 @@
                 $.ajax({
                     url: `/api/units/${selectedValue}/children`,
                     type: 'GET',
-                    success: function(data) {
+                    success: function(children) {
                         const placeholder = nextSelect.data('placeholder');
                         nextSelect.empty().append(new Option(placeholder, ''));
-                        if (data.length > 0) {
-                            $.each(data, function(key, unit) {
+                        if (children.length > 0) {
+                            $.each(children, function(key, unit) {
                                 nextSelect.append(new Option(unit.name, unit.id));
                             });
                             nextSelect.prop('disabled', false);
                         } else {
+                            // No child units, so this is the final unit. Fetch jabatans.
                             nextSelect.html(new Option('-- Tidak ada unit bawahan --', '')).prop('disabled', true);
+                            fetchVacantJabatans(selectedValue);
                         }
                     },
                     error: function() {
                         nextSelect.html(new Option('-- Gagal memuat data --', '')).prop('disabled', true);
                     }
                 });
+            } else {
+                 // This is the last unit dropdown, so fetch jabatans for it.
+                 fetchVacantJabatans(selectedValue);
             }
-        });
-
-        jabatanNameInput.on('input', function() {
             checkFormValidity();
         });
 
-        // Initial check
+        jabatanSelect.on('change', function() {
+            checkFormValidity();
+        });
+
+        // Initial state
         checkFormValidity();
     });
     </script>

@@ -22,7 +22,8 @@ class CompleteProfileController extends Controller
             return redirect()->route('dashboard');
         }
 
-        $eselonIUnits = Unit::whereNull('parent_unit_id')->orderBy('name')->get();
+        // Fetch units specifically at the 'Eselon I' level for the initial dropdown.
+        $eselonIUnits = Unit::where('level', Unit::LEVEL_ESELON_I)->orderBy('name')->get();
         $selectedUnitPath = []; // For the form partial
 
         return view('profile.complete', compact('eselonIUnits', 'selectedUnitPath'));
@@ -35,7 +36,8 @@ class CompleteProfileController extends Controller
     {
         $validated = $request->validate([
             'unit_id' => ['required', 'exists:units,id'],
-            'jabatan_name' => ['required', 'string', 'max:255'],
+            // Validate that the jabatan_id exists and is not already taken by another user.
+            'jabatan_id' => ['required', 'exists:jabatans,id,user_id,NULL'],
         ]);
 
         $user = Auth::user();
@@ -45,15 +47,18 @@ class CompleteProfileController extends Controller
         }
 
         DB::transaction(function () use ($validated, $user) {
-            // Create a new Jabatan for the user based on their input
-            $jabatan = Jabatan::create([
-                'name' => $validated['jabatan_name'],
-                'unit_id' => $validated['unit_id'],
-                'user_id' => $user->id,
-            ]);
+            // Find the selected Jabatan, which must be vacant.
+            $jabatan = Jabatan::where('id', $validated['jabatan_id'])
+                              ->whereNull('user_id')
+                              ->firstOrFail();
 
-            // Update the user's unit_id and recalculate their role based on hierarchy
-            $user->unit_id = $validated['unit_id'];
+            // Assign the user to the selected Jabatan.
+            $jabatan->user_id = $user->id;
+            $jabatan->save();
+
+            // Update the user's unit_id to match their new Jabatan's unit.
+            // This ensures consistency.
+            $user->unit_id = $jabatan->unit_id;
             $user->save();
 
             // This static method will set the user's main role (Eselon, etc.)

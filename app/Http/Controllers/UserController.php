@@ -28,36 +28,10 @@ class UserController extends Controller
         $query = User::with(['unit', 'jabatan', 'atasan.jabatan', 'roles']);
 
         if (!$loggedInUser->isSuperAdmin()) {
-            $scopeUnit = $loggedInUser->unit;
-
-            // For certain roles like Eselon III or IV, the scope should be their entire Eselon II unit.
-            if ($scopeUnit && $loggedInUser->hasRole(['Eselon III', 'Eselon IV'])) {
-                // Manually traverse up to find the Eselon II unit ancestor.
-                // An Eselon II unit is at depth 2 (Root is 0, Eselon I is 1).
-                $eselonIIUnit = $scopeUnit;
-                while ($eselonIIUnit->parentUnit && $eselonIIUnit->ancestors()->count() > 2) {
-                    $eselonIIUnit = $eselonIIUnit->parentUnit;
-                }
-
-                // Final check to ensure we landed on an actual Eselon II unit.
-                if ($eselonIIUnit && $eselonIIUnit->ancestors()->count() == 2) {
-                    $scopeUnit = $eselonIIUnit;
-                }
-            }
-
-            if ($scopeUnit) {
-                $unitIds = $scopeUnit->getAllSubordinateUnitIds();
-                $unitIds[] = $scopeUnit->id;
-                $query->whereIn('unit_id', array_unique($unitIds));
-            } else {
-                // Fallback for users with no unit: they can only see themselves.
-                $query->where('id', $loggedInUser->id);
-            }
-
-            // Exclude Superadmins from the list for non-Superadmin viewers.
-            $query->whereDoesntHave('roles', function ($q) {
-                $q->where('name', 'Superadmin');
-            });
+            $query->inUnitAndSubordinatesOf($loggedInUser)
+                  ->whereDoesntHave('roles', function ($q) {
+                      $q->where('name', 'Superadmin');
+                  });
         }
 
         $query->orderBy('name');
