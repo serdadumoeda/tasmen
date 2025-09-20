@@ -204,6 +204,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/profile/complete', [CompleteProfileController::class, 'create'])->name('profile.complete.create');
     Route::post('/profile/complete', [CompleteProfileController::class, 'store'])->name('profile.complete.store');
 
+    // Route to leave impersonation, accessible by any authenticated user in an impersonation session.
+    Route::get('/users/impersonate/leave', [UserController::class, 'leaveImpersonate'])->name('admin.users.impersonate.leave');
+
     // --- UNIFIED SURAT ROUTES ---
     Route::get('/surat/workflow', [SuratController::class, 'showWorkflow'])->name('surat.workflow');
     Route::resource('surat', SuratController::class)->only(['index', 'create', 'store', 'show', 'destroy']);
@@ -248,7 +251,6 @@ Route::middleware(['auth', 'superadmin'])->prefix('admin')->name('admin.')->grou
 
     // Impersonation Routes
     Route::get('/users/{user}/impersonate', [UserController::class, 'impersonate'])->name('users.impersonate');
-    Route::get('/users/impersonate/leave', [UserController::class, 'leaveImpersonate'])->name('users.impersonate.leave');
 
     // Manual Leave Balance Management
     Route::get('/users/{user}/leave-balance/edit', [UserController::class, 'editLeaveBalance'])->name('users.leave-balance.edit');
