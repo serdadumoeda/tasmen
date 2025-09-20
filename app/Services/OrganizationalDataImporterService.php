@@ -147,8 +147,8 @@ class OrganizationalDataImporterService
             $roleName = match ($item->Eselon) {
                 '1-A' => 'Eselon I',
                 '2-A' => 'Eselon II',
-                '3-A' => 'Koordinator',
-                '4-A' => 'Sub Koordinator',
+                '3-A' => 'Eselon III',
+                '4-A' => 'Eselon IV',
                 default => null,
             };
         }
