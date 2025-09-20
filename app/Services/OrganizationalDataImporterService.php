@@ -142,32 +142,34 @@ class OrganizationalDataImporterService
         }
 
         $roleName = null;
-        // Priority 1: Use the explicit "Eselon" field if it's a structural one.
-        if (!empty($item->Eselon)) {
-            $roleName = match ($item->Eselon) {
-                '1-A' => 'Eselon I',
-                '2-A' => 'Eselon II',
-                '3-A' => 'Eselon III',
-                '4-A' => 'Eselon IV',
-                default => null,
-            };
-        }
 
-        // Priority 2: If no structural role, infer from unit depth.
-        if (!$roleName) {
-            // The `ancestors()` method includes the unit itself. With the root 'Kementerian' unit, depths are shifted by 1.
-            // Depth 1: Kementerian, Depth 2: Eselon I, etc.
+        // For structural positions, the role is determined by the Eselon value.
+        if (isset($item->{'Jenis Jabatan'}) && $item->{'Jenis Jabatan'} === 'Struktural') {
+            if (!empty($item->Eselon)) {
+                $roleName = match ($item->Eselon) {
+                    '1-A' => 'Eselon I',
+                    '2-A' => 'Eselon II',
+                    '3-A' => 'Eselon III',
+                    '4-A' => 'Eselon IV',
+                    default => 'Staf', // Default for structural positions with unexpected Eselon values
+                };
+            } else {
+                $roleName = 'Staf'; // Default for structural positions without an Eselon value
+            }
+        } else {
+            // For non-structural (functional) positions, infer role from unit depth.
             $depth = $unit->ancestors()->count();
             $roleName = match ($depth) {
+                // Functional staff at high-level units might have these roles in this system's logic.
                 2 => 'Eselon I',
                 3 => 'Eselon II',
-                4 => 'Koordinator', // Ananto Wijoyo's unit will now have depth 4.
+                4 => 'Koordinator',
                 5 => 'Sub Koordinator',
                 default => 'Staf',
             };
         }
 
-        return $this->roleCache[$roleName] ?? null;
+        return $this->roleCache[$roleName] ?? $this->roleCache['Staf'] ?? null;
     }
 
     private function prepareUserData(object $item, int $unitId): array
@@ -273,7 +275,7 @@ class OrganizationalDataImporterService
     private function isStructuralHead(User $user): bool
     {
         // This check is now delegated to the User model's hasRole method.
-        return $user->hasRole(['Menteri', 'Eselon I', 'Eselon II', 'Koordinator', 'Sub Koordinator']);
+        return $user->hasRole(['Menteri', 'Eselon I', 'Eselon II', 'Eselon III', 'Eselon IV', 'Koordinator', 'Sub Koordinator']);
     }
 
     private function updateSupervisorForAllUsers(): void
