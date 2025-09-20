@@ -11,9 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('roles', function (Blueprint $table) {
-            $table->boolean('can_manage_users_in_unit')->default(false)->after('level');
-        });
+        if (!Schema::hasColumn('roles', 'can_manage_users_in_unit')) {
+            Schema::table('roles', function (Blueprint $table) {
+                $table->boolean('can_manage_users_in_unit')->default(false)->after('level');
+            });
+        }
     }
 
     /**
@@ -21,8 +23,10 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('roles', function (Blueprint $table) {
-            $table->dropColumn('can_manage_users_in_unit');
-        });
+        if (Schema::hasColumn('roles', 'can_manage_users_in_unit')) {
+            Schema::table('roles', function (Blueprint $table) {
+                $table->dropColumn('can_manage_users_in_unit');
+            });
+        }
     }
 };
