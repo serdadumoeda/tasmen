@@ -315,18 +315,18 @@ class User extends Authenticatable
 
     public function canManageUsers(): bool
     {
-        // Eager load roles if they haven't been loaded to prevent issues in views.
-        if (!$this->relationLoaded('roles')) {
-            $this->load('roles');
-        }
-
-        // Superadmin role has universal access.
-        if ($this->hasRole('Superadmin')) {
+        // Delegated admin check
+        if ($this->jabatan?->can_manage_users) {
             return true;
         }
 
-        // For other roles, check for the explicit permission flag.
-        return $this->roles->some('can_manage_users_in_unit', true);
+        // Default role-based check
+        return $this->hasRole(['Menteri', 'Superadmin', 'Eselon I', 'Eselon II', 'Koordinator']);
+    }
+
+    public function canManageLeaveSettings(): bool
+    {
+        return $this->isSuperAdmin() || ($this->jabatan && $this->jabatan->can_manage_users);
     }
 
     public function isSuperAdmin(): bool
@@ -346,14 +346,13 @@ class User extends Authenticatable
 
     public function isManager(): bool
     {
-        // A user is considered a manager if they have explicit user management permissions.
-        if ($this->canManageUsers()) {
-            return true;
-        }
-
-        // Fallback checks for other types of managers (structural or functional project leads).
         $isStructuralManager = $this->hasRole(['Menteri', 'Eselon I', 'Eselon II', 'Koordinator', 'Sub Koordinator']);
-        $isFunctionalManager = $this->ledProjects()->exists();
+
+        // To prevent infinite recursion with HierarchicalScope, we query without it.
+        // The ledProjects() relationship is on the Project model, which has the scope.
+        $isFunctionalManager = $this->ledProjects()
+                                    ->withoutGlobalScope(HierarchicalScope::class)
+                                    ->exists();
 
         return $isStructuralManager || $isFunctionalManager;
     }

@@ -43,21 +43,12 @@ class UserPolicy
     }
 
     /**
-     * Helper to check for the unit management permission on any of the user's roles.
-     */
-    private function hasUnitManagementPermission(User $user): bool
-    {
-        // Eager load roles if they aren't already, then check the flag.
-        return $user->roles()->where('can_manage_users_in_unit', true)->exists();
-    }
-
-    /**
      * Tentukan apakah user bisa mengedit data user lain.
      */
     public function update(User $user, User $model): bool
     {
         // Delegated admin with Eselon II scope
-        if ($this->hasUnitManagementPermission($user)) {
+        if ($user->jabatan?->can_manage_users) {
             $userEselonII = $user->unit?->getEselonIIAncestor();
             $modelEselonII = $model->unit?->getEselonIIAncestor();
 
@@ -81,7 +72,7 @@ class UserPolicy
         }
 
         // Delegated admin with Eselon II scope can deactivate within their scope
-        if ($this->hasUnitManagementPermission($user)) {
+        if ($user->jabatan?->can_manage_users) {
             $userEselonII = $user->unit?->getEselonIIAncestor();
             $modelEselonII = $model->unit?->getEselonIIAncestor();
 

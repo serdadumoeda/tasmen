@@ -16,23 +16,15 @@ class RoleSeeder extends Seeder
         DB::table('roles')->truncate();
 
         $roles = [
-            // Administrative & High-Level Roles
-            ['name' => 'Menteri', 'level' => 0, 'can_manage_users_in_unit' => true],
-            ['name' => 'Superadmin', 'level' => 0, 'can_manage_users_in_unit' => true],
-
-            // Structural Roles (Eselon)
-            ['name' => 'Eselon I', 'level' => 1, 'can_manage_users_in_unit' => false],
-            ['name' => 'Eselon II', 'level' => 2, 'can_manage_users_in_unit' => false],
-            ['name' => 'Eselon III', 'level' => 3, 'can_manage_users_in_unit' => false],
-            ['name' => 'Eselon IV', 'level' => 4, 'can_manage_users_in_unit' => false],
-
-            // Functional Roles
-            ['name' => 'Koordinator', 'level' => 3, 'can_manage_users_in_unit' => false],
-            ['name' => 'Sub Koordinator', 'level' => 4, 'can_manage_users_in_unit' => false],
-            ['name' => 'Staf', 'level' => 5, 'can_manage_users_in_unit' => false],
-
-            // Special Administrative Role
-            ['name' => 'Sub Koordinator Admin', 'level' => 4, 'can_manage_users_in_unit' => true],
+            ['name' => 'Menteri', 'level' => 0],
+            ['name' => 'Superadmin', 'level' => 0],
+            ['name' => 'Eselon I', 'level' => 1],
+            ['name' => 'Eselon II', 'level' => 2],
+            ['name' => 'Eselon III', 'level' => 3],
+            ['name' => 'Eselon IV', 'level' => 4],
+            ['name' => 'Koordinator', 'level' => 3],
+            ['name' => 'Sub Koordinator', 'level' => 4],
+            ['name' => 'Staf', 'level' => 5],
         ];
 
         foreach ($roles as $role) {
