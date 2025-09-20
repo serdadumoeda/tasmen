@@ -315,18 +315,15 @@ class User extends Authenticatable
 
     public function canManageUsers(): bool
     {
-        // Delegated admin check
-        if ($this->jabatan?->can_manage_users) {
-            return true;
-        }
-
-        // Default role-based check
-        return $this->hasRole(['Menteri', 'Superadmin', 'Eselon I', 'Eselon II', 'Koordinator']);
+        // This check is now centralized in UserPolicy, but we keep this for any other
+        // part of the app that might be using it. It now checks the role flag.
+        return $this->roles->some('can_manage_users_in_unit', true);
     }
 
     public function canManageLeaveSettings(): bool
     {
-        return $this->isSuperAdmin() || ($this->jabatan && $this->jabatan->can_manage_users);
+        // Only Superadmins or users with the explicit unit management permission can manage leave settings.
+        return $this->isSuperAdmin() || $this->canManageUsers();
     }
 
     public function isSuperAdmin(): bool

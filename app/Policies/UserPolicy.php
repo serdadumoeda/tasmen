@@ -19,11 +19,20 @@ class UserPolicy
     }
 
     /**
+     * Helper to check for the unit management permission on any of the user's roles.
+     */
+    private function hasUnitManagementPermission(User $user): bool
+    {
+        // Eager load roles if they aren't already, then check the flag.
+        return $user->roles->some('can_manage_users_in_unit', true);
+    }
+
+    /**
      * Tentukan apakah user bisa melihat daftar user.
      */
     public function viewAny(User $user): bool
     {
-        return $user->canManageUsers();
+        return $this->hasUnitManagementPermission($user);
     }
 
     /**
@@ -31,6 +40,16 @@ class UserPolicy
      */
     public function view(User $user, User $model): bool
     {
+        // A unit admin can view anyone in their Eselon II scope.
+        if ($this->hasUnitManagementPermission($user)) {
+            $userEselonII = $user->unit?->getEselonIIAncestor();
+            $modelEselonII = $model->unit?->getEselonIIAncestor();
+
+            if ($userEselonII && $modelEselonII && $userEselonII->id === $modelEselonII->id) {
+                return true;
+            }
+        }
+
         return $model->isSubordinateOf($user);
     }
 
@@ -39,7 +58,7 @@ class UserPolicy
      */
     public function create(User $user): bool
     {
-        return $user->canManageUsers();
+        return $this->hasUnitManagementPermission($user);
     }
 
     /**
@@ -47,8 +66,8 @@ class UserPolicy
      */
     public function update(User $user, User $model): bool
     {
-        // Delegated admin with Eselon II scope
-        if ($user->jabatan?->can_manage_users) {
+        // A unit admin can edit anyone in their Eselon II scope
+        if ($this->hasUnitManagementPermission($user)) {
             $userEselonII = $user->unit?->getEselonIIAncestor();
             $modelEselonII = $model->unit?->getEselonIIAncestor();
 
@@ -71,8 +90,8 @@ class UserPolicy
             return false; // Cannot deactivate self
         }
 
-        // Delegated admin with Eselon II scope can deactivate within their scope
-        if ($user->jabatan?->can_manage_users) {
+        // A unit admin can deactivate anyone in their Eselon II scope
+        if ($this->hasUnitManagementPermission($user)) {
             $userEselonII = $user->unit?->getEselonIIAncestor();
             $modelEselonII = $model->unit?->getEselonIIAncestor();
 
