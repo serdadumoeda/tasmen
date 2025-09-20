@@ -98,7 +98,11 @@ class UserController extends Controller
     {
         $this->authorize('create', User::class);
         $supervisors = User::orderBy('name')->get();
-        $eselonIUnits = Unit::whereNull('parent_unit_id')->orderBy('name')->get();
+
+        // Find the root unit (Kementerian) and get its direct children (Eselon I)
+        $rootUnit = Unit::whereNull('parent_unit_id')->first();
+        $eselonIUnits = $rootUnit ? $rootUnit->childUnits()->orderBy('name')->get() : collect();
+
         $jabatans = Jabatan::orderBy('name')->get();
         $user = new User();
         $selectedUnitPath = [];
@@ -118,7 +122,6 @@ class UserController extends Controller
             'unit_id' => ['required', 'exists:units,id'],
             'jabatan_name' => ['required', 'string', 'max:255'],
             'is_kepala_unit' => ['nullable', 'boolean'],
-            'can_manage_users' => ['nullable', 'boolean'],
             'atasan_id' => ['nullable', 'exists:users,id'],
             'status' => ['nullable', 'in:active,suspended'],
             'nip' => ['nullable', 'string', 'max:255', 'unique:'.User::class],
@@ -154,7 +157,6 @@ class UserController extends Controller
                 'name' => $userData['jabatan_name'],
                 'unit_id' => $userData['unit_id'],
                 'user_id' => $user->id,
-                'can_manage_users' => $request->boolean('can_manage_users'),
             ]);
 
             // Assign a default role
@@ -179,7 +181,10 @@ class UserController extends Controller
     {
         $this->authorize('update', $user);
         $supervisors = User::where('id', '!=', $user->id)->orderBy('name')->get();
-        $eselonIUnits = Unit::whereNull('parent_unit_id')->orderBy('name')->get();
+
+        // Find the root unit (Kementerian) and get its direct children (Eselon I)
+        $rootUnit = Unit::whereNull('parent_unit_id')->first();
+        $eselonIUnits = $rootUnit ? $rootUnit->childUnits()->orderBy('name')->get() : collect();
         // $jabatans is no longer needed as it's a text input now.
 
         $selectedUnitPath = [];
@@ -220,7 +225,6 @@ class UserController extends Controller
             'unit_id' => ['required', 'exists:units,id'],
             'jabatan_name' => ['required', 'string', 'max:255'],
             'is_kepala_unit' => ['nullable', 'boolean'],
-            'can_manage_users' => ['nullable', 'boolean'],
             'atasan_id' => ['nullable', 'exists:users,id', 'not_in:'.$user->id],
             'status' => ['nullable', 'in:active,suspended'],
             'nip' => ['nullable', 'string', 'max:255', Rule::unique('users')->ignore($user->id)],
@@ -266,7 +270,6 @@ class UserController extends Controller
                 [
                     'name' => $updateData['jabatan_name'],
                     'unit_id' => $updateData['unit_id'],
-                    'can_manage_users' => $request->boolean('can_manage_users'),
                 ]
             );
 
