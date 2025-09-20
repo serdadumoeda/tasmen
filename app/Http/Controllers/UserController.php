@@ -179,14 +179,19 @@ class UserController extends Controller
     {
         $this->authorize('update', $user);
         $supervisors = User::where('id', '!=', $user->id)->orderBy('name')->get();
-        $eselonIUnits = Unit::whereNull('parent_unit_id')->orderBy('name')->get();
-        // $jabatans is no longer needed as it's a text input now.
+
+        // Asumsi hanya ada satu root unit (Kementerian)
+        $rootUnit = Unit::whereNull('parent_unit_id')->first();
+        // Ambil anak-anaknya sebagai unit Eselon I
+        $eselonIUnits = $rootUnit ? $rootUnit->children()->orderBy('name')->get() : collect();
 
         $selectedUnitPath = [];
         if ($user->unit) {
-            $user->load('unit.ancestors'); // Eager load ancestors
+            $user->load('unit.ancestors');
             $ancestors = $user->unit->ancestors->sortBy('depth');
-            $selectedUnitPath = $ancestors->pluck('id')->toArray();
+
+            // Buang elemen pertama (root unit) dari path, karena dropdown pertama sudah untuk Eselon I
+            $selectedUnitPath = $ancestors->pluck('id')->slice(1)->values()->toArray();
             $selectedUnitPath[] = $user->unit->id;
         }
 
