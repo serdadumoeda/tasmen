@@ -28,10 +28,29 @@ class UserController extends Controller
         $query = User::with(['unit', 'jabatan', 'atasan.jabatan', 'roles']);
 
         if (!$loggedInUser->isSuperAdmin()) {
-            $query->inUnitAndSubordinatesOf($loggedInUser)
-                  ->whereDoesntHave('roles', function ($q) {
-                      $q->where('name', 'Superadmin');
-                  });
+            $scopeUnit = $loggedInUser->unit;
+
+            // For certain roles like Eselon III or IV, the scope should be their entire Eselon II unit.
+            if ($scopeUnit && $loggedInUser->hasRole(['Eselon III', 'Eselon IV'])) {
+                $eselonIIUnit = $scopeUnit->getEselonIIAncestor();
+                if ($eselonIIUnit) {
+                    $scopeUnit = $eselonIIUnit;
+                }
+            }
+
+            if ($scopeUnit) {
+                $unitIds = $scopeUnit->getAllSubordinateUnitIds();
+                $unitIds[] = $scopeUnit->id;
+                $query->whereIn('unit_id', array_unique($unitIds));
+            } else {
+                // Fallback for users with no unit: they can only see themselves.
+                $query->where('id', $loggedInUser->id);
+            }
+
+            // Exclude Superadmins from the list for non-Superadmin viewers.
+            $query->whereDoesntHave('roles', function ($q) {
+                $q->where('name', 'Superadmin');
+            });
         }
 
         $query->orderBy('name');
