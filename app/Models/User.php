@@ -315,6 +315,11 @@ class User extends Authenticatable
 
     public function canManageUsers(): bool
     {
+        // Eager load roles if they haven't been loaded to prevent issues in views.
+        if (!$this->relationLoaded('roles')) {
+            $this->load('roles');
+        }
+
         // Superadmin role has universal access, this is a fallback for UI checks.
         if ($this->hasRole('Superadmin')) {
             return true;
@@ -346,13 +351,14 @@ class User extends Authenticatable
 
     public function isManager(): bool
     {
-        $isStructuralManager = $this->hasRole(['Menteri', 'Eselon I', 'Eselon II', 'Koordinator', 'Sub Koordinator']);
+        // A user is considered a manager if they have explicit user management permissions.
+        if ($this->canManageUsers()) {
+            return true;
+        }
 
-        // To prevent infinite recursion with HierarchicalScope, we query without it.
-        // The ledProjects() relationship is on the Project model, which has the scope.
-        $isFunctionalManager = $this->ledProjects()
-                                    ->withoutGlobalScope(HierarchicalScope::class)
-                                    ->exists();
+        // Fallback checks for other types of managers.
+        $isStructuralManager = $this->hasRole(['Menteri', 'Eselon I', 'Eselon II', 'Koordinator', 'Sub Koordinator']);
+        $isFunctionalManager = $this->ledProjects()->exists();
 
         return $isStructuralManager || $isFunctionalManager;
     }
@@ -589,7 +595,8 @@ public function getAvatarColorsAttribute(): array
      */
     public static function syncRoleFromUnit(User $user): void
     {
-        $user->load('unit'); // Explicitly reload the relationship to prevent using stale data.
+        $user->load('unit', 'roles'); // Eager load necessary relationships
+
         if (!$user->unit) {
             $stafRole = Role::where('name', 'Staf')->first();
             if ($stafRole) {
@@ -598,40 +605,48 @@ public function getAvatarColorsAttribute(): array
             return;
         }
 
-        $isHeadOfUnit = $user->unit->kepala_unit_id === $user->id;
         $newRoleName = 'Staf'; // Default role
 
-        if ($isHeadOfUnit) {
-            // The `ancestors()` method includes the unit itself, so the depth count is off by 1.
-            // A top-level unit has 1 ancestor (itself). A child of it has 2, and so on.
-            // We adjust the depth check to match this 1-based index.
-            $depth = $user->unit->ancestors()->count();
+        // New logic as per user request for Struktural units
+        if ($user->unit->type === 'Struktural' && !empty($user->eselon)) {
+            // Directly use the eselon number from the user's profile
+            $newRoleName = 'Eselon ' . $user->eselon;
+        } else {
+            // Fallback to existing logic for Fungsional units or if eselon field is empty
+            $isHeadOfUnit = $user->unit->kepala_unit_id === $user->id;
+            if ($isHeadOfUnit) {
+                // The depth is 1-based (root is 1, Eselon I is 2, etc.)
+                $depth = $user->unit->ancestors()->count();
 
-            // Determine the base functional role based on depth
-            $newRoleName = match ($depth) {
-                2 => 'Eselon I',
-                3 => 'Eselon II',
-                4 => 'Koordinator',
-                5 => 'Sub Koordinator',
-                default => 'Staf',
-            };
-        }
-
-        // If the unit is 'Struktural', map functional roles to their Eselon equivalents.
-        if ($user->unit->type === 'Struktural') {
-            $roleMap = [
-                'Koordinator' => 'Eselon III',
-                'Sub Koordinator' => 'Eselon IV',
-            ];
-            // If the current role exists in our map, transform it.
-            if (isset($roleMap[$newRoleName])) {
-                $newRoleName = $roleMap[$newRoleName];
+                $newRoleName = match ($depth) {
+                    1 => 'Menteri',
+                    2 => 'Eselon I',
+                    3 => 'Eselon II',
+                    4 => 'Koordinator',
+                    5 => 'Sub Koordinator',
+                    default => 'Staf',
+                };
             }
         }
 
         $newRole = Role::where('name', $newRoleName)->first();
+
+        // Preserve administrative or other special roles.
+        // Get all currently assigned roles that are NOT structural/functional.
+        $specialRoles = $user->roles->filter(function ($role) {
+            // A special role is one that has specific permissions or is not a standard structural/functional role.
+            // For now, we define this as any role with `can_manage_users_in_unit` = true.
+            return $role->can_manage_users_in_unit;
+        });
+
         if ($newRole) {
-            $user->roles()->sync([$newRole->id]);
+            // Add the new structural/functional role to the list of special roles.
+            $rolesToSync = $specialRoles->push($newRole)->unique('id')->pluck('id');
+            $user->roles()->sync($rolesToSync);
+        } else {
+            // If the calculated role doesn't exist, just re-sync the existing special roles
+            // to ensure nothing is lost.
+            $user->roles()->sync($specialRoles->pluck('id'));
         }
     }
 
