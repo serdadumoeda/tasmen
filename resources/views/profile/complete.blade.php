@@ -44,9 +44,9 @@
                                 <select id="sub_koordinator" class="unit-select block mt-1 w-full rounded-lg shadow-sm border-gray-300" data-level="4" data-placeholder="-- Pilih Sub Koordinator --" disabled><option value="">-- Pilih Koordinator Dahulu --</option></select>
                             </div>
                             <div class="mb-4">
-                                <label for="jabatan_name" class="block font-semibold text-sm text-gray-700 mb-1">5. Nama Jabatan Anda <span class="text-red-500 font-bold">*</span></label>
-                                <input type="text" name="jabatan_name" id="jabatan_name" required class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500" placeholder="Contoh: Analis Anggaran Ahli Pertama">
-                                <x-input-error :messages="$errors->get('jabatan_name')" class="mt-2" />
+                                <label for="jabatan_id" class="block font-semibold text-sm text-gray-700 mb-1">5. Jabatan <span class="text-red-500 font-bold">*</span></label>
+                                <select name="jabatan_id" id="jabatan_id" required class="block mt-1 w-full rounded-lg shadow-sm border-gray-300" disabled><option value="">-- Pilih Unit Kerja Terakhir --</option></select>
+                                <x-input-error :messages="$errors->get('jabatan_id')" class="mt-2" />
                             </div>
                             <input type="hidden" name="unit_id" id="unit_id" value="">
                         </div>
