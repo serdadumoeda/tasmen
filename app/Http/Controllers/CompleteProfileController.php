@@ -22,8 +22,9 @@ class CompleteProfileController extends Controller
             return redirect()->route('dashboard');
         }
 
-        // Fetch units specifically at the 'Eselon I' level for the initial dropdown.
-        $eselonIUnits = Unit::where('level', Unit::LEVEL_ESELON_I)->orderBy('name')->get();
+        // Fetch units at Eselon I level. Based on the hierarchy logic in the Unit model
+        // (getExpectedHeadRole), an Eselon I unit is at depth 2, meaning it has 2 ancestors.
+        $eselonIUnits = Unit::withCount('ancestors')->having('ancestors_count', 2)->orderBy('name')->get();
         $selectedUnitPath = []; // For the form partial
 
         return view('profile.complete', compact('eselonIUnits', 'selectedUnitPath'));
