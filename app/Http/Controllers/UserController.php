@@ -32,8 +32,15 @@ class UserController extends Controller
 
             // For certain roles like Eselon III or IV, the scope should be their entire Eselon II unit.
             if ($scopeUnit && $loggedInUser->hasRole(['Eselon III', 'Eselon IV'])) {
-                $eselonIIUnit = $scopeUnit->getEselonIIAncestor();
-                if ($eselonIIUnit) {
+                // Manually traverse up to find the Eselon II unit ancestor.
+                // An Eselon II unit is at depth 2 (Root is 0, Eselon I is 1).
+                $eselonIIUnit = $scopeUnit;
+                while ($eselonIIUnit->parentUnit && $eselonIIUnit->ancestors()->count() > 2) {
+                    $eselonIIUnit = $eselonIIUnit->parentUnit;
+                }
+
+                // Final check to ensure we landed on an actual Eselon II unit.
+                if ($eselonIIUnit && $eselonIIUnit->ancestors()->count() == 2) {
                     $scopeUnit = $eselonIIUnit;
                 }
             }
