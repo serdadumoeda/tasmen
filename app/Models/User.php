@@ -100,6 +100,23 @@ class User extends Authenticatable
      */
     public function getAtasanLangsung(): ?User
     {
+        // --- NEW: Prioritize Unit-based hierarchy for Unit Heads ---
+        // Find the highest-level unit this user is the head of.
+        $headedUnit = Unit::where('kepala_unit_id', $this->id)
+            ->with('parentUnit.kepalaUnit') // Eager load for performance
+            ->get()
+            ->sortBy(function ($unit) {
+                return $unit->ancestors()->count();
+            })
+            ->first();
+
+        if ($headedUnit && $headedUnit->parentUnit && $headedUnit->parentUnit->kepalaUnit) {
+            // The supervisor is the head of the parent unit.
+            // (Delegation logic for unit heads might need to be added here in the future if required)
+            return $headedUnit->parentUnit->kepalaUnit;
+        }
+
+        // --- FALLBACK: Original logic for non-Unit Heads (Jabatan-based) ---
         if (!$this->jabatan || !$this->jabatan->parent) {
             return null; // No position or no parent position
         }
