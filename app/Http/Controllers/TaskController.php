@@ -291,12 +291,6 @@ class TaskController extends Controller
         // Hitung ulang progress tugas utama
         $subTask->task->recalculateProgress();
 
-        // Bust the project cache
-        if ($subTask->task->project) {
-            $subTask->task->project->touch();
-        }
-
-
         // Siapkan data untuk dikirim kembali sebagai JSON
         // Gunakan relasi yang sudah di-load untuk efisiensi
         $completed_subtasks = $subTask->task->subTasks->where('is_completed', true)->count();

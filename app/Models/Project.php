@@ -38,17 +38,6 @@ class Project extends Model
      */
     public function getProgressAttribute(): int
     {
-        // --- START PERBAIKAN ---
-        // Prioritaskan status selesai berdasarkan jumlah tugas. Jika semua tugas selesai, progress adalah 100%.
-        // Ini menangani kasus di mana tugas selesai tetapi waktu tidak dicatat.
-        $totalTasks = (int) ($this->attributes['tasks_count'] ?? $this->tasks()->count());
-        $completedTasks = (int) ($this->attributes['completed_tasks_count'] ?? $this->completedTasks()->count());
-
-        if ($totalTasks > 0 && $totalTasks === $completedTasks) {
-            return 100;
-        }
-        // --- END PERBAIKAN ---
-
         // Prioritize time-based progress if data is available from eager loading
         if (isset($this->attributes['tasks_sum_estimated_hours'])) {
             $totalEstimatedHours = (float) $this->attributes['tasks_sum_estimated_hours'];
@@ -65,6 +54,15 @@ class Project extends Model
         }
 
         // Fallback to task-based progress if no time estimates are set
+        if (isset($this->attributes['tasks_count'])) {
+            $totalTasks = (int) $this->attributes['tasks_count'];
+            $completedTasks = (int) ($this->attributes['completed_tasks_count'] ?? 0);
+        } else {
+            // Fallback for a single model instance if not eager loaded
+            $totalTasks = $this->tasks()->count();
+            $completedTasks = $this->completedTasks()->count();
+        }
+
         if ($totalTasks === 0) {
             return 0;
         }

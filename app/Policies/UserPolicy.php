@@ -47,6 +47,11 @@ class UserPolicy
      */
     public function update(User $user, User $model): bool
     {
+        // Aturan baru: Eselon I dan II tidak bisa mengedit pengguna.
+        if ($user->hasRole(['Eselon I', 'Eselon II'])) {
+            return false;
+        }
+
         // Delegated admin with Eselon II scope
         if ($user->jabatan?->can_manage_users) {
             $managerEselonIIUnit = $user->unit?->getEselonIIAncestor();
@@ -72,6 +77,11 @@ class UserPolicy
      */
     public function deactivate(User $user, User $model): bool
     {
+        // Aturan baru: Eselon I dan II tidak bisa menonaktifkan pengguna.
+        if ($user->hasRole(['Eselon I', 'Eselon II'])) {
+            return false;
+        }
+
         if ($user->id === $model->id) {
             return false; // Cannot deactivate self
         }
@@ -94,6 +104,20 @@ class UserPolicy
 
         // A manager can deactivate their own direct subordinates.
         return $model->isSubordinateOf($user);
+    }
+
+    /**
+     * Tentukan apakah user bisa meniru user lain.
+     */
+    public function impersonate(User $user, User $model): bool
+    {
+        // Aturan baru: Eselon I dan II tidak bisa meniru pengguna lain.
+        if ($user->hasRole(['Eselon I', 'Eselon II'])) {
+            return false;
+        }
+
+        // Aturan yang sudah ada: Hanya Superadmin yang bisa meniru, dan tidak bisa meniru sesama Superadmin.
+        return $user->isSuperAdmin() && $user->id !== $model->id && !$model->isSuperAdmin();
     }
 
     /**
