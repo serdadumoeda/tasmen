@@ -47,6 +47,11 @@ class UserPolicy
      */
     public function update(User $user, User $model): bool
     {
+        // Block Eselon I and Eselon II from editing any user.
+        if ($user->hasRole(['Eselon I', 'Eselon II'])) {
+            return false;
+        }
+
         // Delegated admin with Eselon II scope
         if ($user->jabatan?->can_manage_users) {
             $managerEselonIIUnit = $user->unit?->getEselonIIAncestor();
@@ -72,6 +77,11 @@ class UserPolicy
      */
     public function deactivate(User $user, User $model): bool
     {
+        // Block Eselon I and Eselon II from deactivating any user.
+        if ($user->hasRole(['Eselon I', 'Eselon II'])) {
+            return false;
+        }
+
         if ($user->id === $model->id) {
             return false; // Cannot deactivate self
         }
