@@ -45,6 +45,18 @@ class TaskPolicy
     }
 
     /**
+     * Determine whether the user can create tasks.
+     *
+     * @param  \App\Models\User  $user
+     * @return bool
+     */
+    public function create(User $user): bool
+    {
+        // Allow all authenticated users to create ad-hoc tasks.
+        return true;
+    }
+
+    /**
      * Tentukan apakah pengguna bisa mengupdate tugas.
      */
     public function update(User $user, Task $task): bool
