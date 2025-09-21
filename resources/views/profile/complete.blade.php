@@ -44,9 +44,9 @@
                                 <select id="sub_koordinator" class="unit-select block mt-1 w-full rounded-lg shadow-sm border-gray-300" data-level="4" data-placeholder="-- Pilih Sub Koordinator --" disabled><option value="">-- Pilih Koordinator Dahulu --</option></select>
                             </div>
                             <div class="mb-4">
-                                <label for="jabatan_id" class="block font-semibold text-sm text-gray-700 mb-1">5. Jabatan <span class="text-red-500 font-bold">*</span></label>
-                                <select name="jabatan_id" id="jabatan_id" required class="block mt-1 w-full rounded-lg shadow-sm border-gray-300" disabled><option value="">-- Pilih Unit Kerja Terakhir --</option></select>
-                                <x-input-error :messages="$errors->get('jabatan_id')" class="mt-2" />
+                                <label for="jabatan_name" class="block font-semibold text-sm text-gray-700 mb-1">5. Jabatan <span class="text-red-500 font-bold">*</span></label>
+                                <input type="text" name="jabatan_name" id="jabatan_name" required class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500" value="{{ old('jabatan_name') }}" placeholder="Contoh: Analis Kebijakan Ahli Pertama">
+                                <x-input-error :messages="$errors->get('jabatan_name')" class="mt-2" />
                             </div>
                             <input type="hidden" name="unit_id" id="unit_id" value="">
                         </div>
@@ -67,17 +67,14 @@
     $(document).ready(function() {
         const unitIdInput = $('#unit_id');
         const unitSelects = $('.unit-select');
-        const jabatanSelect = $('#jabatan_id');
+        const jabatanNameInput = $('#jabatan_name');
         const submitButton = $('#submit_button');
 
         function checkFormValidity() {
+            // The form is valid if a final unit is selected and the jabatan name is not empty.
             const isUnitSelected = unitIdInput.val() !== '';
-            const isJabatanSelected = jabatanSelect.val() !== '';
-            submitButton.prop('disabled', !(isUnitSelected && isJabatanSelected));
-        }
-
-        function resetJabatanSelect() {
-            jabatanSelect.empty().append(new Option('-- Pilih Unit Kerja Terakhir --', '')).prop('disabled', true);
+            const isJabatanFilled = jabatanNameInput.val().trim() !== '';
+            submitButton.prop('disabled', !(isUnitSelected && isJabatanFilled));
         }
 
         function resetSubsequentSelects(level) {
@@ -89,32 +86,6 @@
                     select.empty().append(new Option(placeholder, '')).prop('disabled', true);
                 }
             }
-            // Also reset the jabatan dropdown whenever a unit changes
-            resetJabatanSelect();
-        }
-
-        function fetchVacantJabatans(unitId) {
-            jabatanSelect.prop('disabled', true).html('<option value="">-- Memuat Jabatan... --</option>');
-            $.ajax({
-                url: `/api/units/${unitId}/vacant-jabatans`,
-                type: 'GET',
-                success: function(jabatans) {
-                    jabatanSelect.empty().append(new Option('-- Pilih Jabatan --', ''));
-                    if (jabatans.length > 0) {
-                        $.each(jabatans, function(key, jabatan) {
-                            jabatanSelect.append(new Option(jabatan.name, jabatan.id));
-                        });
-                        jabatanSelect.prop('disabled', false);
-                    } else {
-                        jabatanSelect.html(new Option('-- Tidak ada jabatan kosong --', '')).prop('disabled', true);
-                    }
-                    checkFormValidity();
-                },
-                error: function() {
-                    jabatanSelect.html(new Option('-- Gagal memuat jabatan --', '')).prop('disabled', true);
-                    checkFormValidity();
-                }
-            });
         }
 
         unitSelects.on('change', function() {
@@ -156,23 +127,19 @@
                             });
                             nextSelect.prop('disabled', false);
                         } else {
-                            // No child units, so this is the final unit. Fetch jabatans.
+                            // No child units, so this is the final unit.
                             nextSelect.html(new Option('-- Tidak ada unit bawahan --', '')).prop('disabled', true);
-                            fetchVacantJabatans(selectedValue);
                         }
                     },
                     error: function() {
                         nextSelect.html(new Option('-- Gagal memuat data --', '')).prop('disabled', true);
                     }
                 });
-            } else {
-                 // This is the last unit dropdown, so fetch jabatans for it.
-                 fetchVacantJabatans(selectedValue);
             }
             checkFormValidity();
         });
 
-        jabatanSelect.on('change', function() {
+        jabatanNameInput.on('input', function() {
             checkFormValidity();
         });
 
