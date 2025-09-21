@@ -13,6 +13,8 @@ use App\Observers\UnitObserver;
 use App\Observers\SettingObserver;
 use App\Models\User;
 use App\Observers\UserObserver;
+use App\Models\Task;
+use App\Observers\TaskObserver;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -34,5 +36,6 @@ class EventServiceProvider extends ServiceProvider
         Unit::observe(UnitObserver::class);
         Setting::observe(SettingObserver::class);
         User::observe(UserObserver::class);
+        Task::observe(TaskObserver::class);
     }
 }
