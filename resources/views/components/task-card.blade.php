@@ -125,6 +125,7 @@
                         <input type="file" name="file" class="text-sm file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" required>
                         <button type="submit" class="px-3 py-1 bg-gray-700 text-white text-xs font-bold rounded hover:bg-gray-600">Unggah</button>
                     </div>
+                    <p class="text-xs text-gray-500 mt-1">Maksimal ukuran file: 5 MB.</p>
                 </form>
             </div>
             {{-- Komentar --}}
