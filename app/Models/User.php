@@ -590,31 +590,33 @@ public function getAvatarColorsAttribute(): array
      */
     public static function syncRoleFromUnit(User $user): void
     {
-        // Find the unit where this user is the designated head.
-        $unitHeaded = Unit::where('kepala_unit_id', $user->id)->first();
+        // Find all units where this user is the designated head.
+        $unitsHeaded = Unit::where('kepala_unit_id', $user->id)->get();
 
         // If the user is not a head of any unit, DO NOTHING.
-        // This is the critical fix to prevent non-heads from being demoted to 'Staf'.
-        if (!$unitHeaded) {
+        if ($unitsHeaded->isEmpty()) {
             return;
         }
 
-        // The depth is the number of ancestors, which is 1-based (root is 1).
-        $depth = $unitHeaded->ancestors()->count();
+        // If the user heads multiple units, find the one highest in the hierarchy (smallest depth).
+        $highestUnit = $unitsHeaded->sortBy(function ($unit) {
+            return $unit->ancestors()->count();
+        })->first();
 
-        // --- ROBUST ROLE DETERMINATION ---
-        // Priority 1: Check for specific unit names that have fixed roles.
-        if ($unitHeaded->name === 'Koordinator') {
-            $newRoleName = 'Koordinator';
-        } elseif ($unitHeaded->name === 'Sub Koordinator') {
-            $newRoleName = 'Sub Koordinator';
-        } else {
-            // Priority 2: Fallback to the existing depth-based logic for other units.
-            $newRoleName = $unitHeaded->getExpectedHeadRole();
-        }
+        // The depth is the number of ancestors of the highest unit.
+        $depth = $highestUnit->ancestors()->count();
+
+        // Determine the base functional role based on the depth of the highest unit they lead.
+        $newRoleName = match ($depth) {
+            2 => 'Eselon I',
+            3 => 'Eselon II',
+            4 => 'Koordinator',
+            5 => 'Sub Koordinator',
+            default => 'Staf', // Fallback for heads of other units (e.g., root)
+        };
 
         // If the unit is 'Struktural', map functional roles to their Eselon equivalents.
-        if ($unitHeaded->type === 'Struktural') {
+        if ($highestUnit->type === 'Struktural') {
             $roleMap = [
                 'Koordinator' => 'Eselon III',
                 'Sub Koordinator' => 'Eselon IV',
