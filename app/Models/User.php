@@ -602,14 +602,16 @@ public function getAvatarColorsAttribute(): array
         // The depth is the number of ancestors, which is 1-based (root is 1).
         $depth = $unitHeaded->ancestors()->count();
 
-        // Determine the base functional role based on the depth of the unit they lead.
-        $newRoleName = match ($depth) {
-            2 => 'Eselon I',
-            3 => 'Eselon II',
-            4 => 'Koordinator',
-            5 => 'Sub Koordinator',
-            default => 'Staf', // Fallback for heads of other units (e.g., root)
-        };
+        // --- ROBUST ROLE DETERMINATION ---
+        // Priority 1: Check for specific unit names that have fixed roles.
+        if ($unitHeaded->name === 'Koordinator') {
+            $newRoleName = 'Koordinator';
+        } elseif ($unitHeaded->name === 'Sub Koordinator') {
+            $newRoleName = 'Sub Koordinator';
+        } else {
+            // Priority 2: Fallback to the existing depth-based logic for other units.
+            $newRoleName = $unitHeaded->getExpectedHeadRole();
+        }
 
         // If the unit is 'Struktural', map functional roles to their Eselon equivalents.
         if ($unitHeaded->type === 'Struktural') {
