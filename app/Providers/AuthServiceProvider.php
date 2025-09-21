@@ -11,8 +11,10 @@ use App\Models\User;
 use App\Policies\PeminjamanRequestPolicy;
 use App\Policies\ProjectPolicy;
 use App\Policies\SpecialAssignmentPolicy;
+use App\Models\LeaveRequest;
 use App\Models\LampiranSurat;
 use App\Models\Setting;
+use App\Policies\LeaveRequestPolicy;
 use App\Policies\LampiranSuratPolicy;
 use App\Models\Surat;
 use App\Policies\SuratPolicy;
@@ -33,6 +35,7 @@ class AuthServiceProvider extends ServiceProvider
      * @var array<class-string, class-string>
      */
     protected $policies = [
+        LeaveRequest::class => LeaveRequestPolicy::class,
         Unit::class => UnitPolicy::class,
         Project::class => ProjectPolicy::class,
         Task::class => TaskPolicy::class,
