@@ -36,7 +36,8 @@ class SpecialAssignmentPolicy
      */
     public function create(User $user): bool
     {
-        return $user->canManageUsers();
+        // According to the new requirement, all authenticated users can create an assignment.
+        return true;
     }
 
     /**
