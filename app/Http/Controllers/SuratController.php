@@ -148,6 +148,14 @@ class SuratController extends Controller
     }
 
     /**
+     * Show the form for creating a new task from a letter.
+     */
+    public function showMakeTaskForm(Surat $surat)
+    {
+        return view('surat.make-task', ['surat' => $surat]);
+    }
+
+    /**
      * Create a new task from a letter.
      */
     public function makeTask(Request $request, Surat $surat)
