@@ -66,11 +66,6 @@ class TaskPolicy
             return true;
         }
 
-        // The creator of the task can update it.
-        if ($user->id === $task->creator_id) {
-            return true;
-        }
-
         // The person assigned to the task can update it.
         if ($task->assignees->contains($user)) {
             return true;

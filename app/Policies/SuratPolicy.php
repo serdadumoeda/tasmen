@@ -49,24 +49,6 @@ class SuratPolicy
     }
 
     /**
-     * Determine whether the user can view the form to create a task from the letter.
-     */
-    public function showMakeTaskForm(User $user, Surat $surat): bool
-    {
-        // Any user who can view the letter can also see the 'make task' form.
-        return $this->view($user, $surat);
-    }
-
-    /**
-     * Determine whether the user can create a task from the letter.
-     */
-    public function makeTask(User $user, Surat $surat): bool
-    {
-        // Any user who can view the letter can also create a task from it.
-        return $this->view($user, $surat);
-    }
-
-    /**
      * Determine whether the user can create a project from the letter.
      */
     public function makeProject(User $user, Surat $surat): bool
