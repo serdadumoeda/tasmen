@@ -126,25 +126,21 @@
                                             <x-dropdown-link :href="route('users.show', $user)">
                                                 {{ __('Lihat Profil') }}
                                             </x-dropdown-link>
-                                            @can('update', $user)
-                                                <x-dropdown-link :href="route('users.edit', $user)">
-                                                    {{ __('Edit') }}
-                                                </x-dropdown-link>
-                                            @endcan
-                                            @can('impersonate', $user)
+                                            <x-dropdown-link :href="route('users.edit', $user)">
+                                                {{ __('Edit') }}
+                                            </x-dropdown-link>
+                                            @if(Auth::user()->isSuperAdmin() && Auth::id() !== $user->id && !$user->isSuperAdmin())
                                                 <x-dropdown-link :href="route('admin.users.impersonate', $user)">
                                                     {{ __('Tiru Pengguna') }}
                                                 </x-dropdown-link>
-                                            @endcan
-                                            @can('deactivate', $user)
-                                                <div class="border-t border-gray-100"></div>
-                                                <form action="{{ route('users.deactivate', $user) }}" method="POST" onsubmit="return confirm('{{ __('Apakah Anda yakin ingin mengarsipkan pengguna ini?') }}');">
-                                                    @csrf
-                                                    <x-dropdown-link :href="route('users.deactivate', $user)" onclick="event.preventDefault(); this.closest('form').submit();">
-                                                        <span class="text-yellow-600">{{ __('Arsipkan') }}</span>
-                                                    </x-dropdown-link>
-                                                </form>
-                                            @endcan
+                                            @endif
+                                            <div class="border-t border-gray-100"></div>
+                                            <form action="{{ route('users.deactivate', $user) }}" method="POST" onsubmit="return confirm('{{ __('Apakah Anda yakin ingin mengarsipkan pengguna ini?') }}');">
+                                                @csrf
+                                                <x-dropdown-link :href="route('users.deactivate', $user)" onclick="event.preventDefault(); this.closest('form').submit();">
+                                                    <span class="text-yellow-600">{{ __('Arsipkan') }}</span>
+                                                </x-dropdown-link>
+                                            </form>
                                         </x-slot>
                                     </x-dropdown>
                                 </td>
