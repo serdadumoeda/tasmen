@@ -47,4 +47,13 @@ class SuratPolicy
         // Only the creator or a collaborator can delete a draft letter.
         return $surat->status === 'draft' && ($user->id === $surat->pembuat_id || $surat->isCollaborator($user));
     }
+
+    /**
+     * Determine whether the user can create a project from the letter.
+     */
+    public function makeProject(User $user, Surat $surat): bool
+    {
+        // Staff members cannot create projects from a letter.
+        return !$user->isStaff();
+    }
 }
