@@ -120,6 +120,7 @@ class UnitController extends Controller
         $this->authorize('update', $unit);
 
         $validated = $request->validate([
+            // Fix: Ignore the current unit's ID when validating for uniqueness.
             'name' => ['required', 'string', 'max:255', Rule::unique('units')->ignore($unit->id)],
             'parent_unit_id' => 'nullable|exists:units,id',
             'kepala_unit_id' => ['nullable', 'exists:users,id'],
