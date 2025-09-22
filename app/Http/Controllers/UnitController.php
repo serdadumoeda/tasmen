@@ -80,42 +80,20 @@ class UnitController extends Controller
         $units = Unit::where('id', '!=', $unit->id)->orderBy('name')->get();
         $workflows = ApprovalWorkflow::orderBy('name')->get();
 
-        // Determine the required role for the head of this unit.
-        $expectedRole = $unit->getExpectedHeadRole();
+        // Get IDs of all users who are currently head of ANY unit.
+        $existingHeadIds = Unit::whereNotNull('kepala_unit_id')
+                                ->pluck('kepala_unit_id');
 
-        // Find the Eselon II ancestor unit to scope the search for potential heads.
-        $eselonIIAncestor = $unit->getEselonIIAncestor();
-
-        // If we are editing a unit under an Eselon II unit, scope the query.
-        if ($eselonIIAncestor) {
-            // Get the ID of the Eselon II unit itself.
-            $unitIds = $eselonIIAncestor->descendants()->pluck('id')->toArray();
-            $unitIds[] = $eselonIIAncestor->id;
-
-            // Query for users within the Eselon II unit's hierarchy.
-            $potentialHeadsQuery = User::whereIn('unit_id', $unitIds);
-        } else {
-            // Fallback to the old behavior if no Eselon II ancestor is found,
-            // though this case should be reviewed based on business rules.
-            $potentialHeadsQuery = User::query();
-        }
-
-        if ($expectedRole) {
-            // Filter users by the expected role.
-            $potentialHeadsQuery->where(function ($query) use ($expectedRole, $unit) {
-                $query->whereHas('roles', function ($subQuery) use ($expectedRole) {
-                    $subQuery->where('name', $expectedRole);
-                });
-
-                // Always include the current head of the unit, even if their role doesn't match.
-                if ($unit->kepala_unit_id) {
-                    $query->orWhere('id', $unit->kepala_unit_id);
-                }
+        // Query for potential heads based on user requirements.
+        $potentialHeadsQuery = User::query()
+            // Rule 1: Candidates must be members of the current unit being edited.
+            ->where('unit_id', $unit->id)
+            // Rule 2: Exclude users who are already heads of other units,
+            // but always include the current head of THIS unit as an option.
+            ->where(function ($query) use ($existingHeadIds, $unit) {
+                $query->whereNotIn('id', $existingHeadIds)
+                      ->orWhere('id', $unit->kepala_unit_id);
             });
-        } else {
-            // If no specific role is expected for this level, only show the current head.
-            $potentialHeadsQuery->where('id', $unit->kepala_unit_id ?? 0);
-        }
 
         $usersInUnit = $potentialHeadsQuery->orderBy('name')->get();
 
