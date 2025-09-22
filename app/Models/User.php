@@ -18,6 +18,7 @@ use App\Models\Project;
 use App\Models\Jabatan;
 use App\Models\JabatanHistory;
 use App\Models\Delegation;
+use App\Models\Role;
 use App\Scopes\HierarchicalScope;
 use App\Services\LeaveDurationService;
 
@@ -602,28 +603,23 @@ public function getAvatarColorsAttribute(): array
      */
     public static function recalculateAndSaveRole(User $user): void
     {
-        $user->load('jabatan');
+        $user->load('jabatan', 'unit');
 
-        $newRoleName = 'Staf'; // Default to 'Staf' if no specific role is found
+        if ($user->unit && $user->unit->type === 'Struktural') {
+            $structuralRole = self::mapEselonToRole($user->eselon ?? null);
+            if ($structuralRole) {
+                self::assignRoleByName($user, $structuralRole);
+                return;
+            }
+        }
+
+        $newRoleName = 'Staf';
 
         if ($user->jabatan && $user->jabatan->role) {
             $newRoleName = $user->jabatan->role;
         }
 
-        // Find the role model by name
-        $newRole = Role::where('name', $newRoleName)->first();
-
-        if ($newRole) {
-            // Sync the new role, replacing any old ones.
-            $user->roles()->sync([$newRole->id]);
-        } else {
-            // If the role from Jabatan is not found in the roles table,
-            // default to Staf as a fallback.
-            $stafRole = Role::where('name', 'Staf')->first();
-            if ($stafRole) {
-                $user->roles()->sync([$stafRole->id]);
-            }
-        }
+        self::assignRoleByName($user, $newRoleName);
     }
 
     public function leaveRequests() { return $this->hasMany(LeaveRequest::class); }
@@ -645,11 +641,18 @@ public function getAvatarColorsAttribute(): array
 
         // If the user heads multiple units, find the one highest in the hierarchy (smallest depth).
         $highestUnit = $unitsHeaded->sortBy(function ($unit) {
-            return $unit->ancestors()->count();
+            return $unit->getHierarchyDepth();
         })->first();
 
-        // The depth is the number of ancestors of the highest unit.
-        $depth = $highestUnit->ancestors()->count();
+        if ($highestUnit && $highestUnit->type === 'Struktural') {
+            $eselonRole = self::mapEselonToRole($user->eselon ?? null);
+            if ($eselonRole) {
+                self::assignRoleByName($user, $eselonRole);
+                return;
+            }
+        }
+
+        $depth = $highestUnit?->getHierarchyDepth() ?? 0;
 
         // Determine the base functional role based on the depth of the highest unit they lead.
         $newRoleName = match ($depth) {
@@ -657,33 +660,60 @@ public function getAvatarColorsAttribute(): array
             3 => 'Eselon II',
             4 => 'Koordinator',
             5 => 'Sub Koordinator',
-            default => 'Staf', // Fallback for heads of other units (e.g., root)
+            default => 'Staf',
         };
 
-        // If the unit is 'Struktural', map functional roles to their Eselon equivalents.
-        if ($highestUnit->type === 'Struktural') {
+        if ($highestUnit && $highestUnit->type === 'Struktural') {
             $roleMap = [
                 'Koordinator' => 'Eselon III',
                 'Sub Koordinator' => 'Eselon IV',
             ];
-            // If the current role exists in our map, transform it.
+
             if (isset($roleMap[$newRoleName])) {
                 $newRoleName = $roleMap[$newRoleName];
             }
         }
 
-        $newRole = Role::where('name', $newRoleName)->first();
+        self::assignRoleByName($user, $newRoleName);
+    }
 
-        if ($newRole) {
-            $user->roles()->sync([$newRole->id]);
-        } else {
-            // As a fallback, if the calculated role name doesn't exist in the roles table,
-            // we can assign 'Staf' to prevent an error, but this should be a rare case for a unit head.
-            $stafRole = Role::where('name', 'Staf')->first();
-            if ($stafRole) {
-                $user->roles()->sync([$stafRole->id]);
+    protected static function assignRoleByName(User $user, string $roleName): void
+    {
+        $role = Role::where('name', $roleName)->first();
+
+        if ($role) {
+            $user->roles()->sync([$role->id]);
+            return;
+        }
+
+        $stafRole = Role::where('name', 'Staf')->first();
+        if ($stafRole) {
+            $user->roles()->sync([$stafRole->id]);
+        }
+    }
+
+    protected static function mapEselonToRole(?string $eselon): ?string
+    {
+        if (!$eselon) {
+            return null;
+        }
+
+        $normalized = strtoupper($eselon);
+
+        foreach (['IV', 'III', 'II', 'I'] as $roman) {
+            if (str_contains($normalized, $roman)) {
+                return 'Eselon ' . $roman;
             }
         }
+
+        if (preg_match('/([1-4])/', $normalized, $matches)) {
+            $map = ['1' => 'I', '2' => 'II', '3' => 'III', '4' => 'IV'];
+            $digit = $matches[1];
+
+            return isset($map[$digit]) ? 'Eselon ' . $map[$digit] : null;
+        }
+
+        return null;
     }
 
     /**

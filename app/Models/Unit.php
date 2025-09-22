@@ -14,6 +14,8 @@ class Unit extends Model
 {
     use HasFactory, RecordsActivity;
 
+    protected ?int $hierarchyDepthCache = null;
+
     public const LEVEL_MENTERI = 'Menteri';
     public const LEVEL_ESELON_I = 'Eselon I';
     public const LEVEL_ESELON_II = 'Eselon II';
@@ -260,19 +262,54 @@ class Unit extends Model
      */
     public function getExpectedHeadRole(): ?string
     {
-        // The depth is the number of ancestors, which is 1-based (root is 1).
-        $depth = $this->ancestors()->count();
+        $depth = $this->getHierarchyDepth();
 
-        // Mapping from hierarchy depth to the expected role name for the HEAD of that unit.
         $roleMap = [
-            1 => 'Menteri',          // A unit with depth 1 (root) is headed by a Menteri.
-            2 => 'Eselon I',        // A unit with depth 2 is headed by an Eselon I.
-            3 => 'Eselon II',       // A unit with depth 3 is headed by an Eselon II.
-            4 => 'Koordinator',     // A unit with depth 4 is headed by a Koordinator.
-            5 => 'Sub Koordinator', // A unit with depth 5 is headed by a Sub Koordinator.
+            1 => 'Menteri',
+            2 => 'Eselon I',
+            3 => 'Eselon II',
+            4 => 'Koordinator',
+            5 => 'Sub Koordinator',
         ];
 
         return $roleMap[$depth] ?? null;
+    }
+
+    /**
+     * Calculate this unit's depth in the hierarchy without relying on the closure table.
+     * Depth is 1-based: root unit returns 1, its children 2, and so on.
+     */
+    public function getHierarchyDepth(): int
+    {
+        if ($this->hierarchyDepthCache !== null) {
+            return $this->hierarchyDepthCache;
+        }
+
+        $depth = 1;
+        $current = $this;
+        $visited = [$current->id];
+        $maxIterations = 50; // Safety guard against cycles.
+
+        while ($current->parent_unit_id && $maxIterations-- > 0) {
+            $current->loadMissing('parentUnit');
+            $parent = $current->parentUnit;
+
+            if (!$parent) {
+                $parent = self::find($current->parent_unit_id);
+            }
+
+            if (!$parent || in_array($parent->id, $visited, true)) {
+                break;
+            }
+
+            $visited[] = $parent->id;
+            $depth++;
+            $current = $parent;
+        }
+
+        $this->hierarchyDepthCache = $depth;
+
+        return $depth;
     }
 
     /**
