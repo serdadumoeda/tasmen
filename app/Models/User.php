@@ -602,85 +602,59 @@ public function getAvatarColorsAttribute(): array
     public function leaveBalances() { return $this->hasMany(LeaveBalance::class); }
 
     /**
-     * Converts an integer to its Roman numeral equivalent for Eselon roles.
-     * @param int $number
-     * @return string
+     * Sync the user's role based on their unit leadership status.
+     * This function should ONLY run for users who are designated as a 'kepala_unit'.
      */
-    private function convertToRoman($number)
+    public static function syncRoleFromUnit(User $user): void
     {
-        // Simple map for Eselon levels used in this application.
-        $map = [1 => 'I', 2 => 'II', 3 => 'III', 4 => 'IV', 5 => 'V'];
-        return $map[$number] ?? (string) $number;
-    }
+        // Find all units where this user is the designated head.
+        $unitsHeaded = Unit::where('kepala_unit_id', $user->id)->get();
 
-    /**
-     * Syncs the user's role, eselon, and Jabatan based on being appointed as head of a unit.
-     * This is the primary method for handling promotions/appointments.
-     *
-     * @param Unit $unit The unit the user is now heading.
-     * @return void
-     */
-    public function syncRoleAndEselonFromUnit(Unit $unit): void
-    {
-        $level = $unit->level_eselon;
-        $newRoleName = 'Staf'; // Default role
-        $newEselonValue = null;
-
-        if ($unit->type === 'Struktural' && $level) {
-            $romanLevel = $this->convertToRoman($level);
-            $newEselonValue = $level . 'a'; // Default sub-level
-            $newRoleName = 'Eselon ' . $romanLevel;
-        } elseif ($unit->type === 'Fungsional' && $level) {
-            $roleMap = [3 => 'Koordinator', 4 => 'Sub Koordinator'];
-            $newRoleName = $roleMap[$level] ?? 'Staf';
+        // If the user is not a head of any unit, DO NOTHING.
+        if ($unitsHeaded->isEmpty()) {
+            return;
         }
 
-        // Update or create the single Jabatan record for this user. This prevents unique constraint errors.
-        Jabatan::updateOrCreate(
-            ['user_id' => $this->id], // Find by unique user_id
-            [
-                'name' => 'Kepala ' . $unit->name, // Set the Jabatan name
-                'unit_id' => $unit->id,             // Ensure Jabatan is in the correct unit
-                'role' => $newRoleName,             // Also sync the role name on the Jabatan itself
-            ]
-        );
+        // If the user heads multiple units, find the one highest in the hierarchy (smallest depth).
+        $highestUnit = $unitsHeaded->sortBy(function ($unit) {
+            return $unit->ancestors()->count();
+        })->first();
 
-        // Find the Role model instance
-        $newRole = Role::where('name', $newRoleName)->first() ?? Role::where('name', 'Staf')->first();
+        // The depth is the number of ancestors of the highest unit.
+        $depth = $highestUnit->ancestors()->count();
 
-        // Update the user's profile
-        $this->eselon = $newEselonValue;
-        $this->unit_id = $unit->id; // Ensure the user is formally moved to the new unit
-        $this->save();
+        // Determine the base functional role based on the depth of the highest unit they lead.
+        $newRoleName = match ($depth) {
+            2 => 'Eselon I',
+            3 => 'Eselon II',
+            4 => 'Koordinator',
+            5 => 'Sub Koordinator',
+            default => 'Staf', // Fallback for heads of other units (e.g., root)
+        };
 
-        // Sync the user's role in the pivot table
+        // If the unit is 'Struktural', map functional roles to their Eselon equivalents.
+        if ($highestUnit->type === 'Struktural') {
+            $roleMap = [
+                'Koordinator' => 'Eselon III',
+                'Sub Koordinator' => 'Eselon IV',
+            ];
+            // If the current role exists in our map, transform it.
+            if (isset($roleMap[$newRoleName])) {
+                $newRoleName = $roleMap[$newRoleName];
+            }
+        }
+
+        $newRole = Role::where('name', $newRoleName)->first();
+
         if ($newRole) {
-            $this->roles()->sync([$newRole->id]);
-        }
-    }
-
-    /**
-     * Resets a user's role, echelon, and Jabatan when they are removed as a head of a unit.
-     *
-     * @return void
-     */
-    public function removeAsHeadOfUnit(): void
-    {
-        // When removed, revert the user's Jabatan to a standard 'Staf' position in their current unit.
-        // This keeps their Jabatan record intact but changes its nature.
-        $this->jabatan()->update([
-            'name' => 'Staf',
-            'role' => 'Staf',
-        ]);
-
-        // Reset user's echelon value
-        $this->eselon = null;
-        $this->save();
-
-        // Revert role in pivot table to 'Staf'
-        $stafRole = Role::where('name', 'Staf')->first();
-        if ($stafRole) {
-            $this->roles()->sync([$stafRole->id]);
+            $user->roles()->sync([$newRole->id]);
+        } else {
+            // As a fallback, if the calculated role name doesn't exist in the roles table,
+            // we can assign 'Staf' to prevent an error, but this should be a rare case for a unit head.
+            $stafRole = Role::where('name', 'Staf')->first();
+            if ($stafRole) {
+                $user->roles()->sync([$stafRole->id]);
+            }
         }
     }
 

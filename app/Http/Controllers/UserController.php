@@ -265,47 +265,33 @@ class UserController extends Controller
             // Update user data
             $user->update($updateData);
 
-            $isKepalaUnit = $request->boolean('is_kepala_unit');
-            $newUnit = Unit::find($updateData['unit_id']);
+            // Update or create the Jabatan
+            $jabatan = Jabatan::updateOrCreate(
+                ['user_id' => $user->id], // Find Jabatan by user_id
+                [
+                    'name' => $updateData['jabatan_name'],
+                    'unit_id' => $updateData['unit_id'],
+                    'can_manage_users' => $request->boolean('can_manage_users'),
+                ]
+            );
 
-            // First, if the user was head of their *original* unit, that link must be severed,
-            // regardless of their new status.
-            $originalUnit = Unit::find($user->getOriginal('unit_id'));
-            if ($originalUnit && $originalUnit->kepala_unit_id === $user->id) {
-                $originalUnit->kepala_unit_id = null;
-                $originalUnit->save();
+            // Handle 'is_kepala_unit' logic
+            // First, if the user is currently a head of a unit, nullify that
+            if ($user->unit && $user->unit->kepala_unit_id === $user->id) {
+                $user->unit->kepala_unit_id = null;
+                $user->unit->save();
             }
-
-            if ($isKepalaUnit && $newUnit) {
-                // If user is being made a head of unit, let the sync logic handle everything.
-                // This will set their role, eselon, AND their Jabatan.
-                $user->syncRoleAndEselonFromUnit($newUnit);
-
-                // We also need to make sure the unit itself knows who its head is.
-                $newUnit->kepala_unit_id = $user->id;
-                $newUnit->save();
-
-            } else {
-                // If the user is NOT a head of unit, this is a standard update.
-                // Their Jabatan name comes from the form input.
-                Jabatan::updateOrCreate(
-                    ['user_id' => $user->id],
-                    [
-                        'name' => $updateData['jabatan_name'],
-                        'unit_id' => $updateData['unit_id'],
-                        'can_manage_users' => $request->boolean('can_manage_users'),
-                        'role' => 'Staf' // Default role for non-heads
-                    ]
-                );
-                // Ensure their role and eselon are reset to non-head status.
-                $user->removeAsHeadOfUnit();
-
-                // We also need to ensure the user is NOT the head of their new unit.
-                if ($newUnit && $newUnit->kepala_unit_id === $user->id) {
-                    $newUnit->kepala_unit_id = null;
+            // Then, if the checkbox is checked, assign them as head of the new unit
+            if ($request->boolean('is_kepala_unit')) {
+                $newUnit = Unit::find($updateData['unit_id']);
+                if($newUnit) {
+                    $newUnit->kepala_unit_id = $user->id;
                     $newUnit->save();
                 }
             }
+
+            // Sync role from the unit's hierarchy expectations
+            User::syncRoleFromUnit($user);
         });
 
         return redirect()->route('users.index')->with('success', 'User berhasil diperbarui.');
