@@ -119,9 +119,15 @@ class UnitController extends Controller
     {
         $this->authorize('update', $unit);
 
+        $nameRule = ['required', 'string', 'max:255'];
+
+        if ($request->input('name') !== $unit->name) {
+            // Only enforce global uniqueness when the name actually changes.
+            $nameRule[] = Rule::unique('units', 'name')->ignore($unit->id);
+        }
+
         $validated = $request->validate([
-            // Fix: Ignore the current unit's ID when validating for uniqueness.
-            'name' => ['required', 'string', 'max:255', Rule::unique('units')->ignore($unit->id)],
+            'name' => $nameRule,
             'parent_unit_id' => 'nullable|exists:units,id',
             'kepala_unit_id' => ['nullable', 'exists:users,id'],
             'type' => ['required', Rule::in(['Struktural', 'Fungsional'])],
