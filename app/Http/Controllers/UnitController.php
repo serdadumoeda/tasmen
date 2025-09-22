@@ -147,18 +147,25 @@ class UnitController extends Controller
 
         $newKepalaUnitId = $unit->fresh()->kepala_unit_id;
 
-        // Recalculate roles if the head of unit has changed.
+        // If the head of unit has changed, trigger the new automated role/eselon sync.
         if ($oldKepalaUnitId !== $newKepalaUnitId) {
+            // Process the old head of unit, if there was one.
             if ($oldKepalaUnitId) {
-                $oldKepala = \App\Models\User::find($oldKepalaUnitId);
+                $oldKepala = User::find($oldKepalaUnitId);
                 if ($oldKepala) {
-                    \App\Models\User::syncRoleFromUnit($oldKepala);
+                    // Reset the old head's role and echelon.
+                    $oldKepala->removeAsHeadOfUnit();
                 }
             }
+
+            // Process the new head of unit, if one was assigned.
             if ($newKepalaUnitId) {
-                $newKepala = \App\Models\User::find($newKepalaUnitId);
-                if ($newKepala) {
-                    \App\Models\User::syncRoleFromUnit($newKepala);
+                $newKepala = User::find($newKepalaUnitId);
+                // The unit needs to be re-fetched to have the latest data after update.
+                $updatedUnit = $unit->fresh();
+                if ($newKepala && $updatedUnit) {
+                    // Sync the new head's role and echelon based on the unit they now lead.
+                    $newKepala->syncRoleAndEselonFromUnit($updatedUnit);
                 }
             }
         }

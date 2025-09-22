@@ -602,59 +602,86 @@ public function getAvatarColorsAttribute(): array
     public function leaveBalances() { return $this->hasMany(LeaveBalance::class); }
 
     /**
-     * Sync the user's role based on their unit leadership status.
-     * This function should ONLY run for users who are designated as a 'kepala_unit'.
+     * Converts an integer to its Roman numeral equivalent for Eselon roles.
+     * @param int $number
+     * @return string
      */
-    public static function syncRoleFromUnit(User $user): void
+    private function convertToRoman($number)
     {
-        // Find all units where this user is the designated head.
-        $unitsHeaded = Unit::where('kepala_unit_id', $user->id)->get();
+        // Simple map for Eselon levels used in this application.
+        $map = [1 => 'I', 2 => 'II', 3 => 'III', 4 => 'IV', 5 => 'V'];
+        return $map[$number] ?? (string) $number;
+    }
 
-        // If the user is not a head of any unit, DO NOTHING.
-        if ($unitsHeaded->isEmpty()) {
-            return;
+    /**
+     * Syncs the user's role and echelon based on being appointed as head of a specific unit.
+     * This is the primary method for handling promotions/appointments to unit head.
+     *
+     * @param Unit $unit The unit the user is now heading.
+     * @return void
+     */
+    public function syncRoleAndEselonFromUnit(Unit $unit): void
+    {
+        $level = $unit->level_eselon;
+        $newRoleName = null;
+        $newEselonValue = null;
+
+        if ($unit->type === 'Struktural') {
+            if ($level) {
+                // For structural, the echelon value is set, and role is derived from it.
+                $romanLevel = $this->convertToRoman($level);
+                $newEselonValue = $level . 'a'; // Use lowercase 'a' as a default sub-level
+                $newRoleName = 'Eselon ' . $romanLevel;
+            }
+        } elseif ($unit->type === 'Fungsional') {
+            // For functional, the echelon value is cleared, and role is mapped.
+            $newEselonValue = null; // Functional roles do not have an echelon value.
+            if ($level) {
+                $roleMap = [
+                    3 => 'Koordinator',
+                    4 => 'Sub Koordinator',
+                ];
+                $newRoleName = $roleMap[$level] ?? null;
+            }
         }
 
-        // If the user heads multiple units, find the one highest in the hierarchy (smallest depth).
-        $highestUnit = $unitsHeaded->sortBy(function ($unit) {
-            return $unit->ancestors()->count();
-        })->first();
-
-        // The depth is the number of ancestors of the highest unit.
-        $depth = $highestUnit->ancestors()->count();
-
-        // Determine the base functional role based on the depth of the highest unit they lead.
-        $newRoleName = match ($depth) {
-            2 => 'Eselon I',
-            3 => 'Eselon II',
-            4 => 'Koordinator',
-            5 => 'Sub Koordinator',
-            default => 'Staf', // Fallback for heads of other units (e.g., root)
-        };
-
-        // If the unit is 'Struktural', map functional roles to their Eselon equivalents.
-        if ($highestUnit->type === 'Struktural') {
-            $roleMap = [
-                'Koordinator' => 'Eselon III',
-                'Sub Koordinator' => 'Eselon IV',
-            ];
-            // If the current role exists in our map, transform it.
-            if (isset($roleMap[$newRoleName])) {
-                $newRoleName = $roleMap[$newRoleName];
-            }
+        // Default to Staff if no specific role was determined (e.g., functional unit with no level)
+        if (is_null($newRoleName)) {
+            $newRoleName = 'Staf';
         }
 
         $newRole = Role::where('name', $newRoleName)->first();
 
+        // Update user profile transactionally
+        $this->eselon = $newEselonValue;
+        $this->save();
+
         if ($newRole) {
-            $user->roles()->sync([$newRole->id]);
+            $this->roles()->sync([$newRole->id]);
         } else {
-            // As a fallback, if the calculated role name doesn't exist in the roles table,
-            // we can assign 'Staf' to prevent an error, but this should be a rare case for a unit head.
+            // Fallback to Staf role if the calculated role (e.g., 'Eselon V') doesn't exist.
             $stafRole = Role::where('name', 'Staf')->first();
             if ($stafRole) {
-                $user->roles()->sync([$stafRole->id]);
+                $this->roles()->sync([$stafRole->id]);
             }
+        }
+    }
+
+    /**
+     * Resets a user's role and echelon when they are removed as a head of a unit.
+     *
+     * @return void
+     */
+    public function removeAsHeadOfUnit(): void
+    {
+        // Reset echelon value
+        $this->eselon = null;
+        $this->save();
+
+        // Revert role to 'Staf'
+        $stafRole = Role::where('name', 'Staf')->first();
+        if ($stafRole) {
+            $this->roles()->sync([$stafRole->id]);
         }
     }
 
