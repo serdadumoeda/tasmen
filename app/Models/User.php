@@ -322,7 +322,16 @@ class User extends Authenticatable
 
     public function canCreateProjects(): bool
     {
-        return $this->hasRole(['Menteri', 'Superadmin', 'Eselon I', 'Eselon II', 'Koordinator']);
+        return $this->hasRole([
+            'Menteri',
+            'Superadmin',
+            'Eselon I',
+            'Eselon II',
+            'Eselon III',
+            'Eselon IV',
+            'Koordinator',
+            'Sub Koordinator',
+        ]);
     }
 
     public function isTopLevelManager(): bool
