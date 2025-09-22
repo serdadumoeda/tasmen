@@ -25,7 +25,13 @@ class UserController extends Controller
         $this->authorize('viewAny', User::class);
 
         $loggedInUser = Auth::user();
-        $query = User::with(['unit', 'jabatan', 'atasan.jabatan', 'roles']);
+        $query = User::with([
+            'unit.kepalaUnit.jabatan',
+            'unit.parentUnit.kepalaUnit.jabatan',
+            'jabatan.parent.user.jabatan',
+            'roles',
+            'atasan.jabatan',
+        ]);
 
         if (!$loggedInUser->isSuperAdmin()) {
             $query->inUnitAndSubordinatesOf($loggedInUser)
@@ -201,7 +207,13 @@ class UserController extends Controller
     public function profile(User $user)
     {
         $this->authorize('view', $user);
-        $user->load(['unit.parentUnit', 'jabatan', 'atasan']);
+        $user->load([
+            'unit.kepalaUnit.jabatan',
+            'unit.parentUnit.kepalaUnit.jabatan',
+            'jabatan',
+            'jabatan.parent.user.jabatan',
+            'atasan.jabatan',
+        ]);
         return view('users.profile', compact('user'));
     }
 

@@ -29,6 +29,9 @@ class User extends Authenticatable
     // Cache for subordinate unit IDs to prevent N+1 issues in policies.
     public ?\Illuminate\Support\Collection $subordinateUnitIdsCache = null;
 
+    protected ?self $cachedAtasanLangsung = null;
+    protected bool $atasanLangsungResolved = false;
+
     public const STATUS_ACTIVE = 'active';
     public const STATUS_SUSPENDED = 'suspended';
 
@@ -94,46 +97,62 @@ class User extends Authenticatable
     }
 
     /**
-     * Get the direct supervisor, accounting for delegations (Plt./Plh.).
-     *
-     * @return User|null
+     * Get the direct supervisor, accounting for unit hierarchy and delegations.
      */
     public function getAtasanLangsung(): ?User
     {
-        // --- NEW: Prioritize Unit-based hierarchy for Unit Heads ---
-        // Find the highest-level unit this user is the head of.
-        $headedUnit = Unit::where('kepala_unit_id', $this->id)
-            ->with('parentUnit.kepalaUnit') // Eager load for performance
-            ->get()
-            ->sortBy(function ($unit) {
-                return $unit->ancestors()->count();
-            })
-            ->first();
-
-        if ($headedUnit && $headedUnit->parentUnit && $headedUnit->parentUnit->kepalaUnit) {
-            // The supervisor is the head of the parent unit.
-            // (Delegation logic for unit heads might need to be added here in the future if required)
-            return $headedUnit->parentUnit->kepalaUnit;
+        if ($this->atasanLangsungResolved) {
+            return $this->cachedAtasanLangsung;
         }
 
-        // --- FALLBACK: Original logic for non-Unit Heads (Jabatan-based) ---
+        $this->loadMissing('atasan.jabatan');
+
+        if ($this->atasan) {
+            return $this->cacheAtasanLangsung($this->atasan);
+        }
+
+        $this->loadMissing(['unit.kepalaUnit.jabatan', 'unit.parentUnit.kepalaUnit.jabatan']);
+
+        if ($this->unit) {
+            if ($this->unit->kepalaUnit && $this->unit->kepalaUnit->id !== $this->id) {
+                return $this->cacheAtasanLangsung($this->unit->kepalaUnit);
+            }
+
+            if ($this->unit->parentUnit && $this->unit->parentUnit->kepalaUnit) {
+                return $this->cacheAtasanLangsung($this->unit->parentUnit->kepalaUnit);
+            }
+        }
+
+        $this->loadMissing(['jabatan.parent.user.jabatan']);
+
         if (!$this->jabatan || !$this->jabatan->parent) {
-            return null; // No position or no parent position
+            return $this->cacheAtasanLangsung(null);
         }
 
         $atasanJabatan = $this->jabatan->parent;
 
-        // 1. Check for an active delegation for the supervisor's position
         $activeDelegation = Delegation::active()
             ->where('jabatan_id', $atasanJabatan->id)
             ->first();
 
         if ($activeDelegation) {
-            return $activeDelegation->user; // Return the delegated user (Plt./Plh.)
+            $activeDelegation->loadMissing('user.jabatan');
+            return $this->cacheAtasanLangsung($activeDelegation->user);
         }
 
-        // 2. If no delegation, return the definitive office holder
-        return $atasanJabatan->user;
+        if ($atasanJabatan->user) {
+            $atasanJabatan->user->loadMissing('jabatan');
+        }
+
+        return $this->cacheAtasanLangsung($atasanJabatan->user);
+    }
+
+    protected function cacheAtasanLangsung(?User $atasan): ?User
+    {
+        $this->atasanLangsungResolved = true;
+        $this->cachedAtasanLangsung = $atasan;
+
+        return $this->cachedAtasanLangsung;
     }
 
     public function jabatan(): \Illuminate\Database\Eloquent\Relations\HasOne

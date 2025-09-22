@@ -133,10 +133,11 @@
                                     <dt class="font-semibold text-sm text-gray-600 mb-1">Unit Kerja:</dt>
                                     <dd class="text-sm text-gray-900">{{ $user->unit->name ?? 'N/A' }}</dd>
                                 </div>
+                                @php($directSupervisor = $user->getAtasanLangsung())
                                  <div class="flex flex-col">
                                     <dt class="font-semibold text-sm text-gray-600 mb-1">Atasan Langsung:</dt>
-                                    <dd class="text-sm text-gray-900">{{ $user->atasan->name ?? 'N/A' }}</dd>
-                                    <dd class="text-xs text-gray-500">{{ $user->atasan->jabatan->name ?? '' }}</dd>
+                                    <dd class="text-sm text-gray-900">{{ $directSupervisor->name ?? 'N/A' }}</dd>
+                                    <dd class="text-xs text-gray-500">{{ $directSupervisor?->jabatan->name ?? '' }}</dd>
                                 </div>
                             </dl>
                         </div>
