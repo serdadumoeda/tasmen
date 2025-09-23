@@ -31,7 +31,28 @@ class ProfileUpdateRequest extends FormRequest
                 'digits:16',
                 Rule::unique(User::class, 'nik')->ignore($this->user()->id)
             ],
-            'signature_image' => ['nullable', 'image', 'mimes:png', 'max:1024'], // Max 1MB, PNG only
+            'nip' => ['nullable', 'string', 'max:255', Rule::unique(User::class)->ignore($this->user()->id)],
+            'tempat_lahir' => ['nullable', 'string', 'max:255'],
+            'tgl_lahir' => ['nullable', 'date_format:Y-m-d'],
+            'alamat' => ['nullable', 'string'],
+            'jenis_kelamin' => ['nullable', 'in:L,P'],
+            'agama' => ['nullable', 'string', 'max:255'],
+            'no_hp' => ['nullable', 'string', 'max:255'],
+            'telepon' => ['nullable', 'string', 'max:255'],
+            'npwp' => ['nullable', 'string', 'max:255'],
+            'golongan' => ['nullable', 'string', 'max:255'],
+            'eselon' => ['nullable', 'string', 'max:255'],
+            'tmt_eselon' => ['nullable', 'date_format:Y-m-d'],
+            'jenis_jabatan' => ['nullable', 'string', 'max:255'],
+            'grade' => ['nullable', 'string', 'max:255'],
+            'pendidikan_terakhir' => ['nullable', 'string', 'max:255'],
+            'pendidikan_jurusan' => ['nullable', 'string', 'max:255'],
+            'pendidikan_universitas' => ['nullable', 'string', 'max:255'],
+            'tmt_cpns' => ['nullable', 'date_format:Y-m-d'],
+            'tmt_pns' => ['nullable', 'date_format:Y-m-d'],
+            'unit_id' => ['required', 'exists:units,id'],
+            'jabatan_name' => ['required', 'string', 'max:255'],
+            'atasan_id' => ['nullable', 'exists:users,id', 'not_in:'.$this->user()->id],
         ];
     }
 }

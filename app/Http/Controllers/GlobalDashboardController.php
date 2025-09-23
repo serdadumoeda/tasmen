@@ -114,11 +114,10 @@ class GlobalDashboardController extends Controller
 
         $activityQuery = Activity::with('user', 'subject')->latest();
 
-        if (!$currentUser->isSuperAdmin()) {
-            // Manajer melihat aktivitas dari hierarkinya, staf hanya melihat aktivitasnya sendiri.
+        if (!$currentUser->isStaff()) {
             $visibleUserIds = $currentUser->getAllSubordinateIds();
             $visibleUserIds->push($currentUser->id);
-            $activityQuery->whereIn('user_id', $visibleUserIds);
+            $activityQuery->whereIn('user_id', $visibleUserIds->unique()->values()->all());
         }
 
         $recentActivities = $activityQuery->paginate(15, ['*'], 'activityPage');
@@ -166,13 +165,9 @@ class GlobalDashboardController extends Controller
         }
         // --- END APPROVAL INBOX LOGIC ---
 
-        // Data for Task Status Pie Chart for the logged-in user and their subordinates
-        $userIds = $currentUser->getAllSubordinateIds();
-        $userIds->push($currentUser->id);
-
-        // Optimized query to count tasks by status directly in the database
-        $myTaskStats = Task::whereHas('assignees', function ($query) use ($userIds) {
-                $query->whereIn('user_id', $userIds);
+        // Data for Task Status Pie Chart limited to the current user's assignments
+        $myTaskStats = Task::whereHas('assignees', function ($query) use ($currentUser) {
+                $query->where('user_id', $currentUser->id);
             })
             ->join('task_statuses', 'tasks.task_status_id', '=', 'task_statuses.id')
             ->select('task_statuses.key', DB::raw('count(*) as total'))

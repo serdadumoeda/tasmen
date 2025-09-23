@@ -53,7 +53,11 @@ class SuratPolicy
      */
     public function makeProject(User $user, Surat $surat): bool
     {
-        // Staff members cannot create projects from a letter.
-        return !$user->isStaff();
+        // Staff members and regular users cannot create projects from a letter.
+        if ($user->isStaff() || $user->hasRole('User')) {
+            return false;
+        }
+
+        return true;
     }
 }

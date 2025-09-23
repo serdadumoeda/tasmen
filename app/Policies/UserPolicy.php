@@ -31,6 +31,10 @@ class UserPolicy
      */
     public function view(User $user, User $model): bool
     {
+        if ($user->id === $model->id) {
+            return true;
+        }
+
         return $model->isSubordinateOf($user);
     }
 

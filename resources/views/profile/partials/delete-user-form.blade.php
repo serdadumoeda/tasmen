@@ -1,13 +1,4 @@
 <section>
-    <header>
-        <h2 class="text-xl font-bold text-gray-800 mb-2 flex items-center"> {{-- Menyesuaikan ukuran dan ketebalan teks --}}
-            <i class="fas fa-user-slash mr-2 text-red-600"></i> {{ __('Hapus Akun') }}
-        </h2>
-
-        <p class="mt-1 text-sm text-gray-600 mb-6"> {{-- Menyesuaikan margin bawah --}}
-            {{ __('Setelah akun Anda dihapus, semua sumber daya dan data akan dihapus secara permanen. Sebelum menghapus akun Anda, harap unduh data atau informasi apa pun yang ingin Anda simpan.') }}
-        </p>
-    </header>
 
     {{-- Tombol Pemicu Modal Hapus Akun --}}
     <button

@@ -39,8 +39,13 @@
             const ctx = document.getElementById('sCurveChart');
             const chartData = @json($chartData);
 
+            if (typeof window.Chart === 'undefined') {
+                console.warn('Chart.js tidak tersedia. Melewati render chart Kurva S.');
+                return;
+            }
+
             // Hancurkan instance chart yang ada sebelum membuat yang baru
-            const existingChart = Chart.getChart(ctx);
+            const existingChart = window.Chart.getChart(ctx);
             if (existingChart) {
                 existingChart.destroy();
             }
@@ -65,7 +70,7 @@
             let maxData = allData.length > 0 ? Math.max(...allData) : 10;
             let suggestedMax = Math.ceil(maxData * 1.25 / 10) * 10; // Nilai maksimum dibulatkan ke kelipatan 10 terdekat
 
-            new Chart(ctx, {
+            new window.Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: chartData.labels,

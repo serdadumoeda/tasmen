@@ -406,8 +406,12 @@
                     initChart() {
                         const ctx = document.getElementById('taskStatusChart');
                         if (ctx) {
+                            if (typeof window.Chart === 'undefined') {
+                                console.warn('Chart.js tidak tersedia. Melewati render chart distribusi status tugas.');
+                                return;
+                            }
                             // Hancurkan instance chart yang ada sebelum membuat yang baru (jika ada)
-                            const existingChart = Chart.getChart(ctx);
+                            const existingChart = window.Chart.getChart(ctx);
                             if (existingChart) {
                                 existingChart.destroy();
                             }
@@ -430,7 +434,7 @@
                                 if (noDataMessage) noDataMessage.remove(); // Hapus pesan jika ada data
                             }
 
-                            new Chart(ctx, {
+                            new window.Chart(ctx, {
                                 type: 'doughnut',
                                 data: {
                                     labels: ['Menunggu', 'Dikerjakan', 'Selesai'],

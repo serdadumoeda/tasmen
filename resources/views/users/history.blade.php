@@ -10,7 +10,7 @@
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
                 <div class="p-6">
                     <div class="mb-4">
-                        <a href="{{ route('users.profile', $user) }}" class="text-indigo-600 hover:underline">
+                        <a href="{{ route('users.show', $user) }}" class="text-indigo-600 hover:underline">
                             &larr; Kembali ke Profil Pengguna
                         </a>
                     </div>

@@ -1,15 +1,6 @@
 <section>
-    <header>
-        <h2 class="text-xl font-bold text-gray-800 mb-2 flex items-center"> {{-- Menyesuaikan ukuran dan ketebalan teks --}}
-            <i class="fas fa-lock mr-2 text-green-600"></i> {{ __('Perbarui Kata Sandi') }}
-        </h2>
 
-        <p class="mt-1 text-sm text-gray-600 mb-6"> {{-- Menyesuaikan margin bawah --}}
-            {{ __('Pastikan akun Anda menggunakan kata sandi yang panjang dan acak agar tetap aman.') }}
-        </p>
-    </header>
-
-    <form method="post" action="{{ route('password.update') }}" class="mt-6 space-y-6"> {{-- Menyesuaikan spasi --}}
+    <form method="post" action="{{ route('password.update') }}" class="space-y-6"> {{-- Menyesuaikan spasi --}}
         @csrf
         @method('put')
 

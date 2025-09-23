@@ -239,8 +239,12 @@
     document.addEventListener('DOMContentLoaded', function () {
         const workloadCtx = document.getElementById('workloadChart');
         if (workloadCtx) {
+            if (typeof window.Chart === 'undefined') {
+                console.warn('Chart.js tidak tersedia. Melewati render chart Analisis Beban Kerja.');
+                return;
+            }
             const chartData = @json($chartData);
-            new Chart(workloadCtx, {
+            new window.Chart(workloadCtx, {
                 type: 'bar',
                 data: {
                     labels: Object.keys(chartData),

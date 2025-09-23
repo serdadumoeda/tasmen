@@ -317,8 +317,13 @@ const initExecutiveSummaryChart = () => {
         return;
     }
 
+    if (typeof window.Chart === 'undefined') {
+        console.warn("Chart.js tidak tersedia. Melewati inisialisasi chart Executive Summary.");
+        return;
+    }
+
     // Hancurkan instance chart yang ada sebelum membuat yang baru
-    const existingChart = Chart.getChart(chartCanvas);
+    const existingChart = window.Chart.getChart(chartCanvas);
     if (existingChart) {
         console.log("Menghancurkan chart yang ada di 'performanceTrendChart'.");
         existingChart.destroy();
@@ -347,7 +352,7 @@ const initExecutiveSummaryChart = () => {
 
     console.log("Data untuk chart:", trendData);
 
-    new Chart(chartCanvas, {
+    new window.Chart(chartCanvas, {
         type: 'line',
         data: {
             labels: trendData.labels,

@@ -152,47 +152,49 @@
                         </div>
                     </div>
 
-                    <x-card>
-                         <h3 class="text-lg font-semibold mb-4 text-gray-900 flex items-center">
-                            <i class="fas fa-history mr-3 text-indigo-500"></i>
-                        Aktivitas Terbaru Sistem
-                    </h3>
-                     <ul class="space-y-4">
-                        @forelse($recentActivities as $activity)
-                            <li class="flex items-start space-x-3">
-                                <div class="flex-shrink-0 pt-1">
-                                    @switch($activity->description)
-                                        @case('created_project') <i class="fas fa-folder-plus text-blue-500"></i> @break
-                                        @case('created_task') <i class="fas fa-check-circle text-green-500"></i> @break
-                                        @case('updated_task') <i class="fas fa-edit text-yellow-500"></i> @break
-                                        @case('created_user') <i class="fas fa-user-plus text-purple-500"></i> @break
-                                        @default <i class="fas fa-dot-circle text-gray-400"></i> @break
-                                    @endswitch
-                                </div>
-                                <div class="flex-1">
-                                    <p class="text-sm text-gray-700">
-                                        <span class="font-bold text-gray-800">{{ optional($activity->user)->name ?? 'Sistem' }}</span>
-                                        @switch($activity->description)
-                                            @case('created_project') membuat kegiatan baru @break
-                                            @case('created_task') membuat tugas baru @break
-                                            @case('updated_task') memperbarui sebuah tugas @break
-                                            @case('created_user') mendaftarkan pengguna baru @break
-                                            @default melakukan sebuah aktivitas @break
-                                        @endswitch
-                                        <span class="font-semibold text-indigo-600">{{ optional($activity->subject)->name ?? optional($activity->subject)->title ?? '' }}</span>
-                                    </p>
-                                    <p class="text-xs text-gray-400 mt-0.5">{{ $activity->created_at->diffForHumans() }}</p>
-                                </div>
-                            </li>
-                        @empty
-                            <li class="text-center text-gray-500 py-8">
-                                <i class="fas fa-box-open fa-2x mb-2"></i>
-                                <p>Belum ada aktivitas tercatat.</p>
-                            </li>
-                        @endforelse
-                    </ul>
-                </x-card>
-            </div>
+                    @unless(auth()->user()->isStaff())
+                        <x-card>
+                            <h3 class="text-lg font-semibold mb-4 text-gray-900 flex items-center">
+                                <i class="fas fa-history mr-3 text-indigo-500"></i>
+                                Aktivitas Terbaru Sistem
+                            </h3>
+                            <ul class="space-y-4">
+                                @forelse($recentActivities as $activity)
+                                    <li class="flex items-start space-x-3">
+                                        <div class="flex-shrink-0 pt-1">
+                                            @switch($activity->description)
+                                                @case('created_project') <i class="fas fa-folder-plus text-blue-500"></i> @break
+                                                @case('created_task') <i class="fas fa-check-circle text-green-500"></i> @break
+                                                @case('updated_task') <i class="fas fa-edit text-yellow-500"></i> @break
+                                                @case('created_user') <i class="fas fa-user-plus text-purple-500"></i> @break
+                                                @default <i class="fas fa-dot-circle text-gray-400"></i> @break
+                                            @endswitch
+                                        </div>
+                                        <div class="flex-1">
+                                            <p class="text-sm text-gray-700">
+                                                <span class="font-bold text-gray-800">{{ optional($activity->user)->name ?? 'Sistem' }}</span>
+                                                @switch($activity->description)
+                                                    @case('created_project') membuat kegiatan baru @break
+                                                    @case('created_task') membuat tugas baru @break
+                                                    @case('updated_task') memperbarui sebuah tugas @break
+                                                    @case('created_user') mendaftarkan pengguna baru @break
+                                                    @default melakukan sebuah aktivitas @break
+                                                @endswitch
+                                                <span class="font-semibold text-indigo-600">{{ optional($activity->subject)->name ?? optional($activity->subject)->title ?? '' }}</span>
+                                            </p>
+                                            <p class="text-xs text-gray-400 mt-0.5">{{ $activity->created_at->diffForHumans() }}</p>
+                                        </div>
+                                    </li>
+                                @empty
+                                    <li class="text-center text-gray-500 py-8">
+                                        <i class="fas fa-box-open fa-2x mb-2"></i>
+                                        <p>Belum ada aktivitas tercatat.</p>
+                                    </li>
+                                @endforelse
+                            </ul>
+                        </x-card>
+                    @endunless
+                </div>
         </div>
     </div>
 
@@ -202,9 +204,13 @@
     document.addEventListener('DOMContentLoaded', function () {
         const ctx = document.getElementById('myTasksChart');
         if (ctx) {
+            if (typeof window.Chart === 'undefined') {
+                console.warn('Chart.js tidak tersedia. Melewati render chart Status Tugas.');
+                return;
+            }
             const chartData = @json($taskStatusChartData ?? []);
             if (Object.values(chartData).some(v => v > 0)) {
-                new Chart(ctx, {
+                new window.Chart(ctx, {
                     type: 'doughnut',
                     data: {
                         labels: Object.keys(chartData),

@@ -24,18 +24,15 @@ class SuratController extends Controller
         $query = Surat::query();
 
         if (!$currentUser->isSuperAdmin()) {
-            // Get all user IDs in the current user's hierarchy (self + subordinates)
-            $subordinateIds = $currentUser->getAllSubordinateIds();
-            $relevantUserIds = $subordinateIds->push($currentUser->id);
-
-            $query->where(function ($q) use ($relevantUserIds) {
-                // Condition 1: Surat was created by the user or their subordinates.
-                $q->whereIn('pembuat_id', $relevantUserIds);
-
-                // Condition 2: Surat was dispositioned to the user or their subordinates.
-                $q->orWhereHas('disposisi', function ($subQuery) use ($relevantUserIds) {
-                    $subQuery->whereIn('penerima_id', $relevantUserIds);
-                });
+            $query->where(function ($q) use ($currentUser) {
+                $q->where('pembuat_id', $currentUser->id)
+                  ->orWhereHas('disposisi', function ($subQuery) use ($currentUser) {
+                      $subQuery->where('penerima_id', $currentUser->id);
+                  })
+                  ->orWhereHas('disposisi.tembusanUsers', function ($subQuery) use ($currentUser) {
+                      $subQuery->where('users.id', $currentUser->id);
+                  })
+                  ->orWhereJsonContains('collaborators', $currentUser->id);
             });
         }
 
@@ -214,6 +211,8 @@ class SuratController extends Controller
      */
     public function makeProject(Surat $surat)
     {
+        $this->authorize('makeProject', $surat);
+
         return redirect()->route('projects.create.step1')
             ->with('surat_id', $surat->id)
             ->with('prefill_name', $surat->perihal);

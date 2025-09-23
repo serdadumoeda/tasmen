@@ -19,9 +19,11 @@
                 <div class="p-6 bg-white border-b border-gray-200">
                     <div class="flex items-center justify-between mb-6">
                         <h3 class="text-2xl font-bold text-gray-900">{{ $user->name }}</h3>
-                        <a href="{{ route('users.edit', $user) }}" class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 active:bg-gray-900 focus:outline-none focus:border-gray-900 focus:ring ring-gray-300 disabled:opacity-25 transition ease-in-out duration-150">
-                            Edit User
-                        </a>
+                        @if(auth()->user()?->hasRole('Superadmin') || auth()->user()?->jabatan?->can_manage_users)
+                            <a href="{{ route('users.edit', $user) }}" class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 active:bg-gray-900 focus:outline-none focus:border-gray-900 focus:ring ring-gray-300 disabled:opacity-25 transition ease-in-out duration-150">
+                                Edit User
+                            </a>
+                        @endif
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
