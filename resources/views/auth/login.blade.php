@@ -127,6 +127,51 @@
       margin: 0;
     }
 
+    .video-background-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -2;
+    }
+
+    #background-video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .video-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5); /* Overlay gelap */
+    }
+
+    .container {
+        position: relative;
+        z-index: 1;
+    }
+
+    .left-side, .right-side {
+        background-color: transparent !important;
+    }
+
+    .form-box {
+        background-color: rgba(255, 255, 255, 0.9);
+        padding: 40px;
+        border-radius: 15px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+
+    .right-side {
+        clip-path: none !important; /* Hapus clip-path agar tidak memotong video */
+    }
+
+
     /* RESPONSIVE */
     @media (max-width: 768px) {
       .container {
@@ -165,6 +210,14 @@
   </style>
 </head>
 <body>
+
+  <div class="video-background-container">
+    <video autoplay muted loop id="background-video">
+      <source src="{{ asset('videos/background.mp4') }}" type="video/mp4">
+      Your browser does not support the video tag.
+    </video>
+    <div class="video-overlay"></div>
+  </div>
 
   <div class="container">
     <div class="left-side">
