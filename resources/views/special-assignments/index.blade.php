@@ -85,11 +85,20 @@
                                         @endif
                                     </div>
                                 </div>
-                                <div class="text-sm flex-shrink-0 flex space-x-2">
+                                <div class="text-sm flex-shrink-0 flex items-center space-x-2">
                                     @can('update', $sk)
                                     <a href="{{ route('special-assignments.edit', $sk) }}" class="inline-flex items-center px-3 py-1.5 bg-indigo-500 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150 shadow-sm hover:shadow-md">
                                         <i class="fas fa-edit mr-1"></i> Edit
                                     </a>
+                                    @endcan
+                                    @can('delete', $sk)
+                                    <form action="{{ route('special-assignments.destroy', $sk) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus SK penugasan ini?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="inline-flex items-center px-3 py-1.5 bg-red-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition ease-in-out duration-150 shadow-sm hover:shadow-md">
+                                            <i class="fas fa-trash mr-1"></i> Hapus
+                                        </button>
+                                    </form>
                                     @endcan
                                 </div>
                             </div>

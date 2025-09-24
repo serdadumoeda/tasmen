@@ -210,6 +210,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/surat/{surat}/download', [SuratController::class, 'download'])->name('surat.download');
     Route::get('/surat/{surat}/make-task', [SuratController::class, 'showMakeTaskForm'])->name('surat.show-make-task');
     Route::post('/surat/{surat}/make-task', [SuratController::class, 'makeTask'])->name('surat.make-task');
+    Route::prefix('surat-keluar')->name('surat-keluar.')->group(function () {
+        Route::get('/', [SuratController::class, 'index'])->name('index');
+        Route::get('/{surat}', [SuratController::class, 'show'])->name('show');
+    });
     Route::get('/surat/{surat}/make-project', [SuratController::class, 'makeProject'])->name('surat.make-project');
 
     // Disposition routes, attached to the unified surat
