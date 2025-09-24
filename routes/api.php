@@ -33,7 +33,9 @@ Route::prefix('v1')->middleware('log.api')->group(function () {
 
     // Group for endpoints requiring 'read:projects' scope
     Route::middleware('auth.apikey:read:projects')->group(function () {
-        Route::apiResource('/projects', ProjectApiController::class)->only(['index', 'show']);
+        Route::apiResource('/projects', ProjectApiController::class)
+            ->only(['index', 'show'])
+            ->names('api.projects');
     });
 
     // Group for endpoints requiring 'read:users' scope
