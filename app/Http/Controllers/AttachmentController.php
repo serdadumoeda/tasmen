@@ -15,7 +15,7 @@ class AttachmentController extends Controller
         Gate::authorize('update', $task);
 
         $request->validate([
-            'file' => 'required|file|max:5120' // Maksimal 5MB
+            'file' => 'required|file|max:2048' // Maksimal 2MB
         ]);
 
         $file = $request->file('file');

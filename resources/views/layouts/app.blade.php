@@ -53,6 +53,13 @@
 
         @include('partials.about-us-modal') 
 
+        <a href="https://docs.google.com/forms/d/e/1FAIpQLSd8NwcrLRq5B5nBMUAUw6z498diaXK4QWxnzkkfa91wNscy5Q/viewform"
+           target="_blank" rel="noopener"
+           class="fixed bottom-6 right-6 inline-flex items-center gap-2 rounded-full bg-yellow-400 text-gray-900 px-5 py-3 font-semibold shadow-xl transition hover:-translate-y-1 hover:shadow-2xl focus:outline-none focus:ring-4 focus:ring-yellow-300">
+            <i class="fas fa-bullhorn text-lg"></i>
+            <span>Laporkan!</span>
+        </a>
+
         <footer class="w-full text-center py-4 bg-gray-100 border-t border-gray-200 text-gray-500 text-sm">
             &copy; Pusdatik - <span class="font-bold text-indigo-700">2025</span>
         </footer>

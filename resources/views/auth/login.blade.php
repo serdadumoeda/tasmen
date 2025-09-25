@@ -38,6 +38,7 @@
       max-width: 350px;
       width: 100%;
       padding: 20px;
+      position: relative;
     }
 
     .form-box h2 {
@@ -151,6 +152,7 @@
       background-color: rgba(0, 0, 0, 0.5); /* Overlay gelap */
     }
 
+
     .container {
         position: relative;
         z-index: 1;
@@ -165,6 +167,19 @@
         padding: 40px;
         border-radius: 15px;
         box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+
+    .corner-badge {
+        position: absolute;
+        width: 660px;
+        max-width: 90%;
+        height: auto;
+        pointer-events: none;
+    }
+
+    .corner-badge--login {
+        top: -160px;
+        right: -200px;
     }
 
     .right-side {
@@ -201,11 +216,18 @@
         font-size: 28px;
       }
 
+      .corner-badge {
+        width: 400px;
+        top: -90px;
+        right: -110px;
+      }
+
       .bottom-links {
         flex-direction: column;
         align-items: center;
         gap: 5px;
       }
+
     }
   </style>
 </head>
@@ -222,6 +244,7 @@
   <div class="container">
     <div class="left-side">
       <form class="form-box" method="POST" action="{{ route('login') }}">
+        <img src="{{ asset('images/tamasya-badge.png') }}" alt="Tagline TAMASYA" class="corner-badge corner-badge--login">
         @csrf
         <h2>LOGIN</h2>
 
