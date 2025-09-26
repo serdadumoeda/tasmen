@@ -15,6 +15,8 @@ return [
 
     'default' => env('FILESYSTEM_DISK', 'local'),
 
+    'leave_attachments_disk' => env('LEAVE_ATTACHMENTS_DISK', 'private'),
+
     /*
     |--------------------------------------------------------------------------
     | Filesystem Disks
@@ -32,8 +34,7 @@ return [
 
         'local' => [
             'driver' => 'local',
-            'root' => storage_path('app/private'),
-            'serve' => true,
+            'root' => storage_path('app'),
             'throw' => false,
             'report' => false,
         ],

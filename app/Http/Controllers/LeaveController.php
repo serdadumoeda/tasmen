@@ -203,7 +203,8 @@ class LeaveController extends Controller
 
         $attachmentPath = null;
         if ($request->hasFile('attachment')) {
-            $attachmentPath = $request->file('attachment')->store('leave_attachments', 'private');
+            $disk = $this->attachmentDisk();
+            $attachmentPath = $request->file('attachment')->store('leave_attachments', $disk);
         }
 
         $atasan = $user->getAtasanLangsung();
@@ -244,11 +245,13 @@ class LeaveController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
-        if (!$leaveRequest->attachment_path || !Storage::disk('private')->exists($leaveRequest->attachment_path)) {
+        $disk = $this->attachmentDisk();
+
+        if (!$leaveRequest->attachment_path || !Storage::disk($disk)->exists($leaveRequest->attachment_path)) {
             abort(404, 'File not found.');
         }
 
-        return Storage::disk('private')->download($leaveRequest->attachment_path);
+        return Storage::disk($disk)->download($leaveRequest->attachment_path);
     }
 
     public function approve(LeaveRequest $leaveRequest, LeaveApprovalService $approvalService, SuratCutiGenerator $suratCutiGenerator)
@@ -319,6 +322,32 @@ class LeaveController extends Controller
             }
             return back()->with('success', 'Permintaan cuti telah disetujui dan diteruskan ke pejabat berwenang.');
         }
+    }
+
+    protected function attachmentDisk(): string
+    {
+        $configuredDisk = config('filesystems.leave_attachments_disk', 'private');
+
+        if (config("filesystems.disks.{$configuredDisk}")) {
+            return $configuredDisk;
+        }
+
+        $defaultDisk = config('filesystems.default', 'local');
+
+        if (!config("filesystems.disks.{$defaultDisk}")) {
+            Log::warning('Leave attachment disk fallback missing from configuration.', [
+                'configured' => $configuredDisk,
+                'default' => $defaultDisk,
+            ]);
+            return 'local';
+        }
+
+        Log::notice('Leave attachment disk not configured, falling back to default disk.', [
+            'configured' => $configuredDisk,
+            'fallback' => $defaultDisk,
+        ]);
+
+        return $defaultDisk;
     }
 
     public function reject(Request $request, LeaveRequest $leaveRequest)
