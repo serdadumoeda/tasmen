@@ -14,14 +14,26 @@ $width = match ($width) {
             const trigger = this.$refs.trigger;
             const content = this.$refs.content;
             const rect = trigger.getBoundingClientRect();
+            const margin = 4;
 
-            content.style.top = `${rect.bottom + window.scrollY + 4}px`;
+            let top = rect.bottom + margin;
+            const contentHeight = content.offsetHeight;
 
-            if ('{{ $align }}' === 'right') {
-                content.style.left = `${rect.right - content.offsetWidth}px`;
-            } else {
-                content.style.left = `${rect.left}px`;
+            if (top + contentHeight > window.innerHeight) {
+                top = rect.top - contentHeight - margin;
             }
+
+            content.style.top = `${Math.max(margin, top)}px`;
+
+            let left;
+            if ('{{ $align }}' === 'right') {
+                left = rect.right - content.offsetWidth;
+            } else {
+                left = rect.left;
+            }
+
+            const maxLeft = window.innerWidth - content.offsetWidth - margin;
+            content.style.left = `${Math.min(Math.max(margin, left), Math.max(margin, maxLeft))}px`;
         }
     }" @click.outside="open = false" @close.stop="open = false" :class="{'submenu-is-open': open}">
     <div @click="open = ! open; if (open) { $nextTick(() => position()) }" x-ref="trigger">

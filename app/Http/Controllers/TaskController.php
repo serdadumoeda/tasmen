@@ -130,7 +130,25 @@ class TaskController extends Controller
             'assignees.*' => 'exists:users,id',
             'file_upload' => 'nullable|' . config('tasmen.file_uploads.tasks.rules'),
             'is_outside_office_hours' => 'nullable|boolean',
+            'progress_manual' => 'nullable|boolean',
         ]);
+
+        $selectedStatus = \App\Models\TaskStatus::find($validated['task_status_id']);
+        $statusHasChanged = $task->task_status_id !== (int) $validated['task_status_id'];
+        $progressManuallyAdjusted = $request->boolean('progress_manual');
+
+        if ($selectedStatus) {
+            if ($selectedStatus->key === 'completed') {
+                $validated['progress'] = 100;
+            } elseif ($statusHasChanged && !$progressManuallyAdjusted) {
+                $defaultProgress = \App\Models\TaskStatus::defaultProgressForKey($selectedStatus->key);
+                if ($defaultProgress !== null) {
+                    $validated['progress'] = $defaultProgress;
+                }
+            }
+        }
+
+        unset($validated['progress_manual']);
 
         $task->fill($validated);
         $task->is_outside_office_hours = $request->has('is_outside_office_hours');
@@ -232,13 +250,10 @@ class TaskController extends Controller
         
         $task->task_status_id = $newStatus->id;
 
-        if ($newStatus->key === 'completed') {
-            $task->progress = 100;
-        } elseif ($newStatus->key === 'pending') {
-            $task->progress = 0;
+        $defaultProgress = \App\Models\TaskStatus::defaultProgressForKey($newStatus->key);
+        if ($defaultProgress !== null) {
+            $task->progress = $defaultProgress;
         }
-        // The arbitrary "90" has been removed. Progress should be recalculated
-        // based on subtasks or other logic, not set to a magic number.
 
         $task->save();
 

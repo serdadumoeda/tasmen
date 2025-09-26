@@ -181,7 +181,12 @@
                                 </label>
                                 <select name="task_status_id" id="task_status_id" class="block mt-1 w-full rounded-lg shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150" required>
                                     @foreach($statuses as $status)
-                                        <option value="{{ $status->id }}" @selected(old('task_status_id', $task->task_status_id) == $status->id)>
+                                        <option value="{{ $status->id }}"
+                                                data-status-key="{{ $status->key }}"
+                                                @if(!is_null($status->defaultProgress()))
+                                                    data-default-progress="{{ $status->defaultProgress() }}"
+                                                @endif
+                                                @selected(old('task_status_id', $task->task_status_id) == $status->id)>
                                             {{ $status->label }}
                                         </option>
                                     @endforeach
@@ -205,6 +210,7 @@
                                 <label for="progress" class="block font-semibold text-sm text-gray-700 mb-1">
                                     <i class="fas fa-spinner mr-2 text-gray-500"></i> Progress: <span id="progress-value">{{ old('progress', $task->progress) }}</span>%
                                 </label>
+                                <input type="hidden" name="progress_manual" id="progress_manual" value="{{ old('progress_manual', 0) }}">
                                 <input type="range" name="progress" id="progress" min="0" max="100" class="block mt-1 w-full h-2 rounded-full appearance-none bg-gray-200 cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-indigo-600 [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-indigo-600 [&::-moz-range-thumb]:shadow-md" value="{{ old('progress', $task->progress) }}" oninput="document.getElementById('progress-value').innerText = this.value">
                             </div>
 
@@ -296,9 +302,32 @@
             // Script untuk progress bar
             const progressInput = document.getElementById('progress');
             const progressValueSpan = document.getElementById('progress-value');
+            const progressManualInput = document.getElementById('progress_manual');
             if (progressInput && progressValueSpan) {
                 progressInput.addEventListener('input', function() {
                     progressValueSpan.innerText = this.value;
+                    if (progressManualInput) {
+                        progressManualInput.value = '1';
+                    }
+                });
+            }
+
+            const statusSelect = document.getElementById('task_status_id');
+            if (statusSelect && progressInput && progressValueSpan) {
+                statusSelect.addEventListener('change', function() {
+                    const selectedOption = this.selectedOptions[0];
+                    if (!selectedOption) {
+                        return;
+                    }
+
+                    const defaultProgress = selectedOption.dataset.defaultProgress;
+                    if (defaultProgress !== undefined && defaultProgress !== '') {
+                        progressInput.value = defaultProgress;
+                        progressValueSpan.innerText = defaultProgress;
+                        if (progressManualInput) {
+                            progressManualInput.value = '0';
+                        }
+                    }
                 });
             }
 
