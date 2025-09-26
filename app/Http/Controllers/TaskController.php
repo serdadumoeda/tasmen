@@ -28,6 +28,7 @@ class TaskController extends Controller
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
             'deadline' => 'required|date',
             'estimated_hours' => 'nullable|numeric|min:0',
             'priority_level_id' => 'required|exists:priority_levels,id',
@@ -40,6 +41,7 @@ class TaskController extends Controller
 
         $task = $project->tasks()->create([
             'title' => $validated['title'],
+            'description' => $validated['description'] ?? null,
             'deadline' => $validated['deadline'],
             'estimated_hours' => $validated['estimated_hours'] ?? null,
             'priority_level_id' => $validated['priority_level_id'],
