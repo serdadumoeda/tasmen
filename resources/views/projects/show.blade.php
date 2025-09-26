@@ -276,7 +276,9 @@
                                             <p class="font-medium flex items-center"><i class="fas fa-user-tie mr-2 text-gray-400"></i> Dibuat Oleh:</p><p class="font-semibold text-gray-800">{{ $project->owner->name ?? 'N/A' }}</p>
                                             <p class="font-medium flex items-center"><i class="fas fa-calendar-plus mr-2 text-gray-400"></i> Tanggal Mulai:</p><p class="font-semibold text-gray-800">{{ $project->start_date ? \Carbon\Carbon::parse($project->start_date)->format('d M Y') : '-' }}</p>
                                             <p class="font-medium flex items-center"><i class="fas fa-calendar-check mr-2 text-gray-400"></i> Tanggal Selesai:</p><p class="font-semibold text-gray-800">{{ $project->end_date ? \Carbon\Carbon::parse($project->end_date)->format('d M Y') : '-' }}</p>
-                                            <p class="font-medium flex items-center"><i class="fas fa-building mr-2 text-gray-400"></i> Eselon 2:</p><p class="font-semibold text-gray-800">{{ optional($project->eselon2)->name ?? 'N/A' }}</p>
+                                            @if($project->eselon2)
+                                                <p class="font-medium flex items-center"><i class="fas fa-building mr-2 text-gray-400"></i> Eselon 2:</p><p class="font-semibold text-gray-800">{{ $project->eselon2->name }}</p>
+                                            @endif
                                         </div>
                                     </div>
                                     <div class="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300"> {{-- Container aktivitas terbaru lebih menonjol --}}

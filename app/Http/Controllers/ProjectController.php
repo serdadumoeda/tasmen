@@ -146,7 +146,7 @@ class ProjectController extends Controller
 
         $this->syncMembers($project, $validated['leader_id'], $validated['members']);
 
-        return redirect()->route('projects.show', $project)->with('success', 'Tim proyek berhasil dibentuk!');
+        return redirect()->route('global.dashboard')->with('success', 'Tim proyek berhasil dibentuk!');
     }
 
     public function show(Request $request, Project $project, BreadcrumbService $breadcrumbService, PageTitleService $pageTitleService)
