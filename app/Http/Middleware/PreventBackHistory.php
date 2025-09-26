@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PreventBackHistory
 {
@@ -20,12 +21,14 @@ class PreventBackHistory
 
         // Check if the response is a StreamedResponse (e.g., a file download)
         // StreamedResponse does not have a header() method, so we skip adding headers.
-        if ($response instanceof \Symfony\Component\HttpFoundation\StreamedResponse) {
+        if ($response instanceof StreamedResponse) {
             return $response;
         }
 
-        return $response->header('Cache-Control', 'no-cache, no-store, max-age=0, must-revalidate')
-                        ->header('Pragma', 'no-cache')
-                        ->header('Expires', 'Fri, 01 Jan 1990 00:00:00 GMT');
+        $response->headers->set('Cache-Control', 'no-cache, no-store, max-age=0, must-revalidate');
+        $response->headers->set('Pragma', 'no-cache');
+        $response->headers->set('Expires', 'Fri, 01 Jan 1990 00:00:00 GMT');
+
+        return $response;
     }
 }
