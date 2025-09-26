@@ -26,7 +26,7 @@ class NewCommentOnTask extends Notification
             'task_title' => $this->comment->task->title,
             'project_id' => $this->comment->task->project->id,
             'message' => "{$this->comment->user->name} berkomentar pada tugas: '{$this->comment->task->title}'",
-            'url' => route('projects.show', $this->comment->task->project_id),
+            'url' => route('projects.show', $this->comment->task->project_id) . '#task-' . $this->comment->task->id,
         ];
     }
 }

@@ -36,11 +36,57 @@ class NotificationController extends Controller
 
         $notification->markAsRead();
 
-        if (isset($notification->data['url'])) {
-            return redirect($notification->data['url']);
+        $targetUrl = $notification->data['url']
+            ?? $notification->data['link']
+            ?? $this->resolveRedirectUrl($notification);
+
+        return $targetUrl
+            ? redirect($targetUrl)
+            : redirect()->route('dashboard');
+    }
+
+    protected function resolveRedirectUrl(\Illuminate\Notifications\DatabaseNotification $notification): ?string
+    {
+        $data = $notification->data ?? [];
+        $type = $notification->type;
+
+        return match ($type) {
+            'App\\Notifications\\TaskAssigned' => $this->resolveTaskAssignedUrl($data),
+            'App\\Notifications\\TaskRequiresApproval' => isset($data['task_id']) ? route('tasks.edit', $data['task_id']) : null,
+            'App\\Notifications\\NewCommentOnTask' => $this->resolveProjectTaskUrl($data),
+            'App\\Notifications\\UserMentioned' => $data['link'] ?? null,
+            'App\\Notifications\\LeaveRequestSubmitted',
+            'App\\Notifications\\LeaveRequestForwarded',
+            'App\\Notifications\\LeaveRequestStatusUpdated' => isset($data['leave_request_id']) ? route('leaves.show', $data['leave_request_id']) : null,
+            'App\\Notifications\\PeminjamanApproved' => isset($data['project_id']) ? route('projects.show', $data['project_id']) : null,
+            'App\\Notifications\\PeminjamanRejected',
+            'App\\Notifications\\PeminjamanRequested' => route('peminjaman-requests.my-requests'),
+            'App\\Notifications\\SuratDisposisiNotification' => isset($data['surat_id']) ? route('surat.show', $data['surat_id']) : null,
+            default => null,
+        };
+    }
+
+    protected function resolveTaskAssignedUrl(array $data): ?string
+    {
+        if (!empty($data['project_id'])) {
+            return $this->resolveProjectTaskUrl($data);
         }
 
-        // Fallback if there's no URL
-        return redirect()->route('dashboard');
+        return !empty($data['task_id']) ? route('tasks.edit', $data['task_id']) : null;
+    }
+
+    protected function resolveProjectTaskUrl(array $data): ?string
+    {
+        if (empty($data['project_id'])) {
+            return null;
+        }
+
+        $url = route('projects.show', $data['project_id']);
+
+        if (!empty($data['task_id'])) {
+            $url .= '#task-' . $data['task_id'];
+        }
+
+        return $url;
     }
 }

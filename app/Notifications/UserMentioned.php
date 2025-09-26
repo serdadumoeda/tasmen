@@ -53,6 +53,7 @@ class UserMentioned extends Notification
             'title' => $title,
             'message' => $message,
             'link' => $link,
+            'url' => $link,
             'comment_id' => $this->comment->id,
         ];
     }

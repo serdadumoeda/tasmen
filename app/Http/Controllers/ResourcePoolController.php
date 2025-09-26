@@ -112,15 +112,24 @@ class ResourcePoolController extends Controller
     {
         $members = User::where('is_in_resource_pool', true)
                         ->where('id', '!=', Auth::id()) // Jangan tampilkan diri sendiri
-                        ->with('atasan', 'roles') // Muat relasi atasan dan peran
+                        ->with(['atasan', 'roles', 'jabatan']) // Muat relasi yang diperlukan untuk label
                         ->get(['id', 'name', 'pool_availability_notes', 'atasan_id']);
 
-        // Tambahkan nama peran secara manual ke dalam response
-        $members->each(function ($member) {
-            $member->role_name = $member->roles->first()->name ?? 'N/A';
+        $payload = $members->map(function ($member) {
+            $roleLabel = optional($member->jabatan)->name
+                ?? optional($member->roles->first())->name
+                ?? 'Tidak ada jabatan';
+
+            return [
+                'id' => $member->id,
+                'name' => $member->name,
+                'role' => $roleLabel,
+                'pool_availability_notes' => $member->pool_availability_notes,
+                'atasan_id' => $member->atasan_id,
+            ];
         });
 
-        return response()->json($members);
+        return response()->json($payload);
     }
 
     public function showWorkflow()

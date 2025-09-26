@@ -72,6 +72,7 @@ class SuratDisposisiNotification extends Notification implements ShouldQueue
             'pengirim_disposisi' => $this->pengirim->name,
             'message' => $message,
             'is_tembusan' => $this->isTembusan,
+            'url' => route('surat-masuk.show', $this->surat->id),
         ];
     }
 }

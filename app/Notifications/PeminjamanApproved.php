@@ -30,6 +30,7 @@ class PeminjamanApproved extends Notification
         return [
             'peminjaman_request_id' => $this->peminjamanRequest->id,
             'message' => "Permintaan Anda untuk menugaskan {$requestedUserName} untuk kegiatan '{$projectName}' telah disetujui.",
+            'project_id' => $this->peminjamanRequest->project_id,
             'url' => route('projects.show', $this->peminjamanRequest->project_id),
         ];
     }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Jabatan;
+use App\Models\Project;
 use App\Models\User;
 use App\Models\Unit;
 use App\Models\LeaveBalance;
@@ -397,7 +398,8 @@ class UserController extends Controller
         }
 
         $search = strtolower($query);
-        $users = User::where(function ($q) use ($search) {
+        $users = User::with(['roles', 'jabatan'])
+                    ->where(function ($q) use ($search) {
                         $q->whereRaw('LOWER(name) LIKE ?', ["%{$search}%"])
                           ->orWhereRaw('LOWER(email) LIKE ?', ["%{$search}%"]);
                     })
@@ -405,7 +407,19 @@ class UserController extends Controller
                     ->limit(10)
                     ->get(['id', 'name']);
 
-        return response()->json($users);
+        $payload = $users->map(function ($user) {
+            $roleLabel = optional($user->jabatan)->name
+                ?? optional($user->roles->first())->name
+                ?? 'Tidak ada jabatan';
+
+            return [
+                'id' => $user->id,
+                'name' => $user->name,
+                'role' => $roleLabel,
+            ];
+        });
+
+        return response()->json($payload);
     }
 
     public function impersonate(User $user)

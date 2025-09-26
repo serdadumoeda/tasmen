@@ -9,7 +9,7 @@
     <div x-show="isOpen" @click.away="isOpen = false" class="absolute right-0 z-20 w-80 mt-2 overflow-hidden bg-white rounded-md shadow-lg" x-cloak>
         <div class="py-2">
             <template x-for="notification in unread" :key="notification.id">
-                <a :href="`{{ url('/notifications') }}/${notification.id}/read`" class="flex items-start px-4 py-3 -mx-2 border-b hover:bg-gray-100 bg-blue-50">
+                <a href="#" @click.prevent="openNotification(notification)" class="flex items-start px-4 py-3 -mx-2 border-b hover:bg-gray-100 bg-blue-50">
                     <div class="flex-shrink-0 w-10 text-center pt-1">
                         <template x-if="notification.type.includes('Leave')"><i class="fas fa-calendar-alt text-blue-500"></i></template>
                         <template x-if="notification.type.includes('Surat')"><i class="fas fa-envelope-open-text text-green-500"></i></template>
@@ -29,21 +29,3 @@
         <a href="#" class="block bg-gray-800 text-white text-center font-bold py-2">Lihat Semua Notifikasi</a>
     </div>
 </div>
-
-<script>
-    function notifications() {
-        return {
-            isOpen: false,
-            unread: [],
-            count: 0,
-            fetchUnread() {
-                fetch('{{ route("notifications.unread") }}')
-                    .then(response => response.json())
-                    .then(data => {
-                        this.unread = data.unread;
-                        this.count = data.count;
-                    });
-            }
-        }
-    }
-</script>

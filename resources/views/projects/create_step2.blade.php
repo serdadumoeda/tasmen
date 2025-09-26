@@ -151,8 +151,8 @@
                                 members.forEach(member => {
                                     poolContainer.insertAdjacentHTML('beforeend', `
                                         <label class="flex items-center p-2 rounded-md hover:bg-gray-100 cursor-pointer">
-                                            <input type="radio" name="modal_member_selection" class="h-4 w-4 border-gray-300 member-radio" value="${member.id}" data-name="${member.name} (${member.role})" data-type="pool">
-                                            <span class="ml-3 text-sm text-gray-800">${member.name} <span class="text-gray-500">(${member.role})</span></span>
+                                            <input type="radio" name="modal_member_selection" class="h-4 w-4 border-gray-300 member-radio" value="${member.id}" data-name="${member.name} (${member.role || member.role_name || 'Tidak ada jabatan'})" data-type="pool">
+                                            <span class="ml-3 text-sm text-gray-800">${member.name} <span class="text-gray-500">(${member.role || member.role_name || 'Tidak ada jabatan'})</span></span>
                                             <span class="ml-auto text-xs text-green-600 font-semibold">Tersedia</span>
                                         </label>
                                     `);
@@ -184,8 +184,8 @@
                                     users.forEach(user => {
                                         searchResultsContainer.insertAdjacentHTML('beforeend', `
                                             <label class="flex items-center p-2 rounded-md hover:bg-gray-100 cursor-pointer">
-                                                <input type="radio" name="modal_member_selection" class="h-4 w-4 border-gray-300 member-radio" value="${user.id}" data-name="${user.name} (${user.role})" data-type="request">
-                                                <span class="ml-3 text-sm text-gray-800">${user.name} <span class="text-gray-500">(${user.role})</span></span>
+                                                <input type="radio" name="modal_member_selection" class="h-4 w-4 border-gray-300 member-radio" value="${user.id}" data-name="${user.name} (${user.role || user.role_name || 'Tidak ada jabatan'})" data-type="request">
+                                                <span class="ml-3 text-sm text-gray-800">${user.name} <span class="text-gray-500">(${user.role || user.role_name || 'Tidak ada jabatan'})</span></span>
                                                 <span class="ml-auto text-xs text-orange-600 font-semibold">Butuh Persetujuan</span>
                                             </label>
                                         `);

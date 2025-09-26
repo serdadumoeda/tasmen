@@ -47,7 +47,7 @@ class LeaveRequestStatusUpdated extends Notification
             $mail->line('Alasan Penolakan: ' . $this->leaveRequest->rejection_reason);
         }
 
-        $mail->action('Lihat Detail', route('leaves.index'));
+        $mail->action('Lihat Detail', route('leaves.show', $this->leaveRequest->id));
 
         return $mail;
     }
@@ -64,7 +64,7 @@ class LeaveRequestStatusUpdated extends Notification
         return [
             'leave_request_id' => $this->leaveRequest->id,
             'message' => 'Pengajuan cuti Anda telah ' . $status . '.',
-            'url' => route('leaves.index'),
+            'url' => route('leaves.show', $this->leaveRequest->id),
         ];
     }
 }

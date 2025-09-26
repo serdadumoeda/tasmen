@@ -122,10 +122,11 @@ const initMemberSelectionModal = () => {
 
     const renderUserRow = (user, type) => {
         let note = type === 'pool' ? `<span class="text-green-600 font-semibold">Tersedia</span>` : `<span class="text-orange-600 font-semibold">Butuh Persetujuan</span>`;
+        const roleLabel = user.role ?? user.role_name ?? 'Tidak ada jabatan';
         return `
             <label class="flex items-center p-2 rounded-md hover:bg-gray-100 cursor-pointer">
-                <input type="radio" name="modal_member_selection" class="h-4 w-4 border-gray-300 member-radio" value="${user.id}" data-name="${user.name} (${user.role})" data-type="${type}">
-                <span class="ml-3 text-sm text-gray-800">${user.name} <span class="text-gray-500">(${user.role})</span></span>
+                <input type="radio" name="modal_member_selection" class="h-4 w-4 border-gray-300 member-radio" value="${user.id}" data-name="${user.name} (${roleLabel})" data-type="${type}">
+                <span class="ml-3 text-sm text-gray-800">${user.name} <span class="text-gray-500">(${roleLabel})</span></span>
                 <span class="ml-auto text-xs">${note}</span>
             </label>`;
     };

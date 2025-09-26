@@ -71,6 +71,16 @@
     {{-- Script untuk komponen Notifikasi --}}
     <script>
         function notifications() {
+            const csrfToken = (document.querySelector('meta[name="csrf-token"]') || { getAttribute: () => '' }).getAttribute('content');
+
+            const taskEditBase = '{{ url('/tasks') }}';
+            const projectsBase = '{{ url('/projects') }}';
+            const leavesBase = '{{ url('/leaves') }}';
+            const suratBase = '{{ url('/surat') }}';
+            const peminjamanIndex = '{{ route('peminjaman-requests.my-requests') }}';
+
+            const readBase = '{{ url('/notifications') }}';
+
             return {
                 isOpen: false,
                 unread: [],
@@ -83,15 +93,66 @@
                             this.count = data.count;
                         });
                 },
-                markAsRead(notificationId) {
-                    fetch('{{ route("notifications.markAsRead") }}', {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ id: notificationId })
-                    });
+                openNotification(notification) {
+                    this.isOpen = false;
+                    window.location.href = `${readBase}/${notification.id}/read`;
+                },
+                resolveUrl(notification) {
+                    const data = notification.data || {};
+                    if (data.url) {
+                        return data.url;
+                    }
+                    if (data.link) {
+                        return data.link;
+                    }
+
+                    switch (notification.type) {
+                        case 'App\\Notifications\\TaskAssigned':
+                            if (data.project_id) {
+                                return `${projectsBase}/${data.project_id}${data.task_id ? `#task-${data.task_id}` : ''}`;
+                            }
+                            if (data.task_id) {
+                                return `${taskEditBase}/${data.task_id}/edit`;
+                            }
+                            break;
+                        case 'App\\Notifications\\TaskRequiresApproval':
+                            if (data.task_id) {
+                                return `${taskEditBase}/${data.task_id}/edit`;
+                            }
+                            break;
+                        case 'App\\Notifications\\NewCommentOnTask':
+                            if (data.project_id) {
+                                return `${projectsBase}/${data.project_id}${data.task_id ? `#task-${data.task_id}` : ''}`;
+                            }
+                            break;
+                        case 'App\\Notifications\\UserMentioned':
+                            if (data.comment_id && data.task_id && data.project_id) {
+                                return `${projectsBase}/${data.project_id}#task-${data.task_id}`;
+                            }
+                            break;
+                        case 'App\\Notifications\\LeaveRequestSubmitted':
+                        case 'App\\Notifications\\LeaveRequestForwarded':
+                        case 'App\\Notifications\\LeaveRequestStatusUpdated':
+                            if (data.leave_request_id) {
+                                return `${leavesBase}/${data.leave_request_id}`;
+                            }
+                            break;
+                        case 'App\\Notifications\\PeminjamanApproved':
+                            if (data.project_id) {
+                                return `${projectsBase}/${data.project_id}`;
+                            }
+                            break;
+        case 'App\\Notifications\\PeminjamanRejected':
+        case 'App\\Notifications\\PeminjamanRequested':
+            return peminjamanIndex;
+        case 'App\\Notifications\\SuratDisposisiNotification':
+            if (data.surat_id) {
+                return `${suratBase}/${data.surat_id}`;
+            }
+            break;
+                    }
+
+                    return '{{ route('dashboard') }}';
                 }
             }
         }

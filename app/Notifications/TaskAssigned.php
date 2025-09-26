@@ -28,7 +28,7 @@ class TaskAssigned extends Notification
                 'project_id' => $this->task->project->id,
                 'project_name' => $this->task->project->name,
                 'message' => "Anda ditugaskan tugas baru: '{$this->task->title}' dalam kegiatan '{$this->task->project->name}'",
-                'url' => route('projects.show', $this->task->project_id),
+                'url' => route('projects.show', $this->task->project_id) . '#task-' . $this->task->id,
             ];
         }
 
