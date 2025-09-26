@@ -38,7 +38,7 @@ function form_textarea($label, $name, $user, $is_required = false) {
         {{ form_input('Nama Lengkap', 'name', $user, 'text', true, 'autofocus') }}
         {{ form_input('Email', 'email', $user, 'email', true) }}
         {{ form_input('NIK', 'nik', $user, 'text', false, 'placeholder="16 digit NIK"') }}
-        {{ form_input('NIP', 'nip', $user, 'text', true) }}
+        {{ form_input('NIP', 'nip', $user, 'text', false) }}
         {{ form_input('Tempat Lahir', 'tempat_lahir', $user) }}
         {{ form_input('Tgl. Lahir', 'tgl_lahir', $user, 'text', true, 'placeholder="YYYY-MM-DD"') }}
         {{ form_textarea('Alamat', 'alamat', $user) }}
